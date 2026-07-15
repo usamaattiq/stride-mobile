@@ -228,6 +228,8 @@ const styles = StyleSheet.create({
   cardWrap: {
     flex: 1,
     backgroundColor: colors.white,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   cardScroll: {
     flex: 1,
