@@ -3,6 +3,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Dimensions,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -69,8 +70,21 @@ export function AuthScaffold({
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
   const scrollViewRef = React.useRef<ScrollView>(null);
+  // Which field to scroll to, and whether the keyboard is already up — tracked
+  // separately from the scroll itself because `scrollResponderScrollNativeHandleToKeyboard`
+  // only computes a correct offset once the keyboard's metrics are known, and
+  // `focus` vs `keyboardDidShow` aren't guaranteed to fire in a fixed order.
+  // Triggering the scroll from `keyboardDidShow` instead of `focus` guarantees
+  // the metrics are populated, instead of only working when focus happens to
+  // lose that race.
+  const focusedNodeRef = React.useRef<number | null>(null);
+  const keyboardVisibleRef = React.useRef(false);
 
-  const scrollToInput = React.useCallback((nodeHandle: number) => {
+  const scrollFocusedInputIntoView = React.useCallback(() => {
+    const nodeHandle = focusedNodeRef.current;
+    if (nodeHandle == null) {
+      return;
+    }
     // Extra offset so the focused field lands with some breathing room above
     // the keyboard instead of touching it.
     scrollViewRef.current?.scrollResponderScrollNativeHandleToKeyboard(
@@ -79,6 +93,32 @@ export function AuthScaffold({
       true,
     );
   }, []);
+
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      keyboardVisibleRef.current = true;
+      scrollFocusedInputIntoView();
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [scrollFocusedInputIntoView]);
+
+  const scrollToInput = React.useCallback(
+    (nodeHandle: number) => {
+      focusedNodeRef.current = nodeHandle;
+      // If the keyboard is already open (switching fields via "next"), there's
+      // no keyboardDidShow coming — scroll immediately using known metrics.
+      if (keyboardVisibleRef.current) {
+        scrollFocusedInputIntoView();
+      }
+    },
+    [scrollFocusedInputIntoView],
+  );
 
   // Without the legal footer there's no bottom chrome, so pad for the safe area.
   const contentBottomPad = showLegalFooter
