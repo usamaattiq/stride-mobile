@@ -1,0 +1,45 @@
+import React from 'react';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { colors } from '@/theme';
+
+import { SignupDraftProvider } from '../context/SignupDraftContext';
+import { LoginFlowScreen } from '../screens/LoginFlowScreen';
+import { SignupFlowScreen } from '../screens/SignupFlowScreen';
+import { HomePlaceholderRoute, SignupSuccessRoute, WelcomeRoute } from './routes';
+import type { AuthStackParamList } from './types';
+
+const Stack = createNativeStackNavigator<AuthStackParamList>();
+
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.white,
+  },
+};
+
+/**
+ * Match bt-app: default native-stack options only.
+ * Signup/login step changes happen inside flow screens (setStep), not stack pushes.
+ */
+export function AuthNavigator(): React.ReactElement {
+  return (
+    <SignupDraftProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="Welcome" component={WelcomeRoute} />
+          <Stack.Screen name="SignupFlow" component={SignupFlowScreen} />
+          <Stack.Screen name="SignupSuccess" component={SignupSuccessRoute} />
+          <Stack.Screen name="LoginFlow" component={LoginFlowScreen} />
+          <Stack.Screen name="HomePlaceholder" component={HomePlaceholderRoute} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SignupDraftProvider>
+  );
+}
