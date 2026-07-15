@@ -7,18 +7,32 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
+// ID-1 card ratio (≈1.585) rounded to a clean value for the crop UI.
+const DEFAULT_ASPECT: [number, number] = [16, 10];
+
 type DocumentUploadFieldProps = {
   label: string;
   uri?: string | null;
   onChange: (uri: string | null) => void;
+  required?: boolean;
   hint?: string;
+  /** Label shown over the preview once an image is selected. */
+  changeHint?: string;
+  /** Enable the native crop step after selecting an image. Defaults to true. */
+  allowsEditing?: boolean;
+  /** Crop aspect ratio (Android honors this; iOS uses its own crop UI). */
+  aspect?: [number, number];
 };
 
 export function DocumentUploadField({
   label,
   uri,
   onChange,
+  required = false,
   hint = 'Tap to upload image',
+  changeHint = 'Tap to change',
+  allowsEditing = true,
+  aspect = DEFAULT_ASPECT,
 }: DocumentUploadFieldProps): React.ReactElement {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -28,6 +42,8 @@ export function DocumentUploadField({
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
+      allowsEditing,
+      aspect,
       quality: 0.85,
     });
 
@@ -40,6 +56,7 @@ export function DocumentUploadField({
     <View style={styles.wrap}>
       <AppText weight="medium" style={styles.label}>
         {label}
+        {required ? <AppText style={styles.required}> *</AppText> : null}
       </AppText>
       <Pressable
         onPress={pickImage}
@@ -48,7 +65,15 @@ export function DocumentUploadField({
         accessibilityLabel={label}
       >
         {uri ? (
-          <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+          <>
+            <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+            <View style={styles.editBadge}>
+              <FontAwesome name="crop" size={12} color={colors.white} />
+              <AppText weight="medium" style={styles.editBadgeText}>
+                {changeHint}
+              </AppText>
+            </View>
+          </>
         ) : (
           <View style={styles.empty}>
             <FontAwesome name="cloud-upload" size={22} color={colors.primary} />
@@ -68,6 +93,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text.primary,
   },
+  required: {
+    fontSize: 13,
+    color: colors.primary,
+  },
   box: {
     minHeight: 120,
     borderRadius: radius.md,
@@ -79,7 +108,23 @@ const styles = StyleSheet.create({
   },
   preview: {
     width: '100%',
-    height: 140,
+    aspectRatio: 16 / 10,
+  },
+  editBadge: {
+    position: 'absolute',
+    right: spacing.xs,
+    bottom: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(10, 10, 10, 0.6)',
+  },
+  editBadgeText: {
+    fontSize: 11,
+    color: colors.white,
   },
   empty: {
     flex: 1,

@@ -10,6 +10,14 @@ import { colors, spacing } from '@/theme';
 import { AuthCard } from '../components/AuthCard';
 import { OtpInput } from '../components/OtpInput';
 
+const RESEND_SECONDS = 45;
+
+function formatCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 type SignupOtpScreenProps = {
   otp: string;
   onChangeOtp: (otp: string) => void;
@@ -25,6 +33,20 @@ export function SignupOtpScreen({
 }: SignupOtpScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const canContinue = otp.length === 6;
+  const [secondsLeft, setSecondsLeft] = React.useState(RESEND_SECONDS);
+
+  React.useEffect(() => {
+    if (secondsLeft <= 0) {
+      return undefined;
+    }
+    const timeout = setTimeout(() => setSecondsLeft((prev) => prev - 1), 1000);
+    return () => clearTimeout(timeout);
+  }, [secondsLeft]);
+
+  const handleResend = () => {
+    onResend?.();
+    setSecondsLeft(RESEND_SECONDS);
+  };
 
   return (
     <>
@@ -35,9 +57,19 @@ export function SignupOtpScreen({
           onPress={onContinue}
           disabled={!canContinue}
         />
-        <Pressable onPress={onResend} style={styles.resend}>
-          <AppText style={styles.resendText}>{t('auth.signup.otp.resend')}</AppText>
-        </Pressable>
+        {secondsLeft > 0 ? (
+          <View style={styles.resend}>
+            <AppText style={styles.countdownText}>
+              {t('auth.signup.otp.resendIn', { time: formatCountdown(secondsLeft) })}
+            </AppText>
+          </View>
+        ) : (
+          <Pressable onPress={handleResend} style={styles.resend} hitSlop={8}>
+            <AppText weight="semibold" style={styles.resendText}>
+              {t('auth.signup.otp.resend')}
+            </AppText>
+          </Pressable>
+        )}
       </AuthCard>
       <View style={styles.spacer} />
     </>
@@ -53,5 +85,9 @@ const styles = StyleSheet.create({
   resendText: {
     fontSize: 13,
     color: colors.primary,
+  },
+  countdownText: {
+    fontSize: 13,
+    color: colors.text.secondary,
   },
 });

@@ -15,30 +15,53 @@
       "privacy": "Privacy Policy",
       "photoCredit": "Photo by Michal Pokorny on Unsplash"
     },
+    "countryPicker": {
+      "title": "Select country",
+      "searchPlaceholder": "Search country or code",
+      "noResults": "No countries found"
+    },
     "signup": {
       "phone": {
-        "title": "Welcome to transit•",
-        "subtitle": "Enter your phone number and we'll send you a verification code",
+        "title": "Enter Mobile Number",
+        "subtitle": "We'll send tou a verification code",
         "placeholder": "300 1234567",
         "cta": "Send OTP"
       },
       "otp": {
-        "title": "Verify your number",
+        "title": "OTP Verification",
         "subtitle": "Enter the 6-digit code sent to {{phone}}",
         "cta": "Verify OTP",
-        "resend": "Resend code"
+        "resend": "Resend code",
+        "resendIn": "Resend code in {{time}}"
       },
       "personal": {
         "title": "Personal information",
-        "subtitle": "Tell us a bit about yourself to continue",
+        "subtitle": "Tell us a bit about yourself",
         "photo": "Profile photo",
+        "photoHint": "Tap to add or change",
         "fullName": "Full name",
         "fullNamePlaceholder": "Enter your full name",
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
-        "address": "Address",
-        "addressPlaceholder": "Enter your address",
+        "location": "City / Location",
+        "locationPlaceholder": "No location selected yet",
+        "useCurrentLocation": "Use current location",
+        "selectOnMap": "Select on map",
+        "locationPermissionTitle": "Location permission",
+        "locationPermissionBody": "Please allow location access to use your current location.",
+        "locationErrorTitle": "Location error",
+        "locationErrorBody": "Unable to fetch current location. Please try selecting on the map.",
+        "mapSelectTitle": "Select location",
+        "mapSelectBody": "Please move the map to choose a location.",
+        "mapTitle": "Select your location",
+        "mapClose": "Close",
+        "mapSearchPlaceholder": "Search location",
+        "mapSearchAction": "Search",
+        "mapNoResults": "No places found. Try a different search.",
+        "mapFallbackTitle": "Map key not found",
+        "mapFallbackBody": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY in .env and restart Expo.",
+        "mapConfirm": "Confirm location",
         "cta": "Continue"
       },
       "documents": {
@@ -48,6 +71,8 @@
         "nicPlaceholder": "Enter NIC number",
         "nicFront": "NIC front side",
         "nicBack": "NIC back side",
+        "uploadHint": "Tap to upload & crop",
+        "changeHint": "Tap to change",
         "cta": "Continue"
       },
       "security": {
@@ -59,6 +84,15 @@
         "biometric": "Use biometric login",
         "biometricPrompt": "Enable biometric login",
         "cta": "Finish signup"
+      },
+      "success": {
+        "title": "Welcome!",
+        "subtitle": "You're all set to grow your transport business.",
+        "creditsEarned": "You earned",
+        "credits": "{{count}} Credits",
+        "creditsReason": "for your first listing",
+        "dashboard": "Go to Dashboard",
+        "explore": "Start Exploring"
       }
     },
     "login": {

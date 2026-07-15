@@ -9,7 +9,10 @@ import { colors, spacing } from '@/theme';
 import { AuthCard } from '../components/AuthCard';
 import { AuthTextField } from '../components/AuthTextField';
 import { ProfilePhotoPicker } from '../components/ProfilePhotoPicker';
+import { SignupLocationField } from '../components/SignupLocationField';
 import type { CountryOption } from '../constants/countries';
+import { useLocationMapPicker, type LocationSelection } from '../hooks/useLocationMapPicker';
+import type { LocationCoords } from '../types/signup.types';
 import { formatPhoneDisplay } from '../types/signup.types';
 
 type SignupPersonalInfoScreenProps = {
@@ -18,10 +21,12 @@ type SignupPersonalInfoScreenProps = {
   fullName: string;
   email: string;
   address: string;
+  locationCoords: LocationCoords | null;
   profilePhotoUri: string | null;
   onChangeFullName: (value: string) => void;
   onChangeEmail: (value: string) => void;
   onChangeAddress: (value: string) => void;
+  onChangeLocationCoords: (coords: LocationCoords | null) => void;
   onChangePhoto: (uri: string | null) => void;
   onContinue: () => void;
 };
@@ -32,15 +37,43 @@ export function SignupPersonalInfoScreen({
   fullName,
   email,
   address,
+  locationCoords,
   profilePhotoUri,
   onChangeFullName,
   onChangeEmail,
   onChangeAddress,
+  onChangeLocationCoords,
   onChangePhoto,
   onContinue,
 }: SignupPersonalInfoScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const canContinue = fullName.trim().length > 1 && address.trim().length > 3;
+  const { locationLoading, openMapPickerForSelection, getCurrentLocation, mapPickerSheet } =
+    useLocationMapPicker();
+
+  const canContinue =
+    fullName.trim().length > 1 && (!!locationCoords || address.trim().length > 0);
+
+  const applySelection = React.useCallback(
+    (selection: LocationSelection) => {
+      onChangeAddress(selection.label);
+      onChangeLocationCoords({ latitude: selection.latitude, longitude: selection.longitude });
+    },
+    [onChangeAddress, onChangeLocationCoords],
+  );
+
+  const handleUseCurrentLocation = React.useCallback(async () => {
+    const selection = await getCurrentLocation();
+    if (selection) applySelection(selection);
+  }, [getCurrentLocation, applySelection]);
+
+  const handleSelectOnMap = React.useCallback(() => {
+    openMapPickerForSelection(
+      applySelection,
+      locationCoords
+        ? { label: address, latitude: locationCoords.latitude, longitude: locationCoords.longitude }
+        : null,
+    );
+  }, [openMapPickerForSelection, applySelection, locationCoords, address]);
 
   return (
     <>
@@ -49,9 +82,12 @@ export function SignupPersonalInfoScreen({
           uri={profilePhotoUri}
           onChange={onChangePhoto}
           label={t('auth.signup.personal.photo')}
+          hint={t('auth.signup.personal.photoHint')}
         />
         <AuthTextField
           label={t('auth.signup.personal.fullName')}
+          required
+          dense
           value={fullName}
           onChangeText={onChangeFullName}
           placeholder={t('auth.signup.personal.fullNamePlaceholder')}
@@ -59,6 +95,8 @@ export function SignupPersonalInfoScreen({
         />
         <AuthTextField
           label={t('auth.signup.personal.mobile')}
+          required
+          dense
           value={formatPhoneDisplay(country, phoneDigits)}
           editable={false}
           selectTextOnFocus={false}
@@ -67,20 +105,24 @@ export function SignupPersonalInfoScreen({
         <AuthTextField
           label={t('auth.signup.personal.email')}
           optional
+          dense
           value={email}
           onChangeText={onChangeEmail}
           placeholder={t('auth.signup.personal.emailPlaceholder')}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <AuthTextField
-          label={t('auth.signup.personal.address')}
+
+        <SignupLocationField
+          label={t('auth.signup.personal.location')}
+          required
+          dense
           value={address}
-          onChangeText={onChangeAddress}
-          placeholder={t('auth.signup.personal.addressPlaceholder')}
-          multiline
-          style={styles.address}
+          loading={locationLoading}
+          onUseCurrentLocation={() => void handleUseCurrentLocation()}
+          onSelectOnMap={handleSelectOnMap}
         />
+
         <Button
           label={t('auth.signup.personal.cta')}
           onPress={onContinue}
@@ -88,6 +130,8 @@ export function SignupPersonalInfoScreen({
         />
       </AuthCard>
       <View style={styles.spacer} />
+
+      {mapPickerSheet}
     </>
   );
 }
@@ -97,10 +141,5 @@ const styles = StyleSheet.create({
   readonly: {
     backgroundColor: colors.background.subtle,
     color: colors.text.secondary,
-  },
-  address: {
-    minHeight: 88,
-    textAlignVertical: 'top',
-    paddingTop: spacing.md,
   },
 });

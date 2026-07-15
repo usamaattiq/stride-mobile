@@ -38,6 +38,7 @@ export function SignupDocumentsScreen({
       <AuthCard>
         <AuthTextField
           label={t('auth.signup.documents.nicNumber')}
+          required
           value={nicNumber}
           onChangeText={onChangeNicNumber}
           placeholder={t('auth.signup.documents.nicPlaceholder')}
@@ -45,13 +46,19 @@ export function SignupDocumentsScreen({
         />
         <DocumentUploadField
           label={t('auth.signup.documents.nicFront')}
+          required
           uri={nicFrontUri}
           onChange={onChangeNicFront}
+          hint={t('auth.signup.documents.uploadHint')}
+          changeHint={t('auth.signup.documents.changeHint')}
         />
         <DocumentUploadField
           label={t('auth.signup.documents.nicBack')}
+          required
           uri={nicBackUri}
           onChange={onChangeNicBack}
+          hint={t('auth.signup.documents.uploadHint')}
+          changeHint={t('auth.signup.documents.changeHint')}
         />
         <Button
           label={t('auth.signup.documents.cta')}

@@ -8,6 +8,7 @@ import { Button } from '@/shared/components/Button';
 import { colors, spacing } from '@/theme';
 
 import { useSignupDraft } from '../context/SignupDraftContext';
+import { SignupSuccessScreen } from '../screens/SignupSuccessScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import type { AuthStackParamList } from './types';
 
@@ -28,6 +29,20 @@ export function WelcomeRoute(): React.ReactElement {
         navigation.navigate('LoginFlow');
       }}
     />
+  );
+}
+
+export function SignupSuccessRoute(): React.ReactElement {
+  const navigation = useNavigation<Nav>();
+  const { resetDraft } = useSignupDraft();
+
+  const goHome = () => {
+    resetDraft();
+    navigation.reset({ index: 0, routes: [{ name: 'HomePlaceholder' }] });
+  };
+
+  return (
+    <SignupSuccessScreen onGoToDashboard={goHome} onStartExploring={goHome} />
   );
 }
 

@@ -44,6 +44,7 @@ export function SignupPhoneScreen({
           disabled={!canContinue}
         />
       </AuthCard>
+      
       <View style={styles.spacer} />
     </>
   );
@@ -53,4 +54,5 @@ const styles = StyleSheet.create({
   spacer: {
     height: spacing.md,
   },
+  
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +18,8 @@ import { LegalLinks } from '@/shared/components/legal/LegalLinks';
 import { LanguageSwitcher } from '@/shared/components/language-switcher';
 import { colors, spacing } from '@/theme';
 
+import { SignupStepIndicator } from './SignupStepIndicator';
+
 type AuthScaffoldProps = {
   onBack: () => void;
   title: string;
@@ -27,6 +30,10 @@ type AuthScaffoldProps = {
   contentWrapStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
   showLegalFooter?: boolean;
+  /** Total number of steps in the flow. Renders a step indicator when set. */
+  stepCount?: number;
+  /** The active step (1-based). Required alongside `stepCount`. */
+  currentStep?: number;
 };
 
 export function AuthScaffold({
@@ -39,20 +46,32 @@ export function AuthScaffold({
   contentWrapStyle,
   scrollable = true,
   showLegalFooter = true,
+  stepCount,
+  currentStep,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+
+  // Without the legal footer there's no bottom chrome, so pad for the safe area.
+  const contentBottomPad = showLegalFooter
+    ? spacing.xl
+    : spacing.xl + Math.max(insets.bottom, spacing.xs);
 
   const body = scrollable ? (
     <ScrollView
       style={styles.cardScroll}
-      contentContainerStyle={[styles.cardWrapScroll, contentWrapStyle]}
+      contentContainerStyle={[
+        styles.cardWrapScroll,
+        { paddingBottom: contentBottomPad },
+        contentWrapStyle,
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
     >
       <View style={styles.cardOverlap}>{children}</View>
     </ScrollView>
   ) : (
-    <View style={[styles.cardWrapStatic, contentWrapStyle]}>
+    <View style={[styles.cardWrapStatic, { paddingBottom: contentBottomPad }, contentWrapStyle]}>
       <View style={styles.cardOverlap}>{children}</View>
     </View>
   );
@@ -76,17 +95,30 @@ export function AuthScaffold({
             >
               <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
             </Pressable>
+
             <LanguageSwitcher variant="glass" />
           </View>
 
           <View style={styles.headerCopy}>
-            <AppText weight="bold" style={[styles.title, titleStyle]}>
+            <AppText
+              weight="bold"
+              style={[styles.title, titleStyle]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {title}
             </AppText>
             {subtitle ? (
               <AppText style={[styles.subtitle, subtitleStyle]}>{subtitle}</AppText>
             ) : null}
           </View>
+
+          {stepCount && currentStep ? (
+            <View style={styles.stepSlot}>
+              <SignupStepIndicator total={stepCount} current={currentStep} onBrand />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.cardWrap}>{body}</View>
@@ -115,10 +147,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   header: {
-    height: '36%',
+    height: '30%',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
     overflow: 'hidden',
     backgroundColor: colors.primary,
   },
@@ -126,6 +158,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  stepSlot: {
+    marginTop: spacing.md,
+    marginHorizontal: spacing.xxl,
   },
   backButton: {
     width: 34,
@@ -136,7 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
   headerCopy: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     minHeight: 72,
   },
   title: {

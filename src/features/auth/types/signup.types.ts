@@ -1,6 +1,11 @@
 import type { CountryOption } from '../constants/countries';
 import { DEFAULT_COUNTRY } from '../constants/countries';
 
+export type LocationCoords = {
+  latitude: number;
+  longitude: number;
+};
+
 export type SignupDraft = {
   country: CountryOption;
   phoneDigits: string;
@@ -8,6 +13,7 @@ export type SignupDraft = {
   fullName: string;
   email: string;
   address: string;
+  locationCoords: LocationCoords | null;
   profilePhotoUri: string | null;
   nicNumber: string;
   nicFrontUri: string | null;
@@ -24,6 +30,7 @@ export const createEmptySignupDraft = (): SignupDraft => ({
   fullName: '',
   email: '',
   address: '',
+  locationCoords: null,
   profilePhotoUri: null,
   nicNumber: '',
   nicFrontUri: null,

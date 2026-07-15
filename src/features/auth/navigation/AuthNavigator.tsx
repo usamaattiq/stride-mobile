@@ -7,7 +7,7 @@ import { colors } from '@/theme';
 import { SignupDraftProvider } from '../context/SignupDraftContext';
 import { LoginFlowScreen } from '../screens/LoginFlowScreen';
 import { SignupFlowScreen } from '../screens/SignupFlowScreen';
-import { HomePlaceholderRoute, WelcomeRoute } from './routes';
+import { HomePlaceholderRoute, SignupSuccessRoute, WelcomeRoute } from './routes';
 import type { AuthStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -35,6 +35,7 @@ export function AuthNavigator(): React.ReactElement {
         >
           <Stack.Screen name="Welcome" component={WelcomeRoute} />
           <Stack.Screen name="SignupFlow" component={SignupFlowScreen} />
+          <Stack.Screen name="SignupSuccess" component={SignupSuccessRoute} />
           <Stack.Screen name="LoginFlow" component={LoginFlowScreen} />
           <Stack.Screen name="HomePlaceholder" component={HomePlaceholderRoute} />
         </Stack.Navigator>

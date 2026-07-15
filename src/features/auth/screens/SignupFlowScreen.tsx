@@ -20,6 +20,19 @@ type SignupStep = 'phone' | 'otp' | 'personal' | 'documents' | 'security';
 
 const STEP_ORDER: SignupStep[] = ['phone', 'otp', 'personal', 'documents', 'security'];
 
+/**
+ * Progress shown in the header stepper. Phone entry + OTP verification are the
+ * same conceptual step, so the flow surfaces 4 steps.
+ */
+const TOTAL_STEPS = 5;
+const STEP_PROGRESS: Record<SignupStep, number> = {
+  phone: 1,
+  otp: 2,
+  personal: 3,
+  documents: 4,
+  security: 5,
+};
+
 type Nav = NativeStackNavigationProp<AuthStackParamList>;
 
 /**
@@ -30,6 +43,9 @@ export function SignupFlowScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft } = useSignupDraft();
   const [step, setStep] = React.useState<SignupStep>('phone');
+  // Set when we intentionally leave the flow (e.g. finishing signup), so the
+  // `beforeRemove` guard below doesn't hijack it into stepping backward.
+  const isLeavingRef = React.useRef(false);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -70,7 +86,7 @@ export function SignupFlowScreen(): React.ReactElement {
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (step === 'phone') {
+      if (step === 'phone' || isLeavingRef.current) {
         return;
       }
       event.preventDefault();
@@ -110,7 +126,14 @@ export function SignupFlowScreen(): React.ReactElement {
   const onBack = step === 'phone' ? leaveFlow : () => goToPreviousStep();
 
   return (
-    <AuthScaffold onBack={onBack} title={header.title} subtitle={header.subtitle}>
+    <AuthScaffold
+      onBack={onBack}
+      title={header.title}
+      subtitle={header.subtitle}
+      stepCount={TOTAL_STEPS}
+      currentStep={STEP_PROGRESS[step]}
+      showLegalFooter={step === 'phone' || step === 'otp'}
+    >
       {step === 'phone' ? (
         <SignupPhoneScreen
           country={draft.country}
@@ -140,10 +163,12 @@ export function SignupFlowScreen(): React.ReactElement {
           fullName={draft.fullName}
           email={draft.email}
           address={draft.address}
+          locationCoords={draft.locationCoords}
           profilePhotoUri={draft.profilePhotoUri}
           onChangeFullName={(fullName) => patchDraft({ fullName })}
           onChangeEmail={(email) => patchDraft({ email })}
           onChangeAddress={(address) => patchDraft({ address })}
+          onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
           onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
           onContinue={() => goToStep('documents')}
         />
@@ -171,7 +196,8 @@ export function SignupFlowScreen(): React.ReactElement {
           onChangeBiometric={(biometricEnabled) => patchDraft({ biometricEnabled })}
           onContinue={() => {
             Keyboard.dismiss();
-            navigation.replace('HomePlaceholder');
+            isLeavingRef.current = true;
+            navigation.replace('SignupSuccess');
           }}
         />
       ) : null}

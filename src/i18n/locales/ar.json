@@ -15,6 +15,11 @@
       "privacy": "سياسة الخصوصية",
       "photoCredit": "صورة بواسطة Michal Pokorny على Unsplash"
     },
+    "countryPicker": {
+      "title": "اختر الدولة",
+      "searchPlaceholder": "ابحث عن دولة أو رمز",
+      "noResults": "لم يتم العثور على دول"
+    },
     "signup": {
       "phone": {
         "title": "مرحباً بك في transit•",
@@ -26,19 +31,37 @@
         "title": "تحقق من رقمك",
         "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}}",
         "cta": "تأكيد الرمز",
-        "resend": "إعادة إرسال الرمز"
+        "resend": "إعادة إرسال الرمز",
+        "resendIn": "إعادة إرسال الرمز خلال {{time}}"
       },
       "personal": {
         "title": "المعلومات الشخصية",
         "subtitle": "أخبرنا قليلاً عن نفسك للمتابعة",
         "photo": "الصورة الشخصية",
+        "photoHint": "اضغط للإضافة أو التغيير",
         "fullName": "الاسم الكامل",
         "fullNamePlaceholder": "أدخل اسمك الكامل",
         "mobile": "رقم الجوال",
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
-        "address": "العنوان",
-        "addressPlaceholder": "أدخل عنوانك",
+        "location": "المدينة / الموقع",
+        "locationPlaceholder": "لم يتم تحديد الموقع بعد",
+        "useCurrentLocation": "استخدام الموقع الحالي",
+        "selectOnMap": "التحديد على الخريطة",
+        "locationPermissionTitle": "إذن الموقع",
+        "locationPermissionBody": "يرجى السماح بالوصول إلى الموقع لاستخدام موقعك الحالي.",
+        "locationErrorTitle": "خطأ في الموقع",
+        "locationErrorBody": "تعذر جلب الموقع الحالي. حاول التحديد على الخريطة.",
+        "mapSelectTitle": "تحديد الموقع",
+        "mapSelectBody": "يرجى تحريك الخريطة لاختيار موقع.",
+        "mapTitle": "حدد موقعك",
+        "mapClose": "إغلاق",
+        "mapSearchPlaceholder": "ابحث عن موقع",
+        "mapSearchAction": "بحث",
+        "mapNoResults": "لم يتم العثور على أماكن. جرّب بحثًا مختلفًا.",
+        "mapFallbackTitle": "مفتاح الخريطة غير موجود",
+        "mapFallbackBody": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY في ملف env. وأعد تشغيل Expo.",
+        "mapConfirm": "تأكيد الموقع",
         "cta": "متابعة"
       },
       "documents": {
@@ -48,6 +71,8 @@
         "nicPlaceholder": "أدخل رقم الهوية",
         "nicFront": "الوجه الأمامي للهوية",
         "nicBack": "الوجه الخلفي للهوية",
+        "uploadHint": "اضغط للرفع والقص",
+        "changeHint": "اضغط للتغيير",
         "cta": "متابعة"
       },
       "security": {
@@ -59,6 +84,15 @@
         "biometric": "استخدام الدخول البيومتري",
         "biometricPrompt": "تفعيل الدخول البيومتري",
         "cta": "إنهاء التسجيل"
+      },
+      "success": {
+        "title": "مرحباً بك!",
+        "subtitle": "أنت جاهز الآن لتنمية أعمال النقل الخاصة بك.",
+        "creditsEarned": "لقد ربحت",
+        "credits": "{{count}} نقطة",
+        "creditsReason": "مقابل أول إعلان لك",
+        "dashboard": "الذهاب إلى لوحة التحكم",
+        "explore": "ابدأ الاستكشاف"
       }
     },
     "login": {

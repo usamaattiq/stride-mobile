@@ -11,12 +11,14 @@ type ProfilePhotoPickerProps = {
   uri?: string | null;
   onChange: (uri: string | null) => void;
   label?: string;
+  hint?: string;
 };
 
 export function ProfilePhotoPicker({
   uri,
   onChange,
   label = 'Profile photo',
+  hint,
 }: ProfilePhotoPickerProps): React.ReactElement {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -38,9 +40,12 @@ export function ProfilePhotoPicker({
 
   return (
     <View style={styles.wrap}>
-      <AppText weight="medium" style={styles.label}>
-        {label}
-      </AppText>
+         {/* <View style={styles.info}> */}
+        <AppText weight="medium" style={styles.label}>
+          {label}
+        </AppText>
+        {/* {hint ? <AppText style={styles.hint}>{hint}</AppText> : null} */}
+      {/* </View> */}
       <Pressable
         onPress={pickImage}
         style={styles.avatarButton}
@@ -51,30 +56,29 @@ export function ProfilePhotoPicker({
           <Image source={{ uri }} style={styles.avatar} contentFit="cover" />
         ) : (
           <View style={styles.placeholder}>
-            <FontAwesome name="camera" size={22} color={colors.primary} />
-            <AppText style={styles.placeholderText}>Add photo</AppText>
+            <FontAwesome name="camera" size={20} color={colors.primary} />
           </View>
         )}
+        <View style={styles.editBadge}>
+          <FontAwesome name="pencil" size={10} color={colors.white} />
+        </View>
       </Pressable>
+
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  label: {
-    fontSize: 13,
-    color: colors.text.primary,
-    alignSelf: 'flex-start',
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    gap: spacing.md,
   },
   avatarButton: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: 'hidden',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 1.5,
     borderColor: colors.border.default,
     backgroundColor: colors.primaryMuted,
@@ -82,15 +86,36 @@ const styles = StyleSheet.create({
   avatar: {
     width: '100%',
     height: '100%',
+    borderRadius: 38,
   },
   placeholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
   },
-  placeholderText: {
-    fontSize: 11,
-    color: colors.primary,
+  editBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  info: {
+    flex: 1,
+    gap: 2,
+  },
+  label: {
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  hint: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
 });

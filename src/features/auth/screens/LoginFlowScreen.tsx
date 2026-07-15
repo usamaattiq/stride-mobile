@@ -81,6 +81,7 @@ export function LoginFlowScreen(): React.ReactElement {
       onBack={step === 'phone' ? leaveFlow : () => goToStep('phone')}
       title={header.title}
       subtitle={header.subtitle}
+      showLegalFooter={step === 'phone'}
     >
       {step === 'phone' ? (
         <LoginPhoneScreen

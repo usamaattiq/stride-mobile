@@ -29,7 +29,13 @@
         }
       ],
       "expo-localization",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to set your city and pick a location on the map."
+        }
+      ]
     ]
   }
 }

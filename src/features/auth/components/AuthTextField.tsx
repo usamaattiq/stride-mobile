@@ -9,12 +9,17 @@ import { getFontFamily } from '@/theme/typography';
 export type AuthTextFieldProps = TextInputProps & {
   label: string;
   optional?: boolean;
+  required?: boolean;
+  /** Smaller label + input text for tighter forms. */
+  dense?: boolean;
   error?: string;
 };
 
 export function AuthTextField({
   label,
   optional = false,
+  required = false,
+  dense = false,
   error,
   style,
   ...rest
@@ -23,8 +28,9 @@ export function AuthTextField({
 
   return (
     <View style={styles.wrap}>
-      <AppText weight="medium" style={styles.label}>
+      <AppText weight="medium" style={[styles.label, dense && styles.labelDense]}>
         {label}
+        {required ? <AppText style={styles.required}> *</AppText> : null}
         {optional ? (
           <AppText style={styles.optional}> (optional)</AppText>
         ) : null}
@@ -33,6 +39,7 @@ export function AuthTextField({
         placeholderTextColor={colors.text.tertiary}
         style={[
           styles.input,
+          dense && styles.inputDense,
           error ? styles.inputError : null,
           { fontFamily: getFontFamily(currentLanguage, 'regular') },
           style,
@@ -54,19 +61,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text.primary,
   },
+  labelDense: {
+    fontSize: 12,
+  },
   optional: {
     fontSize: 12,
     color: colors.text.tertiary,
   },
+  required: {
+    fontSize: 13,
+    color: colors.primary,
+  },
   input: {
-    minHeight: 52,
+    minHeight: 46,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     fontSize: 15,
     color: colors.text.primary,
+  },
+  inputDense: {
+    minHeight: 42,
+    fontSize: 13,
   },
   inputError: {
     borderColor: colors.primary,

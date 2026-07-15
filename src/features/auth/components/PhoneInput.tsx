@@ -7,7 +7,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
@@ -35,13 +37,31 @@ export function PhoneInput({
   placeholder = '300 1234567',
 }: PhoneInputProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
+  const { t } = useTranslation(undefined, { i18n: appI18n });
   const [pickerVisible, setPickerVisible] = React.useState(false);
+  const [query, setQuery] = React.useState('');
 
   const displayValue = (() => {
     if (!value) return '';
     const a = value.slice(0, 3);
     const b = value.slice(3, 10);
     return b.length > 0 ? `${a} ${b}` : a;
+  })();
+
+  const closePicker = () => {
+    setPickerVisible(false);
+    setQuery('');
+  };
+
+  const filteredCountries = (() => {
+    const q = query.trim().toLowerCase().replace(/^\+/, '');
+    if (!q) return COUNTRY_OPTIONS;
+    return COUNTRY_OPTIONS.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.callingCode.includes(q) ||
+        item.code.toLowerCase().includes(q),
+    );
   })();
 
   return (
@@ -72,35 +92,63 @@ export function PhoneInput({
 
       <AppBottomSheet
         visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        heightRatio={0.55}
+        onClose={closePicker}
+        heightRatio={0.7}
       >
         <View style={styles.sheetHandle} />
         <AppText weight="semibold" style={styles.sheetTitle}>
-          Select country
+        Select Country Code
         </AppText>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {COUNTRY_OPTIONS.map((item) => (
+
+        <View style={styles.searchWrap}>
+          <FontAwesome name="search" size={14} color={colors.text.tertiary} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={'Select Country or Dial Code'}
+            placeholderTextColor={colors.text.tertiary}
+            autoCorrect={false}
+            autoCapitalize="none"
+            style={[styles.searchInput, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
+          />
+          {query.length > 0 ? (
             <Pressable
-              key={item.code}
-              style={[
-                styles.countryRow,
-                item.code === country.code && styles.countryRowSelected,
-              ]}
-              onPress={() => {
-                onSelectCountry(item);
-                setPickerVisible(false);
-              }}
+              onPress={() => setQuery('')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
             >
-              <AppText style={styles.rowFlag}>{item.flag}</AppText>
-              <AppText weight="semibold" style={styles.rowDial}>
-                +{item.callingCode}
-              </AppText>
-              <AppText style={styles.rowName} numberOfLines={1}>
-                {item.name}
-              </AppText>
+              <FontAwesome name="times-circle" size={16} color={colors.text.tertiary} />
             </Pressable>
-          ))}
+          ) : null}
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          {filteredCountries.length > 0 ? (
+            filteredCountries.map((item) => (
+              <Pressable
+                key={item.code}
+                style={[
+                  styles.countryRow,
+                  item.code === country.code && styles.countryRowSelected,
+                ]}
+                onPress={() => {
+                  onSelectCountry(item);
+                  closePicker();
+                }}
+              >
+                <AppText style={styles.rowFlag}>{item.flag}</AppText>
+                <AppText weight="semibold" style={styles.rowDial}>
+                  +{item.callingCode}
+                </AppText>
+                <AppText style={styles.rowName} numberOfLines={1}>
+                  {item.name}
+                </AppText>
+              </Pressable>
+            ))
+          ) : (
+            <AppText style={styles.noResults}>{t('auth.countryPicker.noResults')}</AppText>
+          )}
         </ScrollView>
       </AppBottomSheet>
     </View>
@@ -156,6 +204,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
     marginBottom: spacing.sm,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+    marginBottom: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text.primary,
+    paddingVertical: spacing.xs,
+  },
+  noResults: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
   },
   countryRow: {
     minHeight: 48,
