@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -100,6 +100,7 @@ export function SignupSecurityScreen({
               onValueChange={(value) => void enableBiometric(value)}
               trackColor={{ false: colors.border.default, true: colors.primaryDisabled }}
               thumbColor={biometricEnabled ? colors.primary : colors.white}
+              style={styles.biometricSwitch}
             />
           </Pressable>
         ) : null}
@@ -147,4 +148,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.primary,
   },
+  // iOS reserves extra height below the native switch track, so it renders
+  // visibly lower than the label next to it despite `alignItems: 'center'`.
+  biometricSwitch: Platform.select({
+    ios: { marginTop: -4 },
+    default: {},
+  }),
 });

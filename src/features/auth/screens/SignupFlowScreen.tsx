@@ -183,6 +183,7 @@ export function SignupFlowScreen(): React.ReactElement {
           onChangeNicFront={(nicFrontUri) => patchDraft({ nicFrontUri })}
           onChangeNicBack={(nicBackUri) => patchDraft({ nicBackUri })}
           onContinue={() => goToStep('security')}
+          onSkip={() => goToStep('security')}
         />
       ) : null}
 

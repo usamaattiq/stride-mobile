@@ -73,7 +73,8 @@
         "nicBack": "NIC back side",
         "uploadHint": "Tap to upload & crop",
         "changeHint": "Tap to change",
-        "cta": "Continue"
+        "cta": "Continue",
+        "skip": "Skip for now"
       },
       "security": {
         "title": "Security setup",
