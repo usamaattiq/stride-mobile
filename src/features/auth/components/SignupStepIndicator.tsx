@@ -1,8 +1,14 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors } from '@/theme';
+import { getFontFamily } from '@/theme/typography';
+
+// Step numbers are always Latin digits, so force the Outfit metrics instead of
+// the language-driven font (Cairo's ascent/descent sits the glyph noticeably
+// higher within its line box on both Android and iOS).
+const digitFontFamily = getFontFamily('en', 'bold');
 
 type SignupStepIndicatorProps = {
   /** Total number of steps to render. */
@@ -57,6 +63,7 @@ export function SignupStepIndicator({
                   style={[
                     styles.activeLabel,
                     onBrand ? styles.activeLabelOnBrand : styles.activeLabelDefault,
+                    { fontFamily: digitFontFamily },
                   ]}
                 >
                   {step}
@@ -118,6 +125,11 @@ const styles = StyleSheet.create({
   activeLabel: {
     fontSize: 12,
     lineHeight: 15,
+    textAlign: 'center',
+    ...Platform.select({
+      android: { includeFontPadding: false, textAlignVertical: 'center' },
+      default: {},
+    }),
   },
   activeLabelDefault: {
     color: colors.white,

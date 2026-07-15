@@ -50,6 +50,7 @@ export function AuthScaffold({
   currentStep,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+  const hasStepper = Boolean(stepCount && currentStep);
 
   // Without the legal footer there's no bottom chrome, so pad for the safe area.
   const contentBottomPad = showLegalFooter
@@ -79,7 +80,7 @@ export function AuthScaffold({
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.root}>
-        <View style={styles.header}>
+        <View style={[styles.header, !hasStepper && styles.headerNoStepper]}>
           <LinearGradient
             colors={[colors.primary, colors.primary]}
             style={StyleSheet.absoluteFill}
@@ -153,6 +154,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     overflow: 'hidden',
     backgroundColor: colors.primary,
+  },
+  // No step indicator to make room for, so the red header can be shorter.
+  headerNoStepper: {
+    height: '24%',
   },
   topBar: {
     flexDirection: 'row',
