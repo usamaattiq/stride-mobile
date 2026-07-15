@@ -2,6 +2,7 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +20,22 @@ import { LanguageSwitcher } from '@/shared/components/language-switcher';
 import { colors, spacing } from '@/theme';
 
 import { SignupStepIndicator } from './SignupStepIndicator';
+
+// Lets any field rendered inside the scrollable body (via AuthTextField, etc.)
+// scroll itself above the keyboard on focus — RN's ScrollView doesn't do this
+// automatically, see scrollResponderScrollNativeHandleToKeyboard.
+const AuthScrollToInputContext = React.createContext<(nodeHandle: number) => void>(() => {});
+
+export function useAuthScrollToInput(): (nodeHandle: number) => void {
+  return React.useContext(AuthScrollToInputContext);
+}
+
+// Use the physical screen height (not 'window', which shrinks with the Android
+// keyboard under softwareKeyboardLayoutMode: 'resize') so the header keeps a
+// fixed height and never gets clipped when the keyboard opens.
+const SCREEN_HEIGHT = Dimensions.get('screen').height;
+const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.28;
+const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.21;
 
 type AuthScaffoldProps = {
   onBack: () => void;
@@ -51,6 +68,17 @@ export function AuthScaffold({
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  const scrollToInput = React.useCallback((nodeHandle: number) => {
+    // Extra offset so the focused field lands with some breathing room above
+    // the keyboard instead of touching it.
+    scrollViewRef.current?.scrollResponderScrollNativeHandleToKeyboard(
+      nodeHandle,
+      spacing.lg,
+      true,
+    );
+  }, []);
 
   // Without the legal footer there's no bottom chrome, so pad for the safe area.
   const contentBottomPad = showLegalFooter
@@ -59,6 +87,7 @@ export function AuthScaffold({
 
   const body = scrollable ? (
     <ScrollView
+      ref={scrollViewRef}
       style={styles.cardScroll}
       contentContainerStyle={[
         styles.cardWrapScroll,
@@ -69,7 +98,9 @@ export function AuthScaffold({
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
     >
-      <View style={styles.cardOverlap}>{children}</View>
+      <AuthScrollToInputContext.Provider value={scrollToInput}>
+        <View style={styles.cardOverlap}>{children}</View>
+      </AuthScrollToInputContext.Provider>
     </ScrollView>
   ) : (
     <View style={[styles.cardWrapStatic, { paddingBottom: contentBottomPad }, contentWrapStyle]}>
@@ -80,7 +111,12 @@ export function AuthScaffold({
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.root}>
-        <View style={[styles.header, !hasStepper && styles.headerNoStepper]}>
+        <View
+          style={[
+            styles.header,
+            { height: hasStepper ? HEADER_HEIGHT_WITH_STEPPER : HEADER_HEIGHT_NO_STEPPER },
+          ]}
+        >
           <LinearGradient
             colors={[colors.primary, colors.primary]}
             style={StyleSheet.absoluteFill}
@@ -148,16 +184,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   header: {
-    height: '30%',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     overflow: 'hidden',
     backgroundColor: colors.primary,
-  },
-  // No step indicator to make room for, so the red header can be shorter.
-  headerNoStepper: {
-    height: '24%',
   },
   topBar: {
     flexDirection: 'row',
@@ -204,7 +235,7 @@ const styles = StyleSheet.create({
   cardWrapScroll: {
     flexGrow: 1,
     paddingTop: 72,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     paddingBottom: spacing.xl,
   },
   cardWrapStatic: {
@@ -214,7 +245,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   cardOverlap: {
-    marginTop: -72,
+    marginTop: -62,
   },
   legalFooter: {
     backgroundColor: colors.white,

@@ -6,6 +6,8 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { useAuthScrollToInput } from './AuthScaffold';
+
 export type AuthTextFieldProps = TextInputProps & {
   label: string;
   optional?: boolean;
@@ -22,9 +24,16 @@ export function AuthTextField({
   dense = false,
   error,
   style,
+  onFocus,
   ...rest
 }: AuthTextFieldProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
+  const scrollToInput = useAuthScrollToInput();
+
+  const handleFocus: NonNullable<TextInputProps['onFocus']> = (event) => {
+    onFocus?.(event);
+    scrollToInput(event.nativeEvent.target);
+  };
 
   return (
     <View style={styles.wrap}>
@@ -37,6 +46,7 @@ export function AuthTextField({
       </AppText>
       <TextInput
         placeholderTextColor={colors.text.tertiary}
+        onFocus={handleFocus}
         style={[
           styles.input,
           dense && styles.inputDense,

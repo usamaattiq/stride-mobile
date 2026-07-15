@@ -15,6 +15,8 @@ type DocumentUploadFieldProps = {
   uri?: string | null;
   onChange: (uri: string | null) => void;
   required?: boolean;
+  /** Smaller label to match tighter forms. */
+  dense?: boolean;
   hint?: string;
   /** Label shown over the preview once an image is selected. */
   changeHint?: string;
@@ -29,6 +31,7 @@ export function DocumentUploadField({
   uri,
   onChange,
   required = false,
+  dense = false,
   hint = 'Tap to upload image',
   changeHint = 'Tap to change',
   allowsEditing = true,
@@ -54,7 +57,7 @@ export function DocumentUploadField({
 
   return (
     <View style={styles.wrap}>
-      <AppText weight="medium" style={styles.label}>
+      <AppText weight="medium" style={[styles.label, dense && styles.labelDense]}>
         {label}
         {required ? <AppText style={styles.required}> *</AppText> : null}
       </AppText>
@@ -92,6 +95,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     color: colors.text.primary,
+  },
+  labelDense: {
+    fontSize: 12,
   },
   required: {
     fontSize: 13,

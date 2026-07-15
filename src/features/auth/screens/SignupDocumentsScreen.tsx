@@ -39,6 +39,7 @@ export function SignupDocumentsScreen({
         <AuthTextField
           label={t('auth.signup.documents.nicNumber')}
           required
+          dense
           value={nicNumber}
           onChangeText={onChangeNicNumber}
           placeholder={t('auth.signup.documents.nicPlaceholder')}
@@ -47,6 +48,7 @@ export function SignupDocumentsScreen({
         <DocumentUploadField
           label={t('auth.signup.documents.nicFront')}
           required
+          dense
           uri={nicFrontUri}
           onChange={onChangeNicFront}
           hint={t('auth.signup.documents.uploadHint')}
@@ -55,6 +57,7 @@ export function SignupDocumentsScreen({
         <DocumentUploadField
           label={t('auth.signup.documents.nicBack')}
           required
+          dense
           uri={nicBackUri}
           onChange={onChangeNicBack}
           hint={t('auth.signup.documents.uploadHint')}

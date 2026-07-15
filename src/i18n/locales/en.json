@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "transit",
+      "brandName": "stride",
       "title": "Book your next trip in minutes",
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
