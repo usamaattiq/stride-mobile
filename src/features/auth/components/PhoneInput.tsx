@@ -1,0 +1,188 @@
+import React from 'react';
+import { FontAwesome } from '@expo/vector-icons';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+
+import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
+import { AppText } from '@/shared/components/AppText';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { colors, radius, spacing } from '@/theme';
+import { getFontFamily } from '@/theme/typography';
+
+import {
+  COUNTRY_OPTIONS,
+  type CountryOption,
+} from '../constants/countries';
+
+export type PhoneInputProps = {
+  value: string;
+  onChangeDigits: (digits: string) => void;
+  country: CountryOption;
+  onSelectCountry: (country: CountryOption) => void;
+  placeholder?: string;
+};
+
+export function PhoneInput({
+  value,
+  onChangeDigits,
+  country,
+  onSelectCountry,
+  placeholder = '300 1234567',
+}: PhoneInputProps): React.ReactElement {
+  const { currentLanguage } = useLanguage();
+  const [pickerVisible, setPickerVisible] = React.useState(false);
+
+  const displayValue = (() => {
+    if (!value) return '';
+    const a = value.slice(0, 3);
+    const b = value.slice(3, 10);
+    return b.length > 0 ? `${a} ${b}` : a;
+  })();
+
+  return (
+    <View style={styles.container}>
+      <Pressable
+        onPress={() => setPickerVisible(true)}
+        style={styles.countryTap}
+        accessibilityRole="button"
+        accessibilityLabel={`Country ${country.code}`}
+      >
+        <AppText style={styles.flag}>{country.flag}</AppText>
+        <AppText weight="semibold" style={styles.dialCode}>
+          +{country.callingCode}
+        </AppText>
+        <FontAwesome name="chevron-down" size={10} color={colors.text.secondary} />
+      </Pressable>
+
+      <View style={styles.divider} />
+
+      <TextInput
+        value={displayValue}
+        onChangeText={(text) => onChangeDigits(text.replace(/\D/g, '').slice(0, 10))}
+        placeholder={placeholder}
+        placeholderTextColor={colors.text.tertiary}
+        keyboardType="phone-pad"
+        style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
+      />
+
+      <AppBottomSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        heightRatio={0.55}
+      >
+        <View style={styles.sheetHandle} />
+        <AppText weight="semibold" style={styles.sheetTitle}>
+          Select country
+        </AppText>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {COUNTRY_OPTIONS.map((item) => (
+            <Pressable
+              key={item.code}
+              style={[
+                styles.countryRow,
+                item.code === country.code && styles.countryRowSelected,
+              ]}
+              onPress={() => {
+                onSelectCountry(item);
+                setPickerVisible(false);
+              }}
+            >
+              <AppText style={styles.rowFlag}>{item.flag}</AppText>
+              <AppText weight="semibold" style={styles.rowDial}>
+                +{item.callingCode}
+              </AppText>
+              <AppText style={styles.rowName} numberOfLines={1}>
+                {item.name}
+              </AppText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </AppBottomSheet>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    minHeight: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  countryTap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: spacing.sm,
+    paddingRight: spacing.xs,
+  },
+  flag: {
+    fontSize: 20,
+  },
+  dialCode: {
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+  divider: {
+    width: 1,
+    height: 24,
+    backgroundColor: colors.border.default,
+    marginHorizontal: spacing.xs,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text.primary,
+    paddingVertical: spacing.sm,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 44,
+    height: 4,
+    borderRadius: 99,
+    backgroundColor: colors.border.strong,
+    marginBottom: spacing.sm,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  countryRow: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  countryRowSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
+  },
+  rowFlag: {
+    fontSize: 20,
+  },
+  rowDial: {
+    fontSize: 14,
+    color: colors.primary,
+    minWidth: 48,
+  },
+  rowName: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+});

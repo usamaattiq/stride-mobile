@@ -1,0 +1,156 @@
+{
+  "language": {
+    "english": "English",
+    "arabic": "Arabic",
+    "selectLanguage": "Select language"
+  },
+  "auth": {
+    "welcome": {
+      "brandName": "transit",
+      "title": "Book your next trip in minutes",
+      "subtitle": "Compare buses, vans and private rides across every route.",
+      "signUp": "Sign up",
+      "logIn": "Log in",
+      "terms": "Terms & Conditions",
+      "privacy": "Privacy Policy",
+      "photoCredit": "Photo by Michal Pokorny on Unsplash"
+    },
+    "signup": {
+      "phone": {
+        "title": "Welcome to transit•",
+        "subtitle": "Enter your phone number and we'll send you a verification code",
+        "placeholder": "300 1234567",
+        "cta": "Send OTP"
+      },
+      "otp": {
+        "title": "Verify your number",
+        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "cta": "Verify OTP",
+        "resend": "Resend code"
+      },
+      "personal": {
+        "title": "Personal information",
+        "subtitle": "Tell us a bit about yourself to continue",
+        "photo": "Profile photo",
+        "fullName": "Full name",
+        "fullNamePlaceholder": "Enter your full name",
+        "mobile": "Mobile number",
+        "email": "Email",
+        "emailPlaceholder": "name@example.com",
+        "address": "Address",
+        "addressPlaceholder": "Enter your address",
+        "cta": "Continue"
+      },
+      "documents": {
+        "title": "Personal verification",
+        "subtitle": "Upload your NIC documents to verify your identity",
+        "nicNumber": "NIC number",
+        "nicPlaceholder": "Enter NIC number",
+        "nicFront": "NIC front side",
+        "nicBack": "NIC back side",
+        "cta": "Continue"
+      },
+      "security": {
+        "title": "Security setup",
+        "subtitle": "Create a 4-digit MPIN and optionally enable biometric login",
+        "createMpin": "Create MPIN",
+        "confirmMpin": "Confirm MPIN",
+        "mismatch": "MPINs do not match",
+        "biometric": "Use biometric login",
+        "biometricPrompt": "Enable biometric login",
+        "cta": "Finish signup"
+      }
+    },
+    "login": {
+      "phone": {
+        "title": "Welcome back",
+        "subtitle": "Enter your mobile number to continue",
+        "cta": "Continue"
+      },
+      "mpin": {
+        "title": "Enter MPIN",
+        "subtitle": "Enter your 4-digit MPIN to sign in",
+        "cta": "Log in",
+        "useBiometric": "Use biometric login",
+        "biometricPrompt": "Confirm it's you"
+      }
+    }
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
+  "legal": {
+    "common": {
+      "close": "Close",
+      "lastUpdated": "Last updated: July 2026"
+    },
+    "terms": {
+      "title": "Terms & Conditions",
+      "intro": "Welcome to Transit. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
+      "sections": {
+        "acceptance": {
+          "title": "1. Acceptance of Terms",
+          "body": "By creating an account or using any part of Transit, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
+        },
+        "eligibility": {
+          "title": "2. Eligibility",
+          "body": "You must be at least 18 years old and capable of entering into a binding agreement. You are responsible for ensuring all information you provide is accurate and up to date."
+        },
+        "platformUse": {
+          "title": "3. Platform Use",
+          "body": "Transit helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
+        },
+        "accountsSecurity": {
+          "title": "4. Accounts and Security",
+          "body": "You are responsible for safeguarding your login credentials and device. Notify us immediately if you suspect unauthorized access to your account."
+        },
+        "bookingsPayments": {
+          "title": "5. Bookings and Payments",
+          "body": "A booking is confirmed only after successful payment according to the rules shown at checkout. Fares, fees, and cancellation policies may vary by operator and route."
+        },
+        "limitationLiability": {
+          "title": "6. Limitation of Liability",
+          "body": "To the fullest extent permitted by law, Transit is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
+        },
+        "changesTerms": {
+          "title": "7. Changes to These Terms",
+          "body": "We may update these Terms & Conditions from time to time. Continued use of Transit after changes are published constitutes acceptance of the revised terms."
+        }
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "Your privacy matters to us. This Privacy Policy explains what information Transit may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
+      "sections": {
+        "informationCollect": {
+          "title": "1. Information We Collect",
+          "body": "We may collect profile details, contact information, trip preferences, payment-related data, device information, and usage data needed to operate the platform securely."
+        },
+        "howWeUse": {
+          "title": "2. How We Use Information",
+          "body": "We use your information to create and manage accounts, process bookings, improve search and recommendations, prevent fraud, and provide customer support."
+        },
+        "sharing": {
+          "title": "3. Sharing of Information",
+          "body": "We do not sell your personal information. We may share limited data with operators and service providers who help deliver trips, payments, analytics, or compliance services, subject to appropriate safeguards."
+        },
+        "dataRetention": {
+          "title": "4. Data Retention",
+          "body": "We retain information for as long as needed to provide the service, meet legal obligations, resolve disputes, and enforce our agreements. Retention periods may vary by data type."
+        },
+        "security": {
+          "title": "5. Security",
+          "body": "We apply administrative, technical, and organizational measures designed to protect your data. No method of transmission or storage is completely secure, so please use strong credentials and protect your device."
+        },
+        "yourChoices": {
+          "title": "6. Your Choices",
+          "body": "You may request access, correction, or deletion of certain information where applicable law allows. Some data may need to be retained to satisfy legal or account-closure requirements."
+        },
+        "contactUs": {
+          "title": "7. Contact Us",
+          "body": "If you have questions about this Privacy Policy, contact our support team through the in-app help channel. This placeholder policy will be replaced with final legal text."
+        }
+      }
+    }
+  }
+}
