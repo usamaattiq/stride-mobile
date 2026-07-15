@@ -24,6 +24,9 @@ export function LoginFlowScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, loginMpin, setLoginMpin } = useSignupDraft();
   const [step, setStep] = React.useState<LoginStep>('phone');
+  // Set when we intentionally leave the flow (e.g. finishing login), so the
+  // `beforeRemove` guard below doesn't hijack it into stepping backward.
+  const isLeavingRef = React.useRef(false);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -56,7 +59,7 @@ export function LoginFlowScreen(): React.ReactElement {
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (step === 'phone') {
+      if (step === 'phone' || isLeavingRef.current) {
         return;
       }
       event.preventDefault();
@@ -100,6 +103,7 @@ export function LoginFlowScreen(): React.ReactElement {
           onChangeMpin={setLoginMpin}
           onContinue={() => {
             Keyboard.dismiss();
+            isLeavingRef.current = true;
             navigation.replace('HomePlaceholder');
           }}
           biometricEnabled={draft.biometricEnabled}
