@@ -34,8 +34,8 @@ export function useAuthScrollToInput(): (nodeHandle: number) => void {
 // keyboard under softwareKeyboardLayoutMode: 'resize') so the header keeps a
 // fixed height and never gets clipped when the keyboard opens.
 const SCREEN_HEIGHT = Dimensions.get('screen').height;
-const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.28;
-const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.21;
+const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.24;
+const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.19;
 
 type AuthScaffoldProps = {
   onBack: () => void;
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   stepSlot: {
-    marginTop: spacing.md,
+    // marginTop: spacing.md,
     marginHorizontal: spacing.xxl,
   },
   backButton: {
