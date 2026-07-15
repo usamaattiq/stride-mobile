@@ -37,9 +37,14 @@ export function AuthTextField({
 
   return (
     <View style={styles.wrap}>
-      <AppText weight="medium" style={[styles.label, dense && styles.labelDense]}>
+      <AppText
+        weight={dense ? 'bold' : 'medium'}
+        style={[styles.label, dense && styles.labelDense]}
+      >
         {label}
-        {required ? <AppText style={styles.required}> *</AppText> : null}
+        {required ? (
+          <AppText style={[styles.required, dense && styles.requiredDense]}> *</AppText>
+        ) : null}
         {optional ? (
           <AppText style={styles.optional}> (optional)</AppText>
         ) : null}
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   labelDense: {
-    fontSize: 12,
+    fontSize: 14,
   },
   optional: {
     fontSize: 12,
@@ -81,6 +86,9 @@ const styles = StyleSheet.create({
   required: {
     fontSize: 13,
     color: colors.primary,
+  },
+  requiredDense: {
+    fontSize: 14,
   },
   input: {
     minHeight: 46,

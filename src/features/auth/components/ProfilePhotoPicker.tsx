@@ -41,7 +41,7 @@ export function ProfilePhotoPicker({
   return (
     <View style={styles.wrap}>
          {/* <View style={styles.info}> */}
-        <AppText weight="medium" style={styles.label}>
+        <AppText weight="bold" style={styles.label}>
           {label}
         </AppText>
         {/* {hint ? <AppText style={styles.hint}>{hint}</AppText> : null} */}
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   wrap: {
     // flexDirection: 'row',
     // alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   avatarButton: {
     width: 76,

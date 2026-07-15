@@ -57,9 +57,14 @@ export function DocumentUploadField({
 
   return (
     <View style={styles.wrap}>
-      <AppText weight="medium" style={[styles.label, dense && styles.labelDense]}>
+      <AppText
+        weight={dense ? 'bold' : 'medium'}
+        style={[styles.label, dense && styles.labelDense]}
+      >
         {label}
-        {required ? <AppText style={styles.required}> *</AppText> : null}
+        {required ? (
+          <AppText style={[styles.required, dense && styles.requiredDense]}> *</AppText>
+        ) : null}
       </AppText>
       <Pressable
         onPress={pickImage}
@@ -97,11 +102,14 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   labelDense: {
-    fontSize: 12,
+    fontSize: 14,
   },
   required: {
     fontSize: 13,
     color: colors.primary,
+  },
+  requiredDense: {
+    fontSize: 14,
   },
   box: {
     minHeight: 120,
