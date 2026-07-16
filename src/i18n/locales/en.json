@@ -13,7 +13,7 @@
       "logIn": "Log in",
       "terms": "Terms & Conditions",
       "privacy": "Privacy Policy",
-      "photoCredit": "Photo by Michal Pokorny on Unsplash"
+      "photoCredit": "Photo by Elliot Blyth on Unsplash"
     },
     "countryPicker": {
       "title": "Select country",
@@ -44,7 +44,9 @@
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
-        "location": "City / Location",
+        "address": "Address",
+        "city": "City",
+        "country": "Country",
         "locationPlaceholder": "No location selected yet",
         "useCurrentLocation": "Use current location",
         "selectOnMap": "Select on map",

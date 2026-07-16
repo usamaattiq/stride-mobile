@@ -93,7 +93,7 @@ export function PhoneInput({
       <AppBottomSheet
         visible={pickerVisible}
         onClose={closePicker}
-        heightRatio={0.55}
+        heightRatio={0.75}
       >
         <View style={styles.sheetHandle} />
         <AppText weight="semibold" style={styles.sheetTitle}>

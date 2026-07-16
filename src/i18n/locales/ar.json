@@ -13,7 +13,7 @@
       "logIn": "تسجيل الدخول",
       "terms": "الشروط والأحكام",
       "privacy": "سياسة الخصوصية",
-      "photoCredit": "صورة بواسطة Michal Pokorny على Unsplash"
+      "photoCredit": "صورة بواسطة Elliot Blyth على Unsplash"
     },
     "countryPicker": {
       "title": "اختر الدولة",
@@ -44,7 +44,9 @@
         "mobile": "رقم الجوال",
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
-        "location": "المدينة / الموقع",
+        "address": "العنوان",
+        "city": "المدينة",
+        "country": "الدولة",
         "locationPlaceholder": "لم يتم تحديد الموقع بعد",
         "useCurrentLocation": "استخدام الموقع الحالي",
         "selectOnMap": "التحديد على الخريطة",
