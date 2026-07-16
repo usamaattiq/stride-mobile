@@ -28,7 +28,7 @@ import {
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'driver' | 'passenger' | 'general' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'general' | 'logout' | 'photo' | null;
 
 const APP_VERSION = '1.0.0';
 
@@ -91,7 +91,7 @@ export function SettingsHomeScreen(): React.ReactElement {
         setDialog('general');
         break;
       case 'become-driver':
-        setDialog('driver');
+        navigation.navigate('DriverVerification');
         break;
       case 'switch-passenger':
         setDialog('passenger');
@@ -160,24 +160,6 @@ export function SettingsHomeScreen(): React.ReactElement {
         options={languageOptions}
         onClose={() => setLanguageModalVisible(false)}
         onSelectLanguage={handleSelectLanguage}
-      />
-
-      <AppDialog
-        visible={dialog === 'driver'}
-        icon="car"
-        title={t('profile.account.becomeDriver.title')}
-        message={t('profile.account.becomeDriver.confirm')}
-        cancelAction={{
-          label: t('common.cancel'),
-          onPress: () => setDialog(null),
-        }}
-        confirmAction={{
-          label: t('profile.account.becomeDriver.confirmCta'),
-          onPress: () => {
-            setRole('driver');
-            setDialog(null);
-          },
-        }}
       />
 
       <AppDialog

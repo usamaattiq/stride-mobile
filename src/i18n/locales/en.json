@@ -273,6 +273,19 @@
       "unavailableBody": "Add a fingerprint in your device settings, then try again."
     }
   },
+  "driverVerification": {
+    "title": "Driver verification",
+    "subtitle": "Upload your driving license to become a driver",
+    "licenseNumber": "Driving license number",
+    "licensePlaceholder": "Enter license number",
+    "licenseFront": "License front side",
+    "licenseBack": "License back side",
+    "uploadHint": "Tap to upload & crop",
+    "changeHint": "Tap to change",
+    "cta": "Submit & become driver",
+    "successTitle": "You're a driver",
+    "successBody": "Your license details were saved on this device (demo). You can now offer rides."
+  },
   "common": {
     "cancel": "Cancel",
     "ok": "OK"

@@ -10,7 +10,7 @@ import { colors, radius, spacing } from '@/theme';
 // ID-1 card ratio (≈1.585) rounded to a clean value for the crop UI.
 const DEFAULT_ASPECT: [number, number] = [16, 10];
 
-type DocumentUploadFieldProps = {
+export type DocumentUploadFieldProps = {
   label: string;
   uri?: string | null;
   onChange: (uri: string | null) => void;
