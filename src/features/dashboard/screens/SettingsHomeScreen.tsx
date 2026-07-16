@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +12,7 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { LanguageSwitcherModal } from '@/shared/components/language-switcher/LanguageSwitcherModal';
 import { getLanguageOptions } from '@/shared/components/language-switcher/options';
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
@@ -110,7 +110,7 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
+      <FocusAwareStatusBar style="light" />
       <SettingsProfileHeader
         user={user}
         topInset={insets.top}

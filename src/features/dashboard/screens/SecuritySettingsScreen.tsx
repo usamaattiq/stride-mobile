@@ -10,7 +10,6 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 
 import { OtpInput } from '@/features/auth/components/OtpInput';
@@ -19,6 +18,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
@@ -109,7 +109,7 @@ export function SecuritySettingsScreen(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
+      <FocusAwareStatusBar style="dark" />
       <AppTopBar
         left="back"
         title={t('securitySettings.title')}

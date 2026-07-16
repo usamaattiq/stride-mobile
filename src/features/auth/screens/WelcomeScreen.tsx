@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { colors } from '@/theme';
 
@@ -33,7 +33,7 @@ export function WelcomeScreen({
 
   return (
     <View style={styles.root} accessibilityLabel="Welcome screen">
-      <StatusBar style="light" />
+      <FocusAwareStatusBar style="light" />
       <WelcomeHero enterAnim={enterAnim} />
       <WelcomeActions
         enterAnim={enterAnim}

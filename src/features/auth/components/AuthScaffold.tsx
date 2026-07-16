@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { LegalLinks } from '@/shared/components/legal/LegalLinks';
 import { LanguageSwitcher } from '@/shared/components/language-switcher';
 import { colors, spacing } from '@/theme';
@@ -171,6 +172,7 @@ export function AuthScaffold({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
           style={[

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, spacing } from '@/theme';
 
 type DashboardTabScreenProps = {
@@ -26,6 +27,7 @@ export function DashboardTabScreen({
         },
       ]}
     >
+      <FocusAwareStatusBar style="dark" />
       <AppText weight="bold" style={styles.title}>
         {title}
       </AppText>

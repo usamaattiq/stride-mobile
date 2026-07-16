@@ -1,7 +1,6 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { Animated, Easing, StyleSheet, View, type DimensionValue } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +9,7 @@ import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, radius, spacing } from '@/theme';
 
 const CREDITS = 50;
@@ -86,7 +86,7 @@ export function SignupSuccessScreen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <FocusAwareStatusBar style="dark" />
 
       <LinearGradient
         colors={[colors.primarySoft, colors.white]}

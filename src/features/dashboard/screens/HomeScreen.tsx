@@ -2,10 +2,10 @@ import React from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors } from '@/theme';
 
 import { HomeFeedPanel } from '../components/HomeFeedPanel';
@@ -58,7 +58,7 @@ export function HomeScreen(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
+      <FocusAwareStatusBar style="dark" />
       <HomeHeader
         firstName={user.firstName}
         roleLabel={roleLabel}
