@@ -35,6 +35,12 @@
         {
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to set your city and pick a location on the map."
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
+        }
       ]
     ]
   }

@@ -11,9 +11,10 @@
       "subtitle": "قارن الحافلات والمركبات والرحلات الخاصة عبر كل المسارات.",
       "signUp": "إنشاء حساب",
       "logIn": "تسجيل الدخول",
+      "dashboard": "لوحة التحكم",
       "terms": "الشروط والأحكام",
       "privacy": "سياسة الخصوصية",
-      "photoCredit": "صورة بواسطة Michal Pokorny على Unsplash"
+      "photoCredit": "صورة بواسطة Elliot Blyth على Unsplash"
     },
     "countryPicker": {
       "title": "اختر الدولة",
@@ -32,7 +33,10 @@
         "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}}",
         "cta": "تأكيد الرمز",
         "resend": "إعادة إرسال الرمز",
-        "resendIn": "إعادة إرسال الرمز خلال {{time}}"
+        "resendIn": "إعادة إرسال الرمز خلال {{time}}",
+        "resentTitle": "تم إرسال الرمز",
+        "resentBody": "تم إرسال رمز جديد (تجريبي).",
+        "resentConfirm": "حسنًا"
       },
       "personal": {
         "title": "المعلومات الشخصية",
@@ -44,8 +48,11 @@
         "mobile": "رقم الجوال",
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
-        "location": "المدينة / الموقع",
+        "address": "العنوان",
+        "city": "المدينة",
+        "country": "الدولة",
         "locationPlaceholder": "لم يتم تحديد الموقع بعد",
+        "addressLinePlaceholder": "أضف المبنى، الشارع، المنطقة، إلخ.",
         "useCurrentLocation": "استخدام الموقع الحالي",
         "selectOnMap": "التحديد على الخريطة",
         "locationPermissionTitle": "إذن الموقع",
@@ -74,7 +81,10 @@
         "uploadHint": "اضغط للرفع والقص",
         "changeHint": "اضغط للتغيير",
         "cta": "متابعة",
-        "skip": "تخطي الآن"
+        "skip": "تخطي الآن",
+        "skipConfirmTitle": "تخطي التحقق؟",
+        "skipConfirmBody": "يمكنك رفع وثائق هويتك لاحقًا، لكن قد تبقى بعض الميزات محدودة حتى يتم التحقق منك.",
+        "skipConfirmConfirm": "تخطي الآن"
       },
       "security": {
         "title": "إعداد الأمان",
@@ -82,8 +92,6 @@
         "createMpin": "إنشاء رمز MPIN",
         "confirmMpin": "تأكيد رمز MPIN",
         "mismatch": "رمزا MPIN غير متطابقين",
-        "biometric": "استخدام الدخول البيومتري",
-        "biometricPrompt": "تفعيل الدخول البيومتري",
         "cta": "إنهاء التسجيل"
       },
       "success": {
@@ -111,8 +119,186 @@
       }
     }
   },
+  "dashboard": {
+    "tabs": {
+      "Home": "الرئيسية",
+      "MyListings": "قوائمي",
+      "MyOffers": "عروضي",
+      "Settings": "الإعدادات"
+    },
+    "home": {
+      "title": "الرئيسية",
+      "subtitle": "ستظهر رحلاتك ونشاطك هنا.",
+      "hello": "مرحباً، {{name}}",
+      "roleTransporter": "ناقل",
+      "credits": "رصيد",
+      "chatA11y": "فتح المحادثات",
+      "notificationsA11y": "فتح الإشعارات",
+      "creditsA11y": "{{count}} رصيد",
+      "bannerTitle": "طلبات العودة المتاحة",
+      "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
+      "requestSearchPlaceholder": "ابحث عن مدينة أو مسار أو موقع...",
+      "filter": "تصفية",
+      "filterA11y": "فتح عوامل التصفية",
+      "categoryAll": "كل الطلبات",
+      "categoryRfq": "RFQ",
+      "categoryAuction": "مزاد",
+      "categoryFullVehicle": "مركبة كاملة",
+      "categoryShared": "مشترك",
+      "badgeAuction": "مزاد",
+      "badgeRfq": "RFQ",
+      "startingPrice": "السعر الابتدائي",
+      "budget": "الميزانية",
+      "viewDetails": "عرض التفاصيل",
+      "placeOffer": "قدّم عرضاً",
+      "adTitle": "نمِّ أعمالك في النقل",
+      "adSubtitle": "أنشئ قوائم واحصل على المزيد من الحجوزات.",
+      "emptyTitle": "لا توجد طلبات",
+      "emptySubtitle": "عندما ينشر الركاب طلبات عودة بالقرب منك، ستظهر هنا."
+    },
+    "messages": {
+      "title": "الرسائل",
+      "searchPlaceholder": "ابحث في الرسائل...",
+      "filterAll": "كل الرسائل",
+      "filterUnread": "غير مقروءة",
+      "legendUnread": "غير مقروءة",
+      "legendRead": "مقروءة",
+      "emptyTitle": "لا توجد رسائل",
+      "emptySubtitle": "عندما يراسلك المشترون بشأن الطلبات أو الحجوزات أو القوائم، ستظهر هنا."
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "emptyTitle": "لا توجد إشعارات",
+      "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم."
+    },
+    "listings": {
+      "title": "قوائمي",
+      "subtitle": "أدِر الرحلات والمسارات التي أضفتها."
+    },
+    "offers": {
+      "title": "عروضي",
+      "subtitle": "تتبّع العروض التي أرسلتها واستلمتها."
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "subtitle": "الحساب واللغة وتفضيلات التطبيق."
+    }
+  },
+  "profile": {
+    "roles": {
+      "passenger": "راكب",
+      "driver": "سائق"
+    },
+    "sections": {
+      "account": "الحساب",
+      "preferences": "التفضيلات",
+      "support": "الدعم"
+    },
+    "account": {
+      "generalInfo": {
+        "title": "المعلومات العامة",
+        "subtitle": "الاسم ورقم الهاتف وتفاصيل الملف",
+        "comingSoon": "تعديل الملف سيكون متاحاً بعد ربط واجهة الحساب."
+      },
+      "becomeDriver": {
+        "title": "كن سائقاً",
+        "subtitle": "قدّم رحلات واكسب مع Stride",
+        "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
+        "confirmCta": "كن سائقاً"
+      },
+      "switchPassenger": {
+        "title": "التبديل إلى راكب",
+        "subtitle": "احجز رحلات كراكب",
+        "confirm": "هل تريد إعادة هذا الحساب إلى وضع الراكب؟",
+        "confirmCta": "تبديل"
+      },
+      "security": {
+        "title": "الأمان",
+        "subtitle": "رمز MPIN وحماية تسجيل الدخول"
+      }
+    },
+    "settings": {
+      "language": {
+        "title": "اللغة",
+        "subtitle": "اختر لغتك المفضلة"
+      }
+    },
+    "support": {
+      "terms": {
+        "title": "الشروط والأحكام",
+        "subtitle": "اقرأ شروط الاستخدام"
+      },
+      "privacy": {
+        "title": "سياسة الخصوصية",
+        "subtitle": "كيف نتعامل مع بياناتك"
+      }
+    },
+    "photo": {
+      "title": "صورة الملف",
+      "editAccessibility": "تعديل صورة الملف",
+      "comingSoon": "رفع الصورة سيكون متاحاً بعد ربط واجهة الحساب."
+    },
+    "logout": {
+      "title": "تسجيل الخروج",
+      "confirm": "ستعود إلى شاشة الترحيب. يمكنك تسجيل الدخول مرة أخرى في أي وقت."
+    },
+    "versionLabel": "الإصدار"
+  },
+  "securitySettings": {
+    "title": "الأمان",
+    "subtitle": "إدارة رمز MPIN وأمان تسجيل الدخول",
+    "mpin": {
+      "sectionTitle": "رمز MPIN",
+      "summary": "يُستخدم رمز MPIN المكون من 4 أرقام لتسجيل الدخول بأمان.",
+      "changeCta": "تغيير رمز MPIN",
+      "currentLabel": "رمز MPIN الحالي",
+      "newLabel": "رمز MPIN الجديد",
+      "confirmLabel": "تأكيد رمز MPIN الجديد",
+      "saveCta": "حفظ رمز MPIN",
+      "currentRequired": "أدخل رمز MPIN الحالي المكون من 4 أرقام.",
+      "required": "أدخل وأكد رمز MPIN الجديد المكون من 4 أرقام.",
+      "mismatch": "رمزا MPIN الجديدان غير متطابقين.",
+      "savedTitle": "تم تحديث رمز MPIN",
+      "savedBody": "تم حفظ رمز MPIN على هذا الجهاز (تجريبي)."
+    },
+    "biometric": {
+      "sectionTitle": "الدخول البيومتري"
+    }
+  },
+  "biometric": {
+    "face": {
+      "title": "استخدام Face ID",
+      "subtitle": "سجّل الدخول بسرعة باستخدام Face ID",
+      "enablePrompt": "أكد هويتك باستخدام Face ID",
+      "unavailable": "Face ID غير مُعدّ على هذا الجهاز",
+      "unavailableTitle": "Face ID غير متاح",
+      "unavailableBody": "فعّل Face ID من إعدادات جهازك ثم حاول مرة أخرى."
+    },
+    "fingerprint": {
+      "title": "استخدام البيومتري",
+      "subtitle": "سجّل الدخول بسرعة باستخدام البيومتري",
+      "enablePrompt": "أكد هويتك لتفعيل الدخول البيومتري",
+      "unavailable": "الدخول البيومتري غير مُعدّ على هذا الجهاز",
+      "unavailableTitle": "البيومتري غير متاح",
+      "unavailableBody": "أضف بيومتري في إعدادات جهازك ثم حاول مرة أخرى."
+    }
+  },
+  "driverVerification": {
+    "title": "التحقق من السائق",
+    "subtitle": "ارفع رخصة القيادة لتصبح سائقاً",
+    "licenseNumber": "رقم رخصة القيادة",
+    "licensePlaceholder": "أدخل رقم الرخصة",
+    "licenseFront": "الوجه الأمامي للرخصة",
+    "licenseBack": "الوجه الخلفي للرخصة",
+    "uploadHint": "اضغط للرفع والقص",
+    "changeHint": "اضغط للتغيير",
+    "cta": "إرسال والتحول إلى سائق",
+    "successTitle": "أنت سائق الآن",
+    "successBody": "تم حفظ بيانات الرخصة على هذا الجهاز (تجريبي). يمكنك الآن تقديم الرحلات."
+  },
   "common": {
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "ok": "حسنًا"
   },
   "legal": {
     "common": {

@@ -11,9 +11,10 @@
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
       "logIn": "Log in",
+      "dashboard": "Dashboard",
       "terms": "Terms & Conditions",
       "privacy": "Privacy Policy",
-      "photoCredit": "Photo by Michal Pokorny on Unsplash"
+      "photoCredit": "Photo by Elliot Blyth on Unsplash"
     },
     "countryPicker": {
       "title": "Select country",
@@ -32,7 +33,10 @@
         "subtitle": "Enter the 6-digit code sent to {{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
-        "resendIn": "Resend code in {{time}}"
+        "resendIn": "Resend code in {{time}}",
+        "resentTitle": "Code resent",
+        "resentBody": "A new code was sent (demo).",
+        "resentConfirm": "Got it"
       },
       "personal": {
         "title": "Personal information",
@@ -44,8 +48,11 @@
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
-        "location": "City / Location",
+        "address": "Address",
+        "city": "City",
+        "country": "Country",
         "locationPlaceholder": "No location selected yet",
+        "addressLinePlaceholder": "Add building, street, area, etc.",
         "useCurrentLocation": "Use current location",
         "selectOnMap": "Select on map",
         "locationPermissionTitle": "Location permission",
@@ -74,7 +81,10 @@
         "uploadHint": "Tap to upload & crop",
         "changeHint": "Tap to change",
         "cta": "Continue",
-        "skip": "Skip for now"
+        "skip": "Skip for now",
+        "skipConfirmTitle": "Skip verification?",
+        "skipConfirmBody": "You can upload your NIC documents later, but some features may stay limited until you're verified.",
+        "skipConfirmConfirm": "Skip for now"
       },
       "security": {
         "title": "Security setup",
@@ -82,8 +92,6 @@
         "createMpin": "Create MPIN",
         "confirmMpin": "Confirm MPIN",
         "mismatch": "MPINs do not match",
-        "biometric": "Use biometric login",
-        "biometricPrompt": "Enable biometric login",
         "cta": "Finish signup"
       },
       "success": {
@@ -111,8 +119,186 @@
       }
     }
   },
+  "dashboard": {
+    "tabs": {
+      "Home": "Home",
+      "MyListings": "My Listings",
+      "MyOffers": "My Offers",
+      "Settings": "Settings"
+    },
+    "home": {
+      "title": "Home",
+      "subtitle": "Your trips and activity will show up here.",
+      "hello": "Hello, {{name}}",
+      "roleTransporter": "Transporter",
+      "credits": "Credits",
+      "chatA11y": "Open chats",
+      "notificationsA11y": "Open notifications",
+      "creditsA11y": "{{count}} credits",
+      "bannerTitle": "Available Reverse Requests",
+      "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
+      "requestSearchPlaceholder": "Search city, route or location...",
+      "filter": "Filter",
+      "filterA11y": "Open filters",
+      "categoryAll": "All Requests",
+      "categoryRfq": "RFQ",
+      "categoryAuction": "Auction",
+      "categoryFullVehicle": "Full Vehicle",
+      "categoryShared": "Shared",
+      "badgeAuction": "AUCTION",
+      "badgeRfq": "RFQ",
+      "startingPrice": "Starting Price",
+      "budget": "Budget",
+      "viewDetails": "View Details",
+      "placeOffer": "Place Offer",
+      "adTitle": "Grow Your Transport Business",
+      "adSubtitle": "Create listings and get more bookings.",
+      "emptyTitle": "No requests",
+      "emptySubtitle": "When passengers post reverse requests near you, they will show up here."
+    },
+    "messages": {
+      "title": "Messages",
+      "searchPlaceholder": "Search messages...",
+      "filterAll": "All Messages",
+      "filterUnread": "Unread",
+      "legendUnread": "Unread",
+      "legendRead": "Read",
+      "emptyTitle": "No messages",
+      "emptySubtitle": "When buyers message you about requests, bookings, or listings, they will show up here."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "emptyTitle": "No notifications",
+      "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
+    },
+    "listings": {
+      "title": "My Listings",
+      "subtitle": "Manage the rides and routes you have listed."
+    },
+    "offers": {
+      "title": "My Offers",
+      "subtitle": "Track offers you have sent and received."
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Account, language, and app preferences."
+    }
+  },
+  "profile": {
+    "roles": {
+      "passenger": "Passenger",
+      "driver": "Driver"
+    },
+    "sections": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "support": "Support"
+    },
+    "account": {
+      "generalInfo": {
+        "title": "General information",
+        "subtitle": "Name, phone, and profile details",
+        "comingSoon": "Profile editing will be available once the account API is connected."
+      },
+      "becomeDriver": {
+        "title": "Become a driver",
+        "subtitle": "Offer rides and earn with Stride",
+        "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
+        "confirmCta": "Become driver"
+      },
+      "switchPassenger": {
+        "title": "Switch to passenger",
+        "subtitle": "Book trips as a passenger",
+        "confirm": "Switch this account back to passenger mode?",
+        "confirmCta": "Switch"
+      },
+      "security": {
+        "title": "Security",
+        "subtitle": "MPIN and login protection"
+      }
+    },
+    "settings": {
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your preferred language"
+      }
+    },
+    "support": {
+      "terms": {
+        "title": "Terms & Conditions",
+        "subtitle": "Read our terms of use"
+      },
+      "privacy": {
+        "title": "Privacy Policy",
+        "subtitle": "How we handle your data"
+      }
+    },
+    "photo": {
+      "title": "Profile photo",
+      "editAccessibility": "Edit profile photo",
+      "comingSoon": "Photo upload will be available once the account API is connected."
+    },
+    "logout": {
+      "title": "Log out",
+      "confirm": "You will return to the welcome screen. You can log in again anytime."
+    },
+    "versionLabel": "Version"
+  },
+  "securitySettings": {
+    "title": "Security",
+    "subtitle": "Manage your MPIN and login security",
+    "mpin": {
+      "sectionTitle": "MPIN",
+      "summary": "Your 4-digit MPIN is used to sign in securely.",
+      "changeCta": "Change MPIN",
+      "currentLabel": "Current MPIN",
+      "newLabel": "New MPIN",
+      "confirmLabel": "Confirm new MPIN",
+      "saveCta": "Save MPIN",
+      "currentRequired": "Enter your current 4-digit MPIN.",
+      "required": "Enter and confirm a new 4-digit MPIN.",
+      "mismatch": "New MPINs do not match.",
+      "savedTitle": "MPIN updated",
+      "savedBody": "Your MPIN has been saved on this device (demo)."
+    },
+    "biometric": {
+      "sectionTitle": "Biometric login"
+    }
+  },
+  "biometric": {
+    "face": {
+      "title": "Use Face ID",
+      "subtitle": "Sign in quickly with Face ID",
+      "enablePrompt": "Confirm it's you with Face ID",
+      "unavailable": "Face ID is not set up on this device",
+      "unavailableTitle": "Face ID unavailable",
+      "unavailableBody": "Set up Face ID in your device settings, then try again."
+    },
+    "fingerprint": {
+      "title": "Use biometric",
+      "subtitle": "Sign in quickly with biometric login",
+      "enablePrompt": "Confirm it's you to enable biometric login",
+      "unavailable": "Biometric login is not set up on this device",
+      "unavailableTitle": "Biometric unavailable",
+      "unavailableBody": "Add a biometric in your device settings, then try again."
+    }
+  },
+  "driverVerification": {
+    "title": "Driver verification",
+    "subtitle": "Upload your driving license to become a driver",
+    "licenseNumber": "Driving license number",
+    "licensePlaceholder": "Enter license number",
+    "licenseFront": "License front side",
+    "licenseBack": "License back side",
+    "uploadHint": "Tap to upload & crop",
+    "changeHint": "Tap to change",
+    "cta": "Submit & become driver",
+    "successTitle": "You're a driver",
+    "successBody": "Your license details were saved on this device (demo). You can now offer rides."
+  },
   "common": {
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "ok": "OK"
   },
   "legal": {
     "common": {

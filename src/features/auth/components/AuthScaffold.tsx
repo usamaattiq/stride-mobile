@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type FocusEvent,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -16,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { LegalLinks } from '@/shared/components/legal/LegalLinks';
 import { LanguageSwitcher } from '@/shared/components/language-switcher';
 import { colors, spacing } from '@/theme';
@@ -29,6 +31,26 @@ const AuthScrollToInputContext = React.createContext<(nodeHandle: number) => voi
 
 export function useAuthScrollToInput(): (nodeHandle: number) => void {
   return React.useContext(AuthScrollToInputContext);
+}
+
+/**
+ * The one reusable way any field inside AuthScaffold should wire up
+ * keyboard-avoidance: spread the returned handler onto the input's `onFocus`
+ * (optionally chaining your own) instead of re-deriving the scroll call.
+ * Works for any component whose focus event exposes `nativeEvent.target`
+ * (TextInput, and RN inputs that mirror its focus event shape).
+ */
+export function useKeyboardFocusScroll(
+  onFocus?: (event: FocusEvent) => void,
+): (event: FocusEvent) => void {
+  const scrollToInput = useAuthScrollToInput();
+  return React.useCallback(
+    (event: FocusEvent) => {
+      onFocus?.(event);
+      scrollToInput(event.nativeEvent.target);
+    },
+    [onFocus, scrollToInput],
+  );
 }
 
 // Use the physical screen height (not 'window', which shrinks with the Android
@@ -150,6 +172,7 @@ export function AuthScaffold({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
           style={[

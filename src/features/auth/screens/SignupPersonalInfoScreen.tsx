@@ -114,11 +114,12 @@ export function SignupPersonalInfoScreen({
         />
 
         <SignupLocationField
-          label={t('auth.signup.personal.location')}
+          label={t('auth.signup.personal.address')}
           required
           dense
           value={address}
           loading={locationLoading}
+          onChangeText={onChangeAddress}
           onUseCurrentLocation={() => void handleUseCurrentLocation()}
           onSelectOnMap={handleSelectOnMap}
         />

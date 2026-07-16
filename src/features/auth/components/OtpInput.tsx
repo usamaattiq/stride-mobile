@@ -10,6 +10,8 @@ import {
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { useKeyboardFocusScroll } from './AuthScaffold';
+
 export type OtpInputProps = {
   length: number;
   value: string;
@@ -29,6 +31,7 @@ export function OtpInput({
 }: OtpInputProps): React.ReactElement {
   const inputRefs = React.useRef<Array<TextInput | null>>([]);
   const [focusedIndex, setFocusedIndex] = React.useState<number | null>(null);
+  const handleKeyboardFocus = useKeyboardFocusScroll();
   const digits = value.replace(/\D/g, '').slice(0, length);
   const digitFont = getFontFamily('en', 'regular');
 
@@ -95,7 +98,10 @@ export function OtpInput({
                   }
                 }
               }}
-              onFocus={() => setFocusedIndex(index)}
+              onFocus={(event) => {
+                setFocusedIndex(index);
+                handleKeyboardFocus(event);
+              }}
               onBlur={() => setFocusedIndex((current) => (current === index ? null : current))}
               keyboardType="number-pad"
               maxLength={length}

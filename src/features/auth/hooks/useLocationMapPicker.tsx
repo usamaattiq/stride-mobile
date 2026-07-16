@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   TextInput,
@@ -15,6 +14,7 @@ import * as Location from 'expo-location';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
+import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { ENV } from '@/shared/config/env';
@@ -68,6 +68,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   const [mapSearchShowEmpty, setMapSearchShowEmpty] = useState(false);
   const [mapRegion, setMapRegion] = useState<MapRegion>(DEFAULT_REGION);
   const [mapPin, setMapPin] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [infoDialog, setInfoDialog] = useState<{ title: string; body: string } | null>(null);
 
   const pinMapToLocation = useCallback((latitude: number, longitude: number, address?: string) => {
     mapWebViewRef.current?.injectJavaScript(
@@ -142,10 +143,10 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       }
 
       if (status !== Location.PermissionStatus.GRANTED) {
-        Alert.alert(
-          t('auth.signup.personal.locationPermissionTitle'),
-          t('auth.signup.personal.locationPermissionBody'),
-        );
+        setInfoDialog({
+          title: t('auth.signup.personal.locationPermissionTitle'),
+          body: t('auth.signup.personal.locationPermissionBody'),
+        });
         return null;
       }
 
@@ -156,10 +157,10 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       const label = await resolveAddressLabel(latitude, longitude);
       return { label, latitude, longitude };
     } catch {
-      Alert.alert(
-        t('auth.signup.personal.locationErrorTitle'),
-        t('auth.signup.personal.locationErrorBody'),
-      );
+      setInfoDialog({
+        title: t('auth.signup.personal.locationErrorTitle'),
+        body: t('auth.signup.personal.locationErrorBody'),
+      });
       return null;
     } finally {
       setLocationLoading(false);
@@ -168,10 +169,10 @@ export function useLocationMapPicker(): UseLocationMapPicker {
 
   const handleConfirmMapSelection = useCallback(async () => {
     if (!mapPin) {
-      Alert.alert(
-        t('auth.signup.personal.mapSelectTitle'),
-        t('auth.signup.personal.mapSelectBody'),
-      );
+      setInfoDialog({
+        title: t('auth.signup.personal.mapSelectTitle'),
+        body: t('auth.signup.personal.mapSelectBody'),
+      });
       return;
     }
 
@@ -226,120 +227,133 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   const searchFontFamily = getFontFamily(currentLanguage, 'regular');
 
   const mapPickerSheet = (
-    <AppBottomSheet
-      visible={mapVisible}
-      onClose={closeMapPicker}
-      heightRatio={0.72}
-      sheetStyle={styles.mapSheet}
-    >
-      <View style={styles.sheetGrabber} />
-      <View style={styles.mapHeader}>
-        <AppText weight="semibold" style={styles.mapHeaderTitle}>
-          {t('auth.signup.personal.mapTitle')}
-        </AppText>
-        <Pressable onPress={closeMapPicker} style={styles.mapCloseButton} accessibilityRole="button">
-          <AppText style={styles.mapCloseText}>{t('auth.signup.personal.mapClose')}</AppText>
-        </Pressable>
-      </View>
+    <>
+      <AppBottomSheet
+        visible={mapVisible}
+        onClose={closeMapPicker}
+        heightRatio={0.72}
+        sheetStyle={styles.mapSheet}
+      >
+        <View style={styles.sheetGrabber} />
+        <View style={styles.mapHeader}>
+          <AppText weight="semibold" style={styles.mapHeaderTitle}>
+            {t('auth.signup.personal.mapTitle')}
+          </AppText>
+          <Pressable onPress={closeMapPicker} style={styles.mapCloseButton} accessibilityRole="button">
+            <AppText style={styles.mapCloseText}>{t('auth.signup.personal.mapClose')}</AppText>
+          </Pressable>
+        </View>
 
-      <View style={styles.mapSearchRow}>
-        <View style={styles.mapSearchInputWrap}>
-          <FontAwesome name="search" size={14} color={colors.text.tertiary} />
-          <TextInput
-            value={mapSearchQuery}
-            onChangeText={setMapSearchQuery}
-            placeholder={t('auth.signup.personal.mapSearchPlaceholder')}
-            placeholderTextColor={colors.text.tertiary}
-            style={[styles.mapSearchInput, { fontFamily: searchFontFamily }]}
-            returnKeyType="search"
-            onSubmitEditing={() => {
+        <View style={styles.mapSearchRow}>
+          <View style={styles.mapSearchInputWrap}>
+            <FontAwesome name="search" size={14} color={colors.text.tertiary} />
+            <TextInput
+              value={mapSearchQuery}
+              onChangeText={setMapSearchQuery}
+              placeholder={t('auth.signup.personal.mapSearchPlaceholder')}
+              placeholderTextColor={colors.text.tertiary}
+              style={[styles.mapSearchInput, { fontFamily: searchFontFamily }]}
+              returnKeyType="search"
+              onSubmitEditing={() => {
+                void runMapSearch(mapSearchQuery);
+              }}
+            />
+          </View>
+          <Pressable
+            style={styles.mapSearchButton}
+            onPress={() => {
               void runMapSearch(mapSearchQuery);
             }}
+            disabled={mapSearchLoading || !mapSearchQuery.trim()}
+            accessibilityRole="button"
+          >
+            {mapSearchLoading ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <AppText weight="semibold" style={styles.mapSearchButtonText}>
+                {t('auth.signup.personal.mapSearchAction')}
+              </AppText>
+            )}
+          </Pressable>
+        </View>
+
+        {mapSearchResults.length > 0 ? (
+          <View style={styles.mapSearchResults}>
+            {mapSearchResults.map((result) => (
+              <Pressable
+                key={result.id}
+                style={styles.mapSearchResultRow}
+                onPress={() => handleSelectMapSearchResult(result)}
+                accessibilityRole="button"
+              >
+                <FontAwesome name="map-marker" size={14} color={colors.primary} />
+                <AppText style={styles.mapSearchResultText} numberOfLines={2}>
+                  {result.label}
+                </AppText>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        {!mapSearchLoading && mapSearchShowEmpty ? (
+          <View style={styles.mapSearchResults}>
+            <AppText style={styles.mapSearchEmptyText}>
+              {t('auth.signup.personal.mapNoResults')}
+            </AppText>
+          </View>
+        ) : null}
+
+        {mapsApiKey ? (
+          <WebView
+            ref={mapWebViewRef}
+            style={styles.map}
+            originWhitelist={['*']}
+            source={{ html: mapPickerHtml }}
+            onMessage={(event) => {
+              try {
+                const payload = JSON.parse(event.nativeEvent.data) as {
+                  latitude?: number;
+                  longitude?: number;
+                };
+                if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
+                  setMapPin({ latitude: payload.latitude, longitude: payload.longitude });
+                  setMapRegion({ latitude: payload.latitude, longitude: payload.longitude });
+                }
+              } catch {
+                // no-op
+              }
+            }}
+          />
+        ) : (
+          <View style={styles.mapFallback}>
+            <AppText weight="semibold" style={styles.mapFallbackTitle}>
+              {t('auth.signup.personal.mapFallbackTitle')}
+            </AppText>
+            <AppText style={styles.mapFallbackBody}>
+              {t('auth.signup.personal.mapFallbackBody')}
+            </AppText>
+          </View>
+        )}
+
+        <View style={styles.mapFooter}>
+          <Button
+            label={t('auth.signup.personal.mapConfirm')}
+            onPress={() => void handleConfirmMapSelection()}
           />
         </View>
-        <Pressable
-          style={styles.mapSearchButton}
-          onPress={() => {
-            void runMapSearch(mapSearchQuery);
-          }}
-          disabled={mapSearchLoading || !mapSearchQuery.trim()}
-          accessibilityRole="button"
-        >
-          {mapSearchLoading ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <AppText weight="semibold" style={styles.mapSearchButtonText}>
-              {t('auth.signup.personal.mapSearchAction')}
-            </AppText>
-          )}
-        </Pressable>
-      </View>
+      </AppBottomSheet>
 
-      {mapSearchResults.length > 0 ? (
-        <View style={styles.mapSearchResults}>
-          {mapSearchResults.map((result) => (
-            <Pressable
-              key={result.id}
-              style={styles.mapSearchResultRow}
-              onPress={() => handleSelectMapSearchResult(result)}
-              accessibilityRole="button"
-            >
-              <FontAwesome name="map-marker" size={14} color={colors.primary} />
-              <AppText style={styles.mapSearchResultText} numberOfLines={2}>
-                {result.label}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      {!mapSearchLoading && mapSearchShowEmpty ? (
-        <View style={styles.mapSearchResults}>
-          <AppText style={styles.mapSearchEmptyText}>
-            {t('auth.signup.personal.mapNoResults')}
-          </AppText>
-        </View>
-      ) : null}
-
-      {mapsApiKey ? (
-        <WebView
-          ref={mapWebViewRef}
-          style={styles.map}
-          originWhitelist={['*']}
-          source={{ html: mapPickerHtml }}
-          onMessage={(event) => {
-            try {
-              const payload = JSON.parse(event.nativeEvent.data) as {
-                latitude?: number;
-                longitude?: number;
-              };
-              if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
-                setMapPin({ latitude: payload.latitude, longitude: payload.longitude });
-                setMapRegion({ latitude: payload.latitude, longitude: payload.longitude });
-              }
-            } catch {
-              // no-op
-            }
-          }}
-        />
-      ) : (
-        <View style={styles.mapFallback}>
-          <AppText weight="semibold" style={styles.mapFallbackTitle}>
-            {t('auth.signup.personal.mapFallbackTitle')}
-          </AppText>
-          <AppText style={styles.mapFallbackBody}>
-            {t('auth.signup.personal.mapFallbackBody')}
-          </AppText>
-        </View>
-      )}
-
-      <View style={styles.mapFooter}>
-        <Button
-          label={t('auth.signup.personal.mapConfirm')}
-          onPress={() => void handleConfirmMapSelection()}
-        />
-      </View>
-    </AppBottomSheet>
+      <AppDialog
+        visible={infoDialog != null}
+        icon="map-marker"
+        title={infoDialog?.title ?? ''}
+        message={infoDialog?.body}
+        confirmAction={{
+          label: t('common.ok'),
+          onPress: () => setInfoDialog(null),
+        }}
+      />
+    </>
   );
 
   return {

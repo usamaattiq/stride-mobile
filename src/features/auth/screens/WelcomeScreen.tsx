@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { colors } from '@/theme';
 
@@ -11,9 +11,14 @@ import { WelcomeHero } from '../components/WelcomeHero';
 export type WelcomeScreenProps = {
   onSignUp?: () => void;
   onLogIn?: () => void;
+  onDashboard?: () => void;
 };
 
-export function WelcomeScreen({ onSignUp, onLogIn }: WelcomeScreenProps) {
+export function WelcomeScreen({
+  onSignUp,
+  onLogIn,
+  onDashboard,
+}: WelcomeScreenProps) {
   const enterAnim = useRef(new Animated.Value(0)).current;
   const legalControl = useLegalDocumentSheets();
 
@@ -28,12 +33,13 @@ export function WelcomeScreen({ onSignUp, onLogIn }: WelcomeScreenProps) {
 
   return (
     <View style={styles.root} accessibilityLabel="Welcome screen">
-      <StatusBar style="light" />
+      <FocusAwareStatusBar style="light" />
       <WelcomeHero enterAnim={enterAnim} />
       <WelcomeActions
         enterAnim={enterAnim}
         onSignUp={onSignUp}
         onLogIn={onLogIn}
+        onDashboard={onDashboard}
         legalControl={legalControl}
       />
       {legalControl.legalSheets}

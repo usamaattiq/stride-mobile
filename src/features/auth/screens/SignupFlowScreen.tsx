@@ -1,10 +1,11 @@
 import React from 'react';
-import { Alert, BackHandler, Keyboard } from 'react-native';
+import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { AppDialog } from '@/shared/components/AppDialog';
 
 import { AuthScaffold } from '../components/AuthScaffold';
 import { useSignupDraft } from '../context/SignupDraftContext';
@@ -43,6 +44,8 @@ export function SignupFlowScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft } = useSignupDraft();
   const [step, setStep] = React.useState<SignupStep>('phone');
+  const [otpResentVisible, setOtpResentVisible] = React.useState(false);
+  const [skipDocumentsVisible, setSkipDocumentsVisible] = React.useState(false);
   // Set when we intentionally leave the flow (e.g. finishing signup), so the
   // `beforeRemove` guard below doesn't hijack it into stepping backward.
   const isLeavingRef = React.useRef(false);
@@ -126,82 +129,113 @@ export function SignupFlowScreen(): React.ReactElement {
   const onBack = step === 'phone' ? leaveFlow : () => goToPreviousStep();
 
   return (
-    <AuthScaffold
-      onBack={onBack}
-      title={header.title}
-      subtitle={header.subtitle}
-      stepCount={TOTAL_STEPS}
-      currentStep={STEP_PROGRESS[step]}
-      showLegalFooter={step === 'phone' || step === 'otp'}
-    >
-      {step === 'phone' ? (
-        <SignupPhoneScreen
-          country={draft.country}
-          phoneDigits={draft.phoneDigits}
-          onChangeCountry={(country) => patchDraft({ country })}
-          onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
-          onContinue={() => goToStep('otp')}
-        />
-      ) : null}
+    <>
+      <AuthScaffold
+        onBack={onBack}
+        title={header.title}
+        subtitle={header.subtitle}
+        stepCount={TOTAL_STEPS}
+        currentStep={STEP_PROGRESS[step]}
+        showLegalFooter={step === 'phone' || step === 'otp'}
+      >
+        {step === 'phone' ? (
+          <SignupPhoneScreen
+            country={draft.country}
+            phoneDigits={draft.phoneDigits}
+            onChangeCountry={(country) => patchDraft({ country })}
+            onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
+            onContinue={() => goToStep('otp')}
+          />
+        ) : null}
 
-      {step === 'otp' ? (
-        <SignupOtpScreen
-          otp={draft.otp}
-          onChangeOtp={(otp) => patchDraft({ otp })}
-          onContinue={() => goToStep('personal')}
-          onResend={() => {
-            patchDraft({ otp: '' });
-            Alert.alert('OTP resent', 'A new code was sent (demo).');
-          }}
-        />
-      ) : null}
+        {step === 'otp' ? (
+          <SignupOtpScreen
+            otp={draft.otp}
+            onChangeOtp={(otp) => patchDraft({ otp })}
+            onContinue={() => goToStep('personal')}
+            onResend={() => {
+              patchDraft({ otp: '' });
+              setOtpResentVisible(true);
+            }}
+          />
+        ) : null}
 
-      {step === 'personal' ? (
-        <SignupPersonalInfoScreen
-          country={draft.country}
-          phoneDigits={draft.phoneDigits}
-          fullName={draft.fullName}
-          email={draft.email}
-          address={draft.address}
-          locationCoords={draft.locationCoords}
-          profilePhotoUri={draft.profilePhotoUri}
-          onChangeFullName={(fullName) => patchDraft({ fullName })}
-          onChangeEmail={(email) => patchDraft({ email })}
-          onChangeAddress={(address) => patchDraft({ address })}
-          onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
-          onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
-          onContinue={() => goToStep('documents')}
-        />
-      ) : null}
+        {step === 'personal' ? (
+          <SignupPersonalInfoScreen
+            country={draft.country}
+            phoneDigits={draft.phoneDigits}
+            fullName={draft.fullName}
+            email={draft.email}
+            address={draft.address}
+            locationCoords={draft.locationCoords}
+            profilePhotoUri={draft.profilePhotoUri}
+            onChangeFullName={(fullName) => patchDraft({ fullName })}
+            onChangeEmail={(email) => patchDraft({ email })}
+            onChangeAddress={(address) => patchDraft({ address })}
+            onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
+            onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
+            onContinue={() => goToStep('documents')}
+          />
+        ) : null}
 
-      {step === 'documents' ? (
-        <SignupDocumentsScreen
-          nicNumber={draft.nicNumber}
-          nicFrontUri={draft.nicFrontUri}
-          nicBackUri={draft.nicBackUri}
-          onChangeNicNumber={(nicNumber) => patchDraft({ nicNumber })}
-          onChangeNicFront={(nicFrontUri) => patchDraft({ nicFrontUri })}
-          onChangeNicBack={(nicBackUri) => patchDraft({ nicBackUri })}
-          onContinue={() => goToStep('security')}
-          onSkip={() => goToStep('security')}
-        />
-      ) : null}
+        {step === 'documents' ? (
+          <SignupDocumentsScreen
+            nicNumber={draft.nicNumber}
+            nicFrontUri={draft.nicFrontUri}
+            nicBackUri={draft.nicBackUri}
+            onChangeNicNumber={(nicNumber) => patchDraft({ nicNumber })}
+            onChangeNicFront={(nicFrontUri) => patchDraft({ nicFrontUri })}
+            onChangeNicBack={(nicBackUri) => patchDraft({ nicBackUri })}
+            onContinue={() => goToStep('security')}
+            onSkip={() => setSkipDocumentsVisible(true)}
+          />
+        ) : null}
 
-      {step === 'security' ? (
-        <SignupSecurityScreen
-          mpin={draft.mpin}
-          mpinConfirm={draft.mpinConfirm}
-          biometricEnabled={draft.biometricEnabled}
-          onChangeMpin={(mpin) => patchDraft({ mpin })}
-          onChangeMpinConfirm={(mpinConfirm) => patchDraft({ mpinConfirm })}
-          onChangeBiometric={(biometricEnabled) => patchDraft({ biometricEnabled })}
-          onContinue={() => {
-            Keyboard.dismiss();
-            isLeavingRef.current = true;
-            navigation.replace('SignupSuccess');
-          }}
-        />
-      ) : null}
-    </AuthScaffold>
+        {step === 'security' ? (
+          <SignupSecurityScreen
+            mpin={draft.mpin}
+            mpinConfirm={draft.mpinConfirm}
+            biometricEnabled={draft.biometricEnabled}
+            onChangeMpin={(mpin) => patchDraft({ mpin })}
+            onChangeMpinConfirm={(mpinConfirm) => patchDraft({ mpinConfirm })}
+            onChangeBiometric={(biometricEnabled) => patchDraft({ biometricEnabled })}
+            onContinue={() => {
+              Keyboard.dismiss();
+              isLeavingRef.current = true;
+              navigation.replace('SignupSuccess');
+            }}
+          />
+        ) : null}
+      </AuthScaffold>
+
+      <AppDialog
+        visible={otpResentVisible}
+        icon="check-circle"
+        title={t('auth.signup.otp.resentTitle')}
+        message={t('auth.signup.otp.resentBody')}
+        confirmAction={{
+          label: t('auth.signup.otp.resentConfirm'),
+          onPress: () => setOtpResentVisible(false),
+        }}
+      />
+
+      <AppDialog
+        visible={skipDocumentsVisible}
+        icon="exclamation-triangle"
+        title={t('auth.signup.documents.skipConfirmTitle')}
+        message={t('auth.signup.documents.skipConfirmBody')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setSkipDocumentsVisible(false),
+        }}
+        confirmAction={{
+          label: t('auth.signup.documents.skipConfirmConfirm'),
+          onPress: () => {
+            setSkipDocumentsVisible(false);
+            goToStep('security');
+          },
+        }}
+      />
+    </>
   );
 }

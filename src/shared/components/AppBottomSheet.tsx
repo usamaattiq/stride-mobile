@@ -1,6 +1,8 @@
 import React from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   View,
@@ -55,7 +57,12 @@ export function AppBottomSheet({
             sheetStyle,
           ]}
         >
-          {children}
+          <KeyboardAvoidingView
+            style={styles.sheetInner}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            {children}
+          </KeyboardAvoidingView>
         </View>
       </View>
     </Modal>
@@ -79,5 +86,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     overflow: 'hidden',
+  },
+  sheetInner: {
+    flex: 1,
   },
 });
