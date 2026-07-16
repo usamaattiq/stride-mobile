@@ -3,5 +3,5 @@ export type AuthStackParamList = {
   SignupFlow: undefined;
   SignupSuccess: undefined;
   LoginFlow: undefined;
-  HomePlaceholder: undefined;
+  Dashboard: undefined;
 };

@@ -33,6 +33,33 @@ export const colors = {
     heroMid: 'rgba(0, 0, 0, 0.15)',
     heroBottom: 'rgba(0, 0, 0, 0.72)',
   },
+
+  accent: {
+    credits: '#E4572E',
+    coins: '#E8A13A',
+    unread: '#B42318',
+    read: '#D1D5DB',
+    purple: {
+      soft: '#F3E8FF',
+      text: '#7C3AED',
+      avatar: '#8B5CF6',
+    },
+    blue: {
+      soft: '#DBEAFE',
+      text: '#2563EB',
+      avatar: '#3B82F6',
+    },
+    green: {
+      soft: '#D1FAE5',
+      text: '#059669',
+      avatar: '#10B981',
+    },
+    pink: {
+      soft: '#FCE7F3',
+      text: '#DB2777',
+      avatar: '#EC4899',
+    },
+  },
 } as const;
 
 export type Colors = typeof colors;

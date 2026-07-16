@@ -11,9 +11,14 @@ import { WelcomeHero } from '../components/WelcomeHero';
 export type WelcomeScreenProps = {
   onSignUp?: () => void;
   onLogIn?: () => void;
+  onDashboard?: () => void;
 };
 
-export function WelcomeScreen({ onSignUp, onLogIn }: WelcomeScreenProps) {
+export function WelcomeScreen({
+  onSignUp,
+  onLogIn,
+  onDashboard,
+}: WelcomeScreenProps) {
   const enterAnim = useRef(new Animated.Value(0)).current;
   const legalControl = useLegalDocumentSheets();
 
@@ -34,6 +39,7 @@ export function WelcomeScreen({ onSignUp, onLogIn }: WelcomeScreenProps) {
         enterAnim={enterAnim}
         onSignUp={onSignUp}
         onLogIn={onLogIn}
+        onDashboard={onDashboard}
         legalControl={legalControl}
       />
       {legalControl.legalSheets}

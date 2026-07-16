@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
 import { useSignupDraft } from '../context/SignupDraftContext';
@@ -31,6 +30,9 @@ export function WelcomeRoute(): React.ReactElement {
           resetDraft();
           navigation.navigate('LoginFlow');
         }}
+        onDashboard={() => {
+          navigation.navigate('Dashboard');
+        }}
       />
 
       {__DEV__ ? (
@@ -54,36 +56,16 @@ export function SignupSuccessRoute(): React.ReactElement {
   const navigation = useNavigation<Nav>();
   const { resetDraft } = useSignupDraft();
 
-  const goHome = () => {
+  const goDashboard = () => {
     resetDraft();
-    navigation.reset({ index: 0, routes: [{ name: 'HomePlaceholder' }] });
+    navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
   };
 
   return (
-    <SignupSuccessScreen onGoToDashboard={goHome} onStartExploring={goHome} />
-  );
-}
-
-export function HomePlaceholderRoute(): React.ReactElement {
-  const navigation = useNavigation<Nav>();
-  const { resetDraft } = useSignupDraft();
-
-  return (
-    <View style={styles.home}>
-      <AppText weight="bold" style={styles.homeTitle}>
-        You are in
-      </AppText>
-      <AppText style={styles.homeBody}>
-        Auth flow complete. Wire this to your app home when ready.
-      </AppText>
-      <Button
-        label="Back to welcome"
-        onPress={() => {
-          resetDraft();
-          navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-        }}
-      />
-    </View>
+    <SignupSuccessScreen
+      onGoToDashboard={goDashboard}
+      onStartExploring={goDashboard}
+    />
   );
 }
 
@@ -103,23 +85,5 @@ const styles = StyleSheet.create({
   devShortcutText: {
     color: colors.white,
     fontSize: 11,
-  },
-  home: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    backgroundColor: colors.white,
-    gap: spacing.md,
-  },
-  homeTitle: {
-    fontSize: 28,
-    color: colors.text.primary,
-  },
-  homeBody: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: spacing.md,
   },
 });

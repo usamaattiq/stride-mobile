@@ -11,6 +11,7 @@
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
       "logIn": "Log in",
+      "dashboard": "Dashboard",
       "terms": "Terms & Conditions",
       "privacy": "Privacy Policy",
       "photoCredit": "Photo by Elliot Blyth on Unsplash"
@@ -118,6 +119,71 @@
         "useBiometric": "Use biometric login",
         "biometricPrompt": "Confirm it's you"
       }
+    }
+  },
+  "dashboard": {
+    "tabs": {
+      "Home": "Home",
+      "MyListings": "My Listings",
+      "MyOffers": "My Offers",
+      "Settings": "Settings"
+    },
+    "home": {
+      "title": "Home",
+      "subtitle": "Your trips and activity will show up here.",
+      "hello": "Hello, {{name}}",
+      "roleTransporter": "Transporter",
+      "credits": "Credits",
+      "chatA11y": "Open chats",
+      "notificationsA11y": "Open notifications",
+      "creditsA11y": "{{count}} credits",
+      "bannerTitle": "Available Reverse Requests",
+      "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
+      "requestSearchPlaceholder": "Search city, route or location...",
+      "filter": "Filter",
+      "filterA11y": "Open filters",
+      "categoryAll": "All Requests",
+      "categoryRfq": "RFQ",
+      "categoryAuction": "Auction",
+      "categoryFullVehicle": "Full Vehicle",
+      "categoryShared": "Shared",
+      "badgeAuction": "AUCTION",
+      "badgeRfq": "RFQ",
+      "startingPrice": "Starting Price",
+      "budget": "Budget",
+      "viewDetails": "View Details",
+      "placeOffer": "Place Offer",
+      "adTitle": "Grow Your Transport Business",
+      "adSubtitle": "Create listings and get more bookings.",
+      "emptyTitle": "No requests",
+      "emptySubtitle": "When passengers post reverse requests near you, they will show up here."
+    },
+    "messages": {
+      "title": "Messages",
+      "searchPlaceholder": "Search messages...",
+      "filterAll": "All Messages",
+      "filterUnread": "Unread",
+      "legendUnread": "Unread",
+      "legendRead": "Read",
+      "emptyTitle": "No messages",
+      "emptySubtitle": "When buyers message you about requests, bookings, or listings, they will show up here."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "emptyTitle": "No notifications",
+      "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
+    },
+    "listings": {
+      "title": "My Listings",
+      "subtitle": "Manage the rides and routes you have listed."
+    },
+    "offers": {
+      "title": "My Offers",
+      "subtitle": "Track offers you have sent and received."
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Account, language, and app preferences."
     }
   },
   "common": {

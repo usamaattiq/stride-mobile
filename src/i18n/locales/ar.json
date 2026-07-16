@@ -11,6 +11,7 @@
       "subtitle": "قارن الحافلات والمركبات والرحلات الخاصة عبر كل المسارات.",
       "signUp": "إنشاء حساب",
       "logIn": "تسجيل الدخول",
+      "dashboard": "لوحة التحكم",
       "terms": "الشروط والأحكام",
       "privacy": "سياسة الخصوصية",
       "photoCredit": "صورة بواسطة Elliot Blyth على Unsplash"
@@ -118,6 +119,71 @@
         "useBiometric": "استخدام الدخول البيومتري",
         "biometricPrompt": "أكد هويتك"
       }
+    }
+  },
+  "dashboard": {
+    "tabs": {
+      "Home": "الرئيسية",
+      "MyListings": "قوائمي",
+      "MyOffers": "عروضي",
+      "Settings": "الإعدادات"
+    },
+    "home": {
+      "title": "الرئيسية",
+      "subtitle": "ستظهر رحلاتك ونشاطك هنا.",
+      "hello": "مرحباً، {{name}}",
+      "roleTransporter": "ناقل",
+      "credits": "رصيد",
+      "chatA11y": "فتح المحادثات",
+      "notificationsA11y": "فتح الإشعارات",
+      "creditsA11y": "{{count}} رصيد",
+      "bannerTitle": "طلبات العودة المتاحة",
+      "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
+      "requestSearchPlaceholder": "ابحث عن مدينة أو مسار أو موقع...",
+      "filter": "تصفية",
+      "filterA11y": "فتح عوامل التصفية",
+      "categoryAll": "كل الطلبات",
+      "categoryRfq": "RFQ",
+      "categoryAuction": "مزاد",
+      "categoryFullVehicle": "مركبة كاملة",
+      "categoryShared": "مشترك",
+      "badgeAuction": "مزاد",
+      "badgeRfq": "RFQ",
+      "startingPrice": "السعر الابتدائي",
+      "budget": "الميزانية",
+      "viewDetails": "عرض التفاصيل",
+      "placeOffer": "قدّم عرضاً",
+      "adTitle": "نمِّ أعمالك في النقل",
+      "adSubtitle": "أنشئ قوائم واحصل على المزيد من الحجوزات.",
+      "emptyTitle": "لا توجد طلبات",
+      "emptySubtitle": "عندما ينشر الركاب طلبات عودة بالقرب منك، ستظهر هنا."
+    },
+    "messages": {
+      "title": "الرسائل",
+      "searchPlaceholder": "ابحث في الرسائل...",
+      "filterAll": "كل الرسائل",
+      "filterUnread": "غير مقروءة",
+      "legendUnread": "غير مقروءة",
+      "legendRead": "مقروءة",
+      "emptyTitle": "لا توجد رسائل",
+      "emptySubtitle": "عندما يراسلك المشترون بشأن الطلبات أو الحجوزات أو القوائم، ستظهر هنا."
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "emptyTitle": "لا توجد إشعارات",
+      "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم."
+    },
+    "listings": {
+      "title": "قوائمي",
+      "subtitle": "أدِر الرحلات والمسارات التي أضفتها."
+    },
+    "offers": {
+      "title": "عروضي",
+      "subtitle": "تتبّع العروض التي أرسلتها واستلمتها."
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "subtitle": "الحساب واللغة وتفضيلات التطبيق."
     }
   },
   "common": {

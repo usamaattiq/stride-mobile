@@ -12,6 +12,7 @@ type WelcomeActionsProps = {
   enterAnim: Animated.Value;
   onSignUp?: () => void;
   onLogIn?: () => void;
+  onDashboard?: () => void;
   legalControl: LegalDocumentSheetControl;
 };
 
@@ -19,6 +20,7 @@ export function WelcomeActions({
   enterAnim,
   onSignUp,
   onLogIn,
+  onDashboard,
   legalControl,
 }: WelcomeActionsProps) {
   const insets = useSafeAreaInsets();
@@ -60,6 +62,12 @@ export function WelcomeActions({
           variant="secondary"
           onPress={onLogIn}
           accessibilityHint="Sign in to an existing account"
+        />
+        <Button
+          label={t('auth.welcome.dashboard')}
+          variant="secondary"
+          onPress={onDashboard}
+          accessibilityHint="Open the dashboard"
         />
       </View>
 

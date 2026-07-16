@@ -104,7 +104,7 @@ export function LoginFlowScreen(): React.ReactElement {
           onContinue={() => {
             Keyboard.dismiss();
             isLeavingRef.current = true;
-            navigation.replace('HomePlaceholder');
+            navigation.replace('Dashboard');
           }}
           biometricEnabled={draft.biometricEnabled}
         />
