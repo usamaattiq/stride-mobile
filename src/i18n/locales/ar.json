@@ -48,6 +48,7 @@
         "city": "المدينة",
         "country": "الدولة",
         "locationPlaceholder": "لم يتم تحديد الموقع بعد",
+        "addressLinePlaceholder": "أضف المبنى، الشارع، المنطقة، إلخ.",
         "useCurrentLocation": "استخدام الموقع الحالي",
         "selectOnMap": "التحديد على الخريطة",
         "locationPermissionTitle": "إذن الموقع",

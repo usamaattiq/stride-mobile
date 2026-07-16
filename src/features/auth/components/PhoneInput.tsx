@@ -16,6 +16,7 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { useKeyboardFocusScroll } from './AuthScaffold';
 import {
   COUNTRY_OPTIONS,
   type CountryOption,
@@ -40,6 +41,7 @@ export function PhoneInput({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [pickerVisible, setPickerVisible] = React.useState(false);
   const [query, setQuery] = React.useState('');
+  const handleFocus = useKeyboardFocusScroll();
 
   const displayValue = (() => {
     if (!value) return '';
@@ -87,6 +89,7 @@ export function PhoneInput({
         placeholder={placeholder}
         placeholderTextColor={colors.text.tertiary}
         keyboardType="phone-pad"
+        onFocus={handleFocus}
         style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
       />
 

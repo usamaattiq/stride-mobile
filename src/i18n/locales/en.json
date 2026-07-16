@@ -48,6 +48,7 @@
         "city": "City",
         "country": "Country",
         "locationPlaceholder": "No location selected yet",
+        "addressLinePlaceholder": "Add building, street, area, etc.",
         "useCurrentLocation": "Use current location",
         "selectOnMap": "Select on map",
         "locationPermissionTitle": "Location permission",

@@ -1,11 +1,15 @@
 import React from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { colors, radius, spacing } from '@/theme';
+import { colors, getFontFamily, radius, spacing } from '@/theme';
+
+import { useKeyboardFocusScroll } from './AuthScaffold';
+import { combineLocationLabel, splitLocationLabel } from '../utils/locationLabel';
 
 type SignupLocationFieldProps = {
   label: string;
@@ -14,6 +18,7 @@ type SignupLocationFieldProps = {
   loading?: boolean;
   /** Smaller label + text for tighter forms. */
   dense?: boolean;
+  onChangeText: (value: string) => void;
   onUseCurrentLocation: () => void;
   onSelectOnMap: () => void;
 };
@@ -24,11 +29,16 @@ export function SignupLocationField({
   required = false,
   loading = false,
   dense = false,
+  onChangeText,
   onUseCurrentLocation,
   onSelectOnMap,
 }: SignupLocationFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
+  const handleFocus = useKeyboardFocusScroll();
   const hasValue = Boolean(value?.trim());
+  const { addressLine, city, country } = splitLocationLabel(value?.trim() ?? '');
+  const cityCountry = [city, country].filter(Boolean).join(', ');
 
   return (
     <View style={styles.wrap}>
@@ -44,11 +54,25 @@ export function SignupLocationField({
 
       {hasValue ? (
         <View style={styles.valueBox}>
-          <FontAwesome name="map-marker" size={14} color={colors.primary} />
+          <FontAwesome name="map-marker" size={14} color={colors.primary} style={styles.valueIcon} />
           <View style={styles.valueTextAnchor}>
-            <AppText style={[styles.valueText, dense && styles.valueTextDense]} numberOfLines={2}>
-              {value!.trim()}
-            </AppText>
+            <TextInput
+              value={addressLine}
+              onChangeText={(text) => onChangeText(combineLocationLabel(text, city, country))}
+              onFocus={handleFocus}
+              placeholder={t('auth.signup.personal.addressLinePlaceholder')}
+              placeholderTextColor={colors.text.tertiary}
+              style={[
+                styles.valueInput,
+                dense && styles.valueInputDense,
+                { fontFamily: getFontFamily(currentLanguage, 'regular') },
+              ]}
+            />
+            {cityCountry ? (
+              <AppText style={[styles.cityCountry, dense && styles.cityCountryDense]} numberOfLines={1}>
+                {cityCountry}
+              </AppText>
+            ) : null}
           </View>
         </View>
       ) : (
@@ -115,25 +139,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
     backgroundColor: colors.white,
   },
+  valueIcon: {
+    marginTop: 3,
+  },
   valueTextAnchor: {
     flex: 1,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
   },
-  valueText: {
+  valueInput: {
     fontSize: 14,
     lineHeight: 20,
     color: colors.text.secondary,
-    paddingVertical: 0,
+    padding: 0,
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   },
-  valueTextDense: {
+  valueInputDense: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  cityCountry: {
+    marginTop: 2,
+    fontSize: 11,
+    color: colors.text.tertiary,
+  },
+  cityCountryDense: {
+    fontSize: 10,
   },
   placeholder: {
     fontSize: 13,
