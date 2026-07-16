@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -111,18 +111,14 @@ export function SettingsHomeScreen(): React.ReactElement {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
-        showsVerticalScrollIndicator={false}
-      >
-        <SettingsProfileHeader
-          user={user}
-          topInset={insets.top}
-          onEditPhoto={() => setDialog('photo')}
-        />
+      <SettingsProfileHeader
+        user={user}
+        topInset={insets.top}
+        onEditPhoto={() => setDialog('photo')}
+      />
 
-        <View style={styles.body}>
+      <View style={styles.body}>
+        <View style={styles.menu}>
           {sections.map((section) => (
             <SettingsMenuSectionCard
               key={section.id}
@@ -139,22 +135,22 @@ export function SettingsHomeScreen(): React.ReactElement {
               onPressItem={handleMenuPress}
             />
           ))}
-
-          <View style={styles.footer}>
-            <Pressable
-              style={styles.logoutRow}
-              accessibilityRole="button"
-              onPress={() => setDialog('logout')}
-            >
-              <FontAwesome name="sign-out" size={14} color={colors.primary} />
-              <AppText style={styles.logoutLabel}>{t('profile.logout.title')}</AppText>
-            </Pressable>
-            <AppText style={styles.versionLabel}>
-              {t('profile.versionLabel')} {APP_VERSION}
-            </AppText>
-          </View>
         </View>
-      </ScrollView>
+
+        <View style={styles.footer}>
+          <Pressable
+            style={styles.logoutRow}
+            accessibilityRole="button"
+            onPress={() => setDialog('logout')}
+          >
+            <FontAwesome name="sign-out" size={14} color={colors.primary} />
+            <AppText style={styles.logoutLabel}>{t('profile.logout.title')}</AppText>
+          </Pressable>
+          <AppText style={styles.versionLabel}>
+            {t('profile.versionLabel')} {APP_VERSION}
+          </AppText>
+        </View>
+      </View>
 
       {legal.legalSheets}
 
@@ -247,30 +243,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.subtle,
   },
-  scroll: {
-    flex: 1,
-  },
   body: {
-    marginTop: -24,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    gap: spacing.lg,
+    flex: 1,
+    marginTop: -18,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
     backgroundColor: colors.background.subtle,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  menu: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    gap: spacing.md,
   },
   footer: {
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    gap: spacing.xxs,
+    paddingTop: spacing.sm,
   },
   logoutRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   logoutLabel: {
     fontSize: 15,

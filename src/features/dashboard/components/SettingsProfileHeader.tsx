@@ -27,7 +27,7 @@ export function SettingsProfileHeader({
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
   return (
-    <View style={[styles.header, { paddingTop: topInset + spacing.xl }]}>
+    <View style={[styles.header, { paddingTop: topInset + spacing.md }]}>
       <View style={styles.mainRow}>
         <View style={styles.avatarWrap}>
           {user.avatarUri ? (
@@ -69,22 +69,22 @@ export function SettingsProfileHeader({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl + spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   mainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   avatarWrap: {
     position: 'relative',
   },
   avatar: {
-    width: 76,
-    height: 76,
+    width: 68,
+    height: 68,
     borderRadius: radius.full,
-    borderWidth: 3,
+    borderWidth: 2.5,
     borderColor: colors.white,
     backgroundColor: colors.primarySoft,
   },
@@ -93,16 +93,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: 28,
+    fontSize: 26,
     color: colors.primary,
   },
   editButton: {
     position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.primaryPressed,
     borderWidth: 2,
     borderColor: colors.white,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   copy: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 4,
   },
   nameRow: {
     flexDirection: 'row',
@@ -121,13 +121,13 @@ const styles = StyleSheet.create({
   },
   name: {
     flexShrink: 1,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.white,
-    lineHeight: 28,
+    lineHeight: 24,
   },
   role: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.text.inverseMuted,
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

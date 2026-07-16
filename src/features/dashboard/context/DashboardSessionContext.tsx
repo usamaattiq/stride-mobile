@@ -11,23 +11,26 @@ export type DashboardSessionUser = {
   notificationCount: number;
   hasUnreadMessages: boolean;
   isVerified: boolean;
+  biometricEnabled: boolean;
 };
 
 type DashboardSessionContextValue = {
   user: DashboardSessionUser;
   setRole: (role: AppRole) => void;
+  setBiometricEnabled: (enabled: boolean) => void;
   resetSession: () => void;
 };
 
 const DEFAULT_USER: DashboardSessionUser = {
-  firstName: 'Masud',
-  fullName: 'Masud Khan',
+  firstName: 'John',
+  fullName: 'John Doe',
   role: 'passenger',
   avatarUri: 'https://i.pravatar.cc/100?img=12',
   credits: 12450,
   notificationCount: 0,
   hasUnreadMessages: false,
   isVerified: true,
+  biometricEnabled: false,
 };
 
 const DashboardSessionContext = React.createContext<DashboardSessionContextValue | null>(
@@ -45,13 +48,17 @@ export function DashboardSessionProvider({
     setUser((current) => ({ ...current, role }));
   }, []);
 
+  const setBiometricEnabled = React.useCallback((biometricEnabled: boolean) => {
+    setUser((current) => ({ ...current, biometricEnabled }));
+  }, []);
+
   const resetSession = React.useCallback(() => {
     setUser(DEFAULT_USER);
   }, []);
 
   const value = React.useMemo(
-    () => ({ user, setRole, resetSession }),
-    [user, setRole, resetSession],
+    () => ({ user, setRole, setBiometricEnabled, resetSession }),
+    [user, setRole, setBiometricEnabled, resetSession],
   );
 
   return (

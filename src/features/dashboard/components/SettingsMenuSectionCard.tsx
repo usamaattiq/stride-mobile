@@ -83,15 +83,17 @@ function SettingsMenuRow({
         <FontAwesome name={item.icon} size={14} color={settingsMenuIconStyle.iconColor} />
       </View>
       <View style={styles.copy}>
-        <AppText weight="semibold" style={styles.rowTitle}>
+        <AppText weight="semibold" style={styles.rowTitle} numberOfLines={1}>
           {title}
         </AppText>
-        <AppText style={styles.rowSubtitle} numberOfLines={2}>
+        <AppText style={styles.rowSubtitle} numberOfLines={1}>
           {subtitle}
         </AppText>
       </View>
       {accessory && item.action === 'language' ? (
-        <AppText style={styles.accessory}>{accessory}</AppText>
+        <AppText style={styles.accessory} numberOfLines={1}>
+          {accessory}
+        </AppText>
       ) : null}
       <FontAwesome name="chevron-right" size={11} color={colors.border.strong} />
     </Pressable>
@@ -100,15 +102,15 @@ function SettingsMenuRow({
 
 const styles = StyleSheet.create({
   group: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   heading: {
-    fontSize: 14,
-    color: colors.text.primary,
+    fontSize: 13,
+    color: colors.text.secondary,
     marginLeft: 2,
   },
   card: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.white,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: 13,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.white,
   },
   rowBorder: {
@@ -127,8 +129,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border.default,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -147,8 +149,9 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   accessory: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.text.secondary,
     marginRight: 4,
+    maxWidth: 96,
   },
 });

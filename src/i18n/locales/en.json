@@ -262,6 +262,15 @@
       "mismatch": "New MPINs do not match.",
       "savedTitle": "MPIN updated",
       "savedBody": "Your MPIN has been saved on this device (demo)."
+    },
+    "biometric": {
+      "sectionTitle": "Biometric login",
+      "title": "Use fingerprint",
+      "subtitle": "Sign in quickly with your fingerprint",
+      "enablePrompt": "Confirm it's you to enable fingerprint login",
+      "unavailable": "Fingerprint is not set up on this device",
+      "unavailableTitle": "Fingerprint unavailable",
+      "unavailableBody": "Add a fingerprint in your device settings, then try again."
     }
   },
   "common": {
