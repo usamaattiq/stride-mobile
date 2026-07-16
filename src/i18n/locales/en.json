@@ -32,7 +32,10 @@
         "subtitle": "Enter the 6-digit code sent to {{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
-        "resendIn": "Resend code in {{time}}"
+        "resendIn": "Resend code in {{time}}",
+        "resentTitle": "Code resent",
+        "resentBody": "A new code was sent (demo).",
+        "resentConfirm": "Got it"
       },
       "personal": {
         "title": "Personal information",
@@ -77,7 +80,10 @@
         "uploadHint": "Tap to upload & crop",
         "changeHint": "Tap to change",
         "cta": "Continue",
-        "skip": "Skip for now"
+        "skip": "Skip for now",
+        "skipConfirmTitle": "Skip verification?",
+        "skipConfirmBody": "You can upload your NIC documents later, but some features may stay limited until you're verified.",
+        "skipConfirmConfirm": "Skip for now"
       },
       "security": {
         "title": "Security setup",
@@ -115,7 +121,8 @@
     }
   },
   "common": {
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "ok": "OK"
   },
   "legal": {
     "common": {
