@@ -186,6 +186,84 @@
       "subtitle": "الحساب واللغة وتفضيلات التطبيق."
     }
   },
+  "profile": {
+    "roles": {
+      "passenger": "راكب",
+      "driver": "سائق"
+    },
+    "sections": {
+      "account": "الحساب",
+      "preferences": "التفضيلات",
+      "support": "الدعم"
+    },
+    "account": {
+      "generalInfo": {
+        "title": "المعلومات العامة",
+        "subtitle": "الاسم ورقم الهاتف وتفاصيل الملف",
+        "comingSoon": "تعديل الملف سيكون متاحاً بعد ربط واجهة الحساب."
+      },
+      "becomeDriver": {
+        "title": "كن سائقاً",
+        "subtitle": "قدّم رحلات واكسب مع Stride",
+        "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
+        "confirmCta": "كن سائقاً"
+      },
+      "switchPassenger": {
+        "title": "التبديل إلى راكب",
+        "subtitle": "احجز رحلات كراكب",
+        "confirm": "هل تريد إعادة هذا الحساب إلى وضع الراكب؟",
+        "confirmCta": "تبديل"
+      },
+      "security": {
+        "title": "الأمان",
+        "subtitle": "رمز MPIN وحماية تسجيل الدخول"
+      }
+    },
+    "settings": {
+      "language": {
+        "title": "اللغة",
+        "subtitle": "اختر لغتك المفضلة"
+      }
+    },
+    "support": {
+      "terms": {
+        "title": "الشروط والأحكام",
+        "subtitle": "اقرأ شروط الاستخدام"
+      },
+      "privacy": {
+        "title": "سياسة الخصوصية",
+        "subtitle": "كيف نتعامل مع بياناتك"
+      }
+    },
+    "photo": {
+      "title": "صورة الملف",
+      "editAccessibility": "تعديل صورة الملف",
+      "comingSoon": "رفع الصورة سيكون متاحاً بعد ربط واجهة الحساب."
+    },
+    "logout": {
+      "title": "تسجيل الخروج",
+      "confirm": "ستعود إلى شاشة الترحيب. يمكنك تسجيل الدخول مرة أخرى في أي وقت."
+    },
+    "versionLabel": "الإصدار"
+  },
+  "securitySettings": {
+    "title": "الأمان",
+    "subtitle": "إدارة رمز MPIN وأمان تسجيل الدخول",
+    "mpin": {
+      "sectionTitle": "رمز MPIN",
+      "summary": "يُستخدم رمز MPIN المكون من 4 أرقام لتسجيل الدخول بأمان.",
+      "changeCta": "تغيير رمز MPIN",
+      "currentLabel": "رمز MPIN الحالي",
+      "newLabel": "رمز MPIN الجديد",
+      "confirmLabel": "تأكيد رمز MPIN الجديد",
+      "saveCta": "حفظ رمز MPIN",
+      "currentRequired": "أدخل رمز MPIN الحالي المكون من 4 أرقام.",
+      "required": "أدخل وأكد رمز MPIN الجديد المكون من 4 أرقام.",
+      "mismatch": "رمزا MPIN الجديدان غير متطابقين.",
+      "savedTitle": "تم تحديث رمز MPIN",
+      "savedBody": "تم حفظ رمز MPIN على هذا الجهاز (تجريبي)."
+    }
+  },
   "common": {
     "cancel": "إلغاء",
     "ok": "حسنًا"

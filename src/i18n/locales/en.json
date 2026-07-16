@@ -186,6 +186,84 @@
       "subtitle": "Account, language, and app preferences."
     }
   },
+  "profile": {
+    "roles": {
+      "passenger": "Passenger",
+      "driver": "Driver"
+    },
+    "sections": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "support": "Support"
+    },
+    "account": {
+      "generalInfo": {
+        "title": "General information",
+        "subtitle": "Name, phone, and profile details",
+        "comingSoon": "Profile editing will be available once the account API is connected."
+      },
+      "becomeDriver": {
+        "title": "Become a driver",
+        "subtitle": "Offer rides and earn with Stride",
+        "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
+        "confirmCta": "Become driver"
+      },
+      "switchPassenger": {
+        "title": "Switch to passenger",
+        "subtitle": "Book trips as a passenger",
+        "confirm": "Switch this account back to passenger mode?",
+        "confirmCta": "Switch"
+      },
+      "security": {
+        "title": "Security",
+        "subtitle": "MPIN and login protection"
+      }
+    },
+    "settings": {
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your preferred language"
+      }
+    },
+    "support": {
+      "terms": {
+        "title": "Terms & Conditions",
+        "subtitle": "Read our terms of use"
+      },
+      "privacy": {
+        "title": "Privacy Policy",
+        "subtitle": "How we handle your data"
+      }
+    },
+    "photo": {
+      "title": "Profile photo",
+      "editAccessibility": "Edit profile photo",
+      "comingSoon": "Photo upload will be available once the account API is connected."
+    },
+    "logout": {
+      "title": "Log out",
+      "confirm": "You will return to the welcome screen. You can log in again anytime."
+    },
+    "versionLabel": "Version"
+  },
+  "securitySettings": {
+    "title": "Security",
+    "subtitle": "Manage your MPIN and login security",
+    "mpin": {
+      "sectionTitle": "MPIN",
+      "summary": "Your 4-digit MPIN is used to sign in securely.",
+      "changeCta": "Change MPIN",
+      "currentLabel": "Current MPIN",
+      "newLabel": "New MPIN",
+      "confirmLabel": "Confirm new MPIN",
+      "saveCta": "Save MPIN",
+      "currentRequired": "Enter your current 4-digit MPIN.",
+      "required": "Enter and confirm a new 4-digit MPIN.",
+      "mismatch": "New MPINs do not match.",
+      "savedTitle": "MPIN updated",
+      "savedBody": "Your MPIN has been saved on this device (demo)."
+    }
+  },
   "common": {
     "cancel": "Cancel",
     "ok": "OK"

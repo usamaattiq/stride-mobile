@@ -10,10 +10,11 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { DashboardSessionProvider } from '../context/DashboardSessionContext';
 import { HomeScreen } from '../screens/HomeScreen';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
 import { MyOffersScreen } from '../screens/MyOffersScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { SettingsStackNavigator } from './SettingsStackNavigator';
 import type { DashboardTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<DashboardTabParamList>();
@@ -36,34 +37,36 @@ export function DashboardNavigator(): React.ReactElement {
   const insets = useSafeAreaInsets();
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.text.tertiary,
-        tabBarShowLabel: true,
-        tabBarLabelPosition: 'below-icon',
-        tabBarLabel: t(`dashboard.tabs.${route.name}`),
-        tabBarLabelStyle: [
-          styles.tabLabel,
-          { fontFamily: getFontFamily(currentLanguage, 'medium') },
-        ],
-        tabBarIconStyle: styles.tabIcon,
-        tabBarItemStyle: styles.tabItem,
-        tabBarStyle: [
-          styles.tabBar,
-          { height: TAB_BAR_CONTENT_HEIGHT + insets.bottom },
-        ],
-        tabBarIcon: ({ color }) => (
-          <FontAwesome name={TAB_ICONS[route.name]} size={22} color={color} />
-        ),
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="MyListings" component={MyListingsScreen} />
-      <Tab.Screen name="MyOffers" component={MyOffersScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
-    </Tab.Navigator>
+    <DashboardSessionProvider>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.text.tertiary,
+          tabBarShowLabel: true,
+          tabBarLabelPosition: 'below-icon',
+          tabBarLabel: t(`dashboard.tabs.${route.name}`),
+          tabBarLabelStyle: [
+            styles.tabLabel,
+            { fontFamily: getFontFamily(currentLanguage, 'medium') },
+          ],
+          tabBarIconStyle: styles.tabIcon,
+          tabBarItemStyle: styles.tabItem,
+          tabBarStyle: [
+            styles.tabBar,
+            { height: TAB_BAR_CONTENT_HEIGHT + insets.bottom },
+          ],
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name={TAB_ICONS[route.name]} size={22} color={color} />
+          ),
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="MyListings" component={MyListingsScreen} />
+        <Tab.Screen name="MyOffers" component={MyOffersScreen} />
+        <Tab.Screen name="Settings" component={SettingsStackNavigator} />
+      </Tab.Navigator>
+    </DashboardSessionProvider>
   );
 }
 

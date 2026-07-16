@@ -12,7 +12,7 @@ import { HomeFeedPanel } from '../components/HomeFeedPanel';
 import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
-import { DEMO_HOME_USER } from '../constants/messages';
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList, HomePanel } from '../navigation/types';
 
 /**
@@ -21,12 +21,18 @@ import type { DashboardTabParamList, HomePanel } from '../navigation/types';
  */
 export function HomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const navigation =
     useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
+
+  const roleLabel =
+    user.role === 'driver'
+      ? t('profile.roles.driver')
+      : t('profile.roles.passenger');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -54,12 +60,12 @@ export function HomeScreen(): React.ReactElement {
     <View style={styles.root}>
       <StatusBar style="dark" />
       <HomeHeader
-        firstName={DEMO_HOME_USER.firstName}
-        roleLabel={t(DEMO_HOME_USER.roleKey)}
-        avatarUri={DEMO_HOME_USER.avatarUri}
-        credits={DEMO_HOME_USER.credits}
-        notificationCount={DEMO_HOME_USER.notificationCount}
-        hasUnreadMessages={DEMO_HOME_USER.hasUnreadMessages}
+        firstName={user.firstName}
+        roleLabel={roleLabel}
+        avatarUri={user.avatarUri}
+        credits={user.credits}
+        notificationCount={user.notificationCount}
+        hasUnreadMessages={user.hasUnreadMessages}
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
       />

@@ -77,12 +77,3 @@ const DEMO_HOME_MESSAGES_DATA: HomeMessage[] = [
 export const DEMO_HOME_MESSAGES: HomeMessage[] = SHOW_DEMO_DASHBOARD_DATA
   ? DEMO_HOME_MESSAGES_DATA
   : [];
-
-export const DEMO_HOME_USER = {
-  firstName: 'Masud',
-  roleKey: 'dashboard.home.roleTransporter' as const,
-  avatarUri: 'https://i.pravatar.cc/100?img=12',
-  credits: 12450,
-  notificationCount: SHOW_DEMO_DASHBOARD_DATA ? 3 : 0,
-  hasUnreadMessages: SHOW_DEMO_DASHBOARD_DATA,
-};
