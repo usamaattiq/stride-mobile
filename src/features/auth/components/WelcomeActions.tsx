@@ -63,12 +63,12 @@ export function WelcomeActions({
           onPress={onLogIn}
           accessibilityHint="Sign in to an existing account"
         />
-        <Button
+        {/* <Button
           label={t('auth.welcome.dashboard')}
           variant="secondary"
           onPress={onDashboard}
           accessibilityHint="Open the dashboard"
-        />
+        /> */}
       </View>
 
       <LegalLinks legalControl={legalControl} containerStyle={styles.legal} />

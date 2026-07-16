@@ -92,8 +92,6 @@
         "createMpin": "Create MPIN",
         "confirmMpin": "Confirm MPIN",
         "mismatch": "MPINs do not match",
-        "biometric": "Use biometric login",
-        "biometricPrompt": "Enable biometric login",
         "cta": "Finish signup"
       },
       "success": {
@@ -264,13 +262,25 @@
       "savedBody": "Your MPIN has been saved on this device (demo)."
     },
     "biometric": {
-      "sectionTitle": "Biometric login",
-      "title": "Use fingerprint",
-      "subtitle": "Sign in quickly with your fingerprint",
-      "enablePrompt": "Confirm it's you to enable fingerprint login",
-      "unavailable": "Fingerprint is not set up on this device",
-      "unavailableTitle": "Fingerprint unavailable",
-      "unavailableBody": "Add a fingerprint in your device settings, then try again."
+      "sectionTitle": "Biometric login"
+    }
+  },
+  "biometric": {
+    "face": {
+      "title": "Use Face ID",
+      "subtitle": "Sign in quickly with Face ID",
+      "enablePrompt": "Confirm it's you with Face ID",
+      "unavailable": "Face ID is not set up on this device",
+      "unavailableTitle": "Face ID unavailable",
+      "unavailableBody": "Set up Face ID in your device settings, then try again."
+    },
+    "fingerprint": {
+      "title": "Use biometric",
+      "subtitle": "Sign in quickly with biometric login",
+      "enablePrompt": "Confirm it's you to enable biometric login",
+      "unavailable": "Biometric login is not set up on this device",
+      "unavailableTitle": "Biometric unavailable",
+      "unavailableBody": "Add a biometric in your device settings, then try again."
     }
   },
   "driverVerification": {

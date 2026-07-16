@@ -92,8 +92,6 @@
         "createMpin": "إنشاء رمز MPIN",
         "confirmMpin": "تأكيد رمز MPIN",
         "mismatch": "رمزا MPIN غير متطابقين",
-        "biometric": "استخدام الدخول البيومتري",
-        "biometricPrompt": "تفعيل الدخول البيومتري",
         "cta": "إنهاء التسجيل"
       },
       "success": {
@@ -264,13 +262,25 @@
       "savedBody": "تم حفظ رمز MPIN على هذا الجهاز (تجريبي)."
     },
     "biometric": {
-      "sectionTitle": "الدخول البيومتري",
-      "title": "استخدام بصمة الإصبع",
-      "subtitle": "سجّل الدخول بسرعة باستخدام بصمتك",
-      "enablePrompt": "أكد هويتك لتفعيل الدخول ببصمة الإصبع",
-      "unavailable": "بصمة الإصبع غير مُعدّة على هذا الجهاز",
-      "unavailableTitle": "بصمة الإصبع غير متاحة",
-      "unavailableBody": "أضف بصمة في إعدادات جهازك ثم حاول مرة أخرى."
+      "sectionTitle": "الدخول البيومتري"
+    }
+  },
+  "biometric": {
+    "face": {
+      "title": "استخدام Face ID",
+      "subtitle": "سجّل الدخول بسرعة باستخدام Face ID",
+      "enablePrompt": "أكد هويتك باستخدام Face ID",
+      "unavailable": "Face ID غير مُعدّ على هذا الجهاز",
+      "unavailableTitle": "Face ID غير متاح",
+      "unavailableBody": "فعّل Face ID من إعدادات جهازك ثم حاول مرة أخرى."
+    },
+    "fingerprint": {
+      "title": "استخدام البيومتري",
+      "subtitle": "سجّل الدخول بسرعة باستخدام البيومتري",
+      "enablePrompt": "أكد هويتك لتفعيل الدخول البيومتري",
+      "unavailable": "الدخول البيومتري غير مُعدّ على هذا الجهاز",
+      "unavailableTitle": "البيومتري غير متاح",
+      "unavailableBody": "أضف بيومتري في إعدادات جهازك ثم حاول مرة أخرى."
     }
   },
   "driverVerification": {

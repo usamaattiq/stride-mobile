@@ -1,6 +1,5 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +10,13 @@ import { OtpInput } from '@/features/auth/components/OtpInput';
 import { i18n as appI18n } from '@/i18n';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
+import { BiometricToggleRow } from '@/shared/components/BiometricToggleRow';
 import { Button } from '@/shared/components/Button';
-import { colors, radius, spacing } from '@/theme';
+import {
+  biometricCopyMode,
+  useDeviceBiometric,
+} from '@/shared/hooks/useDeviceBiometric';
+import { colors, spacing } from '@/theme';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
 
@@ -24,6 +28,8 @@ export function SecuritySettingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation = useNavigation();
   const { user, setBiometricEnabled } = useDashboardSession();
+  const { available, kind } = useDeviceBiometric();
+  const mode = biometricCopyMode(kind);
 
   const [editing, setEditing] = React.useState(false);
   const [currentPin, setCurrentPin] = React.useState('');
@@ -31,26 +37,9 @@ export function SecuritySettingsScreen(): React.ReactElement {
   const [confirmPin, setConfirmPin] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [savedVisible, setSavedVisible] = React.useState(false);
-  const [biometricAvailable, setBiometricAvailable] = React.useState(false);
   const [biometricDialog, setBiometricDialog] = React.useState<'unavailable' | null>(
     null,
   );
-
-  React.useEffect(() => {
-    let mounted = true;
-    void (async () => {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const enrolled = hasHardware
-        ? await LocalAuthentication.isEnrolledAsync()
-        : false;
-      if (mounted) {
-        setBiometricAvailable(hasHardware && enrolled);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const resetForm = () => {
     setCurrentPin('');
@@ -79,7 +68,7 @@ export function SecuritySettingsScreen(): React.ReactElement {
   };
 
   const toggleBiometric = async (nextEnabled: boolean) => {
-    if (!biometricAvailable) {
+    if (!available) {
       setBiometricDialog('unavailable');
       return;
     }
@@ -90,7 +79,7 @@ export function SecuritySettingsScreen(): React.ReactElement {
     }
 
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: t('securitySettings.biometric.enablePrompt'),
+      promptMessage: t(`biometric.${mode}.enablePrompt`),
       cancelLabel: t('common.cancel'),
       disableDeviceFallback: false,
     });
@@ -179,34 +168,18 @@ export function SecuritySettingsScreen(): React.ReactElement {
             </View>
           )}
 
-          <Pressable
-            style={styles.biometricRow}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: user.biometricEnabled }}
-            onPress={() => void toggleBiometric(!user.biometricEnabled)}
-          >
-            <View style={styles.biometricCopy}>
-              <FontAwesome name="lock" size={16} color={colors.primary} />
-              <View style={styles.biometricText}>
-                <AppText weight="medium" style={styles.biometricLabel}>
-                  {t('securitySettings.biometric.title')}
-                </AppText>
-                <AppText style={styles.biometricSubtitle} numberOfLines={2}>
-                  {biometricAvailable
-                    ? t('securitySettings.biometric.subtitle')
-                    : t('securitySettings.biometric.unavailable')}
-                </AppText>
-              </View>
-            </View>
-            <Switch
-              value={user.biometricEnabled}
-              onValueChange={(value) => void toggleBiometric(value)}
-              disabled={!biometricAvailable && !user.biometricEnabled}
-              trackColor={{ false: colors.border.default, true: colors.primaryDisabled }}
-              thumbColor={user.biometricEnabled ? colors.primary : colors.white}
-              style={styles.biometricSwitch}
-            />
-          </Pressable>
+          <BiometricToggleRow
+            kind={kind}
+            enabled={user.biometricEnabled}
+            available={available}
+            title={t(`biometric.${mode}.title`)}
+            subtitle={
+              available
+                ? t(`biometric.${mode}.subtitle`)
+                : t(`biometric.${mode}.unavailable`)
+            }
+            onToggle={(value) => void toggleBiometric(value)}
+          />
         </AuthCard>
         <View style={styles.spacer} />
       </AuthScaffold>
@@ -225,8 +198,8 @@ export function SecuritySettingsScreen(): React.ReactElement {
       <AppDialog
         visible={biometricDialog === 'unavailable'}
         icon="exclamation"
-        title={t('securitySettings.biometric.unavailableTitle')}
-        message={t('securitySettings.biometric.unavailableBody')}
+        title={t(`biometric.${mode}.unavailableTitle`)}
+        message={t(`biometric.${mode}.unavailableBody`)}
         confirmAction={{
           label: t('common.ok'),
           onPress: () => setBiometricDialog(null),
@@ -270,40 +243,4 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
   },
-  biometricRow: {
-    minHeight: 52,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  biometricCopy: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minWidth: 0,
-  },
-  biometricText: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  biometricLabel: {
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  biometricSubtitle: {
-    fontSize: 11,
-    color: colors.text.tertiary,
-  },
-  biometricSwitch: Platform.select({
-    ios: { marginTop: -4 },
-    default: {},
-  }),
 });
