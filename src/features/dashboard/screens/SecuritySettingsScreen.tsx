@@ -1,31 +1,24 @@
 import React from 'react';
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  View,
-} from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useTranslation } from 'react-i18next';
 
+import { AuthCard } from '@/features/auth/components/AuthCard';
+import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { OtpInput } from '@/features/auth/components/OtpInput';
 import { i18n as appI18n } from '@/i18n';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
-import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
 
 /**
- * Local-only MPIN + biometric security UI (matches bt-app SecuritySettings shape).
- * Wire to API when auth backend is available.
+ * Local-only MPIN + biometric security UI.
+ * Same AuthScaffold shell as personal verification / driver license.
  */
 export function SecuritySettingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -108,26 +101,18 @@ export function SecuritySettingsScreen(): React.ReactElement {
   };
 
   return (
-    <View style={styles.root}>
-      <FocusAwareStatusBar style="dark" />
-      <AppTopBar
-        left="back"
+    <>
+      <AuthScaffold
+        onBack={() => navigation.goBack()}
         title={t('securitySettings.title')}
         subtitle={t('securitySettings.subtitle')}
-        onBackPress={() => navigation.goBack()}
-        style={styles.topBar}
-      />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+        showLegalFooter={false}
       >
-        <AppText weight="bold" style={styles.sectionHeading}>
-          {t('securitySettings.mpin.sectionTitle')}
-        </AppText>
+        <AuthCard>
+          <AppText weight="semibold" style={styles.sectionTitle}>
+            {t('securitySettings.mpin.sectionTitle')}
+          </AppText>
 
-        <View style={styles.card}>
           {!editing ? (
             <>
               <AppText style={styles.cardBody}>{t('securitySettings.mpin.summary')}</AppText>
@@ -141,31 +126,37 @@ export function SecuritySettingsScreen(): React.ReactElement {
             </>
           ) : (
             <View style={styles.form}>
-              <AppText weight="medium" style={styles.fieldLabel}>
-                {t('securitySettings.mpin.currentLabel')}
-              </AppText>
-              <OtpInput
-                length={4}
-                value={currentPin}
-                onChange={setCurrentPin}
-                secureTextEntry
-                autoFocus
-              />
+              <View style={styles.section}>
+                <AppText weight="semibold" style={styles.fieldLabel}>
+                  {t('securitySettings.mpin.currentLabel')}
+                </AppText>
+                <OtpInput
+                  length={4}
+                  value={currentPin}
+                  onChange={setCurrentPin}
+                  secureTextEntry
+                  autoFocus
+                />
+              </View>
 
-              <AppText weight="medium" style={styles.fieldLabel}>
-                {t('securitySettings.mpin.newLabel')}
-              </AppText>
-              <OtpInput length={4} value={pin} onChange={setPin} secureTextEntry />
+              <View style={styles.section}>
+                <AppText weight="semibold" style={styles.fieldLabel}>
+                  {t('securitySettings.mpin.newLabel')}
+                </AppText>
+                <OtpInput length={4} value={pin} onChange={setPin} secureTextEntry />
+              </View>
 
-              <AppText weight="medium" style={styles.fieldLabel}>
-                {t('securitySettings.mpin.confirmLabel')}
-              </AppText>
-              <OtpInput
-                length={4}
-                value={confirmPin}
-                onChange={setConfirmPin}
-                secureTextEntry
-              />
+              <View style={styles.section}>
+                <AppText weight="semibold" style={styles.fieldLabel}>
+                  {t('securitySettings.mpin.confirmLabel')}
+                </AppText>
+                <OtpInput
+                  length={4}
+                  value={confirmPin}
+                  onChange={setConfirmPin}
+                  secureTextEntry
+                />
+              </View>
 
               {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
@@ -187,41 +178,38 @@ export function SecuritySettingsScreen(): React.ReactElement {
               </View>
             </View>
           )}
-        </View>
 
-        <AppText weight="bold" style={styles.sectionHeading}>
-          {t('securitySettings.biometric.sectionTitle')}
-        </AppText>
-
-        <Pressable
-          style={styles.biometricRow}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: user.biometricEnabled }}
-          onPress={() => void toggleBiometric(!user.biometricEnabled)}
-        >
-          <View style={styles.biometricIconWrap}>
-            <FontAwesome5 name="fingerprint" size={18} color={colors.primary} solid />
-          </View>
-          <View style={styles.biometricCopy}>
-            <AppText weight="semibold" style={styles.biometricTitle}>
-              {t('securitySettings.biometric.title')}
-            </AppText>
-            <AppText style={styles.biometricSubtitle} numberOfLines={2}>
-              {biometricAvailable
-                ? t('securitySettings.biometric.subtitle')
-                : t('securitySettings.biometric.unavailable')}
-            </AppText>
-          </View>
-          <Switch
-            value={user.biometricEnabled}
-            onValueChange={(value) => void toggleBiometric(value)}
-            disabled={!biometricAvailable && !user.biometricEnabled}
-            trackColor={{ false: colors.border.default, true: colors.primaryDisabled }}
-            thumbColor={user.biometricEnabled ? colors.primary : colors.white}
-            style={styles.biometricSwitch}
-          />
-        </Pressable>
-      </ScrollView>
+          <Pressable
+            style={styles.biometricRow}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: user.biometricEnabled }}
+            onPress={() => void toggleBiometric(!user.biometricEnabled)}
+          >
+            <View style={styles.biometricCopy}>
+              <FontAwesome name="lock" size={16} color={colors.primary} />
+              <View style={styles.biometricText}>
+                <AppText weight="medium" style={styles.biometricLabel}>
+                  {t('securitySettings.biometric.title')}
+                </AppText>
+                <AppText style={styles.biometricSubtitle} numberOfLines={2}>
+                  {biometricAvailable
+                    ? t('securitySettings.biometric.subtitle')
+                    : t('securitySettings.biometric.unavailable')}
+                </AppText>
+              </View>
+            </View>
+            <Switch
+              value={user.biometricEnabled}
+              onValueChange={(value) => void toggleBiometric(value)}
+              disabled={!biometricAvailable && !user.biometricEnabled}
+              trackColor={{ false: colors.border.default, true: colors.primaryDisabled }}
+              thumbColor={user.biometricEnabled ? colors.primary : colors.white}
+              style={styles.biometricSwitch}
+            />
+          </Pressable>
+        </AuthCard>
+        <View style={styles.spacer} />
+      </AuthScaffold>
 
       <AppDialog
         visible={savedVisible}
@@ -244,36 +232,15 @@ export function SecuritySettingsScreen(): React.ReactElement {
           onPress: () => setBiometricDialog(null),
         }}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background.subtle,
-  },
-  topBar: {
-    backgroundColor: colors.white,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border.default,
-  },
-  content: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  sectionHeading: {
+  spacer: { height: spacing.md },
+  sectionTitle: {
     fontSize: 14,
     color: colors.text.primary,
-    marginTop: spacing.xs,
-  },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    padding: spacing.md,
-    gap: spacing.md,
   },
   cardBody: {
     fontSize: 13,
@@ -283,10 +250,12 @@ const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
   },
+  section: {
+    gap: spacing.sm,
+  },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.text.primary,
-    marginTop: spacing.xs,
   },
   error: {
     fontSize: 12,
@@ -295,37 +264,37 @@ const styles = StyleSheet.create({
   formActions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   formButton: {
     flex: 1,
     minHeight: 48,
   },
   biometricRow: {
+    minHeight: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  biometricCopy: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    minWidth: 0,
   },
-  biometricIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  biometricCopy: {
+  biometricText: {
     flex: 1,
     minWidth: 0,
     gap: 2,
   },
-  biometricTitle: {
+  biometricLabel: {
     fontSize: 14,
     color: colors.text.primary,
   },
@@ -334,7 +303,7 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   biometricSwitch: Platform.select({
-    ios: { marginTop: -2 },
+    ios: { marginTop: -4 },
     default: {},
   }),
 });
