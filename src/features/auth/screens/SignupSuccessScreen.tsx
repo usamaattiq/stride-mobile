@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
@@ -92,6 +93,8 @@ export function SignupSuccessScreen({
         style={styles.bgGradient}
         pointerEvents="none"
       />
+
+      <AppTopBar left="none" showLanguageSwitcher includeSafeArea={false} />
 
       <View style={styles.confettiLayer} pointerEvents="none">
         {CONFETTI.map((piece, index) => {
