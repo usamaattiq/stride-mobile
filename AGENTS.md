@@ -43,7 +43,7 @@ src/
     locales/{en,ar}.json    # flat translation bundles, namespace "translation"
     index.ts                # initializeI18n() — call once, awaited by App.tsx before render
   shared/
-    components/            # AppText, Button, AppTopBar, AppBottomSheet, BrandLogo, language-switcher/, legal/
+    components/            # AppText, Button, AppTopBar, AppBottomSheet, BrandLogo, KeyboardDoneBar, language-switcher/, legal/
     hooks/useLegalDocumentSheets.tsx
   theme/                   # colors.ts, spacing.ts, radius.ts, typography.ts, index.ts (barrel + `theme` object)
   assets/fonts/            # Outfit-*.ttf, Cairo-*.ttf
@@ -116,3 +116,10 @@ navigate from the menu — see `.cursor/rules/settings-nested-screens.mdc`.
   confirm the preferred stack rather than assuming Jest/ESLint defaults.
 - Native `ios/` and `android/` folders are gitignored (not prebuilt) — this is a managed Expo
   workflow app; don't hand-edit native projects, use `expo prebuild`/config plugins instead.
+- `number-pad`/`phone-pad` keyboards have no return key on iOS, so there's no built-in way to
+  dismiss them. Pair every such `TextInput` with `@/shared/components/KeyboardDoneBar` (renders
+  `null` on Android — not needed there) via `inputAccessoryViewID` + a matching `nativeID`
+  (use `React.useId()`). Set `disabled` to the exact same condition that enables the screen's own
+  action button (not just "non-empty"), and pass `onDone` as that same action — Done should submit/
+  advance exactly like pressing the CTA, not just dismiss the keyboard. See `PhoneInput` and
+  `IdentityDocumentVerification` for the pattern.

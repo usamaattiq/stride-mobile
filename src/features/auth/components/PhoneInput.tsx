@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
+import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
@@ -28,6 +29,8 @@ export type PhoneInputProps = {
   country: CountryOption;
   onSelectCountry: (country: CountryOption) => void;
   placeholder?: string;
+  /** Called when the iOS keyboard's Done button is pressed with a valid (10-digit) number. */
+  onDone?: () => void;
 };
 
 export function PhoneInput({
@@ -36,12 +39,14 @@ export function PhoneInput({
   country,
   onSelectCountry,
   placeholder = '300 1234567',
+  onDone,
 }: PhoneInputProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [pickerVisible, setPickerVisible] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const handleFocus = useKeyboardFocusScroll();
+  const accessoryId = React.useId();
 
   const displayValue = (() => {
     if (!value) return '';
@@ -90,8 +95,10 @@ export function PhoneInput({
         placeholderTextColor={colors.text.tertiary}
         keyboardType="phone-pad"
         onFocus={handleFocus}
+        inputAccessoryViewID={accessoryId}
         style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
       />
+      <KeyboardDoneBar nativeID={accessoryId} disabled={value.length < 10} onDone={onDone} />
 
       <AppBottomSheet
         visible={pickerVisible}

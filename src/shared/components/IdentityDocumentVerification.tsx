@@ -11,6 +11,7 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { DocumentUploadField } from '@/shared/components/DocumentUploadField';
+import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
@@ -61,6 +62,8 @@ export function IdentityDocumentVerification({
   minDocumentNumberLength = 5,
 }: IdentityDocumentVerificationProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
+  const accessoryId = React.useId();
+  const showDoneBar = keyboardType !== 'default';
   const canSubmit =
     documentNumber.trim().length >= minDocumentNumberLength &&
     Boolean(frontUri) &&
@@ -79,11 +82,15 @@ export function IdentityDocumentVerification({
           placeholder={documentNumberPlaceholder}
           placeholderTextColor={colors.text.tertiary}
           keyboardType={keyboardType}
+          inputAccessoryViewID={showDoneBar ? accessoryId : undefined}
           style={[
             styles.input,
             { fontFamily: getFontFamily(currentLanguage, 'regular') },
           ]}
         />
+        {showDoneBar ? (
+          <KeyboardDoneBar nativeID={accessoryId} disabled={!canSubmit} onDone={onSubmit} />
+        ) : null}
       </View>
 
       <DocumentUploadField

@@ -305,7 +305,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "ok": "OK"
+    "ok": "OK",
+    "done": "Done"
   },
   "legal": {
     "common": {
