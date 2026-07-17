@@ -99,6 +99,12 @@ local state, not via separate stack pushes (see "Navigation" below).
   renders RTL without checking this first if you're asked to add RTL support.
 - New user-facing strings must go in **both** locale files, never hardcoded in components.
 
+## Settings nested screens
+
+Screens opened from Settings (Security, Driver verification, General information, …) use
+**`AuthScaffold` (red header) + `AuthCard`**, not `AppTopBar`. Register on `SettingsStackNavigator`,
+navigate from the menu — see `.cursor/rules/settings-nested-screens.mdc`.
+
 ## Conventions / gotchas
 
 - This codebase is being ported from/kept in sync with a sibling project referred to as **bt-app**

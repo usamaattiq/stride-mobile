@@ -1,0 +1,19 @@
+---
+description: Settings nested screens UI pattern (AuthScaffold red header)
+globs: src/features/dashboard/**/*
+alwaysApply: false
+---
+
+# Settings nested screens UI
+
+When adding screens opened from **Settings** (menu items that push onto `SettingsStackNavigator`), follow this shell — same as Security, Driver verification, and General information:
+
+1. **`AuthScaffold`** — red top header, back chevron, title + subtitle, `showLegalFooter={false}`
+2. **Reuse shared forms when they exist** — e.g. General information uses `PersonalInformationForm` (same as signup personal step); only change heading / CTA props
+3. **`AuthCard`** — white form card (often inside the shared form)
+4. **Primary CTA** — `Button` at the bottom of the card (e.g. Save changes / Submit)
+5. **No `AppTopBar`** for these flows — do not use the flat white Settings-style top bar
+6. **Register** the route in `settingsTypes.ts` + `SettingsStackNavigator.tsx`, navigate from `SettingsHomeScreen` (do not use a coming-soon `AppDialog` unless the feature is intentionally deferred)
+7. **i18n** — add keys in both `en.json` and `ar.json`
+
+Settings **home** itself stays different: red `SettingsProfileHeader` + menu cards (not AuthScaffold).
