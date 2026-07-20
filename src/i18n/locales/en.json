@@ -197,8 +197,7 @@
     "account": {
       "generalInfo": {
         "title": "General information",
-        "subtitle": "Name, phone, and profile details",
-        "comingSoon": "Profile editing will be available once the account API is connected."
+        "subtitle": "Name, phone, and profile details"
       },
       "becomeDriver": {
         "title": "Become a driver",
@@ -296,9 +295,18 @@
     "successTitle": "You're a driver",
     "successBody": "Your license details were saved on this device (demo). You can now offer rides."
   },
+  "generalInformation": {
+    "title": "General information",
+    "subtitle": "Update your personal details",
+    "mobileLockedHint": "Mobile number cannot be changed",
+    "saveCta": "Save changes",
+    "savedTitle": "Profile updated",
+    "savedBody": "Your details were saved on this device (demo)."
+  },
   "common": {
     "cancel": "Cancel",
-    "ok": "OK"
+    "ok": "OK",
+    "done": "Done"
   },
   "legal": {
     "common": {

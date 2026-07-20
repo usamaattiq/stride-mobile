@@ -28,7 +28,7 @@ import {
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'passenger' | 'general' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'logout' | 'photo' | null;
 
 const APP_VERSION = '1.0.0';
 
@@ -88,7 +88,7 @@ export function SettingsHomeScreen(): React.ReactElement {
         navigation.navigate('SecuritySettings');
         break;
       case 'general-info':
-        setDialog('general');
+        navigation.navigate('GeneralInformation');
         break;
       case 'become-driver':
         navigation.navigate('DriverVerification');
@@ -177,17 +177,6 @@ export function SettingsHomeScreen(): React.ReactElement {
             setRole('passenger');
             setDialog(null);
           },
-        }}
-      />
-
-      <AppDialog
-        visible={dialog === 'general'}
-        icon="id-card"
-        title={t('profile.account.generalInfo.title')}
-        message={t('profile.account.generalInfo.comingSoon')}
-        confirmAction={{
-          label: t('common.ok'),
-          onPress: () => setDialog(null),
         }}
       />
 

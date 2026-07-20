@@ -37,6 +37,7 @@ export function LoginPhoneScreen({
           country={country}
           onSelectCountry={onChangeCountry}
           placeholder={t('auth.signup.phone.placeholder')}
+          onDone={onContinue}
         />
         <Button
           label={t('auth.login.phone.cta')}

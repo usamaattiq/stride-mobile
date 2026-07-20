@@ -39,7 +39,7 @@ export function SettingsProfileHeader({
               </AppText>
             </View>
           )}
-          <Pressable
+          {/* <Pressable
             style={styles.editButton}
             accessibilityRole="button"
             accessibilityLabel={t('profile.photo.editAccessibility')}
@@ -47,7 +47,7 @@ export function SettingsProfileHeader({
             hitSlop={8}
           >
             <FontAwesome name="pencil" size={11} color={colors.white} />
-          </Pressable>
+          </Pressable> */}
         </View>
 
         <View style={styles.copy}>

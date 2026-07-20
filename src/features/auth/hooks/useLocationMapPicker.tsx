@@ -9,6 +9,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { WebView } from 'react-native-webview';
+import type { WebViewMessageEvent } from 'react-native-webview';
 import * as Location from 'expo-location';
 
 import { i18n as appI18n } from '@/i18n';
@@ -66,8 +67,11 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   const [mapSearchResults, setMapSearchResults] = useState<MapSearchResult[]>([]);
   const [mapSearchLoading, setMapSearchLoading] = useState(false);
   const [mapSearchShowEmpty, setMapSearchShowEmpty] = useState(false);
-  const [mapRegion, setMapRegion] = useState<MapRegion>(DEFAULT_REGION);
   const [mapPin, setMapPin] = useState<{ latitude: number; longitude: number } | null>(null);
+  // Seeds the WebView HTML only when the picker opens — must NOT track live pan
+  // updates (mapPin), otherwise every pan reloads the whole WebView instead of
+  // just panning the already-loaded map.
+  const [mapHtmlSeed, setMapHtmlSeed] = useState<MapRegion>(DEFAULT_REGION);
   const [infoDialog, setInfoDialog] = useState<{ title: string; body: string } | null>(null);
 
   const pinMapToLocation = useCallback((latitude: number, longitude: number, address?: string) => {
@@ -118,11 +122,12 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       setMapSearchShowEmpty(false);
 
       if (initial) {
-        setMapPin({ latitude: initial.latitude, longitude: initial.longitude });
-        setMapRegion({ latitude: initial.latitude, longitude: initial.longitude });
+        const seed = { latitude: initial.latitude, longitude: initial.longitude };
+        setMapPin(seed);
+        setMapHtmlSeed(seed);
       } else {
         setMapPin(null);
-        setMapRegion(DEFAULT_REGION);
+        setMapHtmlSeed(DEFAULT_REGION);
       }
 
       setMapVisible(true);
@@ -185,6 +190,20 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     closeMapPicker();
   }, [closeMapPicker, mapPin, t]);
 
+  const handleMapMessage = useCallback((event: WebViewMessageEvent) => {
+    try {
+      const payload = JSON.parse(event.nativeEvent.data) as {
+        latitude?: number;
+        longitude?: number;
+      };
+      if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
+        setMapPin({ latitude: payload.latitude, longitude: payload.longitude });
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
   const handleSelectMapSearchResult = useCallback(
     (result: MapSearchResult) => {
       skipMapSearchRef.current = true;
@@ -216,12 +235,8 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   }, [mapSearchQuery, mapVisible, runMapSearch]);
 
   const mapPickerHtml = useMemo(
-    () =>
-      buildSignupMapPickerHtml(
-        mapsApiKey,
-        mapPin ?? { latitude: mapRegion.latitude, longitude: mapRegion.longitude },
-      ),
-    [mapPin, mapRegion.latitude, mapRegion.longitude, mapsApiKey],
+    () => buildSignupMapPickerHtml(mapsApiKey, mapHtmlSeed),
+    [mapHtmlSeed, mapsApiKey],
   );
 
   const searchFontFamily = getFontFamily(currentLanguage, 'regular');
@@ -309,20 +324,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
             style={styles.map}
             originWhitelist={['*']}
             source={{ html: mapPickerHtml }}
-            onMessage={(event) => {
-              try {
-                const payload = JSON.parse(event.nativeEvent.data) as {
-                  latitude?: number;
-                  longitude?: number;
-                };
-                if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
-                  setMapPin({ latitude: payload.latitude, longitude: payload.longitude });
-                  setMapRegion({ latitude: payload.latitude, longitude: payload.longitude });
-                }
-              } catch {
-                // no-op
-              }
-            }}
+            onMessage={handleMapMessage}
           />
         ) : (
           <View style={styles.mapFallback}>
