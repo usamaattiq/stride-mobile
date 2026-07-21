@@ -16,6 +16,7 @@ type VehicleContextValue = {
   patchDraft: (partial: Partial<VehicleDraft>) => void;
   clearDraft: () => void;
   saveDraftVehicle: (partial?: Partial<VehicleDraft>) => boolean;
+  removeVehicle: (vehicleId: string) => void;
   getVehicleById: (vehicleId: string) => Vehicle | undefined;
 };
 
@@ -83,6 +84,11 @@ export function VehicleProvider({
     return true;
   }, [clearDraft, draft]);
 
+  const removeVehicle = React.useCallback((vehicleId: string) => {
+    setVehicles((current) => current.filter((item) => item.id !== vehicleId));
+    setDraft((current) => (current.id === vehicleId ? createEmptyVehicleDraft() : current));
+  }, []);
+
   const value = React.useMemo(
     () => ({
       vehicles,
@@ -92,6 +98,7 @@ export function VehicleProvider({
       patchDraft,
       clearDraft,
       saveDraftVehicle,
+      removeVehicle,
       getVehicleById,
     }),
     [
@@ -102,6 +109,7 @@ export function VehicleProvider({
       patchDraft,
       clearDraft,
       saveDraftVehicle,
+      removeVehicle,
       getVehicleById,
     ],
   );

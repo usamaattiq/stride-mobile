@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { AppDialog } from '@/shared/components/AppDialog';
 import { Button } from '@/shared/components/Button';
 import { spacing } from '@/theme';
 
@@ -21,7 +22,8 @@ export function VehicleListScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<HomeStackParamList, 'VehicleList'>>();
-  const { vehicles, beginAddVehicle, beginEditVehicle } = useVehicles();
+  const { vehicles, beginAddVehicle, beginEditVehicle, removeVehicle } = useVehicles();
+  const [vehicleToRemove, setVehicleToRemove] = React.useState<Vehicle | null>(null);
 
   const openAddFlow = React.useCallback(() => {
     beginAddVehicle();
@@ -36,6 +38,14 @@ export function VehicleListScreen(): React.ReactElement {
     },
     [beginEditVehicle, navigation],
   );
+
+  const handleConfirmRemove = React.useCallback(() => {
+    if (!vehicleToRemove) {
+      return;
+    }
+    removeVehicle(vehicleToRemove.id);
+    setVehicleToRemove(null);
+  }, [removeVehicle, vehicleToRemove]);
 
   return (
     <AuthScaffold
@@ -53,11 +63,31 @@ export function VehicleListScreen(): React.ReactElement {
               key={vehicle.id}
               vehicle={vehicle}
               onPress={() => openEditFlow(vehicle)}
+              onRemovePress={() => setVehicleToRemove(vehicle)}
             />
           ))}
           <Button label={t('vehicles.addVehicle')} onPress={openAddFlow} />
         </View>
       )}
+
+      <AppDialog
+        visible={vehicleToRemove !== null}
+        icon="trash"
+        title={t('vehicles.remove.title')}
+        message={
+          vehicleToRemove
+            ? t('vehicles.remove.confirm', { title: vehicleToRemove.title })
+            : undefined
+        }
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setVehicleToRemove(null),
+        }}
+        confirmAction={{
+          label: t('vehicles.remove.confirmAction'),
+          onPress: handleConfirmRemove,
+        }}
+      />
     </AuthScaffold>
   );
 }

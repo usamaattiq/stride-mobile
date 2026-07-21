@@ -298,6 +298,12 @@
     "classPlaceholder": "اختر فئة المركبة",
     "classPickerTitle": "اختر فئة المركبة",
     "seatsCount": "{{count}} مقاعد",
+    "remove": {
+      "title": "إزالة المركبة",
+      "confirm": "هل أنت متأكد أنك تريد إزالة \"{{title}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "confirmAction": "إزالة",
+      "a11y": "إزالة {{title}}"
+    },
     "successTitle": "تم حفظ المركبة",
     "successBody": "تم حفظ تفاصيل مركبتك على هذا الجهاز (تجريبي).",
     "fields": {

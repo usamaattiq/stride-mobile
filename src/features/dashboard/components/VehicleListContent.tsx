@@ -1,6 +1,7 @@
 import React from 'react';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -46,43 +47,60 @@ export function DriverVehicleBanner({
 type VehicleListItemProps = {
   vehicle: Vehicle;
   onPress: () => void;
+  onRemovePress: () => void;
 };
 
 export function VehicleListItem({
   vehicle,
   onPress,
+  onRemovePress,
 }: VehicleListItemProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const classLabel = t(
     VEHICLE_CLASS_OPTIONS.find((item) => item.id === vehicle.vehicleClass)?.labelKey ??
       'vehicles.classPlaceholder',
   );
+  const thumbnailUri = vehicle.photoUris[0];
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={styles.item}
-      accessibilityRole="button"
-      accessibilityLabel={vehicle.title}
-    >
-      <View style={styles.itemIcon}>
-        <FontAwesome5 name="car" size={18} color={colors.primary} />
-      </View>
-      <View style={styles.itemCopy}>
-        <AppText weight="semibold" style={styles.itemTitle} numberOfLines={1}>
-          {vehicle.title}
-        </AppText>
-        <AppText style={styles.itemMeta} numberOfLines={1}>
-          {[vehicle.plateNumber, classLabel, t('vehicles.seatsCount', { count: vehicle.totalSeats })]
-            .filter(Boolean)
-            .join(' · ')}
-        </AppText>
-        <AppText style={styles.itemAc}>
-          {vehicle.hasAc ? t('vehicles.fields.acOn') : t('vehicles.fields.acOff')}
-        </AppText>
-      </View>
-      <FontAwesome5 name="chevron-right" size={12} color={colors.text.tertiary} />
-    </Pressable>
+    <View style={styles.item}>
+      <Pressable
+        onPress={onPress}
+        style={styles.itemBody}
+        accessibilityRole="button"
+        accessibilityLabel={vehicle.title}
+      >
+        <View style={styles.itemThumbnail}>
+          {thumbnailUri ? (
+            <Image source={{ uri: thumbnailUri }} style={styles.itemThumbnailImage} contentFit="cover" />
+          ) : (
+            <FontAwesome name="picture-o" size={18} color={colors.text.tertiary} />
+          )}
+        </View>
+        <View style={styles.itemCopy}>
+          <AppText weight="semibold" style={styles.itemTitle} numberOfLines={1}>
+            {vehicle.title}
+          </AppText>
+          <AppText style={styles.itemMeta} numberOfLines={1}>
+            {[vehicle.plateNumber, classLabel, t('vehicles.seatsCount', { count: vehicle.totalSeats })]
+              .filter(Boolean)
+              .join(' · ')}
+          </AppText>
+          <AppText style={styles.itemAc}>
+            {vehicle.hasAc ? t('vehicles.fields.acOn') : t('vehicles.fields.acOff')}
+          </AppText>
+        </View>
+      </Pressable>
+      <Pressable
+        onPress={onRemovePress}
+        style={styles.removeButton}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('vehicles.remove.a11y', { title: vehicle.title })}
+      >
+        <FontAwesome name="times" size={14} color={colors.text.tertiary} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -139,13 +157,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     padding: spacing.md,
   },
-  itemIcon: {
-    width: 42,
-    height: 42,
+  itemBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  itemThumbnail: {
+    width: 52,
+    height: 52,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.subtle,
+  },
+  itemThumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   itemCopy: {
     flex: 1,
@@ -163,6 +195,14 @@ const styles = StyleSheet.create({
   itemAc: {
     fontSize: 11,
     color: colors.text.tertiary,
+  },
+  removeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.subtle,
   },
   empty: {
     flexGrow: 1,
