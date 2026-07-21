@@ -15,6 +15,7 @@ import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/Trip
 import { useTrips } from '@/features/dashboard/context/TripContext';
 import { useVehicles } from '@/features/dashboard/context/VehicleContext';
 import type { HomeStackParamList } from '@/features/dashboard/navigation/homeTypes';
+import { exitTripCreationToHome } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { AppDialog } from '@/shared/components/AppDialog';
 
@@ -130,7 +131,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const handleSuccessDismiss = () => {
     setSuccessVisible(false);
     isLeavingRef.current = true;
-    navigation.navigate('HomeMain');
+    exitTripCreationToHome(navigation);
   };
 
   const handleAddVehicle = () => {

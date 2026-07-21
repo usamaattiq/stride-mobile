@@ -10,6 +10,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 
 import { VehiclePhotosForm } from '../components/VehiclePhotosForm';
 import { useVehicles } from '../context/VehicleContext';
+import { completeVehicleFlow } from '../navigation/homeStackNavigation';
 import type { HomeStackParamList, VehicleFlowReturnTo } from '../navigation/homeTypes';
 import type { Vehicle } from '../types/vehicle.types';
 
@@ -18,11 +19,7 @@ function navigateAfterVehicleSave(
   returnTo: VehicleFlowReturnTo,
   savedVehicle: Vehicle,
 ): void {
-  if (returnTo === 'TripCreation') {
-    navigation.navigate('TripCreation', { selectVehicleId: savedVehicle.id });
-    return;
-  }
-  navigation.navigate('VehicleList');
+  completeVehicleFlow(navigation, returnTo, { selectVehicleId: savedVehicle.id });
 }
 
 export function VehiclePhotosScreen(): React.ReactElement {
