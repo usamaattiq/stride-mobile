@@ -48,7 +48,6 @@ export function SignupDocumentsScreen({
         onChangeBack={onChangeNicBack}
         onSubmit={onContinue}
         onSkip={onSkip}
-        keyboardType="number-pad"
       />
     </AuthCard>
   );

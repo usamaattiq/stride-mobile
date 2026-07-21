@@ -1,0 +1,242 @@
+import React from 'react';
+import { BackHandler, Keyboard } from 'react-native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+
+import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetailsStep';
+import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
+import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
+import { TripScheduleStep } from '@/features/dashboard/components/trip/TripScheduleStep';
+import { TripVehicleModeStep } from '@/features/dashboard/components/trip/TripVehicleModeStep';
+import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/TripVehicleSelectStep';
+import { useTrips } from '@/features/dashboard/context/TripContext';
+import { useVehicles } from '@/features/dashboard/context/VehicleContext';
+import type { HomeStackParamList } from '@/features/dashboard/navigation/homeTypes';
+import { exitTripCreationToHome } from '@/features/dashboard/navigation/homeStackNavigation';
+import { i18n as appI18n } from '@/i18n';
+import { AppDialog } from '@/shared/components/AppDialog';
+
+type TripCreationStep =
+  | 'vehicle'
+  | 'vehicleMode'
+  | 'details'
+  | 'listing'
+  | 'schedule'
+  | 'preview';
+
+const STEP_ORDER: TripCreationStep[] = [
+  'vehicle',
+  'vehicleMode',
+  'details',
+  'listing',
+  'schedule',
+  'preview',
+];
+
+const TOTAL_STEPS = STEP_ORDER.length;
+
+const STEP_PROGRESS: Record<TripCreationStep, number> = {
+  vehicle: 1,
+  vehicleMode: 2,
+  details: 3,
+  listing: 4,
+  schedule: 5,
+  preview: 6,
+};
+
+type Nav = NativeStackNavigationProp<HomeStackParamList, 'TripCreation'>;
+
+export function TripCreationFlowScreen(): React.ReactElement {
+  const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<HomeStackParamList, 'TripCreation'>>();
+  const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { draft, patchDraft, publishDraft } = useTrips();
+  const { vehicles, getVehicleById, beginAddVehicle } = useVehicles();
+  const [step, setStep] = React.useState<TripCreationStep>('vehicle');
+  const [successVisible, setSuccessVisible] = React.useState(false);
+  const isLeavingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const selectVehicleId = route.params?.selectVehicleId;
+    if (!selectVehicleId) {
+      return;
+    }
+    patchDraft({ vehicleId: selectVehicleId });
+    setStep('vehicle');
+    navigation.setParams({ selectVehicleId: undefined });
+  }, [navigation, patchDraft, route.params?.selectVehicleId]);
+
+  const leaveFlow = React.useCallback(() => {
+    Keyboard.dismiss();
+    navigation.goBack();
+  }, [navigation]);
+
+  const goToStep = React.useCallback((next: TripCreationStep) => {
+    Keyboard.dismiss();
+    setStep(next);
+  }, []);
+
+  const goToNextStep = React.useCallback(() => {
+    const index = STEP_ORDER.indexOf(step);
+    if (index < STEP_ORDER.length - 1) {
+      goToStep(STEP_ORDER[index + 1]!);
+    }
+  }, [goToStep, step]);
+
+  const goToPreviousStep = React.useCallback(() => {
+    const index = STEP_ORDER.indexOf(step);
+    if (index > 0) {
+      goToStep(STEP_ORDER[index - 1]!);
+      return true;
+    }
+    return false;
+  }, [goToStep, step]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onHardwareBack = () => {
+        if (goToPreviousStep()) {
+          return true;
+        }
+        leaveFlow();
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+      return () => sub.remove();
+    }, [goToPreviousStep, leaveFlow]),
+  );
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (step === 'vehicle' || isLeavingRef.current) {
+        return;
+      }
+      event.preventDefault();
+      goToPreviousStep();
+    });
+    return unsubscribe;
+  }, [navigation, step, goToPreviousStep]);
+
+  const handlePublish = () => {
+    const trip = publishDraft();
+    if (!trip) {
+      return;
+    }
+    setSuccessVisible(true);
+  };
+
+  const handleSuccessDismiss = () => {
+    setSuccessVisible(false);
+    isLeavingRef.current = true;
+    exitTripCreationToHome(navigation);
+  };
+
+  const handleAddVehicle = () => {
+    beginAddVehicle();
+    navigation.navigate('VehicleDetails', { mode: 'add', returnTo: 'TripCreation' });
+  };
+
+  const header = React.useMemo(() => {
+    switch (step) {
+      case 'vehicle':
+        return {
+          title: t('trips.create.vehicleTitle'),
+          subtitle: t('trips.create.vehicleSubtitle'),
+        };
+      case 'vehicleMode':
+        return {
+          title: t('trips.create.vehicleModeTitle'),
+          subtitle: t('trips.create.vehicleModeSubtitle'),
+        };
+      case 'details':
+        return {
+          title: t('trips.create.detailsTitle'),
+          subtitle: t('trips.create.detailsSubtitle'),
+        };
+      case 'listing':
+        return {
+          title: t('trips.create.listingTitle'),
+          subtitle: t('trips.create.listingSubtitle'),
+        };
+      case 'schedule':
+        return {
+          title: t('trips.create.scheduleTitle'),
+          subtitle: t('trips.create.scheduleSubtitle'),
+        };
+      case 'preview':
+        return {
+          title: t('trips.create.previewTitle'),
+          subtitle: t('trips.create.previewSubtitle'),
+        };
+      default:
+        return { title: t('trips.create.flowTitle'), subtitle: undefined };
+    }
+  }, [step, t]);
+
+  const selectedVehicle = draft.vehicleId ? getVehicleById(draft.vehicleId) : undefined;
+
+  return (
+    <>
+      <AuthScaffold
+        onBack={() => {
+          if (!goToPreviousStep()) {
+            leaveFlow();
+          }
+        }}
+        title={header.title}
+        subtitle={header.subtitle}
+        showLegalFooter={false}
+        stepCount={TOTAL_STEPS}
+        currentStep={STEP_PROGRESS[step]}
+      >
+        {step === 'vehicle' ? (
+          <TripVehicleSelectStep
+            vehicles={vehicles}
+            selectedVehicleId={draft.vehicleId}
+            onSelectVehicle={(vehicleId) => patchDraft({ vehicleId })}
+            onContinue={goToNextStep}
+            onAddVehicle={handleAddVehicle}
+          />
+        ) : null}
+
+        {step === 'vehicleMode' ? (
+          <TripVehicleModeStep
+            value={draft.vehicleMode}
+            onChange={(vehicleMode) => patchDraft({ vehicleMode })}
+            onContinue={goToNextStep}
+          />
+        ) : null}
+
+        {step === 'details' ? (
+          <TripDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+        ) : null}
+
+        {step === 'listing' ? (
+          <TripRfqAuctionStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+        ) : null}
+
+        {step === 'schedule' ? (
+          <TripScheduleStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+        ) : null}
+
+        {step === 'preview' ? (
+          <TripPreviewStep draft={draft} vehicle={selectedVehicle} onPublish={handlePublish} />
+        ) : null}
+      </AuthScaffold>
+
+      <AppDialog
+        visible={successVisible}
+        icon="check"
+        title={t('trips.create.successTitle')}
+        message={t('trips.create.successBody')}
+        confirmAction={{
+          label: t('common.ok'),
+          onPress: handleSuccessDismiss,
+        }}
+      />
+    </>
+  );
+}

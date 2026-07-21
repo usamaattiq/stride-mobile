@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/splash-logo.png"
@@ -40,6 +41,21 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
+        }
+      ],
+      [
+        "@react-native-community/datetimepicker",
+        {
+          "android": {
+            "datePicker": {
+              "colorAccent": { "light": "#B42318" },
+              "colorControlActivated": { "light": "#B42318" }
+            },
+            "timePicker": {
+              "numbersSelectorColor": { "light": "#B42318" },
+              "headerBackground": { "light": "#B42318" }
+            }
+          }
         }
       ],
       "expo-secure-store"
