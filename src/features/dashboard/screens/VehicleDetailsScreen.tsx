@@ -40,7 +40,9 @@ export function VehicleDetailsScreen(): React.ReactElement {
       return;
     }
     setSeatsError(undefined);
-    navigation.navigate('VehiclePhotos');
+    navigation.navigate('VehiclePhotos', {
+      returnTo: route.params.returnTo ?? 'VehicleList',
+    });
   };
 
   return (

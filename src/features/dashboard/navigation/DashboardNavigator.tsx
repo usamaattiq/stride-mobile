@@ -10,6 +10,7 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { TripProvider } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
@@ -38,7 +39,8 @@ export function DashboardNavigator(): React.ReactElement {
 
   return (
     <VehicleProvider>
-      <Tab.Navigator
+      <TripProvider>
+        <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
@@ -66,6 +68,7 @@ export function DashboardNavigator(): React.ReactElement {
         <Tab.Screen name="MyOffers" component={MyOffersScreen} />
         <Tab.Screen name="Settings" component={SettingsStackNavigator} />
       </Tab.Navigator>
+      </TripProvider>
     </VehicleProvider>
   );
 }

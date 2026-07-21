@@ -1,6 +1,7 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
@@ -9,14 +10,31 @@ import { AppDialog } from '@/shared/components/AppDialog';
 
 import { VehiclePhotosForm } from '../components/VehiclePhotosForm';
 import { useVehicles } from '../context/VehicleContext';
-import type { HomeStackParamList } from '../navigation/homeTypes';
+import type { HomeStackParamList, VehicleFlowReturnTo } from '../navigation/homeTypes';
+import type { Vehicle } from '../types/vehicle.types';
+
+function navigateAfterVehicleSave(
+  navigation: NativeStackNavigationProp<HomeStackParamList, 'VehiclePhotos'>,
+  returnTo: VehicleFlowReturnTo,
+  savedVehicle: Vehicle,
+): void {
+  if (returnTo === 'TripCreation') {
+    navigation.navigate('TripCreation', { selectVehicleId: savedVehicle.id });
+    return;
+  }
+  navigation.navigate('VehicleList');
+}
 
 export function VehiclePhotosScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<HomeStackParamList, 'VehiclePhotos'>>();
+  const route = useRoute<RouteProp<HomeStackParamList, 'VehiclePhotos'>>();
   const { draft, patchDraft, saveDraftVehicle } = useVehicles();
   const [savedVisible, setSavedVisible] = React.useState(false);
+  const [savedVehicle, setSavedVehicle] = React.useState<Vehicle | null>(null);
+
+  const returnTo = route.params?.returnTo ?? 'VehicleList';
 
   const handleAddPhotos = (uris: string[]) => {
     patchDraft({ photoUris: [...draft.photoUris, ...uris] });
@@ -28,7 +46,9 @@ export function VehiclePhotosScreen(): React.ReactElement {
 
   const handleSubmit = () => {
     const cleanedPhotos = draft.photoUris.filter((uri) => uri.length > 0);
-    if (saveDraftVehicle({ photoUris: cleanedPhotos })) {
+    const vehicle = saveDraftVehicle({ photoUris: cleanedPhotos });
+    if (vehicle) {
+      setSavedVehicle(vehicle);
       setSavedVisible(true);
     }
   };
@@ -61,7 +81,9 @@ export function VehiclePhotosScreen(): React.ReactElement {
           label: t('common.ok'),
           onPress: () => {
             setSavedVisible(false);
-            navigation.navigate('VehicleList');
+            if (savedVehicle) {
+              navigateAfterVehicleSave(navigation, returnTo, savedVehicle);
+            }
           },
         }}
       />

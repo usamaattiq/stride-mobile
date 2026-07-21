@@ -15,7 +15,7 @@ type VehicleContextValue = {
   beginEditVehicle: (vehicleId: string) => boolean;
   patchDraft: (partial: Partial<VehicleDraft>) => void;
   clearDraft: () => void;
-  saveDraftVehicle: (partial?: Partial<VehicleDraft>) => boolean;
+  saveDraftVehicle: (partial?: Partial<VehicleDraft>) => Vehicle | null;
   removeVehicle: (vehicleId: string) => void;
   getVehicleById: (vehicleId: string) => Vehicle | undefined;
 };
@@ -68,7 +68,7 @@ export function VehicleProvider({
     const id = merged.id ?? createVehicleId();
     const vehicle = draftToVehicle(merged, id);
     if (!vehicle) {
-      return false;
+      return null;
     }
 
     setVehicles((current) => {
@@ -81,7 +81,7 @@ export function VehicleProvider({
       return next;
     });
     clearDraft();
-    return true;
+    return vehicle;
   }, [clearDraft, draft]);
 
   const removeVehicle = React.useCallback((vehicleId: string) => {

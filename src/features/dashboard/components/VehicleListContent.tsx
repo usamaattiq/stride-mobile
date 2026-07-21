@@ -47,13 +47,15 @@ export function DriverVehicleBanner({
 type VehicleListItemProps = {
   vehicle: Vehicle;
   onPress: () => void;
-  onRemovePress: () => void;
+  onRemovePress?: () => void;
+  selected?: boolean;
 };
 
 export function VehicleListItem({
   vehicle,
   onPress,
   onRemovePress,
+  selected = false,
 }: VehicleListItemProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const classLabel = t(
@@ -63,7 +65,7 @@ export function VehicleListItem({
   const thumbnailUri = vehicle.photoUris[0];
 
   return (
-    <View style={styles.item}>
+    <View style={[styles.item, selected && styles.itemSelected]}>
       <Pressable
         onPress={onPress}
         style={styles.itemBody}
@@ -91,23 +93,31 @@ export function VehicleListItem({
           </AppText>
         </View>
       </Pressable>
-      <Pressable
-        onPress={onRemovePress}
-        style={styles.removeButton}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={t('vehicles.remove.a11y', { title: vehicle.title })}
-      >
-        <FontAwesome name="times" size={14} color={colors.text.tertiary} />
-      </Pressable>
+      {onRemovePress ? (
+        <Pressable
+          onPress={onRemovePress}
+          style={styles.removeButton}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('vehicles.remove.a11y', { title: vehicle.title })}
+        >
+          <FontAwesome name="times" size={14} color={colors.text.tertiary} />
+        </Pressable>
+      ) : selected ? (
+        <FontAwesome name="check-circle" size={18} color={colors.primary} />
+      ) : null}
     </View>
   );
 }
 
 export function VehiclesEmptyState({
   onAddPress,
+  title,
+  subtitle,
 }: {
   onAddPress: () => void;
+  title?: string;
+  subtitle?: string;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -115,9 +125,11 @@ export function VehiclesEmptyState({
     <View style={styles.empty}>
       <FontAwesome5 name="car-side" size={32} color={colors.text.tertiary} />
       <AppText weight="semibold" style={styles.emptyTitle}>
-        {t('vehicles.emptyTitle')}
+        {title ?? t('vehicles.emptyTitle')}
       </AppText>
-      <AppText style={styles.emptySubtitle}>{t('vehicles.emptySubtitle')}</AppText>
+      <AppText style={styles.emptySubtitle}>
+        {subtitle ?? t('vehicles.emptySubtitle')}
+      </AppText>
       <Button label={t('vehicles.addVehicle')} onPress={onAddPress} style={styles.emptyButton} />
     </View>
   );
@@ -156,6 +168,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     padding: spacing.md,
+  },
+  itemSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
   itemBody: {
     flex: 1,
