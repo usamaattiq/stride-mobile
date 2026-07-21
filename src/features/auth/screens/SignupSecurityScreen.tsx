@@ -12,6 +12,8 @@ type SignupSecurityScreenProps = {
   onChangeMpinConfirm: (value: string) => void;
   onChangeBiometric: (enabled: boolean) => void;
   onContinue: () => void;
+  submitting?: boolean;
+  errorMessage?: string | null;
 };
 
 /** Signup security step — shared form; heading lives on AuthScaffold. */
@@ -23,6 +25,8 @@ export function SignupSecurityScreen({
   onChangeMpinConfirm,
   onChangeBiometric,
   onContinue,
+  submitting,
+  errorMessage,
 }: SignupSecurityScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -37,6 +41,8 @@ export function SignupSecurityScreen({
       onChangeBiometric={onChangeBiometric}
       onSubmit={onContinue}
       submitLabel={t('auth.signup.security.cta')}
+      submitting={submitting}
+      errorMessage={errorMessage}
     />
   );
 }

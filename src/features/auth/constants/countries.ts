@@ -24,3 +24,7 @@ export const COUNTRY_OPTIONS: readonly CountryOption[] = [
   { code: 'QA', callingCode: '974', name: 'Qatar', flag: '🇶🇦' },
   { code: 'KW', callingCode: '965', name: 'Kuwait', flag: '🇰🇼' },
 ] as const;
+
+export function findCountryByCode(code: string): CountryOption | undefined {
+  return COUNTRY_OPTIONS.find((option) => option.code === code);
+}

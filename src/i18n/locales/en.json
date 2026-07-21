@@ -26,7 +26,8 @@
         "title": "Enter Mobile Number",
         "subtitle": "We'll send tou a verification code",
         "placeholder": "300 1234567",
-        "cta": "Send OTP"
+        "cta": "Send OTP",
+        "sendFailed": "We couldn't send the verification code. Please try again."
       },
       "otp": {
         "title": "OTP Verification",
@@ -35,8 +36,10 @@
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
         "resentTitle": "Code resent",
-        "resentBody": "A new code was sent (demo).",
-        "resentConfirm": "Got it"
+        "resentBody": "A new code was sent.",
+        "resentConfirm": "Got it",
+        "verifyFailed": "We couldn't verify that code. Please try again.",
+        "resendFailed": "We couldn't resend the code. Please try again."
       },
       "personal": {
         "title": "Personal information",
@@ -92,7 +95,8 @@
         "createMpin": "Create MPIN",
         "confirmMpin": "Confirm MPIN",
         "mismatch": "MPINs do not match",
-        "cta": "Finish signup"
+        "cta": "Finish signup",
+        "submitFailed": "We couldn't complete your signup. Please try again."
       },
       "success": {
         "title": "Welcome!",
@@ -108,15 +112,52 @@
       "phone": {
         "title": "Welcome back",
         "subtitle": "Enter your mobile number to continue",
-        "cta": "Continue"
+        "cta": "Continue",
+        "sendOtpFailed": "We couldn't send the verification code. Please try again."
+      },
+      "otp": {
+        "title": "OTP Verification",
+        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "cta": "Verify OTP",
+        "resend": "Resend code",
+        "resendIn": "Resend code in {{time}}",
+        "verifyFailed": "We couldn't verify that code. Please try again.",
+        "resendFailed": "We couldn't resend the code. Please try again."
       },
       "mpin": {
         "title": "Enter MPIN",
         "subtitle": "Enter your 4-digit MPIN to sign in",
         "cta": "Log in",
         "useBiometric": "Use biometric login",
-        "biometricPrompt": "Confirm it's you"
+        "biometricPrompt": "Confirm it's you",
+        "forgotMpin": "Forgot MPIN?",
+        "loginFailed": "Incorrect phone number or MPIN. Please try again.",
+        "accountLocked": "Your account is temporarily locked due to too many attempts. Please try again later.",
+        "loggingInAs": "Logging in as {{phone}}",
+        "useDifferentAccount": "Not you? Use a different account"
+      },
+      "forgotMpin": {
+        "otp": {
+          "title": "Verify it's you",
+          "subtitle": "Enter the 6-digit code sent to {{phone}} to reset your MPIN"
+        },
+        "newMpin": {
+          "title": "Set a new MPIN",
+          "subtitle": "Create a new 4-digit MPIN",
+          "cta": "Continue"
+        },
+        "confirmMpin": {
+          "title": "Confirm new MPIN",
+          "subtitle": "Enter your new MPIN again to confirm",
+          "cta": "Reset MPIN",
+          "mismatch": "MPINs do not match",
+          "resetFailed": "We couldn't reset your MPIN. Please try again."
+        }
       }
+    },
+    "sessionRevoked": {
+      "title": "You were signed out",
+      "message": "You were logged out because you signed in on another device or session."
     }
   },
   "dashboard": {
@@ -258,7 +299,8 @@
       "required": "Enter and confirm a new 4-digit MPIN.",
       "mismatch": "New MPINs do not match.",
       "savedTitle": "MPIN updated",
-      "savedBody": "Your MPIN has been saved on this device (demo)."
+      "savedBody": "Your MPIN has been updated.",
+      "saveFailed": "We couldn't update your MPIN. Please try again."
     },
     "biometric": {
       "sectionTitle": "Biometric login"
@@ -271,7 +313,8 @@
       "enablePrompt": "Confirm it's you with Face ID",
       "unavailable": "Face ID is not set up on this device",
       "unavailableTitle": "Face ID unavailable",
-      "unavailableBody": "Set up Face ID in your device settings, then try again."
+      "unavailableBody": "Set up Face ID in your device settings, then try again.",
+      "saveFailed": "We couldn't update Face ID login. Please try again."
     },
     "fingerprint": {
       "title": "Use biometric",
@@ -279,7 +322,8 @@
       "enablePrompt": "Confirm it's you to enable biometric login",
       "unavailable": "Biometric login is not set up on this device",
       "unavailableTitle": "Biometric unavailable",
-      "unavailableBody": "Add a biometric in your device settings, then try again."
+      "unavailableBody": "Add a biometric in your device settings, then try again.",
+      "saveFailed": "We couldn't update biometric login. Please try again."
     }
   },
   "driverVerification": {

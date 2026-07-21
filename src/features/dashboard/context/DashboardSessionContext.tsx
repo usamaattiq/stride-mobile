@@ -1,5 +1,10 @@
 import React from 'react';
 
+import { authApi } from '@/services/api/authApi';
+import type { UserProfileDto } from '@/services/api/authApi.types';
+import { useDevicePrefsStore } from '@/store/devicePrefsStore';
+import { useProfileStore } from '@/store/profileStore';
+
 export type AppRole = 'passenger' | 'driver';
 
 export type DashboardSessionUser = {
@@ -28,52 +33,90 @@ export type ProfileDetailsUpdate = {
 type DashboardSessionContextValue = {
   user: DashboardSessionUser;
   setRole: (role: AppRole) => void;
-  setBiometricEnabled: (enabled: boolean) => void;
+  setBiometricEnabled: (enabled: boolean) => Promise<void>;
   updateProfile: (details: ProfileDetailsUpdate) => void;
   resetSession: () => void;
 };
 
-const DEFAULT_USER: DashboardSessionUser = {
-  firstName: 'John',
-  fullName: 'John Doe',
-  email: 'john.doe@email.com',
-  address: 'Gulberg III, Lahore',
-  mobileNumber: '+92 300 1234567',
+const FALLBACK_USER: DashboardSessionUser = {
+  firstName: '',
+  fullName: '',
+  email: '',
+  address: '',
+  mobileNumber: '',
   role: 'passenger',
-  avatarUri: 'https://i.pravatar.cc/100?img=12',
-  credits: 12450,
+  avatarUri: undefined,
+  credits: 0,
   notificationCount: 0,
   hasUnreadMessages: false,
-  isVerified: true,
+  isVerified: false,
   biometricEnabled: false,
 };
-
-const DashboardSessionContext = React.createContext<DashboardSessionContextValue | null>(
-  null,
-);
 
 function firstNameFromFullName(fullName: string): string {
   const trimmed = fullName.trim();
   return trimmed.split(/\s+/)[0] || trimmed;
 }
 
+function toDashboardSessionUser(profile: UserProfileDto | null): DashboardSessionUser {
+  if (!profile) {
+    return FALLBACK_USER;
+  }
+  return {
+    firstName: firstNameFromFullName(profile.fullName),
+    fullName: profile.fullName,
+    email: profile.email ?? '',
+    address: profile.address ?? '',
+    mobileNumber: profile.phoneE164,
+    role: profile.role,
+    avatarUri: profile.avatarUrl ?? undefined,
+    credits: profile.credits,
+    notificationCount: 0,
+    hasUnreadMessages: false,
+    isVerified: profile.isVerified,
+    biometricEnabled: profile.biometricEnabled,
+  };
+}
+
+const DashboardSessionContext = React.createContext<DashboardSessionContextValue | null>(
+  null,
+);
+
 export function DashboardSessionProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const [user, setUser] = React.useState<DashboardSessionUser>(DEFAULT_USER);
+  const profile = useProfileStore((state) => state.profile);
+  const setProfile = useProfileStore((state) => state.setProfile);
+  // Fields the backend doesn't own yet (role switching, in-progress profile edits from
+  // General Information) — layered on top of the server-backed profile.
+  const [localOverrides, setLocalOverrides] = React.useState<Partial<DashboardSessionUser>>({});
+
+  React.useEffect(() => {
+    setLocalOverrides({});
+  }, [profile?.id]);
+
+  const user = React.useMemo<DashboardSessionUser>(
+    () => ({ ...toDashboardSessionUser(profile), ...localOverrides }),
+    [profile, localOverrides],
+  );
 
   const setRole = React.useCallback((role: AppRole) => {
-    setUser((current) => ({ ...current, role }));
+    setLocalOverrides((current) => ({ ...current, role }));
   }, []);
 
-  const setBiometricEnabled = React.useCallback((biometricEnabled: boolean) => {
-    setUser((current) => ({ ...current, biometricEnabled }));
-  }, []);
+  const setBiometricEnabled = React.useCallback(
+    async (biometricEnabled: boolean) => {
+      const updated = await authApi.updateMe({ biometricEnabled });
+      setProfile(updated);
+      await useDevicePrefsStore.getState().setBiometricEnabled(biometricEnabled);
+    },
+    [setProfile],
+  );
 
   const updateProfile = React.useCallback((details: ProfileDetailsUpdate) => {
-    setUser((current) => ({
+    setLocalOverrides((current) => ({
       ...current,
       fullName: details.fullName.trim(),
       firstName: firstNameFromFullName(details.fullName),
@@ -84,7 +127,7 @@ export function DashboardSessionProvider({
   }, []);
 
   const resetSession = React.useCallback(() => {
-    setUser(DEFAULT_USER);
+    setLocalOverrides({});
   }, []);
 
   const value = React.useMemo(

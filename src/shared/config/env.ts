@@ -5,6 +5,7 @@
  */
 export const ENV = {
   googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '',
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? '',
 } as const;
 
 export const hasGoogleMapsApiKey = (): boolean => ENV.googleMapsApiKey.length > 0;

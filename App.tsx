@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Alert, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { I18nextProvider } from 'react-i18next';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthNavigator } from './src/features/auth/navigation/AuthNavigator';
+import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
+import { authApi } from './src/services/api/authApi';
+import { isSessionRevokedError } from './src/services/api/apiError';
+import { authStore } from './src/store/authStore';
+import { devicePrefsStore } from './src/store/devicePrefsStore';
+import { profileStore } from './src/store/profileStore';
 import { appFontAssets, colors } from './src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -21,6 +27,7 @@ SplashScreen.setOptions({
 export default function App() {
   const [isI18nReady, setIsI18nReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts(appFontAssets);
+  const [initialRouteName, setInitialRouteName] = useState<keyof AuthStackParamList | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -49,7 +56,51 @@ export default function App() {
     }
   }, [fontError]);
 
-  const appReady = isI18nReady && (fontsLoaded || Boolean(fontError));
+  // Cold-start session bootstrap: a stored token is treated as sufficient proof of
+  // identity — a valid token skips straight to the dashboard, no MPIN/biometric
+  // re-prompt. Runs once i18n is ready so any session-revoked alert has copy to show.
+  useEffect(() => {
+    if (!isI18nReady) {
+      return;
+    }
+
+    let mounted = true;
+
+    void (async () => {
+      await devicePrefsStore.hydrate();
+      const token = await authStore.hydrate();
+
+      if (!token) {
+        if (mounted) {
+          setInitialRouteName('Welcome');
+        }
+        return;
+      }
+
+      try {
+        const profile = await authApi.getMe();
+        profileStore.setProfile(profile);
+        if (mounted) {
+          setInitialRouteName('Dashboard');
+        }
+      } catch (error) {
+        await authStore.signOut();
+        profileStore.clearProfile();
+        if (isSessionRevokedError(error)) {
+          Alert.alert(i18n.t('auth.sessionRevoked.title'), i18n.t('auth.sessionRevoked.message'));
+        }
+        if (mounted) {
+          setInitialRouteName('Welcome');
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isI18nReady]);
+
+  const appReady = isI18nReady && (fontsLoaded || Boolean(fontError)) && initialRouteName !== null;
 
   const onLayoutRootView = useCallback(() => {
     if (!appReady) {
@@ -61,7 +112,7 @@ export default function App() {
     });
   }, [appReady]);
 
-  if (!appReady) {
+  if (!appReady || !initialRouteName) {
     return (
       <View
         style={{
@@ -80,7 +131,7 @@ export default function App() {
     <SafeAreaProvider>
       <I18nextProvider i18n={i18n}>
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-          <AuthNavigator />
+          <AuthNavigator initialRouteName={initialRouteName} />
         </View>
       </I18nextProvider>
     </SafeAreaProvider>
