@@ -63,8 +63,9 @@ export function HomeScreen(): React.ReactElement {
 
     const unsubscribe = tabNavigation.addListener('tabPress', () => {
       setPanel('feed');
-      if (navigation.canGoBack()) {
-        navigation.popToTop();
+      const homeStackState = navigation.getState();
+      if (homeStackState.index > 0) {
+        navigation.navigate('HomeMain');
       }
     });
     return unsubscribe;
