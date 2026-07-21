@@ -53,6 +53,11 @@ export function useKeyboardFocusScroll(
   );
 }
 
+// Extra space above the keyboard when scrolling a focused field into view —
+// covers the field label, optional error line, and iOS InputAccessoryView (Done bar).
+const KEYBOARD_SCROLL_EXTRA = Platform.select({ ios: 112, android: 88 }) ?? 88;
+const KEYBOARD_SCROLL_RETRY_MS = [0, 50, 120, 220, 350, 500] as const;
+
 // Use the physical screen height (not 'window', which shrinks with the Android
 // keyboard under softwareKeyboardLayoutMode: 'resize') so the header keeps a
 // fixed height and never gets clipped when the keyboard opens.
@@ -99,53 +104,85 @@ export function AuthScaffold({
   // Triggering the scroll from `keyboardDidShow` instead of `focus` guarantees
   // the metrics are populated, instead of only working when focus happens to
   // lose that race.
+  type KeyboardEventLike = {
+    endCoordinates: { height: number };
+  };
+
   const focusedNodeRef = React.useRef<number | null>(null);
   const keyboardVisibleRef = React.useRef(false);
+  const [keyboardHeight, setKeyboardHeight] = React.useState(0);
 
   const scrollFocusedInputIntoView = React.useCallback(() => {
     const nodeHandle = focusedNodeRef.current;
     if (nodeHandle == null) {
       return;
     }
-    // Extra offset so the focused field lands with some breathing room above
-    // the keyboard instead of touching it.
     scrollViewRef.current?.scrollResponderScrollNativeHandleToKeyboard(
       nodeHandle,
-      spacing.lg,
+      KEYBOARD_SCROLL_EXTRA,
       true,
     );
   }, []);
 
-  React.useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => {
-      keyboardVisibleRef.current = true;
-      scrollFocusedInputIntoView();
+  const scheduleScrollToFocusedInput = React.useCallback(() => {
+    KEYBOARD_SCROLL_RETRY_MS.forEach((delay) => {
+      if (delay === 0) {
+        requestAnimationFrame(scrollFocusedInputIntoView);
+      } else {
+        setTimeout(scrollFocusedInputIntoView, delay);
+      }
     });
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
-      keyboardVisibleRef.current = false;
-    });
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
   }, [scrollFocusedInputIntoView]);
+
+  React.useEffect(() => {
+    const onKeyboardShow = (event: KeyboardEventLike) => {
+      keyboardVisibleRef.current = true;
+      setKeyboardHeight(event.endCoordinates.height);
+      scheduleScrollToFocusedInput();
+    };
+
+    const onKeyboardHide = () => {
+      keyboardVisibleRef.current = false;
+      setKeyboardHeight(0);
+    };
+
+    const showEvents =
+      Platform.OS === 'ios'
+        ? (['keyboardWillShow', 'keyboardDidShow'] as const)
+        : (['keyboardDidShow'] as const);
+    const hideEvents =
+      Platform.OS === 'ios'
+        ? (['keyboardWillHide', 'keyboardDidHide'] as const)
+        : (['keyboardDidHide'] as const);
+
+    const showSubs = showEvents.map((eventName) =>
+      Keyboard.addListener(eventName, onKeyboardShow),
+    );
+    const hideSubs = hideEvents.map((eventName) =>
+      Keyboard.addListener(eventName, onKeyboardHide),
+    );
+
+    return () => {
+      showSubs.forEach((sub) => sub.remove());
+      hideSubs.forEach((sub) => sub.remove());
+    };
+  }, [scheduleScrollToFocusedInput]);
 
   const scrollToInput = React.useCallback(
     (nodeHandle: number) => {
       focusedNodeRef.current = nodeHandle;
-      // If the keyboard is already open (switching fields via "next"), there's
-      // no keyboardDidShow coming — scroll immediately using known metrics.
-      if (keyboardVisibleRef.current) {
-        scrollFocusedInputIntoView();
-      }
+      // Always retry — on first focus the keyboard is usually still animating in.
+      scheduleScrollToFocusedInput();
     },
-    [scrollFocusedInputIntoView],
+    [scheduleScrollToFocusedInput],
   );
 
   // Without the legal footer there's no bottom chrome, so pad for the safe area.
   const contentBottomPad = showLegalFooter
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
+  // Extend scroll range while the keyboard is open so lower fields can scroll above it.
+  const keyboardContentPad = keyboardHeight > 0 ? keyboardHeight : 0;
 
   const body = scrollable ? (
     <ScrollView
@@ -153,7 +190,7 @@ export function AuthScaffold({
       style={styles.cardScroll}
       contentContainerStyle={[
         styles.cardWrapScroll,
-        { paddingBottom: contentBottomPad },
+        { paddingBottom: contentBottomPad + keyboardContentPad },
         contentWrapStyle,
       ]}
       showsVerticalScrollIndicator={false}

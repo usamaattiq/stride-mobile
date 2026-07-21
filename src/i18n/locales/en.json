@@ -282,6 +282,68 @@
       "unavailableBody": "Add a biometric in your device settings, then try again."
     }
   },
+  "vehicles": {
+    "homeBannerTitle": "Your vehicles",
+    "homeBannerSubtitleEmpty": "Add a vehicle to start accepting ride requests.",
+    "homeBannerSubtitleWithCount": "You have {{count}} vehicle(s) registered.",
+    "homeBannerCta": "Manage vehicles",
+    "listTitle": "My vehicles",
+    "listSubtitle": "Add and manage the vehicles you drive",
+    "addVehicle": "Add vehicle",
+    "emptyTitle": "No vehicles yet",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Stride.",
+    "detailsTitle": "Vehicle details",
+    "detailsSubtitle": "Tell us about your vehicle",
+    "continue": "Continue",
+    "classPlaceholder": "Select vehicle class",
+    "classPickerTitle": "Select vehicle class",
+    "seatsCount": "{{count}} seats",
+    "successTitle": "Vehicle saved",
+    "successBody": "Your vehicle details were saved on this device (demo).",
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Family SUV",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of your vehicle",
+      "plateNumber": "Plate number",
+      "plateNumberPlaceholder": "Enter plate number",
+      "acTitle": "Air conditioning",
+      "acOn": "AC",
+      "acOff": "Non-AC",
+      "totalSeats": "Total seats",
+      "totalSeatsPlaceholder": "Enter number of seats",
+      "class": "Vehicle class",
+      "brand": "Brand",
+      "brandPlaceholder": "e.g. Toyota",
+      "model": "Model",
+      "modelPlaceholder": "e.g. Corolla",
+      "year": "Year",
+      "yearPlaceholder": "e.g. 2022"
+    },
+    "classes": {
+      "suv": "SUV",
+      "sedan": "Sedan",
+      "bus": "Bus",
+      "van": "Van",
+      "coaster": "Coaster",
+      "hiace": "Hiace",
+      "minibus": "Minibus",
+      "pickup": "Pickup"
+    },
+    "photos": {
+      "title": "Vehicle photos",
+      "subtitle": "Add clear photos of your vehicle",
+      "gridLabel": "Vehicle photos",
+      "emptyHint": "No photos yet. Tap Add pictures to select from your gallery.",
+      "addPictures": "Add pictures",
+      "addPicturesHint": "Select one or more photos from your gallery",
+      "removePhotoA11y": "Remove photo {{number}}",
+      "cta": "Save vehicle"
+    },
+    "errors": {
+      "seatsRequired": "Total seats is required"
+    }
+  },
   "driverVerification": {
     "title": "Driver verification",
     "subtitle": "Upload your driving license to become a driver",

@@ -282,6 +282,68 @@
       "unavailableBody": "أضف بيومتري في إعدادات جهازك ثم حاول مرة أخرى."
     }
   },
+  "vehicles": {
+    "homeBannerTitle": "مركباتك",
+    "homeBannerSubtitleEmpty": "أضف مركبة لبدء قبول طلبات الرحلات.",
+    "homeBannerSubtitleWithCount": "لديك {{count}} مركبة مسجلة.",
+    "homeBannerCta": "إدارة المركبات",
+    "listTitle": "مركباتي",
+    "listSubtitle": "أضف وأدر المركبات التي تقودها",
+    "addVehicle": "إضافة مركبة",
+    "emptyTitle": "لا توجد مركبات بعد",
+    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Stride.",
+    "detailsTitle": "تفاصيل المركبة",
+    "detailsSubtitle": "أخبرنا عن مركبتك",
+    "continue": "متابعة",
+    "classPlaceholder": "اختر فئة المركبة",
+    "classPickerTitle": "اختر فئة المركبة",
+    "seatsCount": "{{count}} مقاعد",
+    "successTitle": "تم حفظ المركبة",
+    "successBody": "تم حفظ تفاصيل مركبتك على هذا الجهاز (تجريبي).",
+    "fields": {
+      "title": "العنوان",
+      "titlePlaceholder": "مثال: SUV عائلي",
+      "description": "الوصف",
+      "descriptionPlaceholder": "وصف مختصر لمركبتك",
+      "plateNumber": "رقم اللوحة",
+      "plateNumberPlaceholder": "أدخل رقم اللوحة",
+      "acTitle": "تكييف الهواء",
+      "acOn": "مكيف",
+      "acOff": "بدون تكييف",
+      "totalSeats": "إجمالي المقاعد",
+      "totalSeatsPlaceholder": "أدخل عدد المقاعد",
+      "class": "فئة المركبة",
+      "brand": "العلامة التجارية",
+      "brandPlaceholder": "مثال: Toyota",
+      "model": "الموديل",
+      "modelPlaceholder": "مثال: Corolla",
+      "year": "السنة",
+      "yearPlaceholder": "مثال: 2022"
+    },
+    "classes": {
+      "suv": "SUV",
+      "sedan": "سيدان",
+      "bus": "حافلة",
+      "van": "فان",
+      "coaster": "كوستر",
+      "hiace": "هايس",
+      "minibus": "ميني باص",
+      "pickup": "بيك أب"
+    },
+    "photos": {
+      "title": "صور المركبة",
+      "subtitle": "أضف صوراً واضحة لمركبتك",
+      "gridLabel": "صور المركبة",
+      "emptyHint": "لا توجد صور بعد. اضغط إضافة صور للاختيار من المعرض.",
+      "addPictures": "إضافة صور",
+      "addPicturesHint": "اختر صورة واحدة أو أكثر من المعرض",
+      "removePhotoA11y": "إزالة الصورة {{number}}",
+      "cta": "حفظ المركبة"
+    },
+    "errors": {
+      "seatsRequired": "إجمالي المقاعد مطلوب"
+    }
+  },
   "driverVerification": {
     "title": "التحقق من السائق",
     "subtitle": "ارفع رخصة القيادة لتصبح سائقاً",

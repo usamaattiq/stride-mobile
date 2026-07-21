@@ -7,19 +7,28 @@ import type { DeviceBiometricKind } from '@/shared/hooks/useDeviceBiometric';
 import { colors, radius, spacing } from '@/theme';
 
 type BiometricToggleRowProps = {
-  kind: DeviceBiometricKind;
   enabled: boolean;
-  available: boolean;
   title: string;
   subtitle: string;
   onToggle: (enabled: boolean) => void;
-};
+  available?: boolean;
+} & (
+  | {
+      kind: DeviceBiometricKind;
+      iconName?: never;
+    }
+  | {
+      kind?: never;
+      iconName: React.ComponentProps<typeof FontAwesome5>['name'];
+    }
+);
 
-/** Shared fingerprint / Face ID row used by signup security + settings. */
+/** Shared toggle row used by signup security, settings, and vehicle details. */
 export function BiometricToggleRow({
   kind,
+  iconName,
   enabled,
-  available,
+  available = true,
   title,
   subtitle,
   onToggle,
@@ -35,7 +44,9 @@ export function BiometricToggleRow({
     >
       <View style={styles.copy}>
         <View style={styles.iconWrap}>
-          {isFace ? (
+          {iconName ? (
+            <FontAwesome5 name={iconName} size={18} color={colors.primary} solid />
+          ) : isFace ? (
             <MaterialCommunityIcons
               name="face-recognition"
               size={20}

@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { DashboardSessionProvider } from '@/features/dashboard/context/DashboardSessionContext';
 import { DashboardNavigator } from '@/features/dashboard/navigation/DashboardNavigator';
 import { colors } from '@/theme';
 
@@ -27,8 +28,9 @@ const navigationTheme = {
  */
 export function AuthNavigator(): React.ReactElement {
   return (
-    <SignupDraftProvider>
-      <NavigationContainer theme={navigationTheme}>
+    <DashboardSessionProvider>
+      <SignupDraftProvider>
+        <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator
           screenOptions={{
             headerShown: false,
@@ -40,7 +42,8 @@ export function AuthNavigator(): React.ReactElement {
           <Stack.Screen name="LoginFlow" component={LoginFlowScreen} />
           <Stack.Screen name="Dashboard" component={DashboardNavigator} />
         </Stack.Navigator>
-      </NavigationContainer>
-    </SignupDraftProvider>
+        </NavigationContainer>
+      </SignupDraftProvider>
+    </DashboardSessionProvider>
   );
 }

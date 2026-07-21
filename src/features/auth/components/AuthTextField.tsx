@@ -1,12 +1,19 @@
 import React from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import {
+  findNodeHandle,
+  StyleSheet,
+  TextInput,
+  View,
+  type FocusEvent,
+  type TextInputProps,
+} from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
-import { useKeyboardFocusScroll } from './AuthScaffold';
+import { useAuthScrollToInput } from './AuthScaffold';
 
 export type AuthTextFieldProps = TextInputProps & {
   label: string;
@@ -25,13 +32,39 @@ export function AuthTextField({
   error,
   style,
   onFocus,
+  onBlur,
+  onChangeText,
+  onContentSizeChange,
   ...rest
 }: AuthTextFieldProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
-  const handleFocus = useKeyboardFocusScroll(onFocus);
+  const scrollToInput = useAuthScrollToInput();
+  const inputRef = React.useRef<TextInput>(null);
+  const isFocusedRef = React.useRef(false);
+
+  const resyncFocusedScroll = React.useCallback(() => {
+    if (!isFocusedRef.current) {
+      return;
+    }
+    const nodeHandle = findNodeHandle(inputRef.current);
+    if (nodeHandle != null) {
+      scrollToInput(nodeHandle);
+    }
+  }, [scrollToInput]);
+
+  const handleFocus = (event: FocusEvent) => {
+    isFocusedRef.current = true;
+    onFocus?.(event);
+    scrollToInput(event.nativeEvent.target);
+  };
+
+  const handleBlur = (event: FocusEvent) => {
+    isFocusedRef.current = false;
+    onBlur?.(event);
+  };
 
   return (
-    <View style={styles.wrap}>
+    <View style={styles.wrap} onLayout={resyncFocusedScroll}>
       <AppText
         weight={dense ? 'bold' : 'medium'}
         style={[styles.label, dense && styles.labelDense]}
@@ -45,8 +78,18 @@ export function AuthTextField({
         ) : null}
       </AppText>
       <TextInput
+        ref={inputRef}
         placeholderTextColor={colors.text.tertiary}
         onFocus={handleFocus}
+        onBlur={handleBlur}
+        onChangeText={(text) => {
+          onChangeText?.(text);
+          resyncFocusedScroll();
+        }}
+        onContentSizeChange={(event) => {
+          onContentSizeChange?.(event);
+          resyncFocusedScroll();
+        }}
         style={[
           styles.input,
           dense && styles.inputDense,

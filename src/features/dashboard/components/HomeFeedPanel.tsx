@@ -1,8 +1,11 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { spacing } from '@/theme';
 
+import { DriverVehicleBanner } from './VehicleListContent';
 import { PromoAdBanner } from './PromoAdBanner';
 import { RequestCategoryChips } from './RequestCategoryChips';
 import { RequestSearchRow } from './RequestSearchRow';
@@ -11,9 +14,16 @@ import { ReverseRequestCard } from './ReverseRequestCard';
 import { ReverseRequestsBanner } from './ReverseRequestsBanner';
 import { SHOW_DEMO_DASHBOARD_DATA } from '../constants/demo';
 import { DEMO_REVERSE_REQUESTS } from '../constants/requests';
+import { useDashboardSession } from '../context/DashboardSessionContext';
+import { useVehicles } from '../context/VehicleContext';
+import type { HomeStackParamList } from '../navigation/homeTypes';
 import type { HomeFeedItem, RequestCategory } from '../types/requests.types';
 
 export const HomeFeedPanel = React.memo(function HomeFeedPanel(): React.ReactElement {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>>();
+  const { user } = useDashboardSession();
+  const { vehicles } = useVehicles();
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState<RequestCategory>('all');
   const [hiddenAds, setHiddenAds] = React.useState<Record<string, boolean>>({});
@@ -60,6 +70,12 @@ export const HomeFeedPanel = React.memo(function HomeFeedPanel(): React.ReactEle
 
   const listHeader = (
     <View style={styles.listHeader}>
+      {user.role === 'driver' ? (
+        <DriverVehicleBanner
+          vehicleCount={vehicles.length}
+          onPress={() => navigation.navigate('VehicleList')}
+        />
+      ) : null}
       <ReverseRequestsBanner />
       <RequestSearchRow
         query={query}

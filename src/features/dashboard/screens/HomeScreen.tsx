@@ -2,6 +2,8 @@ import React from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -13,7 +15,12 @@ import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
-import type { DashboardTabParamList, HomePanel } from '../navigation/types';
+import type { DashboardTabParamList, HomePanel, HomeStackParamList } from '../navigation/types';
+
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>,
+  BottomTabNavigationProp<DashboardTabParamList, 'Home'>
+>;
 
 /**
  * Persistent header + bottom tabs. Middle content swaps via local `panel`
@@ -22,8 +29,7 @@ import type { DashboardTabParamList, HomePanel } from '../navigation/types';
 export function HomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
-  const navigation =
-    useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
@@ -50,8 +56,16 @@ export function HomeScreen(): React.ReactElement {
   );
 
   React.useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', () => {
+    const tabNavigation = navigation.getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>();
+    if (!tabNavigation) {
+      return;
+    }
+
+    const unsubscribe = tabNavigation.addListener('tabPress', () => {
       setPanel('feed');
+      if (navigation.canGoBack()) {
+        navigation.popToTop();
+      }
     });
     return unsubscribe;
   }, [navigation]);
