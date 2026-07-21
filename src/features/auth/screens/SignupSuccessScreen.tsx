@@ -10,9 +10,10 @@ import { AppText } from '@/shared/components/AppText';
 import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { useProfileStore } from '@/store/profileStore';
 import { colors, radius, spacing } from '@/theme';
 
-const CREDITS = 50;
+const DEFAULT_CREDITS = 50;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -49,6 +50,7 @@ export function SignupSuccessScreen({
 }: SignupSuccessScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
+  const credits = useProfileStore((state) => state.profile?.credits ?? DEFAULT_CREDITS);
   const badgeScale = React.useRef(new Animated.Value(0)).current;
   const contentOpacity = React.useRef(new Animated.Value(0)).current;
   const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
@@ -148,7 +150,7 @@ export function SignupSuccessScreen({
                 {t('auth.signup.success.creditsEarned')}
               </AppText>
               <AppText weight="bold" style={styles.creditsAmount}>
-                {t('auth.signup.success.credits', { count: CREDITS })}
+                {t('auth.signup.success.credits', { count: credits })}
               </AppText>
               <AppText style={styles.creditsReason}>
                 {t('auth.signup.success.creditsReason')}

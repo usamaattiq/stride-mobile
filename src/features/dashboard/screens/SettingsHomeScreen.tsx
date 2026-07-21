@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
-import { useSignupDraft } from '@/features/auth/context/SignupDraftContext';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { authApi } from '@/services/api/authApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
@@ -17,6 +17,9 @@ import { LanguageSwitcherModal } from '@/shared/components/language-switcher/Lan
 import { getLanguageOptions } from '@/shared/components/language-switcher/options';
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useSignupDraftStore } from '@/store/signupDraftStore';
 import { colors, spacing } from '@/theme';
 
 import { SettingsMenuSectionCard } from '../components/SettingsMenuSectionCard';
@@ -38,7 +41,7 @@ export function SettingsHomeScreen(): React.ReactElement {
   const legal = useLegalDocumentSheets();
   const { currentLanguage, setLanguage } = useLanguage();
   const { user, setRole, resetSession } = useDashboardSession();
-  const { resetDraft } = useSignupDraft();
+  const { resetDraft } = useSignupDraftStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const rootNavigation = navigation.getParent()?.getParent() as
@@ -68,6 +71,10 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const handleLogout = () => {
     setDialog(null);
+    // Best-effort: local sign-out proceeds even if the network call fails.
+    void authApi.logout().catch(() => undefined);
+    void useAuthStore.getState().signOut();
+    useProfileStore.getState().clearProfile();
     resetDraft();
     resetSession();
     rootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });

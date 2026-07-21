@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -10,6 +10,7 @@ type ButtonProps = {
   onPress?: () => void;
   variant?: ButtonVariant;
   disabled?: boolean;
+  loading?: boolean;
   accessibilityHint?: string;
   style?: ViewStyle;
 };
@@ -19,37 +20,43 @@ export function Button({
   onPress,
   variant = 'primary',
   disabled = false,
+  loading = false,
   accessibilityHint,
   style,
 }: ButtonProps) {
   const isPrimary = variant === 'primary';
+  const isDisabled = disabled || loading;
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
         isPrimary ? styles.primary : styles.secondary,
-        pressed && !disabled && (isPrimary ? styles.primaryPressed : styles.secondaryPressed),
-        disabled && styles.disabled,
+        pressed && !isDisabled && (isPrimary ? styles.primaryPressed : styles.secondaryPressed),
+        isDisabled && styles.disabled,
         style,
       ]}
     >
-      <AppText
-        weight="bold"
-        style={[
-          styles.label,
-          isPrimary ? styles.primaryLabel : styles.secondaryLabel,
-          disabled && styles.disabledLabel,
-        ]}
-      >
-        {label}
-      </AppText>
+      {loading ? (
+        <ActivityIndicator color={isPrimary ? colors.text.inverse : colors.primary} />
+      ) : (
+        <AppText
+          weight="bold"
+          style={[
+            styles.label,
+            isPrimary ? styles.primaryLabel : styles.secondaryLabel,
+            isDisabled && styles.disabledLabel,
+          ]}
+        >
+          {label}
+        </AppText>
+      )}
     </Pressable>
   );
 }
