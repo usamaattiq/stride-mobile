@@ -88,7 +88,7 @@ export function LoginMpinScreen({
         </Pressable>
         {onUseDifferentAccount ? (
           <Pressable onPress={onUseDifferentAccount} style={styles.forgot} hitSlop={8} disabled={loading}>
-            <AppText style={styles.useDifferentAccountText}>
+            <AppText weight="semibold" style={styles.useDifferentAccountText}>
               {t('auth.login.mpin.useDifferentAccount')}
             </AppText>
           </Pressable>
@@ -128,6 +128,6 @@ const styles = StyleSheet.create({
   },
   useDifferentAccountText: {
     fontSize: 13,
-    color: colors.text.secondary,
+    color: colors.primary,
   },
 });
