@@ -305,7 +305,7 @@
       "a11y": "Remove {{title}}"
     },
     "successTitle": "Vehicle saved",
-    "successBody": "Your vehicle details were saved on this device (demo).",
+    "successBody": "Your vehicle details were saved on this device",
     "fields": {
       "title": "Title",
       "titlePlaceholder": "e.g. Family SUV",
