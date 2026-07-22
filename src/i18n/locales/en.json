@@ -51,6 +51,7 @@
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
+        "emailInvalid": "Enter a valid email address",
         "address": "Address",
         "city": "City",
         "country": "Country",
@@ -165,7 +166,8 @@
       "Home": "Home",
       "MyListings": "My Listings",
       "MyOffers": "My Offers",
-      "Settings": "Settings"
+      "Settings": "Settings",
+      "createTripA11y": "Create trip"
     },
     "home": {
       "title": "Home",
@@ -214,7 +216,19 @@
     },
     "listings": {
       "title": "My Listings",
-      "subtitle": "Manage the rides and routes you have listed."
+      "subtitle": "Manage the rides and routes you have listed.",
+      "emptyTitle": "No listings yet",
+      "emptySubtitle": "Publish a trip and it will show up here.",
+      "passengerHint": "Switch to driver mode to create and manage trip listings.",
+      "retry": "Try again",
+      "startingPrice": "From {{price}}",
+      "remove": {
+        "title": "Remove listing",
+        "confirm": "Remove the trip from {{from}} to {{to}}?",
+        "confirmAction": "Remove",
+        "a11y": "Remove listing",
+        "failed": "Couldn't remove this listing. Please try again."
+      }
     },
     "offers": {
       "title": "My Offers",
@@ -229,6 +243,10 @@
     "roles": {
       "passenger": "Passenger",
       "driver": "Driver"
+    },
+    "verification": {
+      "verified": "Verified",
+      "notVerified": "Not verified"
     },
     "sections": {
       "account": "Account",
@@ -246,11 +264,23 @@
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
+      "switchDriver": {
+        "title": "Switch to driver mode",
+        "subtitle": "Offer rides with your verified license",
+        "confirm": "Switch this account to driver mode?",
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to driver mode. Please try again."
+      },
+      "manageVehicles": {
+        "title": "Manage vehicles",
+        "subtitle": "Add, edit, or remove your vehicles"
+      },
       "switchPassenger": {
         "title": "Switch to passenger",
         "subtitle": "Book trips as a passenger",
         "confirm": "Switch this account back to passenger mode?",
-        "confirmCta": "Switch"
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to passenger mode. Please try again."
       },
       "security": {
         "title": "Security",
@@ -346,10 +376,13 @@
       "title": "Remove vehicle",
       "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",
       "confirmAction": "Remove",
-      "a11y": "Remove {{title}}"
+      "a11y": "Remove {{title}}",
+      "failed": "Couldn't remove this vehicle. Please try again."
     },
+    "retry": "Try again",
+    "saveFailed": "Couldn't save this vehicle. Please try again.",
     "successTitle": "Vehicle saved",
-    "successBody": "Your vehicle details were saved on this device",
+    "successBody": "Your vehicle details were saved.",
     "fields": {
       "title": "Title",
       "titlePlaceholder": "e.g. Family SUV",
@@ -450,8 +483,9 @@
       "previewListing": "Listing",
       "notSpecified": "Not specified",
       "publish": "Publish trip",
+      "publishFailed": "Couldn't publish this trip. Please try again.",
       "successTitle": "Trip published",
-      "successBody": "Your trip was saved on this device (demo).",
+      "successBody": "Your trip is live. You can manage it from My Listings.",
       "noVehiclesTitle": "Add a vehicle first",
       "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }
@@ -459,6 +493,7 @@
   "driverVerification": {
     "title": "Driver verification",
     "subtitle": "Upload your driving license to become a driver",
+    "completeSubtitle": "Upload your driving license to finish verification",
     "licenseNumber": "Driving license number",
     "licensePlaceholder": "Enter license number",
     "licenseFront": "License front side",
@@ -466,8 +501,31 @@
     "uploadHint": "Tap to upload & crop",
     "changeHint": "Tap to change",
     "cta": "Submit & become driver",
+    "completeCta": "Submit license",
+    "skip": "Skip for now",
+    "submitFailed": "Couldn't complete driver verification. Please try again.",
+    "skipFailed": "Couldn't enter driver mode. Please try again.",
     "successTitle": "You're a driver",
-    "successBody": "Your license details were saved on this device (demo). You can now offer rides."
+    "successBody": "Your license details were saved. You can now offer rides.",
+    "skipSuccessBody": "You're in driver mode. You can upload your license later from Settings.",
+    "completeSuccessTitle": "License verified",
+    "completeSuccessBody": "Your driving license details were saved."
+  },
+  "nicVerification": {
+    "title": "NIC verification",
+    "subtitle": "Upload your NIC documents to verify your identity",
+    "nicNumber": "NIC number",
+    "nicPlaceholder": "Enter NIC number",
+    "nicFront": "NIC front side",
+    "nicBack": "NIC back side",
+    "uploadHint": "Tap to upload & crop",
+    "changeHint": "Tap to change",
+    "cta": "Submit & verify",
+    "submitFailed": "Couldn't complete NIC verification. Please try again.",
+    "successTitle": "NIC verified",
+    "successBody": "Your identity documents were saved.",
+    "successBodyContinueLicense": "NIC saved. Next, upload your driving license.",
+    "continueLicenseCta": "Continue"
   },
   "generalInformation": {
     "title": "General information",

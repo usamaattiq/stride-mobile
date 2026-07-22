@@ -2,6 +2,7 @@ import { apiRequest } from './client';
 import type {
   AuthLoginResult,
   AuthSignupResult,
+  BecomeDriverPayload,
   LoginOtpPurpose,
   PhoneIdentity,
   SignupSubmitPayload,
@@ -38,6 +39,15 @@ export const authApi = {
 
   updateMe: (payload: Partial<UserProfileDto>): Promise<UserProfileDto> =>
     apiRequest({ method: 'PATCH', url: '/auth/me', data: payload }),
+
+  becomeDriver: (payload: BecomeDriverPayload): Promise<AuthLoginResult> =>
+    apiRequest({ method: 'POST', url: '/auth/become-driver', data: payload }),
+
+  switchToDriver: (deviceId: string): Promise<AuthLoginResult> =>
+    apiRequest({ method: 'POST', url: '/auth/switch-to-driver', data: { deviceId } }),
+
+  switchToPassenger: (deviceId: string): Promise<AuthLoginResult> =>
+    apiRequest({ method: 'POST', url: '/auth/switch-to-passenger', data: { deviceId } }),
 
   changeMpin: (currentMpin: string, newMpin: string): Promise<{ updated: true }> =>
     apiRequest({ method: 'PATCH', url: '/auth/mpin', data: { currentMpin, newMpin } }),

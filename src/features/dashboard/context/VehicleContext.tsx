@@ -1,30 +1,32 @@
 import React from 'react';
 
+import { vehicleApi } from '@/services/api/vehicleApi';
+
 import {
   createEmptyVehicleDraft,
-  draftToVehicle,
   vehicleToDraft,
   type Vehicle,
   type VehicleDraft,
 } from '../types/vehicle.types';
+import { draftToVehiclePayload, mapVehicleDtoToVehicle } from '../utils/vehicle.mapper';
 
 type VehicleContextValue = {
   vehicles: Vehicle[];
   draft: VehicleDraft;
+  isLoading: boolean;
+  isSaving: boolean;
+  loadError: string | null;
   beginAddVehicle: () => void;
   beginEditVehicle: (vehicleId: string) => boolean;
   patchDraft: (partial: Partial<VehicleDraft>) => void;
   clearDraft: () => void;
-  saveDraftVehicle: (partial?: Partial<VehicleDraft>) => Vehicle | null;
-  removeVehicle: (vehicleId: string) => void;
+  refreshVehicles: () => Promise<void>;
+  saveDraftVehicle: (partial?: Partial<VehicleDraft>) => Promise<Vehicle | null>;
+  removeVehicle: (vehicleId: string) => Promise<void>;
   getVehicleById: (vehicleId: string) => Vehicle | undefined;
 };
 
 const VehicleContext = React.createContext<VehicleContextValue | null>(null);
-
-function createVehicleId(): string {
-  return `vehicle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export function VehicleProvider({
   children,
@@ -33,6 +35,27 @@ export function VehicleProvider({
 }): React.ReactElement {
   const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
   const [draft, setDraft] = React.useState<VehicleDraft>(createEmptyVehicleDraft);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+
+  const refreshVehicles = React.useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const list = await vehicleApi.list();
+      setVehicles(list.map(mapVehicleDtoToVehicle));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Failed to load vehicles');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void refreshVehicles().catch(() => undefined);
+  }, [refreshVehicles]);
 
   const clearDraft = React.useCallback(() => {
     setDraft(createEmptyVehicleDraft());
@@ -63,40 +86,64 @@ export function VehicleProvider({
     setDraft((current) => ({ ...current, ...partial }));
   }, []);
 
-  const saveDraftVehicle = React.useCallback((partial?: Partial<VehicleDraft>) => {
-    const merged = { ...draft, ...partial };
-    const id = merged.id ?? createVehicleId();
-    const vehicle = draftToVehicle(merged, id);
-    if (!vehicle) {
-      return null;
-    }
-
-    setVehicles((current) => {
-      const existingIndex = current.findIndex((item) => item.id === id);
-      if (existingIndex === -1) {
-        return [...current, vehicle];
+  const saveDraftVehicle = React.useCallback(
+    async (partial?: Partial<VehicleDraft>) => {
+      const merged = { ...draft, ...partial };
+      const payload = draftToVehiclePayload(merged);
+      if (!payload) {
+        return null;
       }
-      const next = [...current];
-      next[existingIndex] = vehicle;
-      return next;
-    });
-    clearDraft();
-    return vehicle;
-  }, [clearDraft, draft]);
 
-  const removeVehicle = React.useCallback((vehicleId: string) => {
-    setVehicles((current) => current.filter((item) => item.id !== vehicleId));
-    setDraft((current) => (current.id === vehicleId ? createEmptyVehicleDraft() : current));
+      setIsSaving(true);
+      try {
+        const savedDto = merged.id
+          ? await vehicleApi.update(merged.id, payload)
+          : await vehicleApi.create(payload);
+        const saved = mapVehicleDtoToVehicle(savedDto);
+
+        setVehicles((current) => {
+          const existingIndex = current.findIndex((item) => item.id === saved.id);
+          if (existingIndex === -1) {
+            return [saved, ...current];
+          }
+          const next = [...current];
+          next[existingIndex] = saved;
+          return next;
+        });
+        clearDraft();
+        return saved;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [clearDraft, draft],
+  );
+
+  const removeVehicle = React.useCallback(async (vehicleId: string) => {
+    setIsSaving(true);
+    try {
+      await vehicleApi.remove(vehicleId);
+      setVehicles((current) => current.filter((item) => item.id !== vehicleId));
+      setDraft((current) =>
+        current.id === vehicleId ? createEmptyVehicleDraft() : current,
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }, []);
 
   const value = React.useMemo(
     () => ({
       vehicles,
       draft,
+      isLoading,
+      isSaving,
+      loadError,
       beginAddVehicle,
       beginEditVehicle,
       patchDraft,
       clearDraft,
+      refreshVehicles,
       saveDraftVehicle,
       removeVehicle,
       getVehicleById,
@@ -104,10 +151,14 @@ export function VehicleProvider({
     [
       vehicles,
       draft,
+      isLoading,
+      isSaving,
+      loadError,
       beginAddVehicle,
       beginEditVehicle,
       patchDraft,
       clearDraft,
+      refreshVehicles,
       saveDraftVehicle,
       removeVehicle,
       getVehicleById,

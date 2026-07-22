@@ -51,3 +51,10 @@ export type SignupSubmitPayload = PhoneIdentity & {
   deviceId: string;
 };
 
+export type BecomeDriverPayload = {
+  licenseNumber: string;
+  licenseFrontUrl: string;
+  licenseBackUrl: string;
+  deviceId: string;
+};
+

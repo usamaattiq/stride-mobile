@@ -1,51 +1,91 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
+import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 import {
   VehicleListItem,
   VehiclesEmptyState,
 } from '../components/VehicleListContent';
 import { useVehicles } from '../context/VehicleContext';
-import type { HomeStackParamList } from '../navigation/homeTypes';
+import { resolveVehicleStackOrigin } from '../navigation/vehicleNavigation.utils';
+import type { VehicleRouteParamList } from '../navigation/vehicleNavigation.types';
 import type { Vehicle } from '../types/vehicle.types';
 
 export function VehicleListScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList, 'VehicleList'>>();
-  const { vehicles, beginAddVehicle, beginEditVehicle, removeVehicle } = useVehicles();
+    useNavigation<NativeStackNavigationProp<VehicleRouteParamList, 'VehicleList'>>();
+  const {
+    vehicles,
+    isLoading,
+    isSaving,
+    loadError,
+    beginAddVehicle,
+    beginEditVehicle,
+    removeVehicle,
+    refreshVehicles,
+  } = useVehicles();
   const [vehicleToRemove, setVehicleToRemove] = React.useState<Vehicle | null>(null);
+  const [removeError, setRemoveError] = React.useState<string | null>(null);
+  const stackOrigin = resolveVehicleStackOrigin(navigation);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      void refreshVehicles().catch(() => undefined);
+    }, [refreshVehicles]),
+  );
 
   const openAddFlow = React.useCallback(() => {
     beginAddVehicle();
-    navigation.navigate('VehicleDetails', { mode: 'add' });
-  }, [beginAddVehicle, navigation]);
+    navigation.navigate('VehicleDetails', {
+      mode: 'add',
+      returnTo: 'VehicleList',
+      stackOrigin,
+    });
+  }, [beginAddVehicle, navigation, stackOrigin]);
 
   const openEditFlow = React.useCallback(
     (vehicle: Vehicle) => {
       if (beginEditVehicle(vehicle.id)) {
-        navigation.navigate('VehicleDetails', { mode: 'edit', vehicleId: vehicle.id });
+        navigation.navigate('VehicleDetails', {
+          mode: 'edit',
+          vehicleId: vehicle.id,
+          returnTo: 'VehicleList',
+          stackOrigin,
+        });
       }
     },
-    [beginEditVehicle, navigation],
+    [beginEditVehicle, navigation, stackOrigin],
   );
 
   const handleConfirmRemove = React.useCallback(() => {
-    if (!vehicleToRemove) {
+    if (!vehicleToRemove || isSaving) {
       return;
     }
-    removeVehicle(vehicleToRemove.id);
-    setVehicleToRemove(null);
-  }, [removeVehicle, vehicleToRemove]);
+
+    setRemoveError(null);
+    void removeVehicle(vehicleToRemove.id)
+      .then(() => {
+        setVehicleToRemove(null);
+      })
+      .catch((error) => {
+        setRemoveError(getErrorMessage(error, t('vehicles.remove.failed')));
+      });
+  }, [isSaving, removeVehicle, t, vehicleToRemove]);
 
   return (
     <AuthScaffold
@@ -54,7 +94,21 @@ export function VehicleListScreen(): React.ReactElement {
       subtitle={t('vehicles.listSubtitle')}
       showLegalFooter={false}
     >
-      {vehicles.length === 0 ? (
+      {isLoading && vehicles.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : loadError && vehicles.length === 0 ? (
+        <View style={styles.centered}>
+          <AppText style={styles.errorText}>{loadError}</AppText>
+          <Button
+            label={t('vehicles.retry')}
+            onPress={() => {
+              void refreshVehicles().catch(() => undefined);
+            }}
+          />
+        </View>
+      ) : vehicles.length === 0 ? (
         <VehiclesEmptyState onAddPress={openAddFlow} />
       ) : (
         <View style={styles.content}>
@@ -63,7 +117,10 @@ export function VehicleListScreen(): React.ReactElement {
               key={vehicle.id}
               vehicle={vehicle}
               onPress={() => openEditFlow(vehicle)}
-              onRemovePress={() => setVehicleToRemove(vehicle)}
+              onRemovePress={() => {
+                setRemoveError(null);
+                setVehicleToRemove(vehicle);
+              }}
             />
           ))}
           <Button label={t('vehicles.addVehicle')} onPress={openAddFlow} />
@@ -75,13 +132,20 @@ export function VehicleListScreen(): React.ReactElement {
         icon="trash"
         title={t('vehicles.remove.title')}
         message={
-          vehicleToRemove
+          removeError ??
+          (vehicleToRemove
             ? t('vehicles.remove.confirm', { title: vehicleToRemove.title })
-            : undefined
+            : undefined)
         }
         cancelAction={{
           label: t('common.cancel'),
-          onPress: () => setVehicleToRemove(null),
+          onPress: () => {
+            if (isSaving) {
+              return;
+            }
+            setVehicleToRemove(null);
+            setRemoveError(null);
+          },
         }}
         confirmAction={{
           label: t('vehicles.remove.confirmAction'),
@@ -95,5 +159,15 @@ export function VehicleListScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   content: {
     gap: spacing.sm,
+  },
+  centered: {
+    gap: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.primary,
+    textAlign: 'center',
   },
 });
