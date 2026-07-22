@@ -10,6 +10,7 @@ export type SettingsMenuAction =
   | 'security'
   | 'general-info'
   | 'become-driver'
+  | 'manage-vehicles'
   | 'switch-passenger';
 
 export type SettingsMenuItem = {
@@ -52,6 +53,14 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         icon: 'car',
         action: 'become-driver',
         roles: ['passenger'],
+      },
+      {
+        id: 'manage-vehicles',
+        titleKey: 'profile.account.manageVehicles.title',
+        subtitleKey: 'profile.account.manageVehicles.subtitle',
+        icon: 'car',
+        action: 'manage-vehicles',
+        roles: ['driver'],
       },
       {
         id: 'switch-passenger',

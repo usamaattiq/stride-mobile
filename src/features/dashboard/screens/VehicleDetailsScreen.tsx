@@ -9,14 +9,15 @@ import { i18n as appI18n } from '@/i18n';
 
 import { VehicleDetailsForm } from '../components/VehicleDetailsForm';
 import { useVehicles } from '../context/VehicleContext';
-import type { HomeStackParamList } from '../navigation/homeTypes';
+import type { VehicleRouteParamList } from '../navigation/vehicleNavigation.types';
+import { resolveVehicleStackOrigin } from '../navigation/vehicleNavigation.utils';
 import { isVehicleDraftComplete } from '../types/vehicle.types';
 
 export function VehicleDetailsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList, 'VehicleDetails'>>();
-  const route = useRoute<RouteProp<HomeStackParamList, 'VehicleDetails'>>();
+    useNavigation<NativeStackNavigationProp<VehicleRouteParamList, 'VehicleDetails'>>();
+  const route = useRoute<RouteProp<VehicleRouteParamList, 'VehicleDetails'>>();
   const { draft, patchDraft, beginAddVehicle, beginEditVehicle } = useVehicles();
   const [seatsError, setSeatsError] = React.useState<string | undefined>();
 
@@ -40,8 +41,10 @@ export function VehicleDetailsScreen(): React.ReactElement {
       return;
     }
     setSeatsError(undefined);
+    const stackOrigin = route.params.stackOrigin ?? resolveVehicleStackOrigin(navigation);
     navigation.navigate('VehiclePhotos', {
       returnTo: route.params.returnTo ?? 'VehicleList',
+      stackOrigin,
     });
   };
 

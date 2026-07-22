@@ -165,7 +165,8 @@
       "Home": "Home",
       "MyListings": "My Listings",
       "MyOffers": "My Offers",
-      "Settings": "Settings"
+      "Settings": "Settings",
+      "createTripA11y": "Create trip"
     },
     "home": {
       "title": "Home",
@@ -245,6 +246,10 @@
         "subtitle": "Offer rides and earn with Stride",
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
+      },
+      "manageVehicles": {
+        "title": "Manage vehicles",
+        "subtitle": "Add, edit, or remove your vehicles"
       },
       "switchPassenger": {
         "title": "Switch to passenger",

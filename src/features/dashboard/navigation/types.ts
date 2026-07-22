@@ -6,6 +6,7 @@ import type { SettingsStackParamList } from './settingsTypes';
 export type DashboardTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList>;
   MyListings: undefined;
+  CreateTrip: undefined;
   MyOffers: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
 };

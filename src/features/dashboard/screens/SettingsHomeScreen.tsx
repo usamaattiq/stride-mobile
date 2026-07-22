@@ -1,7 +1,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -29,9 +31,15 @@ import {
   type SettingsMenuItem,
 } from '../constants/settingsMenu';
 import { useDashboardSession } from '../context/DashboardSessionContext';
+import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
 type DialogKind = 'passenger' | 'logout' | 'photo' | null;
+
+type SettingsNav = CompositeNavigationProp<
+  NativeStackNavigationProp<SettingsStackParamList>,
+  BottomTabNavigationProp<DashboardTabParamList>
+>;
 
 const APP_VERSION = '1.0.0';
 
@@ -42,8 +50,7 @@ export function SettingsHomeScreen(): React.ReactElement {
   const { currentLanguage, setLanguage } = useLanguage();
   const { user, setRole, resetSession } = useDashboardSession();
   const { resetDraft } = useSignupDraftStore();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const navigation = useNavigation<SettingsNav>();
   const rootNavigation = navigation.getParent()?.getParent() as
     | NativeStackNavigationProp<AuthStackParamList>
     | undefined;
@@ -99,6 +106,9 @@ export function SettingsHomeScreen(): React.ReactElement {
         break;
       case 'become-driver':
         navigation.navigate('DriverVerification');
+        break;
+      case 'manage-vehicles':
+        navigation.navigate('VehicleList');
         break;
       case 'switch-passenger':
         setDialog('passenger');

@@ -14,8 +14,8 @@ import { TripVehicleModeStep } from '@/features/dashboard/components/trip/TripVe
 import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/TripVehicleSelectStep';
 import { useTrips } from '@/features/dashboard/context/TripContext';
 import { useVehicles } from '@/features/dashboard/context/VehicleContext';
-import type { HomeStackParamList } from '@/features/dashboard/navigation/homeTypes';
-import { exitTripCreationToHome } from '@/features/dashboard/navigation/homeStackNavigation';
+import type { DashboardRootStackParamList } from '@/features/dashboard/navigation/dashboardRootTypes';
+import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { AppDialog } from '@/shared/components/AppDialog';
 
@@ -47,17 +47,26 @@ const STEP_PROGRESS: Record<TripCreationStep, number> = {
   preview: 6,
 };
 
-type Nav = NativeStackNavigationProp<HomeStackParamList, 'TripCreation'>;
+type Nav = NativeStackNavigationProp<DashboardRootStackParamList, 'TripCreation'>;
 
 export function TripCreationFlowScreen(): React.ReactElement {
   const navigation = useNavigation<Nav>();
-  const route = useRoute<RouteProp<HomeStackParamList, 'TripCreation'>>();
+  const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, publishDraft } = useTrips();
   const { vehicles, getVehicleById, beginAddVehicle } = useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>('vehicle');
   const [successVisible, setSuccessVisible] = React.useState(false);
   const isLeavingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (route.params?.flowKey === undefined) {
+      return;
+    }
+    setStep('vehicle');
+    setSuccessVisible(false);
+    isLeavingRef.current = false;
+  }, [route.params?.flowKey]);
 
   React.useEffect(() => {
     const selectVehicleId = route.params?.selectVehicleId;
@@ -71,7 +80,8 @@ export function TripCreationFlowScreen(): React.ReactElement {
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
-    navigation.goBack();
+    isLeavingRef.current = true;
+    exitTripCreation(navigation);
   }, [navigation]);
 
   const goToStep = React.useCallback((next: TripCreationStep) => {
@@ -131,12 +141,16 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const handleSuccessDismiss = () => {
     setSuccessVisible(false);
     isLeavingRef.current = true;
-    exitTripCreationToHome(navigation);
+    exitTripCreation(navigation);
   };
 
   const handleAddVehicle = () => {
     beginAddVehicle();
-    navigation.navigate('VehicleDetails', { mode: 'add', returnTo: 'TripCreation' });
+    navigation.navigate('VehicleDetails', {
+      mode: 'add',
+      returnTo: 'TripCreation',
+      stackOrigin: 'trip',
+    });
   };
 
   const header = React.useMemo(() => {

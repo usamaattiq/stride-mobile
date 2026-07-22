@@ -15,28 +15,39 @@ import {
   VehiclesEmptyState,
 } from '../components/VehicleListContent';
 import { useVehicles } from '../context/VehicleContext';
-import type { HomeStackParamList } from '../navigation/homeTypes';
+import { resolveVehicleStackOrigin } from '../navigation/vehicleNavigation.utils';
+import type { VehicleRouteParamList } from '../navigation/vehicleNavigation.types';
 import type { Vehicle } from '../types/vehicle.types';
 
 export function VehicleListScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList, 'VehicleList'>>();
+    useNavigation<NativeStackNavigationProp<VehicleRouteParamList, 'VehicleList'>>();
   const { vehicles, beginAddVehicle, beginEditVehicle, removeVehicle } = useVehicles();
   const [vehicleToRemove, setVehicleToRemove] = React.useState<Vehicle | null>(null);
+  const stackOrigin = resolveVehicleStackOrigin(navigation);
 
   const openAddFlow = React.useCallback(() => {
     beginAddVehicle();
-    navigation.navigate('VehicleDetails', { mode: 'add' });
-  }, [beginAddVehicle, navigation]);
+    navigation.navigate('VehicleDetails', {
+      mode: 'add',
+      returnTo: 'VehicleList',
+      stackOrigin,
+    });
+  }, [beginAddVehicle, navigation, stackOrigin]);
 
   const openEditFlow = React.useCallback(
     (vehicle: Vehicle) => {
       if (beginEditVehicle(vehicle.id)) {
-        navigation.navigate('VehicleDetails', { mode: 'edit', vehicleId: vehicle.id });
+        navigation.navigate('VehicleDetails', {
+          mode: 'edit',
+          vehicleId: vehicle.id,
+          returnTo: 'VehicleList',
+          stackOrigin,
+        });
       }
     },
-    [beginEditVehicle, navigation],
+    [beginEditVehicle, navigation, stackOrigin],
   );
 
   const handleConfirmRemove = React.useCallback(() => {
