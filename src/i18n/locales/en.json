@@ -51,6 +51,7 @@
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
+        "emailInvalid": "Enter a valid email address",
         "address": "Address",
         "city": "City",
         "country": "Country",

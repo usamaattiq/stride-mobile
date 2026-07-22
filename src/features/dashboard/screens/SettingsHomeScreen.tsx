@@ -1,6 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { StyleSheet, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -132,6 +131,7 @@ export function SettingsHomeScreen(): React.ReactElement {
         user={user}
         topInset={insets.top}
         onEditPhoto={() => setDialog('photo')}
+        onLogoutPress={() => setDialog('logout')}
       />
 
       <View style={styles.body}>
@@ -155,14 +155,6 @@ export function SettingsHomeScreen(): React.ReactElement {
         </View>
 
         <View style={styles.footer}>
-          <Pressable
-            style={styles.logoutRow}
-            accessibilityRole="button"
-            onPress={() => setDialog('logout')}
-          >
-            <FontAwesome name="sign-out" size={14} color={colors.primary} />
-            <AppText style={styles.logoutLabel}>{t('profile.logout.title')}</AppText>
-          </Pressable>
           <AppText style={styles.versionLabel}>
             {t('profile.versionLabel')} {APP_VERSION}
           </AppText>
@@ -245,26 +237,15 @@ const styles = StyleSheet.create({
   menu: {
     flex: 1,
     justifyContent: 'flex-start',
-    gap: spacing.md,
+    gap: 8,
   },
   footer: {
     alignItems: 'center',
-    gap: spacing.xxs,
     paddingTop: spacing.sm,
-  },
-  logoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: spacing.xs,
-  },
-  logoutLabel: {
-    fontSize: 15,
-    color: colors.primary,
   },
   versionLabel: {
     fontSize: 12,
     color: colors.text.tertiary,
+    paddingVertical: spacing.xs,
   },
 });

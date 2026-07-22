@@ -13,6 +13,7 @@ type SettingsProfileHeaderProps = {
   user: DashboardSessionUser;
   topInset: number;
   onEditPhoto?: () => void;
+  onLogoutPress?: () => void;
 };
 
 function roleLabelKey(role: AppRole): string {
@@ -23,6 +24,7 @@ export function SettingsProfileHeader({
   user,
   topInset,
   onEditPhoto,
+  onLogoutPress,
 }: SettingsProfileHeaderProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -39,15 +41,6 @@ export function SettingsProfileHeader({
               </AppText>
             </View>
           )}
-          {/* <Pressable
-            style={styles.editButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.photo.editAccessibility')}
-            onPress={onEditPhoto}
-            hitSlop={8}
-          >
-            <FontAwesome name="pencil" size={11} color={colors.white} />
-          </Pressable> */}
         </View>
 
         <View style={styles.copy}>
@@ -61,6 +54,21 @@ export function SettingsProfileHeader({
           </View>
           <AppText style={styles.role}>{t(roleLabelKey(user.role))}</AppText>
         </View>
+
+        {onLogoutPress ? (
+          <Pressable
+            style={styles.logoutButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.logout.title')}
+            onPress={onLogoutPress}
+            hitSlop={8}
+          >
+            <FontAwesome name="sign-out" size={14} color={colors.white} />
+            <AppText weight="medium" style={styles.logoutLabel}>
+              {t('profile.logout.title')}
+            </AppText>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -76,6 +84,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  logoutButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: spacing.xxs,
+    paddingLeft: spacing.xs,
+  },
+  logoutLabel: {
+    fontSize: 12,
+    color: colors.white,
+    textAlign: 'center',
   },
   avatarWrap: {
     position: 'relative',

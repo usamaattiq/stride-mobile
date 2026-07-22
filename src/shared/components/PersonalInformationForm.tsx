@@ -13,6 +13,7 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { isValidEmail } from '@/shared/utils/email-validation';
 import { colors, spacing } from '@/theme';
 
 export type PersonalInformationCoords = {
@@ -66,9 +67,14 @@ export function PersonalInformationForm({
   const { locationLoading, openMapPickerForSelection, getCurrentLocation, mapPickerSheet } =
     useLocationMapPicker();
 
+  const emailIsValid = isValidEmail(email);
+  const emailError =
+    email.trim().length > 0 && !emailIsValid ? t('auth.signup.personal.emailInvalid') : undefined;
+
   const canSubmit =
     !submitDisabled &&
     fullName.trim().length > 1 &&
+    emailIsValid &&
     (Boolean(locationCoords) || address.trim().length > 0);
 
   const applySelection = React.useCallback(
@@ -145,6 +151,8 @@ export function PersonalInformationForm({
           placeholder={t('auth.signup.personal.emailPlaceholder')}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          error={emailError}
         />
         <SignupLocationField
           label={t('auth.signup.personal.address')}

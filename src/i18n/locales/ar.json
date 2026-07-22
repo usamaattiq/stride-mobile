@@ -51,6 +51,7 @@
         "mobile": "رقم الجوال",
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
+        "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا",
         "address": "العنوان",
         "city": "المدينة",
         "country": "الدولة",
