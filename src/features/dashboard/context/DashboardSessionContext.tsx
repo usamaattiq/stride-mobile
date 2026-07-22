@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { authApi } from '@/services/api/authApi';
-import type { UserProfileDto } from '@/services/api/authApi.types';
+import type { AuthLoginResult, UserProfileDto } from '@/services/api/authApi.types';
+import { getDeviceId } from '@/services/deviceId';
+import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
 import { useProfileStore } from '@/store/profileStore';
 
@@ -30,9 +32,21 @@ export type ProfileDetailsUpdate = {
   avatarUri?: string;
 };
 
+export type BecomeDriverInput = {
+  licenseNumber: string;
+  licenseFrontUrl: string;
+  licenseBackUrl: string;
+};
+
 type DashboardSessionContextValue = {
   user: DashboardSessionUser;
+  /** True once license verification has been completed (can switch driver ↔ passenger). */
+  hasDriverVerification: boolean;
+  /** Local-only override (DEV shortcuts). Prefer becomeDriver / switchToPassenger. */
   setRole: (role: AppRole) => void;
+  becomeDriver: (input: BecomeDriverInput) => Promise<void>;
+  switchToDriver: () => Promise<void>;
+  switchToPassenger: () => Promise<void>;
   setBiometricEnabled: (enabled: boolean) => Promise<void>;
   updateProfile: (details: ProfileDetailsUpdate) => void;
   resetSession: () => void;
@@ -89,8 +103,8 @@ export function DashboardSessionProvider({
 }): React.ReactElement {
   const profile = useProfileStore((state) => state.profile);
   const setProfile = useProfileStore((state) => state.setProfile);
-  // Fields the backend doesn't own yet (role switching, in-progress profile edits from
-  // General Information) — layered on top of the server-backed profile.
+  // In-progress profile edits from General Information — layered on the server profile.
+  // Role comes from the server after becomeDriver / switchToPassenger.
   const [localOverrides, setLocalOverrides] = React.useState<Partial<DashboardSessionUser>>({});
 
   React.useEffect(() => {
@@ -102,9 +116,54 @@ export function DashboardSessionProvider({
     [profile, localOverrides],
   );
 
+  const hasDriverVerification = React.useMemo(
+    () =>
+      Boolean(
+        profile?.driverLicenseNumber?.trim() &&
+          profile.driverLicenseFrontUrl &&
+          profile.driverLicenseBackUrl,
+      ),
+    [profile],
+  );
+
+  const applyAuthResult = React.useCallback(
+    async (result: AuthLoginResult) => {
+      await useAuthStore.getState().setAuthenticated(result.accessToken);
+      setProfile(result.profile);
+      setLocalOverrides({});
+    },
+    [setProfile],
+  );
+
   const setRole = React.useCallback((role: AppRole) => {
     setLocalOverrides((current) => ({ ...current, role }));
   }, []);
+
+  const becomeDriver = React.useCallback(
+    async (input: BecomeDriverInput) => {
+      const deviceId = await getDeviceId();
+      const result = await authApi.becomeDriver({
+        licenseNumber: input.licenseNumber.trim(),
+        licenseFrontUrl: input.licenseFrontUrl,
+        licenseBackUrl: input.licenseBackUrl,
+        deviceId,
+      });
+      await applyAuthResult(result);
+    },
+    [applyAuthResult],
+  );
+
+  const switchToDriver = React.useCallback(async () => {
+    const deviceId = await getDeviceId();
+    const result = await authApi.switchToDriver(deviceId);
+    await applyAuthResult(result);
+  }, [applyAuthResult]);
+
+  const switchToPassenger = React.useCallback(async () => {
+    const deviceId = await getDeviceId();
+    const result = await authApi.switchToPassenger(deviceId);
+    await applyAuthResult(result);
+  }, [applyAuthResult]);
 
   const setBiometricEnabled = React.useCallback(
     async (biometricEnabled: boolean) => {
@@ -131,8 +190,28 @@ export function DashboardSessionProvider({
   }, []);
 
   const value = React.useMemo(
-    () => ({ user, setRole, setBiometricEnabled, updateProfile, resetSession }),
-    [user, setRole, setBiometricEnabled, updateProfile, resetSession],
+    () => ({
+      user,
+      hasDriverVerification,
+      setRole,
+      becomeDriver,
+      switchToDriver,
+      switchToPassenger,
+      setBiometricEnabled,
+      updateProfile,
+      resetSession,
+    }),
+    [
+      user,
+      hasDriverVerification,
+      setRole,
+      becomeDriver,
+      switchToDriver,
+      switchToPassenger,
+      setBiometricEnabled,
+      updateProfile,
+      resetSession,
+    ],
   );
 
   return (

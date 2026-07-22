@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { IdentityDocumentVerification } from '@/shared/components/IdentityDocumentVerification';
 
@@ -20,16 +21,34 @@ export function DriverVerificationScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
-  const { setRole } = useDashboardSession();
+  const { becomeDriver } = useDashboardSession();
 
   const [licenseNumber, setLicenseNumber] = React.useState('');
   const [frontUri, setFrontUri] = React.useState<string | null>(null);
   const [backUri, setBackUri] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [savedVisible, setSavedVisible] = React.useState(false);
 
-  const handleSubmit = () => {
-    setRole('driver');
-    setSavedVisible(true);
+  const handleSubmit = async () => {
+    if (!frontUri || !backUri || submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await becomeDriver({
+        licenseNumber,
+        licenseFrontUrl: frontUri,
+        licenseBackUrl: backUri,
+      });
+      setSavedVisible(true);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, t('driverVerification.submitFailed')));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -52,11 +71,24 @@ export function DriverVerificationScreen(): React.ReactElement {
             uploadHint={t('driverVerification.uploadHint')}
             changeHint={t('driverVerification.changeHint')}
             submitLabel={t('driverVerification.cta')}
-            onChangeDocumentNumber={setLicenseNumber}
-            onChangeFront={setFrontUri}
-            onChangeBack={setBackUri}
-            onSubmit={handleSubmit}
+            onChangeDocumentNumber={(value) => {
+              setLicenseNumber(value);
+              setSubmitError(null);
+            }}
+            onChangeFront={(uri) => {
+              setFrontUri(uri);
+              setSubmitError(null);
+            }}
+            onChangeBack={(uri) => {
+              setBackUri(uri);
+              setSubmitError(null);
+            }}
+            onSubmit={() => {
+              void handleSubmit();
+            }}
             keyboardType="default"
+            loading={submitting}
+            errorMessage={submitError}
           />
         </AuthCard>
       </AuthScaffold>

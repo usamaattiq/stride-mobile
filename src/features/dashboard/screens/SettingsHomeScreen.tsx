@@ -11,6 +11,7 @@ import type { AuthStackParamList } from '@/features/auth/navigation/types';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { authApi } from '@/services/api/authApi';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
@@ -33,7 +34,7 @@ import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'passenger' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | null;
 
 type SettingsNav = CompositeNavigationProp<
   NativeStackNavigationProp<SettingsStackParamList>,
@@ -47,7 +48,13 @@ export function SettingsHomeScreen(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const legal = useLegalDocumentSheets();
   const { currentLanguage, setLanguage } = useLanguage();
-  const { user, setRole, resetSession } = useDashboardSession();
+  const {
+    user,
+    hasDriverVerification,
+    switchToDriver,
+    switchToPassenger,
+    resetSession,
+  } = useDashboardSession();
   const { resetDraft } = useSignupDraftStore();
   const navigation = useNavigation<SettingsNav>();
   const rootNavigation = navigation.getParent()?.getParent() as
@@ -56,6 +63,8 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
   const [dialog, setDialog] = React.useState<DialogKind>(null);
+  const [switchingRole, setSwitchingRole] = React.useState(false);
+  const [switchRoleError, setSwitchRoleError] = React.useState<string | null>(null);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
   const currentLanguageLabel = React.useMemo(
@@ -66,8 +75,12 @@ export function SettingsHomeScreen(): React.ReactElement {
   );
 
   const sections = React.useMemo(
-    () => getSettingsSectionsForRole(user.role),
-    [user.role],
+    () =>
+      getSettingsSectionsForRole({
+        role: user.role,
+        hasDriverVerification,
+      }),
+    [user.role, hasDriverVerification],
   );
 
   const handleSelectLanguage = (code: LanguageOption['code']) => {
@@ -84,6 +97,56 @@ export function SettingsHomeScreen(): React.ReactElement {
     resetDraft();
     resetSession();
     rootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+  };
+
+  const closeRoleDialog = () => {
+    if (switchingRole) {
+      return;
+    }
+    setDialog(null);
+    setSwitchRoleError(null);
+  };
+
+  const handleSwitchToPassenger = () => {
+    if (switchingRole) {
+      return;
+    }
+
+    setSwitchingRole(true);
+    setSwitchRoleError(null);
+    void switchToPassenger()
+      .then(() => {
+        setDialog(null);
+      })
+      .catch((error) => {
+        setSwitchRoleError(
+          getErrorMessage(error, t('profile.account.switchPassenger.failed')),
+        );
+      })
+      .finally(() => {
+        setSwitchingRole(false);
+      });
+  };
+
+  const handleSwitchToDriver = () => {
+    if (switchingRole) {
+      return;
+    }
+
+    setSwitchingRole(true);
+    setSwitchRoleError(null);
+    void switchToDriver()
+      .then(() => {
+        setDialog(null);
+      })
+      .catch((error) => {
+        setSwitchRoleError(
+          getErrorMessage(error, t('profile.account.switchDriver.failed')),
+        );
+      })
+      .finally(() => {
+        setSwitchingRole(false);
+      });
   };
 
   const handleMenuPress = (item: SettingsMenuItem): void => {
@@ -106,10 +169,15 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'become-driver':
         navigation.navigate('DriverVerification');
         break;
+      case 'switch-driver':
+        setSwitchRoleError(null);
+        setDialog('driver');
+        break;
       case 'manage-vehicles':
         navigation.navigate('VehicleList');
         break;
       case 'switch-passenger':
+        setSwitchRoleError(null);
         setDialog('passenger');
         break;
       default:
@@ -175,17 +243,31 @@ export function SettingsHomeScreen(): React.ReactElement {
         visible={dialog === 'passenger'}
         icon="user"
         title={t('profile.account.switchPassenger.title')}
-        message={t('profile.account.switchPassenger.confirm')}
+        message={
+          switchRoleError ?? t('profile.account.switchPassenger.confirm')
+        }
         cancelAction={{
           label: t('common.cancel'),
-          onPress: () => setDialog(null),
+          onPress: closeRoleDialog,
         }}
         confirmAction={{
           label: t('profile.account.switchPassenger.confirmCta'),
-          onPress: () => {
-            setRole('passenger');
-            setDialog(null);
-          },
+          onPress: handleSwitchToPassenger,
+        }}
+      />
+
+      <AppDialog
+        visible={dialog === 'driver'}
+        icon="car"
+        title={t('profile.account.switchDriver.title')}
+        message={switchRoleError ?? t('profile.account.switchDriver.confirm')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: closeRoleDialog,
+        }}
+        confirmAction={{
+          label: t('profile.account.switchDriver.confirmCta'),
+          onPress: handleSwitchToDriver,
         }}
       />
 

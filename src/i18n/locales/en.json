@@ -248,6 +248,13 @@
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
+      "switchDriver": {
+        "title": "Switch to driver mode",
+        "subtitle": "Offer rides with your verified license",
+        "confirm": "Switch this account to driver mode?",
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to driver mode. Please try again."
+      },
       "manageVehicles": {
         "title": "Manage vehicles",
         "subtitle": "Add, edit, or remove your vehicles"
@@ -256,7 +263,8 @@
         "title": "Switch to passenger",
         "subtitle": "Book trips as a passenger",
         "confirm": "Switch this account back to passenger mode?",
-        "confirmCta": "Switch"
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to passenger mode. Please try again."
       },
       "security": {
         "title": "Security",
@@ -472,8 +480,9 @@
     "uploadHint": "Tap to upload & crop",
     "changeHint": "Tap to change",
     "cta": "Submit & become driver",
+    "submitFailed": "Couldn't complete driver verification. Please try again.",
     "successTitle": "You're a driver",
-    "successBody": "Your license details were saved on this device (demo). You can now offer rides."
+    "successBody": "Your license details were saved. You can now offer rides."
   },
   "generalInformation": {
     "title": "General information",

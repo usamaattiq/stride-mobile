@@ -35,6 +35,8 @@ export type IdentityDocumentVerificationProps = {
   keyboardType?: KeyboardTypeOptions;
   /** Minimum trimmed length for the document number. Defaults to 5. */
   minDocumentNumberLength?: number;
+  loading?: boolean;
+  errorMessage?: string | null;
 };
 
 /**
@@ -60,11 +62,14 @@ export function IdentityDocumentVerification({
   onSkip,
   keyboardType = 'default',
   minDocumentNumberLength = 5,
+  loading = false,
+  errorMessage = null,
 }: IdentityDocumentVerificationProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const accessoryId = React.useId();
   const showDoneBar = keyboardType !== 'default';
   const canSubmit =
+    !loading &&
     documentNumber.trim().length >= minDocumentNumberLength &&
     Boolean(frontUri) &&
     Boolean(backUri);
@@ -112,7 +117,16 @@ export function IdentityDocumentVerification({
         changeHint={changeHint}
       />
 
-      <Button label={submitLabel} onPress={onSubmit} disabled={!canSubmit} />
+      {errorMessage ? (
+        <AppText style={styles.errorText}>{errorMessage}</AppText>
+      ) : null}
+
+      <Button
+        label={submitLabel}
+        onPress={onSubmit}
+        disabled={!canSubmit}
+        loading={loading}
+      />
 
       {onSkip && skipLabel ? (
         <Pressable onPress={onSkip} style={styles.skip} hitSlop={8}>
@@ -157,6 +171,10 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 13,
+    color: colors.primary,
+  },
+  errorText: {
+    fontSize: 12,
     color: colors.primary,
   },
 });
