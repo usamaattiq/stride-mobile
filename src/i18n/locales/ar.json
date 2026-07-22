@@ -26,7 +26,8 @@
         "title": "أدخل رقم الجوال",
         "subtitle": "سنرسل لك رمز التحقق",
         "placeholder": "300 1234567",
-        "cta": "إرسال الرمز"
+        "cta": "إرسال الرمز",
+        "sendFailed": "تعذر إرسال رمز التحقق. حاول مرة أخرى."
       },
       "otp": {
         "title": "تحقق من رقمك",
@@ -35,8 +36,10 @@
         "resend": "إعادة إرسال الرمز",
         "resendIn": "إعادة إرسال الرمز خلال {{time}}",
         "resentTitle": "تم إرسال الرمز",
-        "resentBody": "تم إرسال رمز جديد (تجريبي).",
-        "resentConfirm": "حسنًا"
+        "resentBody": "تم إرسال رمز جديد.",
+        "resentConfirm": "حسنًا",
+        "verifyFailed": "تعذر التحقق من هذا الرمز. حاول مرة أخرى.",
+        "resendFailed": "تعذر إعادة إرسال الرمز. حاول مرة أخرى."
       },
       "personal": {
         "title": "المعلومات الشخصية",
@@ -48,6 +51,7 @@
         "mobile": "رقم الجوال",
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
+        "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا",
         "address": "العنوان",
         "city": "المدينة",
         "country": "الدولة",
@@ -92,7 +96,8 @@
         "createMpin": "إنشاء رمز MPIN",
         "confirmMpin": "تأكيد رمز MPIN",
         "mismatch": "رمزا MPIN غير متطابقين",
-        "cta": "إنهاء التسجيل"
+        "cta": "إنهاء التسجيل",
+        "submitFailed": "تعذر إكمال التسجيل. حاول مرة أخرى."
       },
       "success": {
         "title": "مرحباً بك!",
@@ -108,15 +113,52 @@
       "phone": {
         "title": "مرحباً بعودتك",
         "subtitle": "أدخل رقم جوالك للمتابعة",
-        "cta": "متابعة"
+        "cta": "متابعة",
+        "sendOtpFailed": "تعذر إرسال رمز التحقق. حاول مرة أخرى."
+      },
+      "otp": {
+        "title": "تحقق من رقمك",
+        "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}}",
+        "cta": "تأكيد الرمز",
+        "resend": "إعادة إرسال الرمز",
+        "resendIn": "إعادة إرسال الرمز خلال {{time}}",
+        "verifyFailed": "تعذر التحقق من هذا الرمز. حاول مرة أخرى.",
+        "resendFailed": "تعذر إعادة إرسال الرمز. حاول مرة أخرى."
       },
       "mpin": {
         "title": "أدخل رمز MPIN",
         "subtitle": "أدخل رمز MPIN المكون من 4 أرقام لتسجيل الدخول",
         "cta": "تسجيل الدخول",
         "useBiometric": "استخدام الدخول البيومتري",
-        "biometricPrompt": "أكد هويتك"
+        "biometricPrompt": "أكد هويتك",
+        "forgotMpin": "هل نسيت رمز MPIN؟",
+        "loginFailed": "رقم الجوال أو رمز MPIN غير صحيح. حاول مرة أخرى.",
+        "accountLocked": "تم قفل حسابك مؤقتاً بسبب محاولات كثيرة. حاول مرة أخرى لاحقاً.",
+        "loggingInAs": "تسجيل الدخول باسم {{phone}}",
+        "useDifferentAccount": "لست أنت؟ استخدم حساباً آخر"
+      },
+      "forgotMpin": {
+        "otp": {
+          "title": "تحقق من هويتك",
+          "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}} لإعادة تعيين رمز MPIN"
+        },
+        "newMpin": {
+          "title": "إنشاء رمز MPIN جديد",
+          "subtitle": "أنشئ رمز MPIN جديد مكوناً من 4 أرقام",
+          "cta": "متابعة"
+        },
+        "confirmMpin": {
+          "title": "تأكيد رمز MPIN الجديد",
+          "subtitle": "أدخل رمز MPIN الجديد مرة أخرى للتأكيد",
+          "cta": "إعادة تعيين الرمز",
+          "mismatch": "رمزا MPIN غير متطابقين",
+          "resetFailed": "تعذرت إعادة تعيين رمز MPIN. حاول مرة أخرى."
+        }
       }
+    },
+    "sessionRevoked": {
+      "title": "تم تسجيل خروجك",
+      "message": "تم تسجيل خروجك لأنك سجلت الدخول من جهاز أو جلسة أخرى."
     }
   },
   "dashboard": {
@@ -124,7 +166,8 @@
       "Home": "الرئيسية",
       "MyListings": "قوائمي",
       "MyOffers": "عروضي",
-      "Settings": "الإعدادات"
+      "Settings": "الإعدادات",
+      "createTripA11y": "إنشاء رحلة"
     },
     "home": {
       "title": "الرئيسية",
@@ -173,7 +216,19 @@
     },
     "listings": {
       "title": "قوائمي",
-      "subtitle": "أدِر الرحلات والمسارات التي أضفتها."
+      "subtitle": "أدِر الرحلات والمسارات التي أضفتها.",
+      "emptyTitle": "لا توجد قوائم بعد",
+      "emptySubtitle": "انشر رحلة وستظهر هنا.",
+      "passengerHint": "بدّل إلى وضع السائق لإنشاء وإدارة قوائم الرحلات.",
+      "retry": "إعادة المحاولة",
+      "startingPrice": "من {{price}}",
+      "remove": {
+        "title": "إزالة القائمة",
+        "confirm": "هل تريد إزالة الرحلة من {{from}} إلى {{to}}؟",
+        "confirmAction": "إزالة",
+        "a11y": "إزالة القائمة",
+        "failed": "تعذر إزالة هذه القائمة. يرجى المحاولة مرة أخرى."
+      }
     },
     "offers": {
       "title": "عروضي",
@@ -188,6 +243,10 @@
     "roles": {
       "passenger": "راكب",
       "driver": "سائق"
+    },
+    "verification": {
+      "verified": "متحقق",
+      "notVerified": "غير متحقق"
     },
     "sections": {
       "account": "الحساب",
@@ -205,11 +264,23 @@
         "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
         "confirmCta": "كن سائقاً"
       },
+      "switchDriver": {
+        "title": "التبديل إلى وضع السائق",
+        "subtitle": "قدّم رحلات برخصتك المتحققة",
+        "confirm": "هل تريد التبديل إلى وضع السائق؟",
+        "confirmCta": "تبديل",
+        "failed": "تعذر التبديل إلى وضع السائق. يرجى المحاولة مرة أخرى."
+      },
+      "manageVehicles": {
+        "title": "إدارة المركبات",
+        "subtitle": "أضف أو عدّل أو احذف مركباتك"
+      },
       "switchPassenger": {
         "title": "التبديل إلى راكب",
         "subtitle": "احجز رحلات كراكب",
         "confirm": "هل تريد إعادة هذا الحساب إلى وضع الراكب؟",
-        "confirmCta": "تبديل"
+        "confirmCta": "تبديل",
+        "failed": "تعذر التبديل إلى وضع الراكب. يرجى المحاولة مرة أخرى."
       },
       "security": {
         "title": "الأمان",
@@ -258,7 +329,8 @@
       "required": "أدخل وأكد رمز MPIN الجديد المكون من 4 أرقام.",
       "mismatch": "رمزا MPIN الجديدان غير متطابقين.",
       "savedTitle": "تم تحديث رمز MPIN",
-      "savedBody": "تم حفظ رمز MPIN على هذا الجهاز (تجريبي)."
+      "savedBody": "تم تحديث رمز MPIN الخاص بك.",
+      "saveFailed": "تعذر تحديث رمز MPIN. حاول مرة أخرى."
     },
     "biometric": {
       "sectionTitle": "الدخول البيومتري"
@@ -271,7 +343,8 @@
       "enablePrompt": "أكد هويتك باستخدام Face ID",
       "unavailable": "Face ID غير مُعدّ على هذا الجهاز",
       "unavailableTitle": "Face ID غير متاح",
-      "unavailableBody": "فعّل Face ID من إعدادات جهازك ثم حاول مرة أخرى."
+      "unavailableBody": "فعّل Face ID من إعدادات جهازك ثم حاول مرة أخرى.",
+      "saveFailed": "تعذر تحديث دخول Face ID. حاول مرة أخرى."
     },
     "fingerprint": {
       "title": "استخدام البيومتري",
@@ -279,12 +352,148 @@
       "enablePrompt": "أكد هويتك لتفعيل الدخول البيومتري",
       "unavailable": "الدخول البيومتري غير مُعدّ على هذا الجهاز",
       "unavailableTitle": "البيومتري غير متاح",
-      "unavailableBody": "أضف بيومتري في إعدادات جهازك ثم حاول مرة أخرى."
+      "unavailableBody": "أضف بيومتري في إعدادات جهازك ثم حاول مرة أخرى.",
+      "saveFailed": "تعذر تحديث الدخول البيومتري. حاول مرة أخرى."
+    }
+  },
+  "vehicles": {
+    "homeBannerTitle": "مركباتك",
+    "homeBannerSubtitleEmpty": "أضف مركبة لبدء قبول طلبات الرحلات.",
+    "homeBannerSubtitleWithCount": "لديك {{count}} مركبة مسجلة.",
+    "homeBannerCta": "إدارة المركبات",
+    "listTitle": "مركباتي",
+    "listSubtitle": "أضف وأدر المركبات التي تقودها",
+    "addVehicle": "إضافة مركبة",
+    "emptyTitle": "لا توجد مركبات بعد",
+    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Stride.",
+    "detailsTitle": "تفاصيل المركبة",
+    "detailsSubtitle": "أخبرنا عن مركبتك",
+    "continue": "متابعة",
+    "classPlaceholder": "اختر فئة المركبة",
+    "classPickerTitle": "اختر فئة المركبة",
+    "seatsCount": "{{count}} مقاعد",
+    "remove": {
+      "title": "إزالة المركبة",
+      "confirm": "هل أنت متأكد أنك تريد إزالة \"{{title}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "confirmAction": "إزالة",
+      "a11y": "إزالة {{title}}",
+      "failed": "تعذر إزالة هذه المركبة. يرجى المحاولة مرة أخرى."
+    },
+    "retry": "إعادة المحاولة",
+    "saveFailed": "تعذر حفظ هذه المركبة. يرجى المحاولة مرة أخرى.",
+    "successTitle": "تم حفظ المركبة",
+    "successBody": "تم حفظ تفاصيل مركبتك.",
+    "fields": {
+      "title": "العنوان",
+      "titlePlaceholder": "مثال: SUV عائلي",
+      "description": "الوصف",
+      "descriptionPlaceholder": "وصف مختصر لمركبتك",
+      "plateNumber": "رقم اللوحة",
+      "plateNumberPlaceholder": "أدخل رقم اللوحة",
+      "acTitle": "تكييف الهواء",
+      "acOn": "مكيف",
+      "acOff": "بدون تكييف",
+      "totalSeats": "إجمالي المقاعد",
+      "totalSeatsPlaceholder": "أدخل عدد المقاعد",
+      "class": "فئة المركبة",
+      "brand": "العلامة التجارية",
+      "brandPlaceholder": "مثال: Toyota",
+      "model": "الموديل",
+      "modelPlaceholder": "مثال: Corolla",
+      "year": "السنة",
+      "yearPlaceholder": "مثال: 2022"
+    },
+    "classes": {
+      "suv": "SUV",
+      "sedan": "سيدان",
+      "bus": "حافلة",
+      "van": "فان",
+      "coaster": "كوستر",
+      "hiace": "هايس",
+      "minibus": "ميني باص",
+      "pickup": "بيك أب"
+    },
+    "photos": {
+      "title": "صور المركبة",
+      "subtitle": "أضف صوراً واضحة لمركبتك",
+      "gridLabel": "صور المركبة",
+      "emptyHint": "لا توجد صور بعد. اضغط إضافة صور للاختيار من المعرض.",
+      "addPictures": "إضافة صور",
+      "addPicturesHint": "اختر صورة واحدة أو أكثر من المعرض",
+      "removePhotoA11y": "إزالة الصورة {{number}}",
+      "cta": "حفظ المركبة"
+    },
+    "errors": {
+      "seatsRequired": "إجمالي المقاعد مطلوب"
+    }
+  },
+  "trips": {
+    "homeBannerTitle": "الرحلات",
+    "homeBannerSubtitleEmpty": "أنشئ رحلة لاستقبال طلبات الركاب.",
+    "homeBannerSubtitleWithCount": "لديك {{count}} رحلة منشورة.",
+    "homeBannerCta": "إنشاء رحلة",
+    "create": {
+      "flowTitle": "إنشاء رحلة",
+      "vehicleTitle": "اختر المركبة",
+      "vehicleSubtitle": "اختر المركبة لهذه الرحلة",
+      "vehicleModeTitle": "نوع المركبة",
+      "vehicleModeSubtitle": "قدّم مقاعد مشتركة أو المركبة كاملة",
+      "vehicleModeLabel": "عرض الرحلة",
+      "vehicleModeShared": "مركبة مشتركة",
+      "vehicleModeFullPrivate": "مركبة خاصة كاملة",
+      "detailsTitle": "تفاصيل الرحلة",
+      "detailsSubtitle": "حدّد معلومات المغادرة والوصول",
+      "departureCity": "مدينة المغادرة",
+      "departurePoint": "نقطة المغادرة",
+      "departureDateTime": "تاريخ ووقت المغادرة",
+      "arrivalCity": "مدينة الوصول",
+      "arrivalPoint": "نقطة الوصول",
+      "arrivalDateTime": "تاريخ ووقت الوصول",
+      "cityPlaceholder": "ابحث عن مدينة",
+      "cityNoResults": "لم يتم العثور على مدن. جرّب بحثاً آخر.",
+      "cityApiHint": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY للبحث عن المدن.",
+      "pointPlaceholder": "لم يتم اختيار نقطة بعد",
+      "selectOnMap": "التحديد على الخريطة",
+      "date": "التاريخ",
+      "time": "الوقت",
+      "pickDate": "اختر التاريخ",
+      "pickTime": "اختر الوقت",
+      "listingTitle": "طلب عرض / مزاد",
+      "listingSubtitle": "اختر كيف يمكن للركاب حجز هذه الرحلة",
+      "listingTypeLabel": "نوع الإدراج",
+      "listingRfq": "طلب عرض",
+      "listingAuction": "مزاد",
+      "startingPrice": "السعر الابتدائي",
+      "startingPricePlaceholder": "أدخل المبلغ (اختياري)",
+      "paymentMethodLabel": "طريقة الدفع",
+      "paymentCash": "نقداً",
+      "paymentOnline": "إلكتروني",
+      "durationLabel": "مدة الإدراج",
+      "durationValue": "{{count}} ساعة",
+      "scheduleTitle": "بدء الإدراج",
+      "scheduleSubtitle": "ابدأ فوراً أو جدول لاحقاً",
+      "startModeLabel": "متى يبدأ",
+      "startInstant": "ابدأ فوراً",
+      "startScheduled": "جدولة لاحقاً",
+      "scheduledStart": "تاريخ ووقت البدء",
+      "previewTitle": "معاينة الرحلة",
+      "previewSubtitle": "راجع كل شيء قبل النشر",
+      "previewTrip": "الرحلة",
+      "previewVehicle": "المركبة",
+      "previewListing": "الإدراج",
+      "notSpecified": "غير محدد",
+      "publish": "نشر الرحلة",
+      "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
+      "successTitle": "تم نشر الرحلة",
+      "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
+      "noVehiclesTitle": "أضف مركبة أولاً",
+      "noVehiclesSubtitle": "تحتاج إلى مركبة واحدة على الأقل قبل إنشاء رحلة."
     }
   },
   "driverVerification": {
     "title": "التحقق من السائق",
     "subtitle": "ارفع رخصة القيادة لتصبح سائقاً",
+    "completeSubtitle": "ارفع رخصة القيادة لإكمال التحقق",
     "licenseNumber": "رقم رخصة القيادة",
     "licensePlaceholder": "أدخل رقم الرخصة",
     "licenseFront": "الوجه الأمامي للرخصة",
@@ -292,8 +501,31 @@
     "uploadHint": "اضغط للرفع والقص",
     "changeHint": "اضغط للتغيير",
     "cta": "إرسال والتحول إلى سائق",
+    "completeCta": "إرسال الرخصة",
+    "skip": "تخطّي الآن",
+    "submitFailed": "تعذر إكمال التحقق من السائق. يرجى المحاولة مرة أخرى.",
+    "skipFailed": "تعذر الدخول إلى وضع السائق. يرجى المحاولة مرة أخرى.",
     "successTitle": "أنت سائق الآن",
-    "successBody": "تم حفظ بيانات الرخصة على هذا الجهاز (تجريبي). يمكنك الآن تقديم الرحلات."
+    "successBody": "تم حفظ بيانات الرخصة. يمكنك الآن تقديم الرحلات.",
+    "skipSuccessBody": "أنت في وضع السائق. يمكنك رفع الرخصة لاحقاً من الإعدادات.",
+    "completeSuccessTitle": "تم التحقق من الرخصة",
+    "completeSuccessBody": "تم حفظ بيانات رخصة القيادة."
+  },
+  "nicVerification": {
+    "title": "التحقق من الهوية",
+    "subtitle": "ارفع مستندات الهوية للتحقق من هويتك",
+    "nicNumber": "رقم الهوية",
+    "nicPlaceholder": "أدخل رقم الهوية",
+    "nicFront": "الوجه الأمامي للهوية",
+    "nicBack": "الوجه الخلفي للهوية",
+    "uploadHint": "اضغط للرفع والقص",
+    "changeHint": "اضغط للتغيير",
+    "cta": "إرسال والتحقق",
+    "submitFailed": "تعذر إكمال التحقق من الهوية. يرجى المحاولة مرة أخرى.",
+    "successTitle": "تم التحقق من الهوية",
+    "successBody": "تم حفظ مستندات الهوية.",
+    "successBodyContinueLicense": "تم حفظ الهوية. بعد ذلك ارفع رخصة القيادة.",
+    "continueLicenseCta": "متابعة"
   },
   "generalInformation": {
     "title": "المعلومات العامة",
@@ -306,7 +538,8 @@
   "common": {
     "cancel": "إلغاء",
     "ok": "حسنًا",
-    "done": "تم"
+    "done": "تم",
+    "continue": "متابعة"
   },
   "legal": {
     "common": {

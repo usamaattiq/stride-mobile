@@ -21,8 +21,10 @@ function formatCountdown(totalSeconds: number): string {
 type SignupOtpScreenProps = {
   otp: string;
   onChangeOtp: (otp: string) => void;
-  onContinue: () => void;
+  onContinue: (otp?: string) => void;
   onResend?: () => void;
+  loading?: boolean;
+  errorMessage?: string | null;
 };
 
 export function SignupOtpScreen({
@@ -30,9 +32,11 @@ export function SignupOtpScreen({
   onChangeOtp,
   onContinue,
   onResend,
+  loading = false,
+  errorMessage,
 }: SignupOtpScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const canContinue = otp.length === 6;
+  const canContinue = otp.length === 6 && !loading;
   const [secondsLeft, setSecondsLeft] = React.useState(RESEND_SECONDS);
 
   React.useEffect(() => {
@@ -51,11 +55,23 @@ export function SignupOtpScreen({
   return (
     <>
       <AuthCard>
-        <OtpInput length={6} value={otp} onChange={onChangeOtp} autoFocus onFilled={onContinue} />
+        <OtpInput
+          length={6}
+          value={otp}
+          onChange={onChangeOtp}
+          autoFocus
+          onFilled={(value) => {
+            if (!loading) {
+              onContinue(value);
+            }
+          }}
+        />
+        {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
         <Button
           label={t('auth.signup.otp.cta')}
-          onPress={onContinue}
+          onPress={() => onContinue()}
           disabled={!canContinue}
+          loading={loading}
         />
         {secondsLeft > 0 ? (
           <View style={styles.resend}>
@@ -89,5 +105,9 @@ const styles = StyleSheet.create({
   countdownText: {
     fontSize: 13,
     color: colors.text.secondary,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.primary,
   },
 });

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { OtpInput } from '@/features/auth/components/OtpInput';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { BiometricToggleRow } from '@/shared/components/BiometricToggleRow';
@@ -18,7 +19,7 @@ import { colors, spacing } from '@/theme';
 
 type SecuritySetupBaseProps = {
   biometricEnabled: boolean;
-  onChangeBiometric: (enabled: boolean) => void;
+  onChangeBiometric: (enabled: boolean) => void | Promise<void>;
 };
 
 export type SecuritySetupFormProps = SecuritySetupBaseProps &
@@ -32,11 +33,13 @@ export type SecuritySetupFormProps = SecuritySetupBaseProps &
         onChangeMpinConfirm: (value: string) => void;
         onSubmit: () => void;
         submitLabel: string;
+        submitting?: boolean;
+        errorMessage?: string | null;
       }
     | {
         /** Settings: change existing MPIN + biometric. */
         mode: 'manage';
-        onMpinSaved?: () => void;
+        onSaveMpin: (currentMpin: string, newMpin: string) => Promise<void>;
       }
   );
 
@@ -55,7 +58,9 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
   const [newPin, setNewPin] = React.useState('');
   const [confirmNewPin, setConfirmNewPin] = React.useState('');
   const [manageError, setManageError] = React.useState<string | null>(null);
+  const [savingMpin, setSavingMpin] = React.useState(false);
   const [savedVisible, setSavedVisible] = React.useState(false);
+  const [biometricSaveError, setBiometricSaveError] = React.useState<string | null>(null);
 
   const setupMismatch =
     props.mode === 'setup' &&
@@ -65,7 +70,8 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
     props.mode === 'setup' &&
     props.mpin.length === 4 &&
     props.mpinConfirm.length === 4 &&
-    !setupMismatch;
+    !setupMismatch &&
+    !props.submitting;
 
   const resetManageForm = () => {
     setCurrentPin('');
@@ -74,7 +80,7 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
     setManageError(null);
   };
 
-  const handleSaveMpin = () => {
+  const handleSaveMpin = async () => {
     if (props.mode !== 'manage') {
       return;
     }
@@ -91,10 +97,18 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
       return;
     }
 
-    setEditing(false);
-    resetManageForm();
-    setSavedVisible(true);
-    props.onMpinSaved?.();
+    setManageError(null);
+    setSavingMpin(true);
+    try {
+      await props.onSaveMpin(currentPin, newPin);
+      setEditing(false);
+      resetManageForm();
+      setSavedVisible(true);
+    } catch (error) {
+      setManageError(getErrorMessage(error, t('securitySettings.mpin.saveFailed')));
+    } finally {
+      setSavingMpin(false);
+    }
   };
 
   const toggleBiometric = async (enabled: boolean) => {
@@ -104,7 +118,11 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
     }
 
     if (!enabled) {
-      props.onChangeBiometric(false);
+      try {
+        await props.onChangeBiometric(false);
+      } catch (error) {
+        setBiometricSaveError(getErrorMessage(error, t(`biometric.${mode}.saveFailed`)));
+      }
       return;
     }
 
@@ -115,7 +133,11 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
     });
 
     if (result.success) {
-      props.onChangeBiometric(true);
+      try {
+        await props.onChangeBiometric(true);
+      } catch (error) {
+        setBiometricSaveError(getErrorMessage(error, t(`biometric.${mode}.saveFailed`)));
+      }
     }
   };
 
@@ -150,6 +172,9 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
                 <AppText style={styles.error}>
                   {t('auth.signup.security.mismatch')}
                 </AppText>
+              ) : null}
+              {props.errorMessage ? (
+                <AppText style={styles.error}>{props.errorMessage}</AppText>
               ) : null}
             </View>
           </>
@@ -227,7 +252,8 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
                   />
                   <Button
                     label={t('securitySettings.mpin.saveCta')}
-                    onPress={handleSaveMpin}
+                    onPress={() => void handleSaveMpin()}
+                    loading={savingMpin}
                     style={styles.formButton}
                   />
                 </View>
@@ -254,6 +280,7 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
             label={props.submitLabel}
             onPress={props.onSubmit}
             disabled={!canFinishSetup}
+            loading={props.submitting}
           />
         ) : null}
       </AuthCard>
@@ -267,6 +294,17 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
         confirmAction={{
           label: t('common.ok'),
           onPress: () => setBiometricDialog(false),
+        }}
+      />
+
+      <AppDialog
+        visible={biometricSaveError !== null}
+        icon="exclamation"
+        title={t(`biometric.${mode}.unavailableTitle`)}
+        message={biometricSaveError ?? ''}
+        confirmAction={{
+          label: t('common.ok'),
+          onPress: () => setBiometricSaveError(null),
         }}
       />
 

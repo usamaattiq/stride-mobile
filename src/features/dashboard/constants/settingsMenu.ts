@@ -10,6 +10,8 @@ export type SettingsMenuAction =
   | 'security'
   | 'general-info'
   | 'become-driver'
+  | 'switch-driver'
+  | 'manage-vehicles'
   | 'switch-passenger';
 
 export type SettingsMenuItem = {
@@ -18,14 +20,27 @@ export type SettingsMenuItem = {
   subtitleKey: string;
   icon: ComponentProps<typeof FontAwesome>['name'];
   action: SettingsMenuAction;
-  /** Show only for these roles. Omit = all roles. */
+  /**
+   * Visibility rule:
+   * - Omit = always shown
+   * - `roles` only = shown for those roles
+   * - `requiresDriverVerification` = passenger who already completed license verification
+   * - `requiresNoDriverVerification` = passenger who has never verified as driver
+   */
   roles?: AppRole[];
+  requiresDriverVerification?: boolean;
+  requiresNoDriverVerification?: boolean;
 };
 
 export type SettingsMenuSection = {
   id: string;
   titleKey: string;
   items: SettingsMenuItem[];
+};
+
+export type SettingsMenuVisibility = {
+  role: AppRole;
+  hasDriverVerification: boolean;
 };
 
 export const settingsMenuIconStyle = {
@@ -52,6 +67,16 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         icon: 'car',
         action: 'become-driver',
         roles: ['passenger'],
+        requiresNoDriverVerification: true,
+      },
+      {
+        id: 'switch-driver',
+        titleKey: 'profile.account.switchDriver.title',
+        subtitleKey: 'profile.account.switchDriver.subtitle',
+        icon: 'car',
+        action: 'switch-driver',
+        roles: ['passenger'],
+        requiresDriverVerification: true,
       },
       {
         id: 'switch-passenger',
@@ -59,6 +84,14 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         subtitleKey: 'profile.account.switchPassenger.subtitle',
         icon: 'user',
         action: 'switch-passenger',
+        roles: ['driver'],
+      },
+      {
+        id: 'manage-vehicles',
+        titleKey: 'profile.account.manageVehicles.title',
+        subtitleKey: 'profile.account.manageVehicles.subtitle',
+        icon: 'car',
+        action: 'manage-vehicles',
         roles: ['driver'],
       },
       {
@@ -105,9 +138,27 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
   },
 ];
 
-export function getSettingsSectionsForRole(role: AppRole): SettingsMenuSection[] {
+function isMenuItemVisible(
+  item: SettingsMenuItem,
+  visibility: SettingsMenuVisibility,
+): boolean {
+  if (item.roles && !item.roles.includes(visibility.role)) {
+    return false;
+  }
+  if (item.requiresDriverVerification && !visibility.hasDriverVerification) {
+    return false;
+  }
+  if (item.requiresNoDriverVerification && visibility.hasDriverVerification) {
+    return false;
+  }
+  return true;
+}
+
+export function getSettingsSectionsForRole(
+  visibility: SettingsMenuVisibility,
+): SettingsMenuSection[] {
   return SETTINGS_MENU_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.roles || item.roles.includes(role)),
+    items: section.items.filter((item) => isMenuItemVisible(item, visibility)),
   })).filter((section) => section.items.length > 0);
 }

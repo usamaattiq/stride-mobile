@@ -26,7 +26,8 @@
         "title": "Enter Mobile Number",
         "subtitle": "We'll send tou a verification code",
         "placeholder": "300 1234567",
-        "cta": "Send OTP"
+        "cta": "Send OTP",
+        "sendFailed": "We couldn't send the verification code. Please try again."
       },
       "otp": {
         "title": "OTP Verification",
@@ -35,8 +36,10 @@
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
         "resentTitle": "Code resent",
-        "resentBody": "A new code was sent (demo).",
-        "resentConfirm": "Got it"
+        "resentBody": "A new code was sent.",
+        "resentConfirm": "Got it",
+        "verifyFailed": "We couldn't verify that code. Please try again.",
+        "resendFailed": "We couldn't resend the code. Please try again."
       },
       "personal": {
         "title": "Personal information",
@@ -48,6 +51,7 @@
         "mobile": "Mobile number",
         "email": "Email",
         "emailPlaceholder": "name@example.com",
+        "emailInvalid": "Enter a valid email address",
         "address": "Address",
         "city": "City",
         "country": "Country",
@@ -92,7 +96,8 @@
         "createMpin": "Create MPIN",
         "confirmMpin": "Confirm MPIN",
         "mismatch": "MPINs do not match",
-        "cta": "Finish signup"
+        "cta": "Finish signup",
+        "submitFailed": "We couldn't complete your signup. Please try again."
       },
       "success": {
         "title": "Welcome!",
@@ -108,15 +113,52 @@
       "phone": {
         "title": "Welcome back",
         "subtitle": "Enter your mobile number to continue",
-        "cta": "Continue"
+        "cta": "Continue",
+        "sendOtpFailed": "We couldn't send the verification code. Please try again."
+      },
+      "otp": {
+        "title": "OTP Verification",
+        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "cta": "Verify OTP",
+        "resend": "Resend code",
+        "resendIn": "Resend code in {{time}}",
+        "verifyFailed": "We couldn't verify that code. Please try again.",
+        "resendFailed": "We couldn't resend the code. Please try again."
       },
       "mpin": {
         "title": "Enter MPIN",
         "subtitle": "Enter your 4-digit MPIN to sign in",
         "cta": "Log in",
         "useBiometric": "Use biometric login",
-        "biometricPrompt": "Confirm it's you"
+        "biometricPrompt": "Confirm it's you",
+        "forgotMpin": "Forgot MPIN?",
+        "loginFailed": "Incorrect phone number or MPIN. Please try again.",
+        "accountLocked": "Your account is temporarily locked due to too many attempts. Please try again later.",
+        "loggingInAs": "Logging in as {{phone}}",
+        "useDifferentAccount": "Not you? Use a different account"
+      },
+      "forgotMpin": {
+        "otp": {
+          "title": "Verify it's you",
+          "subtitle": "Enter the 6-digit code sent to {{phone}} to reset your MPIN"
+        },
+        "newMpin": {
+          "title": "Set a new MPIN",
+          "subtitle": "Create a new 4-digit MPIN",
+          "cta": "Continue"
+        },
+        "confirmMpin": {
+          "title": "Confirm new MPIN",
+          "subtitle": "Enter your new MPIN again to confirm",
+          "cta": "Reset MPIN",
+          "mismatch": "MPINs do not match",
+          "resetFailed": "We couldn't reset your MPIN. Please try again."
+        }
       }
+    },
+    "sessionRevoked": {
+      "title": "You were signed out",
+      "message": "You were logged out because you signed in on another device or session."
     }
   },
   "dashboard": {
@@ -124,7 +166,8 @@
       "Home": "Home",
       "MyListings": "My Listings",
       "MyOffers": "My Offers",
-      "Settings": "Settings"
+      "Settings": "Settings",
+      "createTripA11y": "Create trip"
     },
     "home": {
       "title": "Home",
@@ -173,7 +216,19 @@
     },
     "listings": {
       "title": "My Listings",
-      "subtitle": "Manage the rides and routes you have listed."
+      "subtitle": "Manage the rides and routes you have listed.",
+      "emptyTitle": "No listings yet",
+      "emptySubtitle": "Publish a trip and it will show up here.",
+      "passengerHint": "Switch to driver mode to create and manage trip listings.",
+      "retry": "Try again",
+      "startingPrice": "From {{price}}",
+      "remove": {
+        "title": "Remove listing",
+        "confirm": "Remove the trip from {{from}} to {{to}}?",
+        "confirmAction": "Remove",
+        "a11y": "Remove listing",
+        "failed": "Couldn't remove this listing. Please try again."
+      }
     },
     "offers": {
       "title": "My Offers",
@@ -188,6 +243,10 @@
     "roles": {
       "passenger": "Passenger",
       "driver": "Driver"
+    },
+    "verification": {
+      "verified": "Verified",
+      "notVerified": "Not verified"
     },
     "sections": {
       "account": "Account",
@@ -205,11 +264,23 @@
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
+      "switchDriver": {
+        "title": "Switch to driver mode",
+        "subtitle": "Offer rides with your verified license",
+        "confirm": "Switch this account to driver mode?",
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to driver mode. Please try again."
+      },
+      "manageVehicles": {
+        "title": "Manage vehicles",
+        "subtitle": "Add, edit, or remove your vehicles"
+      },
       "switchPassenger": {
         "title": "Switch to passenger",
         "subtitle": "Book trips as a passenger",
         "confirm": "Switch this account back to passenger mode?",
-        "confirmCta": "Switch"
+        "confirmCta": "Switch",
+        "failed": "Couldn't switch to passenger mode. Please try again."
       },
       "security": {
         "title": "Security",
@@ -258,7 +329,8 @@
       "required": "Enter and confirm a new 4-digit MPIN.",
       "mismatch": "New MPINs do not match.",
       "savedTitle": "MPIN updated",
-      "savedBody": "Your MPIN has been saved on this device (demo)."
+      "savedBody": "Your MPIN has been updated.",
+      "saveFailed": "We couldn't update your MPIN. Please try again."
     },
     "biometric": {
       "sectionTitle": "Biometric login"
@@ -271,7 +343,8 @@
       "enablePrompt": "Confirm it's you with Face ID",
       "unavailable": "Face ID is not set up on this device",
       "unavailableTitle": "Face ID unavailable",
-      "unavailableBody": "Set up Face ID in your device settings, then try again."
+      "unavailableBody": "Set up Face ID in your device settings, then try again.",
+      "saveFailed": "We couldn't update Face ID login. Please try again."
     },
     "fingerprint": {
       "title": "Use biometric",
@@ -279,12 +352,148 @@
       "enablePrompt": "Confirm it's you to enable biometric login",
       "unavailable": "Biometric login is not set up on this device",
       "unavailableTitle": "Biometric unavailable",
-      "unavailableBody": "Add a biometric in your device settings, then try again."
+      "unavailableBody": "Add a biometric in your device settings, then try again.",
+      "saveFailed": "We couldn't update biometric login. Please try again."
+    }
+  },
+  "vehicles": {
+    "homeBannerTitle": "Your vehicles",
+    "homeBannerSubtitleEmpty": "Add a vehicle to start accepting ride requests.",
+    "homeBannerSubtitleWithCount": "You have {{count}} vehicle(s) registered.",
+    "homeBannerCta": "Manage vehicles",
+    "listTitle": "My vehicles",
+    "listSubtitle": "Add and manage the vehicles you drive",
+    "addVehicle": "Add vehicle",
+    "emptyTitle": "No vehicles yet",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Stride.",
+    "detailsTitle": "Vehicle details",
+    "detailsSubtitle": "Tell us about your vehicle",
+    "continue": "Continue",
+    "classPlaceholder": "Select vehicle class",
+    "classPickerTitle": "Select vehicle class",
+    "seatsCount": "{{count}} seats",
+    "remove": {
+      "title": "Remove vehicle",
+      "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",
+      "confirmAction": "Remove",
+      "a11y": "Remove {{title}}",
+      "failed": "Couldn't remove this vehicle. Please try again."
+    },
+    "retry": "Try again",
+    "saveFailed": "Couldn't save this vehicle. Please try again.",
+    "successTitle": "Vehicle saved",
+    "successBody": "Your vehicle details were saved.",
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Family SUV",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of your vehicle",
+      "plateNumber": "Plate number",
+      "plateNumberPlaceholder": "Enter plate number",
+      "acTitle": "Air conditioning",
+      "acOn": "AC",
+      "acOff": "Non-AC",
+      "totalSeats": "Total seats",
+      "totalSeatsPlaceholder": "Enter number of seats",
+      "class": "Vehicle class",
+      "brand": "Brand",
+      "brandPlaceholder": "e.g. Toyota",
+      "model": "Model",
+      "modelPlaceholder": "e.g. Corolla",
+      "year": "Year",
+      "yearPlaceholder": "e.g. 2022"
+    },
+    "classes": {
+      "suv": "SUV",
+      "sedan": "Sedan",
+      "bus": "Bus",
+      "van": "Van",
+      "coaster": "Coaster",
+      "hiace": "Hiace",
+      "minibus": "Minibus",
+      "pickup": "Pickup"
+    },
+    "photos": {
+      "title": "Vehicle photos",
+      "subtitle": "Add clear photos of your vehicle",
+      "gridLabel": "Vehicle photos",
+      "emptyHint": "No photos yet. Tap Add pictures to select from your gallery.",
+      "addPictures": "Add pictures",
+      "addPicturesHint": "Select one or more photos from your gallery",
+      "removePhotoA11y": "Remove photo {{number}}",
+      "cta": "Save vehicle"
+    },
+    "errors": {
+      "seatsRequired": "Total seats is required"
+    }
+  },
+  "trips": {
+    "homeBannerTitle": "Trips",
+    "homeBannerSubtitleEmpty": "Create a trip to receive passenger requests.",
+    "homeBannerSubtitleWithCount": "You have {{count}} published trip(s).",
+    "homeBannerCta": "Create trip",
+    "create": {
+      "flowTitle": "Create trip",
+      "vehicleTitle": "Select vehicle",
+      "vehicleSubtitle": "Choose the vehicle for this trip",
+      "vehicleModeTitle": "Vehicle type",
+      "vehicleModeSubtitle": "Offer shared seats or the full vehicle",
+      "vehicleModeLabel": "Trip offering",
+      "vehicleModeShared": "Shared vehicle",
+      "vehicleModeFullPrivate": "Full private vehicle",
+      "detailsTitle": "Trip details",
+      "detailsSubtitle": "Set departure and arrival information",
+      "departureCity": "Departure city",
+      "departurePoint": "Departure point",
+      "departureDateTime": "Departure date & time",
+      "arrivalCity": "Arrival city",
+      "arrivalPoint": "Arrival point",
+      "arrivalDateTime": "Arrival date & time",
+      "cityPlaceholder": "Search city",
+      "cityNoResults": "No cities found. Try another search.",
+      "cityApiHint": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to search cities.",
+      "pointPlaceholder": "No point selected yet",
+      "selectOnMap": "Select on map",
+      "date": "Date",
+      "time": "Time",
+      "pickDate": "Pick date",
+      "pickTime": "Pick time",
+      "listingTitle": "RFQ / Auction",
+      "listingSubtitle": "Choose how passengers can book this trip",
+      "listingTypeLabel": "Listing type",
+      "listingRfq": "RFQ",
+      "listingAuction": "Auction",
+      "startingPrice": "Starting price",
+      "startingPricePlaceholder": "Enter amount (optional)",
+      "paymentMethodLabel": "Payment method",
+      "paymentCash": "Cash",
+      "paymentOnline": "Online",
+      "durationLabel": "Listing duration",
+      "durationValue": "{{count}} hour(s)",
+      "scheduleTitle": "Start listing",
+      "scheduleSubtitle": "Start instantly or schedule for later",
+      "startModeLabel": "When to start",
+      "startInstant": "Start instantly",
+      "startScheduled": "Schedule for later",
+      "scheduledStart": "Start date & time",
+      "previewTitle": "Preview trip",
+      "previewSubtitle": "Review everything before publishing",
+      "previewTrip": "Trip",
+      "previewVehicle": "Vehicle",
+      "previewListing": "Listing",
+      "notSpecified": "Not specified",
+      "publish": "Publish trip",
+      "publishFailed": "Couldn't publish this trip. Please try again.",
+      "successTitle": "Trip published",
+      "successBody": "Your trip is live. You can manage it from My Listings.",
+      "noVehiclesTitle": "Add a vehicle first",
+      "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }
   },
   "driverVerification": {
     "title": "Driver verification",
     "subtitle": "Upload your driving license to become a driver",
+    "completeSubtitle": "Upload your driving license to finish verification",
     "licenseNumber": "Driving license number",
     "licensePlaceholder": "Enter license number",
     "licenseFront": "License front side",
@@ -292,8 +501,31 @@
     "uploadHint": "Tap to upload & crop",
     "changeHint": "Tap to change",
     "cta": "Submit & become driver",
+    "completeCta": "Submit license",
+    "skip": "Skip for now",
+    "submitFailed": "Couldn't complete driver verification. Please try again.",
+    "skipFailed": "Couldn't enter driver mode. Please try again.",
     "successTitle": "You're a driver",
-    "successBody": "Your license details were saved on this device (demo). You can now offer rides."
+    "successBody": "Your license details were saved. You can now offer rides.",
+    "skipSuccessBody": "You're in driver mode. You can upload your license later from Settings.",
+    "completeSuccessTitle": "License verified",
+    "completeSuccessBody": "Your driving license details were saved."
+  },
+  "nicVerification": {
+    "title": "NIC verification",
+    "subtitle": "Upload your NIC documents to verify your identity",
+    "nicNumber": "NIC number",
+    "nicPlaceholder": "Enter NIC number",
+    "nicFront": "NIC front side",
+    "nicBack": "NIC back side",
+    "uploadHint": "Tap to upload & crop",
+    "changeHint": "Tap to change",
+    "cta": "Submit & verify",
+    "submitFailed": "Couldn't complete NIC verification. Please try again.",
+    "successTitle": "NIC verified",
+    "successBody": "Your identity documents were saved.",
+    "successBodyContinueLicense": "NIC saved. Next, upload your driving license.",
+    "continueLicenseCta": "Continue"
   },
   "generalInformation": {
     "title": "General information",
@@ -306,7 +538,8 @@
   "common": {
     "cancel": "Cancel",
     "ok": "OK",
-    "done": "Done"
+    "done": "Done",
+    "continue": "Continue"
   },
   "legal": {
     "common": {
