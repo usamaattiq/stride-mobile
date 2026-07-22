@@ -91,3 +91,18 @@ export function exitTripCreation(rootNavigation: TripRootNavigation): void {
     rootNavigation.goBack();
   }
 }
+
+/** After publish — land on My Listings so the new trip is visible. */
+export function exitTripCreationToListings(rootNavigation: TripRootNavigation): void {
+  rootNavigation.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'MainTabs',
+          params: { screen: 'MyListings' },
+        },
+      ],
+    }),
+  );
+}

@@ -14,6 +14,8 @@ type TripPreviewStepProps = {
   draft: TripDraft;
   vehicle: Vehicle | undefined;
   onPublish: () => void;
+  publishing?: boolean;
+  errorMessage?: string | null;
 };
 
 function formatDateTime(iso: string | null, locale: string): string {
@@ -53,6 +55,8 @@ export function TripPreviewStep({
   draft,
   vehicle,
   onPublish,
+  publishing = false,
+  errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const locale = i18n.language;
@@ -136,7 +140,14 @@ export function TripPreviewStep({
         />
         <PreviewRow label={t('trips.create.startModeLabel')} value={startLabel} />
 
-        <Button label={t('trips.create.publish')} onPress={onPublish} />
+        {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
+
+        <Button
+          label={t('trips.create.publish')}
+          onPress={onPublish}
+          loading={publishing}
+          disabled={publishing}
+        />
       </View>
     </AuthCard>
   );
@@ -168,5 +179,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.primary,
     lineHeight: 19,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.primary,
   },
 });

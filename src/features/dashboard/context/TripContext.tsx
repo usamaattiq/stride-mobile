@@ -1,27 +1,31 @@
 import React from 'react';
 
+import { tripApi } from '@/services/api/tripApi';
+import { useProfileStore } from '@/store/profileStore';
+
 import {
   createEmptyTripDraft,
-  draftToTrip,
   type Trip,
   type TripDraft,
 } from '../types/trip.types';
+import { draftToCreateTripPayload, mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type TripContextValue = {
   trips: Trip[];
   draft: TripDraft;
+  isLoading: boolean;
+  isPublishing: boolean;
+  loadError: string | null;
   beginCreateTrip: () => void;
   patchDraft: (partial: Partial<TripDraft>) => void;
   clearDraft: () => void;
-  publishDraft: () => Trip | null;
+  refreshTrips: () => Promise<void>;
+  publishDraft: () => Promise<Trip | null>;
+  removeTrip: (tripId: string) => Promise<void>;
   getTripById: (tripId: string) => Trip | undefined;
 };
 
 const TripContext = React.createContext<TripContextValue | null>(null);
-
-function createTripId(): string {
-  return `trip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export function TripProvider({
   children,
@@ -30,6 +34,34 @@ export function TripProvider({
 }): React.ReactElement {
   const [trips, setTrips] = React.useState<Trip[]>([]);
   const [draft, setDraft] = React.useState<TripDraft>(createEmptyTripDraft);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isPublishing, setIsPublishing] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+
+  const refreshTrips = React.useCallback(async () => {
+    const role = useProfileStore.getState().profile?.role;
+    if (role !== 'driver') {
+      setTrips([]);
+      setLoadError(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const list = await tripApi.list();
+      setTrips(list.map(mapTripDtoToTrip));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Failed to load trips');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void refreshTrips().catch(() => undefined);
+  }, [refreshTrips]);
 
   const clearDraft = React.useCallback(() => {
     setDraft(createEmptyTripDraft());
@@ -48,28 +80,58 @@ export function TripProvider({
     [trips],
   );
 
-  const publishDraft = React.useCallback(() => {
-    const trip = draftToTrip(draft, createTripId());
-    if (!trip) {
+  const publishDraft = React.useCallback(async () => {
+    const payload = draftToCreateTripPayload(draft);
+    if (!payload) {
       return null;
     }
 
-    setTrips((current) => [...current, trip]);
-    clearDraft();
-    return trip;
+    setIsPublishing(true);
+    try {
+      const created = await tripApi.create(payload);
+      const trip = mapTripDtoToTrip(created);
+      setTrips((current) => [trip, ...current]);
+      clearDraft();
+      return trip;
+    } finally {
+      setIsPublishing(false);
+    }
   }, [clearDraft, draft]);
+
+  const removeTrip = React.useCallback(async (tripId: string) => {
+    await tripApi.remove(tripId);
+    setTrips((current) => current.filter((item) => item.id !== tripId));
+  }, []);
 
   const value = React.useMemo(
     () => ({
       trips,
       draft,
+      isLoading,
+      isPublishing,
+      loadError,
       beginCreateTrip,
       patchDraft,
       clearDraft,
+      refreshTrips,
       publishDraft,
+      removeTrip,
       getTripById,
     }),
-    [trips, draft, beginCreateTrip, patchDraft, clearDraft, publishDraft, getTripById],
+    [
+      trips,
+      draft,
+      isLoading,
+      isPublishing,
+      loadError,
+      beginCreateTrip,
+      patchDraft,
+      clearDraft,
+      refreshTrips,
+      publishDraft,
+      removeTrip,
+      getTripById,
+    ],
   );
 
   return <TripContext.Provider value={value}>{children}</TripContext.Provider>;

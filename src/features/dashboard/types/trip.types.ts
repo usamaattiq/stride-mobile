@@ -34,6 +34,7 @@ export type TripDraft = {
 export type Trip = {
   id: string;
   vehicleId: string;
+  vehicleTitle: string | null;
   vehicleMode: TripVehicleMode;
   departureCity: TripCity;
   departurePoint: TripLocationPoint;
@@ -99,6 +100,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   return {
     id,
     vehicleId: draft.vehicleId,
+    vehicleTitle: null,
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint: draft.departurePoint,

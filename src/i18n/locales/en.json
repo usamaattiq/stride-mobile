@@ -216,7 +216,19 @@
     },
     "listings": {
       "title": "My Listings",
-      "subtitle": "Manage the rides and routes you have listed."
+      "subtitle": "Manage the rides and routes you have listed.",
+      "emptyTitle": "No listings yet",
+      "emptySubtitle": "Publish a trip and it will show up here.",
+      "passengerHint": "Switch to driver mode to create and manage trip listings.",
+      "retry": "Try again",
+      "startingPrice": "From {{price}}",
+      "remove": {
+        "title": "Remove listing",
+        "confirm": "Remove the trip from {{from}} to {{to}}?",
+        "confirmAction": "Remove",
+        "a11y": "Remove listing",
+        "failed": "Couldn't remove this listing. Please try again."
+      }
     },
     "offers": {
       "title": "My Offers",
@@ -471,8 +483,9 @@
       "previewListing": "Listing",
       "notSpecified": "Not specified",
       "publish": "Publish trip",
+      "publishFailed": "Couldn't publish this trip. Please try again.",
       "successTitle": "Trip published",
-      "successBody": "Your trip was saved on this device (demo).",
+      "successBody": "Your trip is live. You can manage it from My Listings.",
       "noVehiclesTitle": "Add a vehicle first",
       "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }
