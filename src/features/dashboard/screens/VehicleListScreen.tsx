@@ -1,14 +1,20 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
+import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 import {
   VehicleListItem,
@@ -23,9 +29,25 @@ export function VehicleListScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<VehicleRouteParamList, 'VehicleList'>>();
-  const { vehicles, beginAddVehicle, beginEditVehicle, removeVehicle } = useVehicles();
+  const {
+    vehicles,
+    isLoading,
+    isSaving,
+    loadError,
+    beginAddVehicle,
+    beginEditVehicle,
+    removeVehicle,
+    refreshVehicles,
+  } = useVehicles();
   const [vehicleToRemove, setVehicleToRemove] = React.useState<Vehicle | null>(null);
+  const [removeError, setRemoveError] = React.useState<string | null>(null);
   const stackOrigin = resolveVehicleStackOrigin(navigation);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      void refreshVehicles().catch(() => undefined);
+    }, [refreshVehicles]),
+  );
 
   const openAddFlow = React.useCallback(() => {
     beginAddVehicle();
@@ -51,12 +73,19 @@ export function VehicleListScreen(): React.ReactElement {
   );
 
   const handleConfirmRemove = React.useCallback(() => {
-    if (!vehicleToRemove) {
+    if (!vehicleToRemove || isSaving) {
       return;
     }
-    removeVehicle(vehicleToRemove.id);
-    setVehicleToRemove(null);
-  }, [removeVehicle, vehicleToRemove]);
+
+    setRemoveError(null);
+    void removeVehicle(vehicleToRemove.id)
+      .then(() => {
+        setVehicleToRemove(null);
+      })
+      .catch((error) => {
+        setRemoveError(getErrorMessage(error, t('vehicles.remove.failed')));
+      });
+  }, [isSaving, removeVehicle, t, vehicleToRemove]);
 
   return (
     <AuthScaffold
@@ -65,7 +94,21 @@ export function VehicleListScreen(): React.ReactElement {
       subtitle={t('vehicles.listSubtitle')}
       showLegalFooter={false}
     >
-      {vehicles.length === 0 ? (
+      {isLoading && vehicles.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : loadError && vehicles.length === 0 ? (
+        <View style={styles.centered}>
+          <AppText style={styles.errorText}>{loadError}</AppText>
+          <Button
+            label={t('vehicles.retry')}
+            onPress={() => {
+              void refreshVehicles().catch(() => undefined);
+            }}
+          />
+        </View>
+      ) : vehicles.length === 0 ? (
         <VehiclesEmptyState onAddPress={openAddFlow} />
       ) : (
         <View style={styles.content}>
@@ -74,7 +117,10 @@ export function VehicleListScreen(): React.ReactElement {
               key={vehicle.id}
               vehicle={vehicle}
               onPress={() => openEditFlow(vehicle)}
-              onRemovePress={() => setVehicleToRemove(vehicle)}
+              onRemovePress={() => {
+                setRemoveError(null);
+                setVehicleToRemove(vehicle);
+              }}
             />
           ))}
           <Button label={t('vehicles.addVehicle')} onPress={openAddFlow} />
@@ -86,13 +132,20 @@ export function VehicleListScreen(): React.ReactElement {
         icon="trash"
         title={t('vehicles.remove.title')}
         message={
-          vehicleToRemove
+          removeError ??
+          (vehicleToRemove
             ? t('vehicles.remove.confirm', { title: vehicleToRemove.title })
-            : undefined
+            : undefined)
         }
         cancelAction={{
           label: t('common.cancel'),
-          onPress: () => setVehicleToRemove(null),
+          onPress: () => {
+            if (isSaving) {
+              return;
+            }
+            setVehicleToRemove(null);
+            setRemoveError(null);
+          },
         }}
         confirmAction={{
           label: t('vehicles.remove.confirmAction'),
@@ -106,5 +159,15 @@ export function VehicleListScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   content: {
     gap: spacing.sm,
+  },
+  centered: {
+    gap: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.primary,
+    textAlign: 'center',
   },
 });

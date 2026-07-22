@@ -18,6 +18,7 @@ type VehiclePhotosFormProps = {
   onSubmit: () => void;
   submitLabel: string;
   submitDisabled?: boolean;
+  loading?: boolean;
 };
 
 const GRID_GAP = spacing.sm;
@@ -29,6 +30,7 @@ export function VehiclePhotosForm({
   onSubmit,
   submitLabel,
   submitDisabled = false,
+  loading = false,
 }: VehiclePhotosFormProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -100,6 +102,7 @@ export function VehiclePhotosForm({
           label={submitLabel}
           onPress={onSubmit}
           disabled={submitDisabled || !hasPhotos}
+          loading={loading}
         />
       </View>
     </AuthCard>

@@ -364,10 +364,13 @@
       "title": "Remove vehicle",
       "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",
       "confirmAction": "Remove",
-      "a11y": "Remove {{title}}"
+      "a11y": "Remove {{title}}",
+      "failed": "Couldn't remove this vehicle. Please try again."
     },
+    "retry": "Try again",
+    "saveFailed": "Couldn't save this vehicle. Please try again.",
     "successTitle": "Vehicle saved",
-    "successBody": "Your vehicle details were saved on this device",
+    "successBody": "Your vehicle details were saved.",
     "fields": {
       "title": "Title",
       "titlePlaceholder": "e.g. Family SUV",
