@@ -1,5 +1,6 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -13,50 +14,92 @@ import { IdentityDocumentVerification } from '@/shared/components/IdentityDocume
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
+type SuccessKind = 'verified' | 'skipped' | 'completed';
+
 /**
- * Become-a-driver license verification — same AuthScaffold shell as
- * signup personal verification (NIC), with driving-license copy.
+ * Driving-license verification.
+ * - purpose=become: enter driver mode (submit with docs, or skip without)
+ * - purpose=complete: already a driver; only save license docs
  */
 export function DriverVerificationScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
-  const { becomeDriver } = useDashboardSession();
+  const route = useRoute<RouteProp<SettingsStackParamList, 'DriverVerification'>>();
+  const purpose = route.params?.purpose ?? 'become';
+  const isCompleteFlow = purpose === 'complete';
+
+  const { becomeDriver, switchToDriver, submitLicenseVerification } =
+    useDashboardSession();
 
   const [licenseNumber, setLicenseNumber] = React.useState('');
   const [frontUri, setFrontUri] = React.useState<string | null>(null);
   const [backUri, setBackUri] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [savedVisible, setSavedVisible] = React.useState(false);
+  const [successKind, setSuccessKind] = React.useState<SuccessKind | null>(null);
 
-  const handleSubmit = async () => {
-    if (!frontUri || !backUri || submitting) {
+  const runAction = async (kind: SuccessKind, action: () => Promise<void>) => {
+    if (submitting) {
       return;
     }
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await becomeDriver({
-        licenseNumber,
-        licenseFrontUrl: frontUri,
-        licenseBackUrl: backUri,
-      });
-      setSavedVisible(true);
+      await action();
+      setSuccessKind(kind);
     } catch (error) {
-      setSubmitError(getErrorMessage(error, t('driverVerification.submitFailed')));
+      const fallback =
+        kind === 'skipped'
+          ? t('driverVerification.skipFailed')
+          : t('driverVerification.submitFailed');
+      setSubmitError(getErrorMessage(error, fallback));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleSubmit = () => {
+    if (!frontUri || !backUri) {
+      return;
+    }
+
+    const input = {
+      licenseNumber,
+      licenseFrontUrl: frontUri,
+      licenseBackUrl: backUri,
+    };
+
+    if (isCompleteFlow) {
+      void runAction('completed', () => submitLicenseVerification(input));
+      return;
+    }
+
+    void runAction('verified', () => becomeDriver(input));
+  };
+
+  const handleSkip = () => {
+    void runAction('skipped', () => switchToDriver());
+  };
+
+  const successMessage =
+    successKind === 'skipped'
+      ? t('driverVerification.skipSuccessBody')
+      : successKind === 'completed'
+        ? t('driverVerification.completeSuccessBody')
+        : t('driverVerification.successBody');
 
   return (
     <>
       <AuthScaffold
         onBack={() => navigation.goBack()}
         title={t('driverVerification.title')}
-        subtitle={t('driverVerification.subtitle')}
+        subtitle={
+          isCompleteFlow
+            ? t('driverVerification.completeSubtitle')
+            : t('driverVerification.subtitle')
+        }
         showLegalFooter={false}
       >
         <AuthCard>
@@ -70,7 +113,12 @@ export function DriverVerificationScreen(): React.ReactElement {
             backLabel={t('driverVerification.licenseBack')}
             uploadHint={t('driverVerification.uploadHint')}
             changeHint={t('driverVerification.changeHint')}
-            submitLabel={t('driverVerification.cta')}
+            submitLabel={
+              isCompleteFlow
+                ? t('driverVerification.completeCta')
+                : t('driverVerification.cta')
+            }
+            skipLabel={isCompleteFlow ? undefined : t('driverVerification.skip')}
             onChangeDocumentNumber={(value) => {
               setLicenseNumber(value);
               setSubmitError(null);
@@ -83,9 +131,8 @@ export function DriverVerificationScreen(): React.ReactElement {
               setBackUri(uri);
               setSubmitError(null);
             }}
-            onSubmit={() => {
-              void handleSubmit();
-            }}
+            onSubmit={handleSubmit}
+            onSkip={isCompleteFlow ? undefined : handleSkip}
             keyboardType="default"
             loading={submitting}
             errorMessage={submitError}
@@ -94,14 +141,18 @@ export function DriverVerificationScreen(): React.ReactElement {
       </AuthScaffold>
 
       <AppDialog
-        visible={savedVisible}
+        visible={successKind !== null}
         icon="check"
-        title={t('driverVerification.successTitle')}
-        message={t('driverVerification.successBody')}
+        title={
+          isCompleteFlow
+            ? t('driverVerification.completeSuccessTitle')
+            : t('driverVerification.successTitle')
+        }
+        message={successMessage}
         confirmAction={{
           label: t('common.ok'),
           onPress: () => {
-            setSavedVisible(false);
+            setSuccessKind(null);
             navigation.navigate('SettingsHome');
           },
         }}

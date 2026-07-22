@@ -11,9 +11,12 @@ import type { AppRole, DashboardSessionUser } from '../context/DashboardSessionC
 
 type SettingsProfileHeaderProps = {
   user: DashboardSessionUser;
+  /** Driver identity is complete only when NIC + license are both done. */
+  isIdentityComplete: boolean;
   topInset: number;
   onEditPhoto?: () => void;
   onLogoutPress?: () => void;
+  onVerifyPress?: () => void;
 };
 
 function roleLabelKey(role: AppRole): string {
@@ -22,9 +25,10 @@ function roleLabelKey(role: AppRole): string {
 
 export function SettingsProfileHeader({
   user,
+  isIdentityComplete,
   topInset,
-  onEditPhoto,
   onLogoutPress,
+  onVerifyPress,
 }: SettingsProfileHeaderProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -44,15 +48,36 @@ export function SettingsProfileHeader({
         </View>
 
         <View style={styles.copy}>
-          <View style={styles.nameRow}>
-            <AppText weight="bold" style={styles.name} numberOfLines={1}>
-              {user.fullName}
-            </AppText>
-            {user.isVerified ? (
-              <FontAwesome name="check-circle" size={16} color={colors.white} />
-            ) : null}
-          </View>
+          <AppText weight="bold" style={styles.name} numberOfLines={1}>
+            {user.fullName}
+          </AppText>
           <AppText style={styles.role}>{t(roleLabelKey(user.role))}</AppText>
+
+          {isIdentityComplete ? (
+            <View style={styles.verifiedRow}>
+              <FontAwesome name="check-circle" size={14} color={colors.white} />
+              <AppText weight="semibold" style={styles.verifiedLabel}>
+                {t('profile.verification.verified')}
+              </AppText>
+            </View>
+          ) : (
+            <Pressable
+              style={styles.unverifiedButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.verification.notVerified')}
+              onPress={onVerifyPress}
+              hitSlop={8}
+            >
+              <FontAwesome
+                name="exclamation-circle"
+                size={13}
+                color={colors.white}
+              />
+              <AppText weight="semibold" style={styles.unverifiedLabel}>
+                {t('profile.verification.notVerified')}
+              </AppText>
+            </Pressable>
+          )}
         </View>
 
         {onLogoutPress ? (
@@ -116,28 +141,10 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: colors.primary,
   },
-  editButton: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.primaryPressed,
-    borderWidth: 2,
-    borderColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   copy: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    gap: 0,
   },
   name: {
     flexShrink: 1,
@@ -146,8 +153,38 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   role: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.text.inverseMuted,
-    lineHeight: 18,
+    lineHeight: 14,
+  },
+  verifiedRow: {
+     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+        paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  verifiedLabel: {
+    fontSize: 13,
+    color: colors.white,
+  },
+  unverifiedButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  unverifiedLabel: {
+    fontSize: 12,
+    color: colors.white,
   },
 });

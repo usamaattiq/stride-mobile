@@ -129,8 +129,17 @@ export function IdentityDocumentVerification({
       />
 
       {onSkip && skipLabel ? (
-        <Pressable onPress={onSkip} style={styles.skip} hitSlop={8}>
-          <AppText weight="semibold" style={styles.skipText}>
+        <Pressable
+          onPress={onSkip}
+          style={styles.skip}
+          hitSlop={8}
+          disabled={loading}
+          accessibilityState={{ disabled: loading }}
+        >
+          <AppText
+            weight="semibold"
+            style={[styles.skipText, loading && styles.skipTextDisabled]}
+          >
             {skipLabel}
           </AppText>
         </Pressable>
@@ -172,6 +181,9 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 13,
     color: colors.primary,
+  },
+  skipTextDisabled: {
+    color: colors.text.tertiary,
   },
   errorText: {
     fontSize: 12,

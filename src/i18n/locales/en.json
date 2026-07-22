@@ -232,6 +232,10 @@
       "passenger": "Passenger",
       "driver": "Driver"
     },
+    "verification": {
+      "verified": "Verified",
+      "notVerified": "Not verified"
+    },
     "sections": {
       "account": "Account",
       "preferences": "Preferences",
@@ -473,6 +477,7 @@
   "driverVerification": {
     "title": "Driver verification",
     "subtitle": "Upload your driving license to become a driver",
+    "completeSubtitle": "Upload your driving license to finish verification",
     "licenseNumber": "Driving license number",
     "licensePlaceholder": "Enter license number",
     "licenseFront": "License front side",
@@ -480,9 +485,31 @@
     "uploadHint": "Tap to upload & crop",
     "changeHint": "Tap to change",
     "cta": "Submit & become driver",
+    "completeCta": "Submit license",
+    "skip": "Skip for now",
     "submitFailed": "Couldn't complete driver verification. Please try again.",
+    "skipFailed": "Couldn't enter driver mode. Please try again.",
     "successTitle": "You're a driver",
-    "successBody": "Your license details were saved. You can now offer rides."
+    "successBody": "Your license details were saved. You can now offer rides.",
+    "skipSuccessBody": "You're in driver mode. You can upload your license later from Settings.",
+    "completeSuccessTitle": "License verified",
+    "completeSuccessBody": "Your driving license details were saved."
+  },
+  "nicVerification": {
+    "title": "NIC verification",
+    "subtitle": "Upload your NIC documents to verify your identity",
+    "nicNumber": "NIC number",
+    "nicPlaceholder": "Enter NIC number",
+    "nicFront": "NIC front side",
+    "nicBack": "NIC back side",
+    "uploadHint": "Tap to upload & crop",
+    "changeHint": "Tap to change",
+    "cta": "Submit & verify",
+    "submitFailed": "Couldn't complete NIC verification. Please try again.",
+    "successTitle": "NIC verified",
+    "successBody": "Your identity documents were saved.",
+    "successBodyContinueLicense": "NIC saved. Next, upload your driving license.",
+    "continueLicenseCta": "Continue"
   },
   "generalInformation": {
     "title": "General information",

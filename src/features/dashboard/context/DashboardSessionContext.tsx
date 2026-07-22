@@ -38,6 +38,14 @@ export type BecomeDriverInput = {
   licenseBackUrl: string;
 };
 
+export type NicVerificationInput = {
+  nicNumber: string;
+  nicFrontUrl: string;
+  nicBackUrl: string;
+};
+
+export type LicenseVerificationInput = BecomeDriverInput;
+
 type DashboardSessionContextValue = {
   user: DashboardSessionUser;
   /** True once license verification has been completed (can switch driver ↔ passenger). */
@@ -47,6 +55,8 @@ type DashboardSessionContextValue = {
   becomeDriver: (input: BecomeDriverInput) => Promise<void>;
   switchToDriver: () => Promise<void>;
   switchToPassenger: () => Promise<void>;
+  submitNicVerification: (input: NicVerificationInput) => Promise<void>;
+  submitLicenseVerification: (input: LicenseVerificationInput) => Promise<void>;
   setBiometricEnabled: (enabled: boolean) => Promise<void>;
   updateProfile: (details: ProfileDetailsUpdate) => void;
   resetSession: () => void;
@@ -165,6 +175,30 @@ export function DashboardSessionProvider({
     await applyAuthResult(result);
   }, [applyAuthResult]);
 
+  const submitNicVerification = React.useCallback(
+    async (input: NicVerificationInput) => {
+      const updated = await authApi.updateMe({
+        nicNumber: input.nicNumber.trim(),
+        nicFrontUrl: input.nicFrontUrl,
+        nicBackUrl: input.nicBackUrl,
+      });
+      setProfile(updated);
+    },
+    [setProfile],
+  );
+
+  const submitLicenseVerification = React.useCallback(
+    async (input: LicenseVerificationInput) => {
+      const updated = await authApi.updateMe({
+        driverLicenseNumber: input.licenseNumber.trim(),
+        driverLicenseFrontUrl: input.licenseFrontUrl,
+        driverLicenseBackUrl: input.licenseBackUrl,
+      });
+      setProfile(updated);
+    },
+    [setProfile],
+  );
+
   const setBiometricEnabled = React.useCallback(
     async (biometricEnabled: boolean) => {
       const updated = await authApi.updateMe({ biometricEnabled });
@@ -197,6 +231,8 @@ export function DashboardSessionProvider({
       becomeDriver,
       switchToDriver,
       switchToPassenger,
+      submitNicVerification,
+      submitLicenseVerification,
       setBiometricEnabled,
       updateProfile,
       resetSession,
@@ -208,6 +244,8 @@ export function DashboardSessionProvider({
       becomeDriver,
       switchToDriver,
       switchToPassenger,
+      submitNicVerification,
+      submitLicenseVerification,
       setBiometricEnabled,
       updateProfile,
       resetSession,

@@ -232,6 +232,10 @@
       "passenger": "راكب",
       "driver": "سائق"
     },
+    "verification": {
+      "verified": "متحقق",
+      "notVerified": "غير متحقق"
+    },
     "sections": {
       "account": "الحساب",
       "preferences": "التفضيلات",
@@ -473,6 +477,7 @@
   "driverVerification": {
     "title": "التحقق من السائق",
     "subtitle": "ارفع رخصة القيادة لتصبح سائقاً",
+    "completeSubtitle": "ارفع رخصة القيادة لإكمال التحقق",
     "licenseNumber": "رقم رخصة القيادة",
     "licensePlaceholder": "أدخل رقم الرخصة",
     "licenseFront": "الوجه الأمامي للرخصة",
@@ -480,9 +485,31 @@
     "uploadHint": "اضغط للرفع والقص",
     "changeHint": "اضغط للتغيير",
     "cta": "إرسال والتحول إلى سائق",
+    "completeCta": "إرسال الرخصة",
+    "skip": "تخطّي الآن",
     "submitFailed": "تعذر إكمال التحقق من السائق. يرجى المحاولة مرة أخرى.",
+    "skipFailed": "تعذر الدخول إلى وضع السائق. يرجى المحاولة مرة أخرى.",
     "successTitle": "أنت سائق الآن",
-    "successBody": "تم حفظ بيانات الرخصة. يمكنك الآن تقديم الرحلات."
+    "successBody": "تم حفظ بيانات الرخصة. يمكنك الآن تقديم الرحلات.",
+    "skipSuccessBody": "أنت في وضع السائق. يمكنك رفع الرخصة لاحقاً من الإعدادات.",
+    "completeSuccessTitle": "تم التحقق من الرخصة",
+    "completeSuccessBody": "تم حفظ بيانات رخصة القيادة."
+  },
+  "nicVerification": {
+    "title": "التحقق من الهوية",
+    "subtitle": "ارفع مستندات الهوية للتحقق من هويتك",
+    "nicNumber": "رقم الهوية",
+    "nicPlaceholder": "أدخل رقم الهوية",
+    "nicFront": "الوجه الأمامي للهوية",
+    "nicBack": "الوجه الخلفي للهوية",
+    "uploadHint": "اضغط للرفع والقص",
+    "changeHint": "اضغط للتغيير",
+    "cta": "إرسال والتحقق",
+    "submitFailed": "تعذر إكمال التحقق من الهوية. يرجى المحاولة مرة أخرى.",
+    "successTitle": "تم التحقق من الهوية",
+    "successBody": "تم حفظ مستندات الهوية.",
+    "successBodyContinueLicense": "تم حفظ الهوية. بعد ذلك ارفع رخصة القيادة.",
+    "continueLicenseCta": "متابعة"
   },
   "generalInformation": {
     "title": "المعلومات العامة",

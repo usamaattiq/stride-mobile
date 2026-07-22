@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -82,6 +82,28 @@ export function SettingsHomeScreen(): React.ReactElement {
       }),
     [user.role, hasDriverVerification],
   );
+
+  const isIdentityComplete =
+    user.role === 'driver'
+      ? user.isVerified && hasDriverVerification
+      : user.isVerified;
+
+  const handleVerifyPress = () => {
+    if (user.role === 'driver') {
+      if (!user.isVerified) {
+        navigation.navigate('NicVerification');
+        return;
+      }
+      if (!hasDriverVerification) {
+        navigation.navigate('DriverVerification', { purpose: 'complete' });
+      }
+      return;
+    }
+
+    if (!user.isVerified) {
+      navigation.navigate('NicVerification');
+    }
+  };
 
   const handleSelectLanguage = (code: LanguageOption['code']) => {
     void setLanguage(code);
@@ -167,7 +189,7 @@ export function SettingsHomeScreen(): React.ReactElement {
         navigation.navigate('GeneralInformation');
         break;
       case 'become-driver':
-        navigation.navigate('DriverVerification');
+        navigation.navigate('DriverVerification', { purpose: 'become' });
         break;
       case 'switch-driver':
         setSwitchRoleError(null);
@@ -197,36 +219,48 @@ export function SettingsHomeScreen(): React.ReactElement {
       <FocusAwareStatusBar style="light" />
       <SettingsProfileHeader
         user={user}
+        isIdentityComplete={isIdentityComplete}
         topInset={insets.top}
         onEditPhoto={() => setDialog('photo')}
         onLogoutPress={() => setDialog('logout')}
+        onVerifyPress={handleVerifyPress}
       />
 
       <View style={styles.body}>
-        <View style={styles.menu}>
-          {sections.map((section) => (
-            <SettingsMenuSectionCard
-              key={section.id}
-              section={section}
-              title={t(section.titleKey)}
-              itemLabel={(item) => ({
-                title: t(item.titleKey),
-                subtitle:
-                  item.action === 'language'
-                    ? currentLanguageLabel
-                    : t(item.subtitleKey),
-              })}
-              resolveAccessory={resolveAccessory}
-              onPressItem={handleMenuPress}
-            />
-          ))}
-        </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: spacing.sm + insets.bottom },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.menu}>
+            {sections.map((section) => (
+              <SettingsMenuSectionCard
+                key={section.id}
+                section={section}
+                title={t(section.titleKey)}
+                itemLabel={(item) => ({
+                  title: t(item.titleKey),
+                  subtitle:
+                    item.action === 'language'
+                      ? currentLanguageLabel
+                      : t(item.subtitleKey),
+                })}
+                resolveAccessory={resolveAccessory}
+                onPressItem={handleMenuPress}
+              />
+            ))}
+          </View>
 
-        <View style={styles.footer}>
-          <AppText style={styles.versionLabel}>
-            {t('profile.versionLabel')} {APP_VERSION}
-          </AppText>
-        </View>
+          <View style={styles.footer}>
+            <AppText style={styles.versionLabel}>
+              {t('profile.versionLabel')} {APP_VERSION}
+            </AppText>
+          </View>
+        </ScrollView>
       </View>
 
       {legal.legalSheets}
@@ -310,20 +344,24 @@ const styles = StyleSheet.create({
     marginTop: -18,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
     backgroundColor: colors.background.subtle,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  menu: {
+  scroll: {
     flex: 1,
-    justifyContent: 'flex-start',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    gap: spacing.sm,
+  },
+  menu: {
     gap: 8,
   },
   footer: {
     alignItems: 'center',
     paddingTop: spacing.sm,
+    marginTop: 'auto',
   },
   versionLabel: {
     fontSize: 12,
