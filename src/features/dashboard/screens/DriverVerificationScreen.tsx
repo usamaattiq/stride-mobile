@@ -10,6 +10,10 @@ import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { IdentityDocumentVerification } from '@/shared/components/IdentityDocumentVerification';
+import {
+  isRemoteMediaUrl,
+  uploadLocalFileToPresignedUrl,
+} from '@/shared/services/mediaUploadService';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
@@ -60,23 +64,43 @@ export function DriverVerificationScreen(): React.ReactElement {
     }
   };
 
+  const uploadLicenseUrls = async () => {
+    if (!frontUri || !backUri) {
+      throw new Error('License images are required');
+    }
+
+    const licenseFrontUrl = isRemoteMediaUrl(frontUri)
+      ? frontUri
+      : (await uploadLocalFileToPresignedUrl(frontUri, { purpose: 'license_front' })).fileUrl;
+    const licenseBackUrl = isRemoteMediaUrl(backUri)
+      ? backUri
+      : (await uploadLocalFileToPresignedUrl(backUri, { purpose: 'license_back' })).fileUrl;
+
+    return { licenseFrontUrl, licenseBackUrl };
+  };
+
   const handleSubmit = () => {
     if (!frontUri || !backUri) {
       return;
     }
 
-    const input = {
-      licenseNumber,
-      licenseFrontUrl: frontUri,
-      licenseBackUrl: backUri,
+    const submit = async () => {
+      const { licenseFrontUrl, licenseBackUrl } = await uploadLicenseUrls();
+      const input = {
+        licenseNumber,
+        licenseFrontUrl,
+        licenseBackUrl,
+      };
+
+      if (isCompleteFlow) {
+        await submitLicenseVerification(input);
+        return;
+      }
+
+      await becomeDriver(input);
     };
 
-    if (isCompleteFlow) {
-      void runAction('completed', () => submitLicenseVerification(input));
-      return;
-    }
-
-    void runAction('verified', () => becomeDriver(input));
+    void runAction(isCompleteFlow ? 'completed' : 'verified', submit);
   };
 
   const handleSkip = () => {

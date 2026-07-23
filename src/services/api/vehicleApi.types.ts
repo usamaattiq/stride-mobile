@@ -20,6 +20,7 @@ export type VehicleDto = {
   model: string | null;
   year: number | null;
   photoUrls: string[];
+  photoViewUrls?: string[];
   createdAt: string;
   updatedAt: string;
 };

@@ -9,6 +9,10 @@ import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { IdentityDocumentVerification } from '@/shared/components/IdentityDocumentVerification';
+import {
+  isRemoteMediaUrl,
+  uploadLocalFileToPresignedUrl,
+} from '@/shared/services/mediaUploadService';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
@@ -41,10 +45,17 @@ export function NicVerificationScreen(): React.ReactElement {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      const nicFrontUrl = isRemoteMediaUrl(frontUri)
+        ? frontUri
+        : (await uploadLocalFileToPresignedUrl(frontUri, { purpose: 'nic_front' })).fileUrl;
+      const nicBackUrl = isRemoteMediaUrl(backUri)
+        ? backUri
+        : (await uploadLocalFileToPresignedUrl(backUri, { purpose: 'nic_back' })).fileUrl;
+
       await submitNicVerification({
         nicNumber,
-        nicFrontUrl: frontUri,
-        nicBackUrl: backUri,
+        nicFrontUrl,
+        nicBackUrl,
       });
       continueToLicenseRef.current =
         user.role === 'driver' && !hasDriverVerification;

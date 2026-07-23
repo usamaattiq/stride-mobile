@@ -3,6 +3,10 @@ import React from 'react';
 import { authApi } from '@/services/api/authApi';
 import type { AuthLoginResult, UserProfileDto } from '@/services/api/authApi.types';
 import { getDeviceId } from '@/services/deviceId';
+import {
+  isRemoteMediaUrl,
+  uploadLocalFileToPresignedUrl,
+} from '@/shared/services/mediaUploadService';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -29,7 +33,9 @@ export type ProfileDetailsUpdate = {
   fullName: string;
   email: string;
   address: string;
-  avatarUri?: string;
+  /** Pass `null` to clear avatar; omit to leave unchanged. */
+  avatarUri?: string | null;
+  locationCoordinates?: { latitude: number; longitude: number } | null;
 };
 
 export type BecomeDriverInput = {
@@ -58,7 +64,7 @@ type DashboardSessionContextValue = {
   submitNicVerification: (input: NicVerificationInput) => Promise<void>;
   submitLicenseVerification: (input: LicenseVerificationInput) => Promise<void>;
   setBiometricEnabled: (enabled: boolean) => Promise<void>;
-  updateProfile: (details: ProfileDetailsUpdate) => void;
+  updateProfile: (details: ProfileDetailsUpdate) => Promise<void>;
   resetSession: () => void;
 };
 
@@ -93,7 +99,7 @@ function toDashboardSessionUser(profile: UserProfileDto | null): DashboardSessio
     address: profile.address ?? '',
     mobileNumber: profile.phoneE164,
     role: profile.role,
-    avatarUri: profile.avatarUrl ?? undefined,
+    avatarUri: profile.avatarViewUrl ?? profile.avatarUrl ?? undefined,
     credits: profile.credits,
     notificationCount: 0,
     hasUnreadMessages: false,
@@ -208,16 +214,38 @@ export function DashboardSessionProvider({
     [setProfile],
   );
 
-  const updateProfile = React.useCallback((details: ProfileDetailsUpdate) => {
-    setLocalOverrides((current) => ({
-      ...current,
-      fullName: details.fullName.trim(),
-      firstName: firstNameFromFullName(details.fullName),
-      email: details.email.trim(),
-      address: details.address.trim(),
-      avatarUri: details.avatarUri !== undefined ? details.avatarUri : current.avatarUri,
-    }));
-  }, []);
+  const updateProfile = React.useCallback(
+    async (details: ProfileDetailsUpdate) => {
+      let avatarUrl: string | null | undefined;
+
+      if (details.avatarUri !== undefined) {
+        if (details.avatarUri === null || details.avatarUri === '') {
+          avatarUrl = null;
+        } else if (isRemoteMediaUrl(details.avatarUri)) {
+          // Prefer stable fileUrl from server profile when the UI is showing a signed view URL.
+          avatarUrl = profile?.avatarUrl ?? details.avatarUri;
+        } else {
+          const uploaded = await uploadLocalFileToPresignedUrl(details.avatarUri, {
+            purpose: 'avatar',
+          });
+          avatarUrl = uploaded.fileUrl;
+        }
+      }
+
+      const updated = await authApi.updateMe({
+        fullName: details.fullName.trim(),
+        email: details.email.trim() || null,
+        address: details.address.trim() || null,
+        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        ...(details.locationCoordinates !== undefined
+          ? { locationCoordinates: details.locationCoordinates }
+          : {}),
+      });
+      setProfile(updated);
+      setLocalOverrides({});
+    },
+    [profile?.avatarUrl, setProfile],
+  );
 
   const resetSession = React.useCallback(() => {
     setLocalOverrides({});

@@ -533,7 +533,9 @@
     "mobileLockedHint": "Mobile number cannot be changed",
     "saveCta": "Save changes",
     "savedTitle": "Profile updated",
-    "savedBody": "Your details were saved on this device (demo)."
+    "savedBody": "Your details were saved successfully.",
+    "saveFailed": "Could not save your profile. Please try again.",
+    "removePhoto": "Remove photo"
   },
   "common": {
     "cancel": "Cancel",

@@ -9,12 +9,17 @@ export type UserProfileDto = {
   latitude: number | null;
   longitude: number | null;
   avatarUrl: string | null;
+  avatarViewUrl?: string | null;
   nicNumber: string | null;
   nicFrontUrl: string | null;
+  nicFrontViewUrl?: string | null;
   nicBackUrl: string | null;
+  nicBackViewUrl?: string | null;
   driverLicenseNumber: string | null;
   driverLicenseFrontUrl: string | null;
+  driverLicenseFrontViewUrl?: string | null;
   driverLicenseBackUrl: string | null;
+  driverLicenseBackViewUrl?: string | null;
   role: 'passenger' | 'driver';
   biometricEnabled: boolean;
   credits: number;
@@ -49,6 +54,10 @@ export type SignupSubmitPayload = PhoneIdentity & {
   mpin: string;
   biometricEnabled: boolean;
   deviceId: string;
+  avatarUrl?: string;
+  nicNumber?: string;
+  nicFrontUrl?: string;
+  nicBackUrl?: string;
 };
 
 export type BecomeDriverPayload = {
