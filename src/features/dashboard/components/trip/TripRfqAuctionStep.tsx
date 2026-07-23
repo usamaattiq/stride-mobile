@@ -18,7 +18,11 @@ type TripRfqAuctionStepProps = {
 };
 
 function isListingComplete(draft: TripDraft): boolean {
-  return Boolean(draft.listingType && draft.paymentMethod);
+  return Boolean(
+    draft.listingType &&
+      draft.paymentMethod &&
+      draft.startingPrice.trim().length > 0,
+  );
 }
 
 export function TripRfqAuctionStep({
@@ -44,7 +48,7 @@ export function TripRfqAuctionStep({
 
         <AuthTextField
           label={t('trips.create.startingPrice')}
-          optional
+          required
           value={draft.startingPrice}
           onChangeText={(startingPrice) => onChange({ startingPrice })}
           placeholder={t('trips.create.startingPricePlaceholder')}

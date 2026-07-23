@@ -12,6 +12,8 @@ type ProfilePhotoPickerProps = {
   onChange: (uri: string | null) => void;
   label?: string;
   hint?: string;
+  /** Show a remove control when a photo is selected (settings). */
+  allowRemove?: boolean;
 };
 
 export function ProfilePhotoPicker({
@@ -19,6 +21,7 @@ export function ProfilePhotoPicker({
   onChange,
   label = 'Profile photo',
   hint,
+  allowRemove = false,
 }: ProfilePhotoPickerProps): React.ReactElement {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -40,40 +43,52 @@ export function ProfilePhotoPicker({
 
   return (
     <View style={styles.wrap}>
-         {/* <View style={styles.info}> */}
-        <AppText weight="bold" style={styles.label}>
-          {label}
-        </AppText>
-        {/* {hint ? <AppText style={styles.hint}>{hint}</AppText> : null} */}
-      {/* </View> */}
-      <Pressable
-        onPress={pickImage}
-        style={styles.avatarButton}
-        accessibilityRole="button"
-        accessibilityLabel="Upload profile photo"
-      >
-        {uri ? (
-          <Image source={{ uri }} style={styles.avatar} contentFit="cover" />
-        ) : (
-          <View style={styles.placeholder}>
-            <FontAwesome name="camera" size={20} color={colors.primary} />
+      <AppText weight="bold" style={styles.label}>
+        {label}
+      </AppText>
+      {hint ? <AppText style={styles.hint}>{hint}</AppText> : null}
+      <View style={styles.avatarFrame}>
+        <Pressable
+          onPress={pickImage}
+          style={styles.avatarButton}
+          accessibilityRole="button"
+          accessibilityLabel="Upload profile photo"
+        >
+          {uri ? (
+            <Image source={{ uri }} style={styles.avatar} contentFit="cover" />
+          ) : (
+            <View style={styles.placeholder}>
+              <FontAwesome name="camera" size={20} color={colors.primary} />
+            </View>
+          )}
+          <View style={styles.editBadge}>
+            <FontAwesome name="pencil" size={10} color={colors.white} />
           </View>
-        )}
-        <View style={styles.editBadge}>
-          <FontAwesome name="pencil" size={10} color={colors.white} />
-        </View>
-      </Pressable>
-
-
+        </Pressable>
+        {allowRemove && uri ? (
+          <Pressable
+            onPress={() => onChange(null)}
+            style={styles.removeBadge}
+            accessibilityRole="button"
+            accessibilityLabel="Remove photo"
+            hitSlop={6}
+          >
+            <FontAwesome name="times" size={12} color={colors.white} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    // flexDirection: 'row',
-    // alignItems: 'center',
     gap: spacing.sm,
+  },
+  avatarFrame: {
+    width: 76,
+    height: 76,
+    position: 'relative',
   },
   avatarButton: {
     width: 76,
@@ -106,9 +121,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.white,
   },
-  info: {
-    flex: 1,
-    gap: 2,
+  removeBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+    zIndex: 2,
   },
   label: {
     fontSize: 14,

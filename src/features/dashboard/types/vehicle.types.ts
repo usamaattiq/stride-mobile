@@ -19,7 +19,10 @@ export type Vehicle = {
   brand: string;
   model: string;
   year: string;
+  /** Stable file URLs (or local URIs while drafting). Persist these. */
   photoUris: string[];
+  /** Fresh view URLs for <Image>; falls back to photoUris when absent. */
+  photoDisplayUris?: string[];
 };
 
 export type VehicleDraft = {

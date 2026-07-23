@@ -1,6 +1,10 @@
 import React from 'react';
 
 import { vehicleApi } from '@/services/api/vehicleApi';
+import {
+  isRemoteMediaUrl,
+  uploadLocalFileToPresignedUrl,
+} from '@/shared/services/mediaUploadService';
 
 import {
   createEmptyVehicleDraft,
@@ -89,13 +93,24 @@ export function VehicleProvider({
   const saveDraftVehicle = React.useCallback(
     async (partial?: Partial<VehicleDraft>) => {
       const merged = { ...draft, ...partial };
-      const payload = draftToVehiclePayload(merged);
-      if (!payload) {
-        return null;
-      }
 
       setIsSaving(true);
       try {
+        const photoUrls: string[] = [];
+        for (const uri of merged.photoUris.filter((item) => item.length > 0)) {
+          if (isRemoteMediaUrl(uri)) {
+            photoUrls.push(uri);
+            continue;
+          }
+          const uploaded = await uploadLocalFileToPresignedUrl(uri, { purpose: 'vehicle' });
+          photoUrls.push(uploaded.fileUrl);
+        }
+
+        const payload = draftToVehiclePayload({ ...merged, photoUris: photoUrls });
+        if (!payload) {
+          return null;
+        }
+
         const savedDto = merged.id
           ? await vehicleApi.update(merged.id, payload)
           : await vehicleApi.create(payload);

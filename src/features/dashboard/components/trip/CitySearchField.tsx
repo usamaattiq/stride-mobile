@@ -14,6 +14,7 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { ENV } from '@/shared/config/env';
 import { searchCities } from '@/shared/utils/city-search';
+import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 type CitySearchFieldProps = {
@@ -67,11 +68,12 @@ export function CitySearchField({
   }, [query]);
 
   const handleSelect = (city: TripCity) => {
+    const selected = { ...city, label: cityDisplayName(city.label) };
     skipSearchRef.current = true;
-    setQuery(city.label);
+    setQuery(selected.label);
     setResults([]);
     setShowEmpty(false);
-    onChange(city);
+    onChange(selected);
   };
 
   return (
