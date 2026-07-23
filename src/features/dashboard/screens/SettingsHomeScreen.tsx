@@ -1,15 +1,17 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
-import { useSignupDraft } from '@/features/auth/context/SignupDraftContext';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { authApi } from '@/services/api/authApi';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
@@ -17,6 +19,9 @@ import { LanguageSwitcherModal } from '@/shared/components/language-switcher/Lan
 import { getLanguageOptions } from '@/shared/components/language-switcher/options';
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useSignupDraftStore } from '@/store/signupDraftStore';
 import { colors, spacing } from '@/theme';
 
 import { SettingsMenuSectionCard } from '../components/SettingsMenuSectionCard';
@@ -26,9 +31,15 @@ import {
   type SettingsMenuItem,
 } from '../constants/settingsMenu';
 import { useDashboardSession } from '../context/DashboardSessionContext';
+import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'passenger' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | null;
+
+type SettingsNav = CompositeNavigationProp<
+  NativeStackNavigationProp<SettingsStackParamList>,
+  BottomTabNavigationProp<DashboardTabParamList>
+>;
 
 const APP_VERSION = '1.0.0';
 
@@ -37,16 +48,23 @@ export function SettingsHomeScreen(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const legal = useLegalDocumentSheets();
   const { currentLanguage, setLanguage } = useLanguage();
-  const { user, setRole, resetSession } = useDashboardSession();
-  const { resetDraft } = useSignupDraft();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const {
+    user,
+    hasDriverVerification,
+    switchToDriver,
+    switchToPassenger,
+    resetSession,
+  } = useDashboardSession();
+  const { resetDraft } = useSignupDraftStore();
+  const navigation = useNavigation<SettingsNav>();
   const rootNavigation = navigation.getParent()?.getParent() as
     | NativeStackNavigationProp<AuthStackParamList>
     | undefined;
 
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
   const [dialog, setDialog] = React.useState<DialogKind>(null);
+  const [switchingRole, setSwitchingRole] = React.useState(false);
+  const [switchRoleError, setSwitchRoleError] = React.useState<string | null>(null);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
   const currentLanguageLabel = React.useMemo(
@@ -57,9 +75,35 @@ export function SettingsHomeScreen(): React.ReactElement {
   );
 
   const sections = React.useMemo(
-    () => getSettingsSectionsForRole(user.role),
-    [user.role],
+    () =>
+      getSettingsSectionsForRole({
+        role: user.role,
+        hasDriverVerification,
+      }),
+    [user.role, hasDriverVerification],
   );
+
+  const isIdentityComplete =
+    user.role === 'driver'
+      ? user.isVerified && hasDriverVerification
+      : user.isVerified;
+
+  const handleVerifyPress = () => {
+    if (user.role === 'driver') {
+      if (!user.isVerified) {
+        navigation.navigate('NicVerification');
+        return;
+      }
+      if (!hasDriverVerification) {
+        navigation.navigate('DriverVerification', { purpose: 'complete' });
+      }
+      return;
+    }
+
+    if (!user.isVerified) {
+      navigation.navigate('NicVerification');
+    }
+  };
 
   const handleSelectLanguage = (code: LanguageOption['code']) => {
     void setLanguage(code);
@@ -68,9 +112,63 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const handleLogout = () => {
     setDialog(null);
+    // Best-effort: local sign-out proceeds even if the network call fails.
+    void authApi.logout().catch(() => undefined);
+    void useAuthStore.getState().signOut();
+    useProfileStore.getState().clearProfile();
     resetDraft();
     resetSession();
     rootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+  };
+
+  const closeRoleDialog = () => {
+    if (switchingRole) {
+      return;
+    }
+    setDialog(null);
+    setSwitchRoleError(null);
+  };
+
+  const handleSwitchToPassenger = () => {
+    if (switchingRole) {
+      return;
+    }
+
+    setSwitchingRole(true);
+    setSwitchRoleError(null);
+    void switchToPassenger()
+      .then(() => {
+        setDialog(null);
+      })
+      .catch((error) => {
+        setSwitchRoleError(
+          getErrorMessage(error, t('profile.account.switchPassenger.failed')),
+        );
+      })
+      .finally(() => {
+        setSwitchingRole(false);
+      });
+  };
+
+  const handleSwitchToDriver = () => {
+    if (switchingRole) {
+      return;
+    }
+
+    setSwitchingRole(true);
+    setSwitchRoleError(null);
+    void switchToDriver()
+      .then(() => {
+        setDialog(null);
+      })
+      .catch((error) => {
+        setSwitchRoleError(
+          getErrorMessage(error, t('profile.account.switchDriver.failed')),
+        );
+      })
+      .finally(() => {
+        setSwitchingRole(false);
+      });
   };
 
   const handleMenuPress = (item: SettingsMenuItem): void => {
@@ -91,9 +189,17 @@ export function SettingsHomeScreen(): React.ReactElement {
         navigation.navigate('GeneralInformation');
         break;
       case 'become-driver':
-        navigation.navigate('DriverVerification');
+        navigation.navigate('DriverVerification', { purpose: 'become' });
+        break;
+      case 'switch-driver':
+        setSwitchRoleError(null);
+        setDialog('driver');
+        break;
+      case 'manage-vehicles':
+        navigation.navigate('VehicleList');
         break;
       case 'switch-passenger':
+        setSwitchRoleError(null);
         setDialog('passenger');
         break;
       default:
@@ -113,43 +219,48 @@ export function SettingsHomeScreen(): React.ReactElement {
       <FocusAwareStatusBar style="light" />
       <SettingsProfileHeader
         user={user}
+        isIdentityComplete={isIdentityComplete}
         topInset={insets.top}
         onEditPhoto={() => setDialog('photo')}
+        onLogoutPress={() => setDialog('logout')}
+        onVerifyPress={handleVerifyPress}
       />
 
       <View style={styles.body}>
-        <View style={styles.menu}>
-          {sections.map((section) => (
-            <SettingsMenuSectionCard
-              key={section.id}
-              section={section}
-              title={t(section.titleKey)}
-              itemLabel={(item) => ({
-                title: t(item.titleKey),
-                subtitle:
-                  item.action === 'language'
-                    ? currentLanguageLabel
-                    : t(item.subtitleKey),
-              })}
-              resolveAccessory={resolveAccessory}
-              onPressItem={handleMenuPress}
-            />
-          ))}
-        </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: spacing.sm + insets.bottom },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.menu}>
+            {sections.map((section) => (
+              <SettingsMenuSectionCard
+                key={section.id}
+                section={section}
+                title={t(section.titleKey)}
+                itemLabel={(item) => ({
+                  title: t(item.titleKey),
+                  subtitle:
+                    item.action === 'language'
+                      ? currentLanguageLabel
+                      : t(item.subtitleKey),
+                })}
+                resolveAccessory={resolveAccessory}
+                onPressItem={handleMenuPress}
+              />
+            ))}
+          </View>
 
-        <View style={styles.footer}>
-          <Pressable
-            style={styles.logoutRow}
-            accessibilityRole="button"
-            onPress={() => setDialog('logout')}
-          >
-            <FontAwesome name="sign-out" size={14} color={colors.primary} />
-            <AppText style={styles.logoutLabel}>{t('profile.logout.title')}</AppText>
-          </Pressable>
-          <AppText style={styles.versionLabel}>
-            {t('profile.versionLabel')} {APP_VERSION}
-          </AppText>
-        </View>
+          <View style={styles.footer}>
+            <AppText style={styles.versionLabel}>
+              {t('profile.versionLabel')} {APP_VERSION}
+            </AppText>
+          </View>
+        </ScrollView>
       </View>
 
       {legal.legalSheets}
@@ -166,17 +277,31 @@ export function SettingsHomeScreen(): React.ReactElement {
         visible={dialog === 'passenger'}
         icon="user"
         title={t('profile.account.switchPassenger.title')}
-        message={t('profile.account.switchPassenger.confirm')}
+        message={
+          switchRoleError ?? t('profile.account.switchPassenger.confirm')
+        }
         cancelAction={{
           label: t('common.cancel'),
-          onPress: () => setDialog(null),
+          onPress: closeRoleDialog,
         }}
         confirmAction={{
           label: t('profile.account.switchPassenger.confirmCta'),
-          onPress: () => {
-            setRole('passenger');
-            setDialog(null);
-          },
+          onPress: handleSwitchToPassenger,
+        }}
+      />
+
+      <AppDialog
+        visible={dialog === 'driver'}
+        icon="car"
+        title={t('profile.account.switchDriver.title')}
+        message={switchRoleError ?? t('profile.account.switchDriver.confirm')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: closeRoleDialog,
+        }}
+        confirmAction={{
+          label: t('profile.account.switchDriver.confirmCta'),
+          onPress: handleSwitchToDriver,
         }}
       />
 
@@ -219,35 +344,28 @@ const styles = StyleSheet.create({
     marginTop: -18,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
     backgroundColor: colors.background.subtle,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  menu: {
+  scroll: {
     flex: 1,
-    justifyContent: 'flex-start',
-    gap: spacing.md,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    gap: spacing.sm,
+  },
+  menu: {
+    gap: 8,
   },
   footer: {
     alignItems: 'center',
-    gap: spacing.xxs,
     paddingTop: spacing.sm,
-  },
-  logoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: spacing.xs,
-  },
-  logoutLabel: {
-    fontSize: 15,
-    color: colors.primary,
+    marginTop: 'auto',
   },
   versionLabel: {
     fontSize: 12,
     color: colors.text.tertiary,
+    paddingVertical: spacing.xs,
   },
 });

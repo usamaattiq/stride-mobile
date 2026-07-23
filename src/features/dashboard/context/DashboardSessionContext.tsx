@@ -1,5 +1,12 @@
 import React from 'react';
 
+import { authApi } from '@/services/api/authApi';
+import type { AuthLoginResult, UserProfileDto } from '@/services/api/authApi.types';
+import { getDeviceId } from '@/services/deviceId';
+import { useAuthStore } from '@/store/authStore';
+import { useDevicePrefsStore } from '@/store/devicePrefsStore';
+import { useProfileStore } from '@/store/profileStore';
+
 export type AppRole = 'passenger' | 'driver';
 
 export type DashboardSessionUser = {
@@ -25,55 +32,184 @@ export type ProfileDetailsUpdate = {
   avatarUri?: string;
 };
 
+export type BecomeDriverInput = {
+  licenseNumber: string;
+  licenseFrontUrl: string;
+  licenseBackUrl: string;
+};
+
+export type NicVerificationInput = {
+  nicNumber: string;
+  nicFrontUrl: string;
+  nicBackUrl: string;
+};
+
+export type LicenseVerificationInput = BecomeDriverInput;
+
 type DashboardSessionContextValue = {
   user: DashboardSessionUser;
+  /** True once license verification has been completed (can switch driver ↔ passenger). */
+  hasDriverVerification: boolean;
+  /** Local-only override (DEV shortcuts). Prefer becomeDriver / switchToPassenger. */
   setRole: (role: AppRole) => void;
-  setBiometricEnabled: (enabled: boolean) => void;
+  becomeDriver: (input: BecomeDriverInput) => Promise<void>;
+  switchToDriver: () => Promise<void>;
+  switchToPassenger: () => Promise<void>;
+  submitNicVerification: (input: NicVerificationInput) => Promise<void>;
+  submitLicenseVerification: (input: LicenseVerificationInput) => Promise<void>;
+  setBiometricEnabled: (enabled: boolean) => Promise<void>;
   updateProfile: (details: ProfileDetailsUpdate) => void;
   resetSession: () => void;
 };
 
-const DEFAULT_USER: DashboardSessionUser = {
-  firstName: 'John',
-  fullName: 'John Doe',
-  email: 'john.doe@email.com',
-  address: 'Gulberg III, Lahore',
-  mobileNumber: '+92 300 1234567',
+const FALLBACK_USER: DashboardSessionUser = {
+  firstName: '',
+  fullName: '',
+  email: '',
+  address: '',
+  mobileNumber: '',
   role: 'passenger',
-  avatarUri: 'https://i.pravatar.cc/100?img=12',
-  credits: 12450,
+  avatarUri: undefined,
+  credits: 0,
   notificationCount: 0,
   hasUnreadMessages: false,
-  isVerified: true,
+  isVerified: false,
   biometricEnabled: false,
 };
-
-const DashboardSessionContext = React.createContext<DashboardSessionContextValue | null>(
-  null,
-);
 
 function firstNameFromFullName(fullName: string): string {
   const trimmed = fullName.trim();
   return trimmed.split(/\s+/)[0] || trimmed;
 }
 
+function toDashboardSessionUser(profile: UserProfileDto | null): DashboardSessionUser {
+  if (!profile) {
+    return FALLBACK_USER;
+  }
+  return {
+    firstName: firstNameFromFullName(profile.fullName),
+    fullName: profile.fullName,
+    email: profile.email ?? '',
+    address: profile.address ?? '',
+    mobileNumber: profile.phoneE164,
+    role: profile.role,
+    avatarUri: profile.avatarUrl ?? undefined,
+    credits: profile.credits,
+    notificationCount: 0,
+    hasUnreadMessages: false,
+    isVerified: profile.isVerified,
+    biometricEnabled: profile.biometricEnabled,
+  };
+}
+
+const DashboardSessionContext = React.createContext<DashboardSessionContextValue | null>(
+  null,
+);
+
 export function DashboardSessionProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const [user, setUser] = React.useState<DashboardSessionUser>(DEFAULT_USER);
+  const profile = useProfileStore((state) => state.profile);
+  const setProfile = useProfileStore((state) => state.setProfile);
+  // In-progress profile edits from General Information — layered on the server profile.
+  // Role comes from the server after becomeDriver / switchToPassenger.
+  const [localOverrides, setLocalOverrides] = React.useState<Partial<DashboardSessionUser>>({});
+
+  React.useEffect(() => {
+    setLocalOverrides({});
+  }, [profile?.id]);
+
+  const user = React.useMemo<DashboardSessionUser>(
+    () => ({ ...toDashboardSessionUser(profile), ...localOverrides }),
+    [profile, localOverrides],
+  );
+
+  const hasDriverVerification = React.useMemo(
+    () =>
+      Boolean(
+        profile?.driverLicenseNumber?.trim() &&
+          profile.driverLicenseFrontUrl &&
+          profile.driverLicenseBackUrl,
+      ),
+    [profile],
+  );
+
+  const applyAuthResult = React.useCallback(
+    async (result: AuthLoginResult) => {
+      await useAuthStore.getState().setAuthenticated(result.accessToken);
+      setProfile(result.profile);
+      setLocalOverrides({});
+    },
+    [setProfile],
+  );
 
   const setRole = React.useCallback((role: AppRole) => {
-    setUser((current) => ({ ...current, role }));
+    setLocalOverrides((current) => ({ ...current, role }));
   }, []);
 
-  const setBiometricEnabled = React.useCallback((biometricEnabled: boolean) => {
-    setUser((current) => ({ ...current, biometricEnabled }));
-  }, []);
+  const becomeDriver = React.useCallback(
+    async (input: BecomeDriverInput) => {
+      const deviceId = await getDeviceId();
+      const result = await authApi.becomeDriver({
+        licenseNumber: input.licenseNumber.trim(),
+        licenseFrontUrl: input.licenseFrontUrl,
+        licenseBackUrl: input.licenseBackUrl,
+        deviceId,
+      });
+      await applyAuthResult(result);
+    },
+    [applyAuthResult],
+  );
+
+  const switchToDriver = React.useCallback(async () => {
+    const deviceId = await getDeviceId();
+    const result = await authApi.switchToDriver(deviceId);
+    await applyAuthResult(result);
+  }, [applyAuthResult]);
+
+  const switchToPassenger = React.useCallback(async () => {
+    const deviceId = await getDeviceId();
+    const result = await authApi.switchToPassenger(deviceId);
+    await applyAuthResult(result);
+  }, [applyAuthResult]);
+
+  const submitNicVerification = React.useCallback(
+    async (input: NicVerificationInput) => {
+      const updated = await authApi.updateMe({
+        nicNumber: input.nicNumber.trim(),
+        nicFrontUrl: input.nicFrontUrl,
+        nicBackUrl: input.nicBackUrl,
+      });
+      setProfile(updated);
+    },
+    [setProfile],
+  );
+
+  const submitLicenseVerification = React.useCallback(
+    async (input: LicenseVerificationInput) => {
+      const updated = await authApi.updateMe({
+        driverLicenseNumber: input.licenseNumber.trim(),
+        driverLicenseFrontUrl: input.licenseFrontUrl,
+        driverLicenseBackUrl: input.licenseBackUrl,
+      });
+      setProfile(updated);
+    },
+    [setProfile],
+  );
+
+  const setBiometricEnabled = React.useCallback(
+    async (biometricEnabled: boolean) => {
+      const updated = await authApi.updateMe({ biometricEnabled });
+      setProfile(updated);
+      await useDevicePrefsStore.getState().setBiometricEnabled(biometricEnabled);
+    },
+    [setProfile],
+  );
 
   const updateProfile = React.useCallback((details: ProfileDetailsUpdate) => {
-    setUser((current) => ({
+    setLocalOverrides((current) => ({
       ...current,
       fullName: details.fullName.trim(),
       firstName: firstNameFromFullName(details.fullName),
@@ -84,12 +220,36 @@ export function DashboardSessionProvider({
   }, []);
 
   const resetSession = React.useCallback(() => {
-    setUser(DEFAULT_USER);
+    setLocalOverrides({});
   }, []);
 
   const value = React.useMemo(
-    () => ({ user, setRole, setBiometricEnabled, updateProfile, resetSession }),
-    [user, setRole, setBiometricEnabled, updateProfile, resetSession],
+    () => ({
+      user,
+      hasDriverVerification,
+      setRole,
+      becomeDriver,
+      switchToDriver,
+      switchToPassenger,
+      submitNicVerification,
+      submitLicenseVerification,
+      setBiometricEnabled,
+      updateProfile,
+      resetSession,
+    }),
+    [
+      user,
+      hasDriverVerification,
+      setRole,
+      becomeDriver,
+      switchToDriver,
+      switchToPassenger,
+      submitNicVerification,
+      submitLicenseVerification,
+      setBiometricEnabled,
+      updateProfile,
+      resetSession,
+    ],
   );
 
   return (
