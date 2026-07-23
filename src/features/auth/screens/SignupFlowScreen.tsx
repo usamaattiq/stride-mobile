@@ -185,7 +185,7 @@ export function SignupFlowScreen(): React.ReactElement {
     setSubmitting(true);
     try {
       const deviceId = await getDeviceId();
-      const payload = toSignupSubmitPayload(draft, deviceId);
+      const payload = await toSignupSubmitPayload(draft, deviceId);
       const result = await authApi.submitSignup(payload);
 
       await useAuthStore.getState().setAuthenticated(result.accessToken);

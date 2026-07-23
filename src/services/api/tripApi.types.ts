@@ -13,6 +13,10 @@ export type TripDto = {
   id: string;
   vehicleId: string;
   vehicleTitle: string | null;
+  vehiclePhotoUrls: string[];
+  vehiclePhotoViewUrl?: string | null;
+  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | 'hiace' | 'minibus' | 'pickup' | null;
+  vehicleTotalSeats: number | null;
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
   departurePoint: TripLocationPointDto;
@@ -41,7 +45,7 @@ export type CreateTripPayload = {
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
   listingType: 'rfq' | 'auction';
-  startingPrice?: string | null;
+  startingPrice: string;
   paymentMethod: 'cash' | 'online';
   durationHours: number;
   startMode: 'instant' | 'scheduled';

@@ -40,6 +40,10 @@ export type PersonalInformationFormProps = {
   showMobileLockedHint?: boolean;
   /** Extra gate on top of built-in validation (e.g. require dirty in settings). */
   submitDisabled?: boolean;
+  /** Show remove control under the photo (settings). */
+  allowRemovePhoto?: boolean;
+  loading?: boolean;
+  errorMessage?: string | null;
 };
 
 /**
@@ -62,6 +66,9 @@ export function PersonalInformationForm({
   submitLabel,
   showMobileLockedHint = false,
   submitDisabled = false,
+  allowRemovePhoto = false,
+  loading = false,
+  errorMessage = null,
 }: PersonalInformationFormProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { locationLoading, openMapPickerForSelection, getCurrentLocation, mapPickerSheet } =
@@ -73,6 +80,7 @@ export function PersonalInformationForm({
 
   const canSubmit =
     !submitDisabled &&
+    !loading &&
     fullName.trim().length > 1 &&
     emailIsValid &&
     (Boolean(locationCoords) || address.trim().length > 0);
@@ -116,6 +124,7 @@ export function PersonalInformationForm({
           onChange={onChangePhoto}
           label={t('auth.signup.personal.photo')}
           hint={t('auth.signup.personal.photoHint')}
+          allowRemove={allowRemovePhoto}
         />
         <AuthTextField
           label={t('auth.signup.personal.fullName')}
@@ -164,7 +173,8 @@ export function PersonalInformationForm({
           onUseCurrentLocation={() => void handleUseCurrentLocation()}
           onSelectOnMap={handleSelectOnMap}
         />
-        <Button label={submitLabel} onPress={onSubmit} disabled={!canSubmit} />
+        <Button label={submitLabel} onPress={onSubmit} disabled={!canSubmit} loading={loading} />
+        {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
       </AuthCard>
       <View style={styles.spacer} />
       {mapPickerSheet}
@@ -183,5 +193,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: colors.text.tertiary,
+  },
+  errorText: {
+    marginTop: spacing.sm,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
+    textAlign: 'center',
   },
 });

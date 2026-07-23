@@ -62,7 +62,7 @@ export function VehicleListItem({
     VEHICLE_CLASS_OPTIONS.find((item) => item.id === vehicle.vehicleClass)?.labelKey ??
       'vehicles.classPlaceholder',
   );
-  const thumbnailUri = vehicle.photoUris[0];
+  const thumbnailUri = vehicle.photoDisplayUris?.[0] ?? vehicle.photoUris[0];
 
   return (
     <View style={[styles.item, selected && styles.itemSelected]}>

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { PersonalInformationForm } from '@/shared/components/PersonalInformationForm';
 
@@ -31,6 +32,8 @@ export function GeneralInformationScreen(): React.ReactElement {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
   const [savedVisible, setSavedVisible] = React.useState(false);
 
   React.useEffect(() => {
@@ -46,14 +49,27 @@ export function GeneralInformationScreen(): React.ReactElement {
     address.trim() !== user.address ||
     (profilePhotoUri ?? null) !== (user.avatarUri ?? null);
 
-  const handleSave = () => {
-    updateProfile({
-      fullName,
-      email,
-      address,
-      avatarUri: profilePhotoUri ?? undefined,
-    });
-    setSavedVisible(true);
+  const handleSave = async () => {
+    if (saving || !isDirty) {
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateProfile({
+        fullName,
+        email,
+        address,
+        avatarUri: profilePhotoUri,
+        locationCoordinates: locationCoords,
+      });
+      setSavedVisible(true);
+    } catch (error) {
+      setSaveError(getErrorMessage(error, t('generalInformation.saveFailed')));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -71,15 +87,32 @@ export function GeneralInformationScreen(): React.ReactElement {
           mobileNumber={user.mobileNumber}
           profilePhotoUri={profilePhotoUri}
           locationCoords={locationCoords}
-          onChangeFullName={setFullName}
-          onChangeEmail={setEmail}
-          onChangeAddress={setAddress}
+          onChangeFullName={(value) => {
+            setFullName(value);
+            setSaveError(null);
+          }}
+          onChangeEmail={(value) => {
+            setEmail(value);
+            setSaveError(null);
+          }}
+          onChangeAddress={(value) => {
+            setAddress(value);
+            setSaveError(null);
+          }}
           onChangeLocationCoords={setLocationCoords}
-          onChangePhoto={setProfilePhotoUri}
-          onSubmit={handleSave}
+          onChangePhoto={(uri) => {
+            setProfilePhotoUri(uri);
+            setSaveError(null);
+          }}
+          onSubmit={() => {
+            void handleSave();
+          }}
           submitLabel={t('generalInformation.saveCta')}
           showMobileLockedHint
-          submitDisabled={!isDirty}
+          allowRemovePhoto
+          submitDisabled={!isDirty || saving}
+          loading={saving}
+          errorMessage={saveError}
         />
       </AuthScaffold>
 
