@@ -221,6 +221,7 @@
       "emptySubtitle": "Publish a trip and it will show up here.",
       "passengerHint": "Switch to driver mode to create and manage trip listings.",
       "retry": "Try again",
+      "loadFailed": "Couldn't load listings. Please try again.",
       "startingPrice": "From {{price}}",
       "remove": {
         "title": "Remove listing",
@@ -380,6 +381,7 @@
       "failed": "Couldn't remove this vehicle. Please try again."
     },
     "retry": "Try again",
+    "loadFailed": "Couldn't load vehicles. Please try again.",
     "saveFailed": "Couldn't save this vehicle. Please try again.",
     "successTitle": "Vehicle saved",
     "successBody": "Your vehicle details were saved.",

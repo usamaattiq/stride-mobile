@@ -228,10 +228,11 @@ export function LoginFlowScreen(): React.ReactElement {
         return;
       }
 
-      const fallback = isApiErrorWithCode(error, 'ACCOUNT_LOCKED')
-        ? t('auth.login.mpin.accountLocked')
-        : t('auth.login.mpin.loginFailed');
-      setLoginError(getErrorMessage(error, fallback));
+      if (isApiErrorWithCode(error, 'ACCOUNT_LOCKED')) {
+        setLoginError(t('auth.login.mpin.accountLocked'));
+      } else {
+        setLoginError(getErrorMessage(error, t('auth.login.mpin.loginFailed')));
+      }
     } finally {
       setLoggingIn(false);
     }

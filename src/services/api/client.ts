@@ -43,7 +43,7 @@ apiClient.interceptors.response.use(
         : new ApiError(
             error.response?.status ?? 0,
             'NETWORK_ERROR',
-            error.message || 'Unable to reach the server',
+            'Unable to reach the server',
           );
 
     if (isSessionRevokedError(apiError)) {

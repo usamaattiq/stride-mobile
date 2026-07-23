@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { i18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { vehicleApi } from '@/services/api/vehicleApi';
 
 import {
@@ -46,7 +48,7 @@ export function VehicleProvider({
       const list = await vehicleApi.list();
       setVehicles(list.map(mapVehicleDtoToVehicle));
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Failed to load vehicles');
+      setLoadError(getErrorMessage(error, i18n.t('vehicles.loadFailed')));
       throw error;
     } finally {
       setIsLoading(false);

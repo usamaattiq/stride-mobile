@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { i18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { useProfileStore } from '@/store/profileStore';
 
@@ -52,7 +54,7 @@ export function TripProvider({
       const list = await tripApi.list();
       setTrips(list.map(mapTripDtoToTrip));
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Failed to load trips');
+      setLoadError(getErrorMessage(error, i18n.t('dashboard.listings.loadFailed')));
       throw error;
     } finally {
       setIsLoading(false);
