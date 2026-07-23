@@ -63,6 +63,12 @@ function TripListItem({ trip, onPress, onRemovePress }: TripListItemProps): Reac
     trip.vehicleTotalSeats != null
       ? t('vehicles.seatsCount', { count: trip.vehicleTotalSeats })
       : null;
+  const modeLabel =
+    trip.vehicleMode === 'fullPrivate'
+      ? t('trips.create.vehicleModeFullPrivate')
+      : trip.vehicleMode === 'shared'
+        ? t('trips.create.vehicleModeShared')
+        : null;
   const vehicleMeta = [classLabel, seatsLabel].filter(Boolean).join(' · ');
 
   return (
@@ -106,10 +112,23 @@ function TripListItem({ trip, onPress, onRemovePress }: TripListItemProps): Reac
           {formatTripWhen(trip.departureAt)}
         </AppText>
 
+        {modeLabel ? (
+          <View style={styles.vehicleMetaRow}>
+            <FontAwesome
+              name={trip.vehicleMode === 'fullPrivate' ? 'lock' : 'users'}
+              size={11}
+              color={colors.text.tertiary}
+            />
+            <AppText style={styles.meta} numberOfLines={1}>
+              {modeLabel}
+            </AppText>
+          </View>
+        ) : null}
+
         <View style={styles.bottomRow}>
           {vehicleMeta ? (
             <View style={styles.vehicleMetaRow}>
-              <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
+              <FontAwesome name="car" size={11} color={colors.text.tertiary} />
               <AppText style={styles.meta} numberOfLines={1}>
                 {vehicleMeta}
               </AppText>
@@ -331,7 +350,7 @@ const styles = StyleSheet.create({
   },
   item: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
@@ -380,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    marginTop: 4,
+    // marginTop: 4,
   },
   vehicleMetaRow: {
     flex: 1,

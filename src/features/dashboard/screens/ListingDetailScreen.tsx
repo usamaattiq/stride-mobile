@@ -187,6 +187,10 @@ export function ListingDetailScreen(): React.ReactElement {
     trip.vehicleTotalSeats != null
       ? t('vehicles.seatsCount', { count: trip.vehicleTotalSeats })
       : null;
+  const modeLabel =
+    trip.vehicleMode === 'fullPrivate'
+      ? t('trips.create.vehicleModeFullPrivate')
+      : t('trips.create.vehicleModeShared');
   const dateRange = formatDateRange(trip.departureAt, trip.arrivalAt, i18n.language);
   const timeLabel = `${formatTimeLabel(trip.departureAt, i18n.language)} – ${formatTimeLabel(trip.arrivalAt, i18n.language)}`;
   const expiresIn = formatExpiresIn(trip.publishedAt, trip.durationHours);
@@ -201,10 +205,7 @@ export function ListingDetailScreen(): React.ReactElement {
     from: fromCity,
     to: toCity,
     vehicle: trip.vehicleTitle ?? classLabel,
-    mode:
-      trip.vehicleMode === 'fullPrivate'
-        ? t('trips.create.vehicleModeFullPrivate')
-        : t('trips.create.vehicleModeShared'),
+    mode: modeLabel,
   });
 
   const tabs: Array<{ id: DetailTab; label: string }> = [
@@ -278,6 +279,16 @@ export function ListingDetailScreen(): React.ReactElement {
               <AppText style={styles.summaryMeta} numberOfLines={1}>
                 {dateRange}
               </AppText>
+              <View style={styles.summaryVehicleRow}>
+                <FontAwesome
+                  name={trip.vehicleMode === 'fullPrivate' ? 'lock' : 'users'}
+                  size={12}
+                  color={colors.text.tertiary}
+                />
+                <AppText style={styles.summaryMeta} numberOfLines={1}>
+                  {modeLabel}
+                </AppText>
+              </View>
               <View style={styles.summaryVehicleRow}>
                 <FontAwesome5 name="shuttle-van" size={12} color={colors.text.tertiary} />
                 <AppText style={styles.summaryMeta} numberOfLines={1}>
@@ -390,6 +401,12 @@ export function ListingDetailScreen(): React.ReactElement {
                 icon="car"
                 label={t('vehicles.fields.class')}
                 value={classLabel}
+              />
+              <View style={styles.rowDivider} />
+              <TripDetailRow
+                icon="exchange"
+                label={t('trips.create.vehicleModeLabel')}
+                value={modeLabel}
               />
               {seatsLabel ? (
                 <>
@@ -648,8 +665,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   summaryPrice: {
-    alignItems: 'flex-end',
-    maxWidth: 88,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+    flexShrink: 0,
   },
   summaryPriceAmount: {
     fontSize: 15,
