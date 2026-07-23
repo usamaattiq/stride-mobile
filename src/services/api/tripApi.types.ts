@@ -41,7 +41,7 @@ export type CreateTripPayload = {
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
   listingType: 'rfq' | 'auction';
-  startingPrice?: string | null;
+  startingPrice: string;
   paymentMethod: 'cash' | 'online';
   durationHours: number;
   startMode: 'instant' | 'scheduled';

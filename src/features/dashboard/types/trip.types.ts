@@ -96,6 +96,9 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   }
 
   const trimmedPrice = draft.startingPrice.trim();
+  if (!trimmedPrice) {
+    return null;
+  }
 
   return {
     id,
@@ -109,7 +112,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     arrivalPoint: draft.arrivalPoint,
     arrivalAt: draft.arrivalAt,
     listingType: draft.listingType,
-    startingPrice: trimmedPrice.length > 0 ? trimmedPrice : null,
+    startingPrice: trimmedPrice,
     paymentMethod: draft.paymentMethod,
     durationHours: draft.durationHours,
     startMode: draft.startMode,
