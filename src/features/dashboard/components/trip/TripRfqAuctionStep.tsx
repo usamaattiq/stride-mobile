@@ -56,15 +56,27 @@ function SelectCard({
         {selected ? <FontAwesome name="check" size={9} color={colors.white} /> : null}
       </View>
 
-      <View style={[styles.selectIcon, selected && styles.selectIconSelected]}>
+      <View
+        style={[
+          styles.selectIcon,
+          compact && styles.selectIconCompact,
+          selected && styles.selectIconSelected,
+        ]}
+      >
         {selected ? selectedIcon : icon}
       </View>
 
-      <View style={styles.selectCopy}>
-        <AppText weight="bold" style={styles.selectTitle}>
+      <View style={[styles.selectCopy, compact && styles.selectCopyCompact]}>
+        <AppText
+          weight="bold"
+          style={[styles.selectTitle, compact && styles.selectTitleCompact]}
+          numberOfLines={1}
+        >
           {title}
         </AppText>
-        {description ? <AppText style={styles.selectDescription}>{description}</AppText> : null}
+        {description && !compact ? (
+          <AppText style={styles.selectDescription}>{description}</AppText>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -127,6 +139,12 @@ export function TripRfqAuctionStep({
       title: t('trips.create.paymentOnline'),
       icon: <FontAwesome name="credit-card" size={15} color={colors.text.tertiary} />,
       selectedIcon: <FontAwesome name="credit-card" size={15} color={colors.primary} />,
+    },
+    {
+      id: 'both',
+      title: t('trips.create.paymentBoth'),
+      icon: <FontAwesome name="exchange" size={15} color={colors.text.tertiary} />,
+      selectedIcon: <FontAwesome name="exchange" size={15} color={colors.primary} />,
     },
   ];
 
@@ -234,8 +252,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectCardCompact: {
-    minHeight: 64,
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 78,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    gap: 6,
   },
   selectCardSelected: {
     borderColor: colors.primary,
@@ -266,6 +290,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  selectIconCompact: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
   selectIconSelected: {
     backgroundColor: colors.white,
   },
@@ -275,9 +304,20 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingRight: spacing.md,
   },
+  selectCopyCompact: {
+    flex: 0,
+    flexGrow: 0,
+    width: '100%',
+    paddingRight: 0,
+    alignItems: 'center',
+  },
   selectTitle: {
     fontSize: 14,
     color: colors.text.primary,
+  },
+  selectTitleCompact: {
+    fontSize: 12,
+    textAlign: 'center',
   },
   selectDescription: {
     fontSize: 11,

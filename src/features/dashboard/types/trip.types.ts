@@ -2,7 +2,7 @@ import type { VehicleClass } from './vehicle.types';
 
 export type TripVehicleMode = 'shared' | 'fullPrivate';
 export type TripListingType = 'rfq' | 'auction';
-export type TripPaymentMethod = 'cash' | 'online';
+export type TripPaymentMethod = 'cash' | 'online' | 'both';
 export type TripStartMode = 'instant' | 'scheduled';
 
 export type TripCity = {

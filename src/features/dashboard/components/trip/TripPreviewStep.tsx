@@ -188,7 +188,9 @@ export function TripPreviewStep({
       ? t('trips.create.paymentCash')
       : draft.paymentMethod === 'online'
         ? t('trips.create.paymentOnline')
-        : t('trips.create.notSpecified');
+        : draft.paymentMethod === 'both'
+          ? t('trips.create.paymentBoth')
+          : t('trips.create.notSpecified');
 
   const startLabel =
     draft.startMode === 'instant'

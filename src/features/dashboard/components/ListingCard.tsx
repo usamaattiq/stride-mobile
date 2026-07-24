@@ -1,6 +1,7 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -82,12 +83,31 @@ export function ListingCard({
   const paymentLabel =
     trip.paymentMethod === 'online'
       ? t('trips.create.paymentOnline')
-      : trip.paymentMethod === 'cash'
-        ? t('trips.create.paymentCash')
-        : t('trips.create.notSpecified');
+      : trip.paymentMethod === 'both'
+        ? t('trips.create.paymentBoth')
+        : trip.paymentMethod === 'cash'
+          ? t('trips.create.paymentCash')
+          : t('trips.create.notSpecified');
 
   const content = (
     <>
+      <LinearGradient
+        colors={['#FFFFFF', '#FFF7F6', '#FEE4E2']}
+        locations={[0, 0.42, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0.35, y: 0.15 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientWash}
+        pointerEvents="none"
+      />
+
       <View style={styles.mainRow}>
         <View style={styles.thumbnail}>
           {trip.vehiclePhotoUrl ? (
@@ -248,6 +268,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     overflow: 'hidden',
+    shadowColor: '#B42318',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  gradientWash: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 36,
+    width: '58%',
   },
   mainRow: {
     flexDirection: 'row',
@@ -259,7 +291,7 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: radius.sm,
     overflow: 'hidden',
-    backgroundColor: colors.background.subtle,
+    backgroundColor: colors.primarySoft,
   },
   thumbnailImage: {
     width: '100%',
@@ -363,7 +395,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
-    backgroundColor: colors.background.subtle,
+    backgroundColor: 'rgba(249, 250, 251, 0.72)',
   },
   footerItem: {
     flex: 1,
