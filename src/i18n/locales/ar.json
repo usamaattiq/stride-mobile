@@ -234,6 +234,7 @@
         "loadFailed": "تعذر تحميل تفاصيل القائمة.",
         "statusLive": "مباشر",
         "statusEnded": "منتهية",
+        "expiresInTimer": "تنتهي خلال {{time}}",
         "pickupPoints": "{{count}} نقطة صعود",
         "pickupPoints_plural": "{{count}} نقاط صعود",
         "dropoffPoints": "{{count}} نقطة إنزال",

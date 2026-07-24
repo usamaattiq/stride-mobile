@@ -234,6 +234,7 @@
         "loadFailed": "Couldn't load listing details.",
         "statusLive": "Live",
         "statusEnded": "Ended",
+        "expiresInTimer": "Expires in {{time}}",
         "pickupPoints": "{{count}} Pickup Point",
         "pickupPoints_plural": "{{count}} Pickup Points",
         "dropoffPoints": "{{count}} Drop-off Point",

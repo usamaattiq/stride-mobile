@@ -29,12 +29,12 @@ import type { DashboardRootStackParamList } from '../navigation/dashboardRootTyp
 import type { Trip } from '../types/trip.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
-type DetailTab = 'overview' | 'responses' | 'activity' | 'manage';
+type DetailTab = 'overview' | 'responses';
 
 function formatDateTime(iso: string, locale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
-    return 'â€”';
+    return '—';
   }
   const day = date.toLocaleDateString(locale, {
     day: 'numeric',
@@ -98,17 +98,9 @@ type SectionHeaderProps = {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
   title: string;
   subtitle?: string;
-  onEdit?: () => void;
-  editA11yLabel: string;
 };
 
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-  onEdit,
-  editA11yLabel,
-}: SectionHeaderProps): React.ReactElement {
+function SectionHeader({ icon, title, subtitle }: SectionHeaderProps): React.ReactElement {
   return (
     <View style={styles.cardHeader}>
       <SectionIcon name={icon} />
@@ -116,37 +108,6 @@ function SectionHeader({
         {subtitle ? <AppText style={styles.eyebrow}>{subtitle}</AppText> : null}
         <AppText weight="bold" style={styles.sectionTitle}>
           {title}
-        </AppText>
-      </View>
-      {onEdit ? (
-        <Pressable
-          onPress={onEdit}
-          style={styles.editIconButton}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={editA11yLabel}
-        >
-          <FontAwesome name="pencil" size={14} color={colors.primary} />
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-type FeatureChipProps = {
-  icon: React.ReactNode;
-  label: string;
-  showDivider?: boolean;
-};
-
-function FeatureChip({ icon, label, showDivider = false }: FeatureChipProps): React.ReactElement {
-  return (
-    <View style={styles.featureChip}>
-      {showDivider ? <View style={styles.featureDivider} /> : null}
-      <View style={styles.featureInner}>
-        {icon}
-        <AppText weight="semibold" style={styles.featureLabel} numberOfLines={1}>
-          {label}
         </AppText>
       </View>
     </View>
@@ -189,7 +150,6 @@ export function ListingDetailScreen(): React.ReactElement {
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (cached) {
@@ -267,7 +227,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = trip.arrivalCity
     ? cityDisplayName(trip.arrivalCity.label)
-    : 'â€”';
+    : '—';
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -292,14 +252,9 @@ export function ListingDetailScreen(): React.ReactElement {
     trip.paymentMethod === 'online'
       ? t('trips.create.paymentOnline')
       : t('trips.create.paymentCash');
-  const startLabel =
-    trip.startMode === 'instant'
-      ? t('trips.create.startInstant')
-      : formatDateTime(trip.scheduledStartAt ?? trip.publishedAt, i18n.language);
   const priceLabel = trip.startingPrice ?? t('trips.create.notSpecified');
   const locale = i18n.language;
   const vehicleTitle = trip.vehicleTitle ?? classLabel;
-  const editA11y = t('dashboard.listings.detail.edit');
   const description =
     trip.description?.trim() ||
     t('dashboard.listings.detail.descriptionBody', {
@@ -312,11 +267,8 @@ export function ListingDetailScreen(): React.ReactElement {
   const tabs: Array<{ id: DetailTab; label: string }> = [
     { id: 'overview', label: t('dashboard.listings.detail.tabs.overview') },
     { id: 'responses', label: t('dashboard.listings.detail.tabs.responses', { count: 0 }) },
-    { id: 'activity', label: t('dashboard.listings.detail.tabs.activity') },
-    { id: 'manage', label: t('dashboard.listings.detail.tabs.manage') },
   ];
 
-  const openEdit = () => setInfoMessage(t('dashboard.listings.detail.editComingSoon'));
   const openRemove = () => {
     setRemoveError(null);
     setConfirmRemove(true);
@@ -355,7 +307,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 style={[styles.liveBadgeText, !isLive && styles.endedBadgeText]}
               >
                 {isLive
-                  ? t('dashboard.listings.detail.statusLive')
+                  ? t('dashboard.listings.detail.expiresInTimer', { time: expiresIn })
                   : t('dashboard.listings.detail.statusEnded')}
               </AppText>
             </View>
@@ -378,7 +330,7 @@ export function ListingDetailScreen(): React.ReactElement {
 
             <View style={styles.summaryCopy}>
               <AppText weight="bold" style={styles.summaryRoute} numberOfLines={2}>
-                {`${fromCity} â†’ ${toCity}`}
+                {`${fromCity} → ${toCity}`}
               </AppText>
               <View style={styles.summaryVehicleRow}>
                 <FontAwesome
@@ -393,7 +345,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <View style={styles.summaryVehicleRow}>
                 <FontAwesome name="car" size={12} color={colors.text.tertiary} />
                 <AppText style={styles.summaryMeta} numberOfLines={1}>
-                  {[classLabel, seatsLabel].filter(Boolean).join(' Â· ')}
+                  {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
                 </AppText>
               </View>
             </View>
@@ -408,46 +360,6 @@ export function ListingDetailScreen(): React.ReactElement {
                 </AppText>
               </View>
             ) : null}
-          </View>
-        </View>
-
-        <View style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <FontAwesome name="user" size={12} color={colors.text.tertiary} />
-            <AppText style={styles.statLabel}>
-              {t('dashboard.listings.detail.stats.responses')}
-            </AppText>
-            <AppText weight="bold" style={styles.statValue}>
-              0
-            </AppText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <FontAwesome name="eye" size={12} color={colors.text.tertiary} />
-            <AppText style={styles.statLabel}>{t('dashboard.listings.detail.stats.views')}</AppText>
-            <AppText weight="bold" style={styles.statValue}>
-              0
-            </AppText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <FontAwesome name="clock-o" size={12} color={colors.text.tertiary} />
-            <AppText style={styles.statLabel}>
-              {t('dashboard.listings.detail.stats.expiresIn')}
-            </AppText>
-            <AppText weight="bold" style={[styles.statValue, isLive && styles.statValueAlert]}>
-              {expiresIn ?? t('dashboard.listings.detail.statusEnded')}
-            </AppText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <FontAwesome name="cloud-upload" size={12} color={colors.text.tertiary} />
-            <AppText style={styles.statLabel}>{t('dashboard.listings.detail.stats.status')}</AppText>
-            <AppText weight="bold" style={[styles.statValue, isLive ? styles.statValueLive : null]}>
-              {isLive
-                ? t('dashboard.listings.detail.statusLive')
-                : t('dashboard.listings.detail.statusEnded')}
-            </AppText>
           </View>
         </View>
 
@@ -479,64 +391,37 @@ export function ListingDetailScreen(): React.ReactElement {
           <>
             <View style={styles.card}>
               <SectionHeader
-                icon="car"
-                subtitle={t('trips.create.vehicleTitle')}
-                title={vehicleTitle}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
+                icon="align-left"
+                title={t('dashboard.listings.detail.description')}
               />
-              <View style={styles.vehicleBody}>
-                <View style={styles.vehicleCopy}>
-                  <View style={styles.featuresRow}>
-                    <FeatureChip
-                      icon={
-                        <FontAwesome name="user" size={11} color={colors.text.secondary} />
-                      }
-                      label={seatsLabel ?? 'â€”'}
-                    />
-                    {classLabel ? (
-                      <FeatureChip
-                        showDivider
-                        icon={
-                          <FontAwesome name="car" size={11} color={colors.text.secondary} />
-                        }
-                        label={classLabel}
-                      />
-                    ) : null}
-                  </View>
-                </View>
-                <View style={styles.vehicleThumb}>
-                  {trip.vehiclePhotoUrl ? (
-                    <Image
-                      source={{ uri: trip.vehiclePhotoUrl }}
-                      style={styles.vehicleThumbImage}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <View style={styles.vehicleThumbFallback}>
-                      <FontAwesome name="car" size={22} color={colors.text.tertiary} />
-                    </View>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <SectionHeader
-                icon="exchange"
-                subtitle={t('trips.create.vehicleModeTitle')}
-                title={modeLabel}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
-              />
+              <AppText
+                style={styles.descriptionText}
+                numberOfLines={descriptionExpanded ? undefined : 3}
+              >
+                {description}
+              </AppText>
+              <Pressable
+                onPress={() => setDescriptionExpanded((current) => !current)}
+                style={styles.showMore}
+                hitSlop={8}
+              >
+                <AppText weight="semibold" style={styles.showMoreText}>
+                  {descriptionExpanded
+                    ? t('dashboard.listings.detail.showLess')
+                    : t('dashboard.listings.detail.showMore')}
+                </AppText>
+                <FontAwesome
+                  name={descriptionExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={10}
+                  color={colors.primary}
+                />
+              </Pressable>
             </View>
 
             <View style={styles.card}>
               <SectionHeader
                 icon="map-marker"
                 title={t('trips.create.detailsTitle')}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
               />
 
               <View style={styles.timeline}>
@@ -572,7 +457,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.departurePoint?.label ?? 'â€”'}
+                          {trip.departurePoint?.label ?? '—'}
                         </AppText>
                       </View>
                     </View>
@@ -603,7 +488,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.arrivalPoint?.label ?? 'â€”'}
+                          {trip.arrivalPoint?.label ?? '—'}
                         </AppText>
                       </View>
                     </View>
@@ -616,8 +501,6 @@ export function ListingDetailScreen(): React.ReactElement {
               <SectionHeader
                 icon="tag"
                 title={t('trips.create.listingTitle')}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
               />
 
               <View style={styles.listingGrid}>
@@ -648,62 +531,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 </View>
               </View>
             </View>
-
-            <View style={styles.card}>
-              <SectionHeader
-                icon="play-circle"
-                subtitle={t('trips.create.scheduleTitle')}
-                title={startLabel}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
-              />
-            </View>
-
-            <View style={styles.card}>
-              <SectionHeader
-                icon="align-left"
-                title={t('dashboard.listings.detail.description')}
-                onEdit={openEdit}
-                editA11yLabel={editA11y}
-              />
-              <AppText
-                style={styles.descriptionText}
-                numberOfLines={descriptionExpanded ? undefined : 3}
-              >
-                {description}
-              </AppText>
-              <Pressable
-                onPress={() => setDescriptionExpanded((current) => !current)}
-                style={styles.showMore}
-                hitSlop={8}
-              >
-                <AppText weight="semibold" style={styles.showMoreText}>
-                  {descriptionExpanded
-                    ? t('dashboard.listings.detail.showLess')
-                    : t('dashboard.listings.detail.showMore')}
-                </AppText>
-                <FontAwesome
-                  name={descriptionExpanded ? 'chevron-up' : 'chevron-down'}
-                  size={10}
-                  color={colors.primary}
-                />
-              </Pressable>
-            </View>
           </>
-        ) : tab === 'manage' ? (
-          <View style={styles.card}>
-            <AppText weight="bold" style={styles.sectionTitle}>
-              {t('dashboard.listings.detail.tabs.manage')}
-            </AppText>
-            <AppText style={styles.descriptionText}>
-              {t('dashboard.listings.detail.manageHint')}
-            </AppText>
-            <Button
-              label={t('dashboard.listings.remove.confirmAction')}
-              variant="secondary"
-              onPress={openRemove}
-            />
-          </View>
         ) : (
           <View style={styles.emptyTabCard}>
             <AppText weight="semibold" style={styles.emptyTabTitle}>
@@ -740,17 +568,6 @@ export function ListingDetailScreen(): React.ReactElement {
         confirmAction={{
           label: t('dashboard.listings.remove.confirmAction'),
           onPress: handleRemove,
-        }}
-      />
-
-      <AppDialog
-        visible={infoMessage !== null}
-        icon="info"
-        title={t('dashboard.listings.detail.edit')}
-        message={infoMessage ?? undefined}
-        confirmAction={{
-          label: t('common.ok'),
-          onPress: () => setInfoMessage(null),
         }}
       />
     </AuthScaffold>
@@ -865,41 +682,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.tertiary,
   },
-  statsCard: {
-    flexDirection: 'row',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xxs,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  statDivider: {
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
-    marginVertical: 2,
-  },
-  statLabel: {
-    fontSize: 10,
-    color: colors.text.tertiary,
-    textAlign: 'center',
-  },
-  statValue: {
-    fontSize: 12,
-    color: colors.text.primary,
-    textAlign: 'center',
-  },
-  statValueAlert: {
-    color: colors.primary,
-  },
-  statValueLive: {
-    color: colors.accent.green.text,
-  },
   tabsRow: {
     gap: spacing.md,
     paddingVertical: 2,
@@ -952,64 +734,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     color: colors.text.primary,
-  },
-  editIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vehicleBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  vehicleCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  featureChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  featureDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 14,
-    backgroundColor: colors.border.default,
-    marginRight: spacing.xs,
-  },
-  featureInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  featureLabel: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  vehicleThumb: {
-    width: 72,
-    height: 56,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    backgroundColor: colors.background.subtle,
-  },
-  vehicleThumbImage: {
-    width: '100%',
-    height: '100%',
-  },
-  vehicleThumbFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   timeline: {
     flexDirection: 'row',
