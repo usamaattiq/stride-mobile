@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import {
   ActivityIndicator,
   Pressable,
@@ -23,6 +22,7 @@ import { Button } from '@/shared/components/Button';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
+import { ListingCard } from '../components/ListingCard';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
@@ -46,21 +46,6 @@ function formatDateTime(iso: string, locale: string): string {
     minute: '2-digit',
   });
   return `${day} at ${time}`;
-}
-
-function formatExpiresIn(publishedAt: string, durationHours: number): string | null {
-  const expiresAt = new Date(publishedAt).getTime() + durationHours * 60 * 60 * 1000;
-  const remainingMs = expiresAt - Date.now();
-  if (remainingMs <= 0) {
-    return null;
-  }
-  const totalMinutes = Math.floor(remainingMs / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours <= 0) {
-    return `${minutes}m`;
-  }
-  return `${hours}h ${minutes}m`;
 }
 
 function formatDurationLabel(
@@ -238,16 +223,10 @@ export function ListingDetailScreen(): React.ReactElement {
           'vehicles.classPlaceholder',
       )
     : t('trips.create.previewVehicle');
-  const seatsLabel =
-    trip.vehicleTotalSeats != null
-      ? t('vehicles.seatsCount', { count: trip.vehicleTotalSeats })
-      : null;
   const modeLabel =
     trip.vehicleMode === 'fullPrivate'
       ? t('trips.create.vehicleModeFullPrivate')
       : t('trips.create.vehicleModeShared');
-  const expiresIn = formatExpiresIn(trip.publishedAt, trip.durationHours);
-  const isLive = Boolean(expiresIn);
   const paymentLabel =
     trip.paymentMethod === 'online'
       ? t('trips.create.paymentOnline')
@@ -294,74 +273,7 @@ export function ListingDetailScreen(): React.ReactElement {
       }
     >
       <View style={styles.content}>
-        <View style={styles.summaryCard}>
-          <View style={styles.badgeRow}>
-            <View style={styles.rfqBadge}>
-              <AppText weight="semibold" style={styles.rfqBadgeText}>
-                {listingLabel}
-              </AppText>
-            </View>
-            <View style={[styles.liveBadge, !isLive && styles.endedBadge]}>
-              <AppText
-                weight="semibold"
-                style={[styles.liveBadgeText, !isLive && styles.endedBadgeText]}
-              >
-                {isLive
-                  ? t('dashboard.listings.detail.expiresInTimer', { time: expiresIn })
-                  : t('dashboard.listings.detail.statusEnded')}
-              </AppText>
-            </View>
-          </View>
-
-          <View style={styles.summaryBody}>
-            <View style={styles.summaryThumb}>
-              {trip.vehiclePhotoUrl ? (
-                <Image
-                  source={{ uri: trip.vehiclePhotoUrl }}
-                  style={styles.summaryThumbImage}
-                  contentFit="cover"
-                />
-              ) : (
-                <View style={styles.summaryThumbFallback}>
-                  <FontAwesome name="car" size={18} color={colors.text.tertiary} />
-                </View>
-              )}
-            </View>
-
-            <View style={styles.summaryCopy}>
-              <AppText weight="bold" style={styles.summaryRoute} numberOfLines={2}>
-                {`${fromCity} → ${toCity}`}
-              </AppText>
-              <View style={styles.summaryVehicleRow}>
-                <FontAwesome
-                  name={trip.vehicleMode === 'fullPrivate' ? 'lock' : 'users'}
-                  size={12}
-                  color={colors.text.tertiary}
-                />
-                <AppText style={styles.summaryMeta} numberOfLines={1}>
-                  {modeLabel}
-                </AppText>
-              </View>
-              <View style={styles.summaryVehicleRow}>
-                <FontAwesome name="car" size={12} color={colors.text.tertiary} />
-                <AppText style={styles.summaryMeta} numberOfLines={1}>
-                  {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
-                </AppText>
-              </View>
-            </View>
-
-            {trip.startingPrice ? (
-              <View style={styles.summaryPrice}>
-                <AppText weight="bold" style={styles.summaryPriceAmount} numberOfLines={1}>
-                  {trip.startingPrice}
-                </AppText>
-                <AppText style={styles.summaryPriceSuffix}>
-                  {t('dashboard.listings.pricePerSeatSuffix')}
-                </AppText>
-              </View>
-            ) : null}
-          </View>
-        </View>
+        <ListingCard trip={trip} showPhotoCount />
 
         <ScrollView
           horizontal
@@ -588,99 +500,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: spacing.xs,
-  },
-  summaryCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.sm,
-    gap: spacing.xs,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rfqBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-    backgroundColor: colors.accent.purple.soft,
-  },
-  rfqBadgeText: {
-    fontSize: 10,
-    color: colors.accent.purple.text,
-    textTransform: 'uppercase',
-  },
-  liveBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-    backgroundColor: colors.accent.green.soft,
-  },
-  liveBadgeText: {
-    fontSize: 10,
-    color: colors.accent.green.text,
-  },
-  endedBadge: {
-    backgroundColor: colors.background.subtle,
-  },
-  endedBadgeText: {
-    color: colors.text.secondary,
-  },
-  summaryBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  summaryThumb: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    backgroundColor: colors.background.subtle,
-  },
-  summaryThumbImage: {
-    width: '100%',
-    height: '100%',
-  },
-  summaryThumbFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  summaryRoute: {
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-  summaryMeta: {
-    fontSize: 12,
-    color: colors.text.tertiary,
-  },
-  summaryVehicleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  summaryPrice: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 3,
-    flexShrink: 0,
-  },
-  summaryPriceAmount: {
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-  summaryPriceSuffix: {
-    fontSize: 12,
-    color: colors.text.tertiary,
   },
   tabsRow: {
     gap: spacing.md,
