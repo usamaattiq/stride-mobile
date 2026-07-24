@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import {
   ActivityIndicator,
@@ -91,6 +91,65 @@ function SectionIcon({ name }: SectionIconProps): React.ReactElement {
   return (
     <View style={styles.sectionIcon}>
       <FontAwesome name={name} size={14} color={colors.primary} />
+    </View>
+  );
+}
+
+type SectionHeaderProps = {
+  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  title: string;
+  subtitle?: string;
+  onEdit?: () => void;
+  editA11yLabel: string;
+};
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  onEdit,
+  editA11yLabel,
+}: SectionHeaderProps): React.ReactElement {
+  return (
+    <View style={styles.cardHeader}>
+      <SectionIcon name={icon} />
+      <View style={styles.cardHeaderCopy}>
+        {subtitle ? <AppText style={styles.eyebrow}>{subtitle}</AppText> : null}
+        <AppText weight="bold" style={styles.sectionTitle}>
+          {title}
+        </AppText>
+      </View>
+      {onEdit ? (
+        <Pressable
+          onPress={onEdit}
+          style={styles.editIconButton}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={editA11yLabel}
+        >
+          <FontAwesome name="pencil" size={14} color={colors.primary} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+type FeatureChipProps = {
+  icon: React.ReactNode;
+  label: string;
+  showDivider?: boolean;
+};
+
+function FeatureChip({ icon, label, showDivider = false }: FeatureChipProps): React.ReactElement {
+  return (
+    <View style={styles.featureChip}>
+      {showDivider ? <View style={styles.featureDivider} /> : null}
+      <View style={styles.featureInner}>
+        {icon}
+        <AppText weight="semibold" style={styles.featureLabel} numberOfLines={1}>
+          {label}
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -198,7 +257,9 @@ export function ListingDetailScreen(): React.ReactElement {
   }
 
   const fromCity = cityDisplayName(trip.departureCity.label);
-  const toCity = cityDisplayName(trip.arrivalCity.label);
+  const toCity = trip.arrivalCity
+    ? cityDisplayName(trip.arrivalCity.label)
+    : '—';
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -229,12 +290,16 @@ export function ListingDetailScreen(): React.ReactElement {
       : formatDateTime(trip.scheduledStartAt ?? trip.publishedAt, i18n.language);
   const priceLabel = trip.startingPrice ?? t('trips.create.notSpecified');
   const locale = i18n.language;
-  const description = t('dashboard.listings.detail.descriptionBody', {
-    from: fromCity,
-    to: toCity,
-    vehicle: trip.vehicleTitle ?? classLabel,
-    mode: modeLabel,
-  });
+  const vehicleTitle = trip.vehicleTitle ?? classLabel;
+  const editA11y = t('dashboard.listings.detail.edit');
+  const description =
+    trip.description?.trim() ||
+    t('dashboard.listings.detail.descriptionBody', {
+      from: fromCity,
+      to: toCity,
+      vehicle: vehicleTitle,
+      mode: modeLabel,
+    });
 
   const tabs: Array<{ id: DetailTab; label: string }> = [
     { id: 'overview', label: t('dashboard.listings.detail.tabs.overview') },
@@ -320,7 +385,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 </AppText>
               </View>
               <View style={styles.summaryVehicleRow}>
-                <FontAwesome5 name="shuttle-van" size={12} color={colors.text.tertiary} />
+                <FontAwesome name="car" size={12} color={colors.text.tertiary} />
                 <AppText style={styles.summaryMeta} numberOfLines={1}>
                   {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
                 </AppText>
@@ -406,25 +471,25 @@ export function ListingDetailScreen(): React.ReactElement {
 
         {tab === 'overview' ? (
           <>
+          
+
             <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <SectionIcon name="car" />
-                <View style={styles.cardHeaderCopy}>
-                  <AppText style={styles.eyebrow}>{t('trips.create.vehicleModeLabel')}</AppText>
-                  <AppText weight="bold" style={styles.cardTitle}>
-                    {modeLabel}
-                  </AppText>
-                </View>
-              </View>
+              <SectionHeader
+                icon="exchange"
+                subtitle={t('trips.create.vehicleModeTitle')}
+                title={modeLabel}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
             </View>
 
             <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <SectionIcon name="map-marker" />
-                <AppText weight="bold" style={styles.sectionTitle}>
-                  {t('trips.create.detailsTitle')}
-                </AppText>
-              </View>
+              <SectionHeader
+                icon="map-marker"
+                title={t('trips.create.detailsTitle')}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
 
               <View style={styles.timeline}>
                 <View style={styles.timelineRail}>
@@ -459,13 +524,11 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.departurePoint.label}
+                          {trip.departurePoint?.label ?? '—'}
                         </AppText>
                       </View>
                     </View>
                   </View>
-
-                  <View style={styles.endpointDivider} />
 
                   <View style={styles.endpointBlock}>
                     <View style={styles.endpointTop}>
@@ -492,7 +555,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.arrivalPoint.label}
+                          {trip.arrivalPoint?.label ?? '—'}
                         </AppText>
                       </View>
                     </View>
@@ -502,21 +565,12 @@ export function ListingDetailScreen(): React.ReactElement {
             </View>
 
             <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <SectionIcon name="tag" />
-                <AppText weight="bold" style={[styles.sectionTitle, styles.sectionTitleFlex]}>
-                  {t('trips.create.previewListingDetails')}
-                </AppText>
-                <Pressable
-                  onPress={openEdit}
-                  style={styles.editIconButton}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('dashboard.listings.detail.edit')}
-                >
-                  <FontAwesome name="pencil" size={14} color={colors.primary} />
-                </Pressable>
-              </View>
+              <SectionHeader
+                icon="tag"
+                title={t('trips.create.listingTitle')}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
 
               <View style={styles.listingGrid}>
                 <View style={styles.listingRow}>
@@ -526,22 +580,9 @@ export function ListingDetailScreen(): React.ReactElement {
                     value={listingLabel}
                   />
                   <ListingCell
-                    icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
-                    label={t('trips.create.durationLabel')}
-                    value={formatDurationLabel(trip.durationHours, t)}
-                  />
-                </View>
-                <View style={styles.listingDivider} />
-                <View style={styles.listingRow}>
-                  <ListingCell
                     icon={<FontAwesome name="dollar" size={13} color={colors.primary} />}
                     label={t('trips.create.startingPrice')}
                     value={priceLabel}
-                  />
-                  <ListingCell
-                    icon={<FontAwesome name="play-circle" size={13} color={colors.primary} />}
-                    label={t('trips.create.startModeLabel')}
-                    value={startLabel}
                   />
                 </View>
                 <View style={styles.listingDivider} />
@@ -552,23 +593,31 @@ export function ListingDetailScreen(): React.ReactElement {
                     value={paymentLabel}
                   />
                   <ListingCell
-                    icon={<FontAwesome5 name="chair" size={12} color={colors.primary} />}
-                    label={t('vehicles.fields.totalSeats')}
-                    value={
-                      trip.vehicleTotalSeats != null ? String(trip.vehicleTotalSeats) : '—'
-                    }
+                    icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
+                    label={t('trips.create.durationLabel')}
+                    value={formatDurationLabel(trip.durationHours, t)}
                   />
                 </View>
               </View>
             </View>
 
             <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <SectionIcon name="align-left" />
-                <AppText weight="bold" style={styles.sectionTitle}>
-                  {t('dashboard.listings.detail.description')}
-                </AppText>
-              </View>
+              <SectionHeader
+                icon="play-circle"
+                subtitle={t('trips.create.scheduleTitle')}
+                title={startLabel}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
+            </View>
+
+            <View style={styles.card}>
+              <SectionHeader
+                icon="align-left"
+                title={t('dashboard.listings.detail.description')}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
               <AppText
                 style={styles.descriptionText}
                 numberOfLines={descriptionExpanded ? undefined : 3}
@@ -593,26 +642,18 @@ export function ListingDetailScreen(): React.ReactElement {
               </Pressable>
             </View>
 
-            <View style={styles.actionsRow}>
-              <Pressable
-                onPress={() => {
-                  setRemoveError(null);
-                  setConfirmRemove(true);
-                }}
-                style={styles.removeButton}
-              >
-                <FontAwesome name="trash-o" size={14} color={colors.primary} />
-                <AppText weight="bold" style={styles.removeButtonText}>
-                  {t('dashboard.listings.remove.confirmAction')}
-                </AppText>
-              </Pressable>
-              <Pressable onPress={openEdit} style={styles.editButton}>
-                <FontAwesome name="pencil" size={14} color={colors.white} />
-                <AppText weight="bold" style={styles.editButtonText}>
-                  {t('dashboard.listings.detail.edit')}
-                </AppText>
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => {
+                setRemoveError(null);
+                setConfirmRemove(true);
+              }}
+              style={styles.removeButton}
+            >
+              <FontAwesome name="trash-o" size={14} color={colors.white} />
+              <AppText weight="bold" style={styles.removeButtonText}>
+                {t('dashboard.listings.remove.confirmAction')}
+              </AppText>
+            </Pressable>
           </>
         ) : tab === 'manage' ? (
           <View style={styles.card}>
@@ -898,22 +939,65 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.text.tertiary,
   },
-  cardTitle: {
-    fontSize: 15,
-    color: colors.text.primary,
-  },
   sectionTitle: {
     fontSize: 15,
     color: colors.text.primary,
-  },
-  sectionTitleFlex: {
-    flex: 1,
   },
   editIconButton: {
     width: 32,
     height: 32,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vehicleBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  vehicleCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  featuresRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  featureChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 14,
+    backgroundColor: colors.border.default,
+    marginRight: spacing.xs,
+  },
+  featureInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  featureLabel: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  vehicleThumb: {
+    width: 72,
+    height: 56,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    backgroundColor: colors.background.subtle,
+  },
+  vehicleThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  vehicleThumbFallback: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -953,10 +1037,6 @@ const styles = StyleSheet.create({
   },
   endpointBlock: {
     gap: spacing.xs,
-  },
-  endpointDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
   },
   endpointTop: {
     flexDirection: 'row',
@@ -1080,29 +1160,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingTop: spacing.xxs,
-  },
   removeButton: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.white,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xxs,
-  },
-  removeButtonText: {
-    fontSize: 14,
-    color: colors.primary,
-  },
-  editButton: {
-    flex: 1,
     minHeight: 44,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
@@ -1111,7 +1169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xxs,
   },
-  editButtonText: {
+  removeButtonText: {
     fontSize: 14,
     color: colors.white,
   },

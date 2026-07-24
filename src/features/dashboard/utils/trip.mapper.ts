@@ -24,6 +24,7 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     durationHours: dto.durationHours,
     startMode: dto.startMode,
     scheduledStartAt: dto.scheduledStartAt,
+    description: dto.description ?? null,
     publishedAt: dto.publishedAt,
   };
 }
@@ -49,5 +50,6 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
     durationHours: preview.durationHours,
     startMode: preview.startMode,
     scheduledStartAt: preview.scheduledStartAt,
+    description: preview.description,
   };
 }

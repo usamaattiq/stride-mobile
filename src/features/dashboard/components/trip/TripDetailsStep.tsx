@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
+import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker';
 import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
@@ -96,6 +97,18 @@ export function TripDetailsStep({
             required
           />
 
+          <AuthTextField
+            label={t('trips.create.description')}
+            optional
+            value={draft.description}
+            onChangeText={(description) => onChange({ description })}
+            placeholder={t('trips.create.descriptionPlaceholder')}
+            multiline
+            textAlignVertical="top"
+            style={styles.textArea}
+            maxLength={1000}
+          />
+
           <Button
             label={t('common.continue')}
             onPress={onContinue}
@@ -111,5 +124,9 @@ export function TripDetailsStep({
 const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
+  },
+  textArea: {
+    minHeight: 96,
+    paddingTop: spacing.sm,
   },
 });

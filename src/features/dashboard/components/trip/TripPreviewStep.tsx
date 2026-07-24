@@ -1,21 +1,28 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
-import type { TripDraft } from '@/features/dashboard/types/trip.types';
+import { canPublishTripDraft, type TripDraft } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
+export type TripPreviewEditStep =
+  | 'vehicle'
+  | 'vehicleMode'
+  | 'details'
+  | 'listing'
+  | 'schedule';
+
 type TripPreviewStepProps = {
   draft: TripDraft;
   vehicle: Vehicle | undefined;
   onPublish: () => void;
-  onEdit: () => void;
+  onEditStep: (step: TripPreviewEditStep) => void;
   publishing?: boolean;
   errorMessage?: string | null;
 };
@@ -71,6 +78,45 @@ function SectionIcon({ name }: SectionIconProps): React.ReactElement {
   );
 }
 
+type SectionHeaderProps = {
+  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  title: string;
+  subtitle?: string;
+  onEdit?: () => void;
+  editA11yLabel: string;
+};
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  onEdit,
+  editA11yLabel,
+}: SectionHeaderProps): React.ReactElement {
+  return (
+    <View style={styles.cardHeader}>
+      <SectionIcon name={icon} />
+      <View style={styles.cardHeaderCopy}>
+        {subtitle ? <AppText style={styles.eyebrow}>{subtitle}</AppText> : null}
+        <AppText weight="bold" style={styles.sectionTitle}>
+          {title}
+        </AppText>
+      </View>
+      {onEdit ? (
+        <Pressable
+          onPress={onEdit}
+          style={styles.editIconButton}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={editA11yLabel}
+        >
+          <FontAwesome name="pencil" size={14} color={colors.primary} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 type FeatureChipProps = {
   icon: React.ReactNode;
   label: string;
@@ -115,7 +161,7 @@ export function TripPreviewStep({
   draft,
   vehicle,
   onPublish,
-  onEdit,
+  onEditStep,
   publishing = false,
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
@@ -127,28 +173,28 @@ export function TripPreviewStep({
       ? t('trips.create.vehicleModeShared')
       : draft.vehicleMode === 'fullPrivate'
         ? t('trips.create.vehicleModeFullPrivate')
-        : '—';
+        : t('trips.create.notSpecified');
 
   const listingLabel =
     draft.listingType === 'rfq'
       ? t('trips.create.listingRfq')
       : draft.listingType === 'auction'
         ? t('trips.create.listingAuction')
-        : '—';
+        : t('trips.create.notSpecified');
 
   const paymentLabel =
     draft.paymentMethod === 'cash'
       ? t('trips.create.paymentCash')
       : draft.paymentMethod === 'online'
         ? t('trips.create.paymentOnline')
-        : '—';
+        : t('trips.create.notSpecified');
 
   const startLabel =
     draft.startMode === 'instant'
       ? t('trips.create.startInstant')
       : draft.startMode === 'scheduled'
         ? formatDateTime(draft.scheduledStartAt, locale)
-        : '—';
+        : t('trips.create.notSpecified');
 
   const priceLabel = draft.startingPrice.trim()
     ? draft.startingPrice.trim()
@@ -159,29 +205,26 @@ export function TripPreviewStep({
     ? cityDisplayName(draft.departureCity.label)
     : '—';
   const arrivalCity = draft.arrivalCity ? cityDisplayName(draft.arrivalCity.label) : '—';
+  const canPublish = canPublishTripDraft(draft);
+  const editA11y = t('dashboard.listings.detail.edit');
 
   return (
     <View style={styles.root}>
       <View style={styles.card}>
-        <View style={styles.vehicleTop}>
+        <SectionHeader
+          icon="car"
+          subtitle={t('trips.create.vehicleTitle')}
+          title={vehicle?.title ?? '—'}
+          onEdit={() => onEditStep('vehicle')}
+          editA11yLabel={editA11y}
+        />
+        <View style={styles.vehicleBody}>
           <View style={styles.vehicleCopy}>
-            <View style={styles.cardHeader}>
-              <SectionIcon name="car" />
-              <View style={styles.cardHeaderCopy}>
-                <AppText style={styles.eyebrow}>{t('trips.create.previewVehicle')}</AppText>
-                <AppText weight="bold" style={styles.cardTitle} numberOfLines={2}>
-                  {vehicle?.title ?? '—'}
-                </AppText>
-              </View>
-            </View>
-
             <View style={styles.featuresRow}>
               <FeatureChip
                 icon={<FontAwesome name="user" size={11} color={colors.text.secondary} />}
                 label={
-                  vehicle
-                    ? t('vehicles.seatsCount', { count: vehicle.totalSeats })
-                    : '—'
+                  vehicle ? t('vehicles.seatsCount', { count: vehicle.totalSeats }) : '—'
                 }
               />
               <FeatureChip
@@ -194,14 +237,11 @@ export function TripPreviewStep({
                   />
                 }
                 label={
-                  vehicle?.hasAc
-                    ? t('trips.create.acAvailable')
-                    : t('vehicles.fields.acOff')
+                  vehicle?.hasAc ? t('trips.create.acAvailable') : t('vehicles.fields.acOff')
                 }
               />
             </View>
           </View>
-
           <View style={styles.vehicleThumb}>
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={styles.vehicleThumbImage} contentFit="cover" />
@@ -215,24 +255,22 @@ export function TripPreviewStep({
       </View>
 
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <SectionIcon name="car" />
-          <View style={styles.cardHeaderCopy}>
-            <AppText style={styles.eyebrow}>{t('trips.create.vehicleModeLabel')}</AppText>
-            <AppText weight="bold" style={styles.cardTitle}>
-              {vehicleModeLabel}
-            </AppText>
-          </View>
-        </View>
+        <SectionHeader
+          icon="exchange"
+          subtitle={t('trips.create.vehicleModeTitle')}
+          title={vehicleModeLabel}
+          onEdit={() => onEditStep('vehicleMode')}
+          editA11yLabel={editA11y}
+        />
       </View>
 
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <SectionIcon name="map-marker" />
-          <AppText weight="bold" style={styles.sectionTitle}>
-            {t('trips.create.detailsTitle')}
-          </AppText>
-        </View>
+        <SectionHeader
+          icon="map-marker"
+          title={t('trips.create.detailsTitle')}
+          onEdit={() => onEditStep('details')}
+          editA11yLabel={editA11y}
+        />
 
         <View style={styles.timeline}>
           <View style={styles.timelineRail}>
@@ -308,12 +346,12 @@ export function TripPreviewStep({
       </View>
 
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <SectionIcon name="tag" />
-          <AppText weight="bold" style={styles.sectionTitle}>
-            {t('trips.create.previewListingDetails')}
-          </AppText>
-        </View>
+        <SectionHeader
+          icon="tag"
+          title={t('trips.create.listingTitle')}
+          onEdit={() => onEditStep('listing')}
+          editA11yLabel={editA11y}
+        />
 
         <View style={styles.listingGrid}>
           <View style={styles.listingRow}>
@@ -323,22 +361,9 @@ export function TripPreviewStep({
               value={listingLabel}
             />
             <ListingCell
-              icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
-              label={t('trips.create.durationLabel')}
-              value={formatDurationLabel(draft.durationHours, t)}
-            />
-          </View>
-          <View style={styles.listingDivider} />
-          <View style={styles.listingRow}>
-            <ListingCell
               icon={<FontAwesome name="dollar" size={13} color={colors.primary} />}
               label={t('trips.create.startingPrice')}
               value={priceLabel}
-            />
-            <ListingCell
-              icon={<FontAwesome name="play-circle" size={13} color={colors.primary} />}
-              label={t('trips.create.startModeLabel')}
-              value={startLabel}
             />
           </View>
           <View style={styles.listingDivider} />
@@ -349,58 +374,71 @@ export function TripPreviewStep({
               value={paymentLabel}
             />
             <ListingCell
-              icon={<FontAwesome5 name="chair" size={12} color={colors.primary} />}
-              label={t('vehicles.fields.totalSeats')}
-              value={vehicle ? String(vehicle.totalSeats) : '—'}
+              icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
+              label={t('trips.create.durationLabel')}
+              value={formatDurationLabel(draft.durationHours, t)}
             />
           </View>
         </View>
       </View>
 
-      {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
-
-      <View style={styles.actions}>
-        <Pressable
-          onPress={onEdit}
-          disabled={publishing}
-          style={({ pressed }) => [
-            styles.editButton,
-            pressed && styles.editButtonPressed,
-            publishing && styles.actionDisabled,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('trips.create.editTrip')}
-        >
-          <FontAwesome name="pencil-square-o" size={16} color={colors.primary} />
-          <AppText weight="bold" style={styles.editButtonText}>
-            {t('trips.create.editTrip')}
-          </AppText>
-        </Pressable>
-
-        <Pressable
-          onPress={onPublish}
-          disabled={publishing}
-          style={({ pressed }) => [
-            styles.publishButton,
-            pressed && !publishing && styles.publishButtonPressed,
-            publishing && styles.actionDisabled,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('trips.create.publish')}
-          accessibilityState={{ busy: publishing, disabled: publishing }}
-        >
-          {publishing ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <>
-              <FontAwesome name="paper-plane" size={14} color={colors.white} />
-              <AppText weight="bold" style={styles.publishButtonText}>
-                {t('trips.create.publish')}
-              </AppText>
-            </>
-          )}
-        </Pressable>
+      <View style={styles.card}>
+        <SectionHeader
+          icon="play-circle"
+          subtitle={t('trips.create.scheduleTitle')}
+          title={startLabel}
+          onEdit={() => onEditStep('schedule')}
+          editA11yLabel={editA11y}
+        />
       </View>
+
+      <View style={styles.card}>
+        <SectionHeader
+          icon="align-left"
+          title={t('dashboard.listings.detail.description')}
+          onEdit={() => onEditStep('details')}
+          editA11yLabel={editA11y}
+        />
+        <AppText style={styles.descriptionText}>
+          {draft.description.trim()
+            ? draft.description.trim()
+            : t('dashboard.listings.detail.descriptionBody', {
+                from: departureCity,
+                to: arrivalCity,
+                vehicle: vehicle?.title ?? '—',
+                mode: vehicleModeLabel,
+              })}
+        </AppText>
+      </View>
+
+      {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
+      {!canPublish && !errorMessage ? (
+        <AppText style={styles.errorText}>{t('trips.create.publishIncomplete')}</AppText>
+      ) : null}
+
+      <Pressable
+        onPress={onPublish}
+        disabled={publishing || !canPublish}
+        style={({ pressed }) => [
+          styles.publishButton,
+          pressed && canPublish && !publishing && styles.publishButtonPressed,
+          (publishing || !canPublish) && styles.actionDisabled,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={t('trips.create.publish')}
+        accessibilityState={{ busy: publishing, disabled: publishing || !canPublish }}
+      >
+        {publishing ? (
+          <ActivityIndicator color={colors.white} />
+        ) : (
+          <>
+            <FontAwesome name="paper-plane" size={14} color={colors.white} />
+            <AppText weight="bold" style={styles.publishButtonText}>
+              {t('trips.create.publish')}
+            </AppText>
+          </>
+        )}
+      </Pressable>
     </View>
   );
 }
@@ -435,26 +473,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  editIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   eyebrow: {
     fontSize: 11,
     color: colors.text.tertiary,
-  },
-  cardTitle: {
-    fontSize: 15,
-    color: colors.text.primary,
   },
   sectionTitle: {
     fontSize: 15,
     color: colors.text.primary,
   },
-  vehicleTop: {
+  vehicleBody: {
     flexDirection: 'row',
     gap: spacing.sm,
+    alignItems: 'center',
   },
   vehicleCopy: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.sm,
   },
   vehicleThumb: {
     width: 88,
@@ -623,36 +665,16 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 18,
   },
+  descriptionText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.text.secondary,
+  },
   errorText: {
     fontSize: 12,
     color: colors.primary,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xxs,
-  },
-  editButton: {
-    flex: 1,
-    minHeight: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.white,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-  editButtonPressed: {
-    backgroundColor: colors.primaryMuted,
-  },
-  editButtonText: {
-    fontSize: 14,
-    color: colors.primary,
-  },
   publishButton: {
-    flex: 1,
     minHeight: 52,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
@@ -660,6 +682,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
+    marginTop: spacing.xxs,
   },
   publishButtonPressed: {
     backgroundColor: colors.primaryPressed,

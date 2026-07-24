@@ -30,6 +30,7 @@ export type TripDto = {
   durationHours: number;
   startMode: 'instant' | 'scheduled';
   scheduledStartAt: string | null;
+  description: string | null;
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -50,4 +51,5 @@ export type CreateTripPayload = {
   durationHours: number;
   startMode: 'instant' | 'scheduled';
   scheduledStartAt?: string | null;
+  description?: string | null;
 };

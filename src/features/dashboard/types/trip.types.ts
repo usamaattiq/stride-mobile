@@ -31,6 +31,8 @@ export type TripDraft = {
   durationHours: number;
   startMode: TripStartMode | null;
   scheduledStartAt: string | null;
+  /** Optional free-text trip notes. */
+  description: string;
 };
 
 export type Trip = {
@@ -53,6 +55,7 @@ export type Trip = {
   durationHours: number;
   startMode: TripStartMode;
   scheduledStartAt: string | null;
+  description: string | null;
   publishedAt: string;
 };
 
@@ -72,11 +75,17 @@ export function createEmptyTripDraft(): TripDraft {
     durationHours: 6,
     startMode: null,
     scheduledStartAt: null,
+    description: '',
   };
 }
 
 export function isTripDraftComplete(draft: TripDraft): boolean {
   return draftToTrip(draft, 'preview') !== null;
+}
+
+/** Minimum fields required to publish (matches create API). */
+export function canPublishTripDraft(draft: TripDraft): boolean {
+  return isTripDraftComplete(draft);
 }
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
@@ -125,6 +134,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     durationHours: draft.durationHours,
     startMode: draft.startMode,
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
+    description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
   };
 }
