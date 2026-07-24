@@ -40,6 +40,7 @@ export type Trip = {
   vehicleId: string;
   vehicleTitle: string | null;
   vehiclePhotoUrl: string | null;
+  vehiclePhotoCount: number;
   vehicleClass: VehicleClass | null;
   vehicleTotalSeats: number | null;
   vehicleMode: TripVehicleMode;
@@ -119,6 +120,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehicleId: draft.vehicleId,
     vehicleTitle: null,
     vehiclePhotoUrl: null,
+    vehiclePhotoCount: 0,
     vehicleClass: null,
     vehicleTotalSeats: null,
     vehicleMode: draft.vehicleMode,

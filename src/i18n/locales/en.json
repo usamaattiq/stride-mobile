@@ -223,6 +223,13 @@
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",
+      "card": {
+        "pricePerSeat": "Price per seat",
+        "priceWithCurrency": "PKR {{price}}",
+        "active": "Active",
+        "ended": "Ended",
+        "photoCount": "{{current}}/{{total}}"
+      },
       "detail": {
         "title": "Listing details",
         "route": "Route",

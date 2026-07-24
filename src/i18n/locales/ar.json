@@ -223,6 +223,13 @@
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",
+      "card": {
+        "pricePerSeat": "السعر لكل مقعد",
+        "priceWithCurrency": "PKR {{price}}",
+        "active": "نشط",
+        "ended": "منتهية",
+        "photoCount": "{{current}}/{{total}}"
+      },
       "detail": {
         "title": "تفاصيل القائمة",
         "route": "المسار",
