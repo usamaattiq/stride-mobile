@@ -250,6 +250,8 @@
         "descriptionBody": "رحلة من {{from}} إلى {{to}} بمركبة {{vehicle}} ({{mode}}). راجع الجدول والتسعير أدناه.",
         "showMore": "عرض المزيد",
         "showLess": "عرض أقل",
+        "openPickupInMaps": "فتح نقطة الالتقاط {{place}} في خرائط Google",
+        "openDropoffInMaps": "فتح نقطة التوصيل {{place}} في خرائط Google",
         "paymentTerms": "شروط الدفع",
         "share": "مشاركة القائمة",
         "edit": "تعديل القائمة",

@@ -24,6 +24,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
@@ -31,7 +32,7 @@ import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip } from '../types/trip.types';
+import type { Trip, TripLocationPoint } from '../types/trip.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
@@ -84,6 +85,53 @@ function SectionHeader({ icon, title, subtitle }: SectionHeaderProps): React.Rea
         </AppText>
       </View>
     </View>
+  );
+}
+
+type LocationPointRowProps = {
+  eyebrow: string;
+  point: TripLocationPoint | null | undefined;
+  accessibilityLabel: string;
+};
+
+function LocationPointRow({
+  eyebrow,
+  point,
+  accessibilityLabel,
+}: LocationPointRowProps): React.ReactElement {
+  const label = point?.label?.trim() || '—';
+  const canOpen =
+    point != null &&
+    Number.isFinite(point.latitude) &&
+    Number.isFinite(point.longitude);
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.pointRow, pressed && canOpen && styles.pointRowPressed]}
+      disabled={!canOpen}
+      onPress={() => {
+        if (!point || !canOpen) {
+          return;
+        }
+        void openInGoogleMaps(point);
+      }}
+      accessibilityRole={canOpen ? 'link' : 'text'}
+      accessibilityLabel={accessibilityLabel}
+    >
+      <FontAwesome name="map-marker" size={12} color={colors.primary} />
+      <View style={styles.pointCopy}>
+        <AppText style={styles.eyebrow}>{eyebrow}</AppText>
+        <AppText
+          weight="medium"
+          style={[styles.pointValue, canOpen && styles.pointValueLink]}
+        >
+          {label}
+        </AppText>
+      </View>
+      {canOpen ? (
+        <FontAwesome name="external-link" size={11} color={colors.primary} />
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -364,15 +412,13 @@ export function ListingDetailScreen(): React.ReactElement {
                           </View>
                         </View>
                       </View>
-                      <View style={styles.pointRow}>
-                        <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                        <View style={styles.pointCopy}>
-                          <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
-                          <AppText weight="medium" style={styles.pointValue}>
-                            {trip.departurePoint?.label ?? '—'}
-                          </AppText>
-                        </View>
-                      </View>
+                      <LocationPointRow
+                        eyebrow={t('trips.create.pickupPoint')}
+                        point={trip.departurePoint}
+                        accessibilityLabel={t('dashboard.listings.detail.openPickupInMaps', {
+                          place: trip.departurePoint?.label ?? '—',
+                        })}
+                      />
                     </View>
 
                     <View style={styles.endpointBlock}>
@@ -395,15 +441,13 @@ export function ListingDetailScreen(): React.ReactElement {
                           </View>
                         </View>
                       </View>
-                      <View style={styles.pointRow}>
-                        <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                        <View style={styles.pointCopy}>
-                          <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
-                          <AppText weight="medium" style={styles.pointValue}>
-                            {trip.arrivalPoint?.label ?? '—'}
-                          </AppText>
-                        </View>
-                      </View>
+                      <LocationPointRow
+                        eyebrow={t('trips.create.dropoffPoint')}
+                        point={trip.arrivalPoint}
+                        accessibilityLabel={t('dashboard.listings.detail.openDropoffInMaps', {
+                          place: trip.arrivalPoint?.label ?? '—',
+                        })}
+                      />
                     </View>
                   </View>
                 </View>
@@ -586,6 +630,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 6,
     paddingLeft: 2,
+    paddingVertical: 2,
+  },
+  pointRowPressed: {
+    opacity: 0.75,
   },
   pointCopy: {
     flex: 1,
@@ -593,9 +641,13 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   pointValue: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.text.primary,
-    lineHeight: 18,
+    lineHeight: 16,
+  },
+  pointValueLink: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
   descriptionWrap: {
     position: 'relative',

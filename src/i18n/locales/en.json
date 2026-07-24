@@ -250,6 +250,8 @@
         "descriptionBody": "Trip from {{from}} to {{to}} with {{vehicle}} ({{mode}}). Review the schedule and pricing details below.",
         "showMore": "Show more",
         "showLess": "Show less",
+        "openPickupInMaps": "Open pickup point {{place}} in Google Maps",
+        "openDropoffInMaps": "Open drop-off point {{place}} in Google Maps",
         "paymentTerms": "Payment Terms",
         "share": "Share Listing",
         "edit": "Edit Listing",
