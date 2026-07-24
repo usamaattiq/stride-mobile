@@ -499,6 +499,12 @@
       "departureCity": "مدينة المغادرة",
       "departurePoint": "نقطة المغادرة",
       "departureDateTime": "تاريخ ووقت المغادرة",
+      "departureDateWindow": "نافذة تاريخ المغادرة",
+      "departureWindowHint": "اضغط تاريخ البداية ثم تاريخ النهاية على التقويم",
+      "departureTime": "وقت المغادرة",
+      "selectDateRange": "اختر نطاق التاريخ",
+      "selectDate": "اختر التاريخ",
+      "selectTime": "اختر الوقت",
       "arrivalCity": "مدينة الوصول",
       "arrivalPoint": "نقطة الوصول",
       "arrivalDateTime": "تاريخ ووقت الوصول",
@@ -615,6 +621,7 @@
     "cancel": "إلغاء",
     "ok": "حسنًا",
     "done": "تم",
+    "clear": "مسح",
     "continue": "متابعة"
   },
   "legal": {

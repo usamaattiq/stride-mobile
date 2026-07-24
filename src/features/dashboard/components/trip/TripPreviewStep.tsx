@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import { canPublishTripDraft, type TripDraft } from '@/features/dashboard/types/trip.types';
+import { formatDateRangeLabel } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
@@ -292,10 +293,15 @@ export function TripPreviewStep({
                   <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
                   <View style={styles.endpointWhenCopy}>
                     <AppText style={styles.whenLabel}>
-                      {t('trips.create.departureDateTime')}
+                      {t('trips.create.departureDateWindow')}
                     </AppText>
                     <AppText weight="semibold" style={styles.whenValue}>
-                      {formatDateTime(draft.departureAt, locale)}
+                      {formatDateRangeLabel(
+                        draft.departureAt,
+                        draft.departureUntil,
+                        locale,
+                        '—',
+                      )}
                     </AppText>
                   </View>
                 </View>

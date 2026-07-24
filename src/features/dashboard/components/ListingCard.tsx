@@ -10,12 +10,16 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 
-function formatTripWhen(iso: string, locale: string): string {
-  const date = new Date(iso);
+function formatTripWhen(trip: Trip, locale: string): string {
+  if (trip.departureUntil) {
+    return formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt);
+  }
+  const date = new Date(trip.departureAt);
   if (Number.isNaN(date.getTime())) {
-    return iso;
+    return trip.departureAt;
   }
   const day = date.toLocaleDateString(locale, {
     day: 'numeric',
@@ -137,7 +141,7 @@ export function ListingCard({
           <View style={styles.metaRow}>
             <FontAwesome name="calendar" size={11} color={colors.primary} />
             <AppText style={styles.metaText} numberOfLines={1}>
-              {formatTripWhen(trip.departureAt, i18n.language)}
+              {formatTripWhen(trip, i18n.language)}
             </AppText>
           </View>
 

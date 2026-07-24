@@ -21,10 +21,17 @@ export type TripDraft = {
   vehicleMode: TripVehicleMode | null;
   departureCity: TripCity | null;
   departurePoint: TripLocationPoint | null;
+  /** Start of the departure date window. */
   departureAt: string | null;
+  /** End of the departure date window. */
+  departureUntil: string | null;
+  /** Whether the user explicitly picked a departure time (vs. the default baked into departureAt). */
+  departureTimeSet: boolean;
   arrivalCity: TripCity | null;
   arrivalPoint: TripLocationPoint | null;
   arrivalAt: string | null;
+  /** Whether the user explicitly picked an arrival time (vs. the default baked into arrivalAt). */
+  arrivalTimeSet: boolean;
   listingType: TripListingType | null;
   startingPrice: string;
   paymentMethod: TripPaymentMethod | null;
@@ -47,6 +54,8 @@ export type Trip = {
   departureCity: TripCity;
   departurePoint: TripLocationPoint;
   departureAt: string;
+  /** End of the departure date window, when set. */
+  departureUntil: string | null;
   arrivalCity: TripCity;
   arrivalPoint: TripLocationPoint;
   arrivalAt: string;
@@ -67,9 +76,12 @@ export function createEmptyTripDraft(): TripDraft {
     departureCity: null,
     departurePoint: null,
     departureAt: null,
+    departureUntil: null,
+    departureTimeSet: false,
     arrivalCity: null,
     arrivalPoint: null,
     arrivalAt: null,
+    arrivalTimeSet: false,
     listingType: null,
     startingPrice: '',
     paymentMethod: null,
@@ -127,6 +139,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     departureCity: draft.departureCity,
     departurePoint: draft.departurePoint,
     departureAt: draft.departureAt,
+    departureUntil: draft.departureUntil,
     arrivalCity: draft.arrivalCity,
     arrivalPoint: draft.arrivalPoint,
     arrivalAt: draft.arrivalAt,

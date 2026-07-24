@@ -28,6 +28,7 @@ import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
+import { formatDateRangeLabel } from '../components/trip/dateRangeUtils';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
@@ -404,10 +405,15 @@ export function ListingDetailScreen(): React.ReactElement {
                           <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
                           <View style={styles.endpointWhenCopy}>
                             <AppText style={styles.whenLabel}>
-                              {t('trips.create.departureDateTime')}
+                              {t('trips.create.departureDateWindow')}
                             </AppText>
                             <AppText weight="semibold" style={styles.whenValue}>
-                              {formatDateTime(trip.departureAt, locale)}
+                              {formatDateRangeLabel(
+                                trip.departureAt,
+                                trip.departureUntil,
+                                locale,
+                                '—',
+                              )}
                             </AppText>
                           </View>
                         </View>

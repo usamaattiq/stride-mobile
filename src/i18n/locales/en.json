@@ -499,6 +499,12 @@
       "departureCity": "Departure city",
       "departurePoint": "Departure point",
       "departureDateTime": "Departure date & time",
+      "departureDateWindow": "Departure date window",
+      "departureWindowHint": "Tap a start date, then an end date on the calendar",
+      "departureTime": "Departure time",
+      "selectDateRange": "Select date range",
+      "selectDate": "Select date",
+      "selectTime": "Select time",
       "arrivalCity": "Arrival city",
       "arrivalPoint": "Arrival point",
       "arrivalDateTime": "Arrival date & time",
@@ -615,6 +621,7 @@
     "cancel": "Cancel",
     "ok": "OK",
     "done": "Done",
+    "clear": "Clear",
     "continue": "Continue"
   },
   "legal": {
