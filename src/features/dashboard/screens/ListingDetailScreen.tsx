@@ -93,6 +93,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<DetailTab>('overview');
   const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
+  const [descriptionTruncatable, setDescriptionTruncatable] = React.useState(false);
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
@@ -258,28 +259,38 @@ export function ListingDetailScreen(): React.ReactElement {
                 icon="align-left"
                 title={t('dashboard.listings.detail.description')}
               />
-              <AppText
-                style={styles.descriptionText}
-                numberOfLines={descriptionExpanded ? undefined : 3}
-              >
-                {description}
-              </AppText>
-              <Pressable
-                onPress={() => setDescriptionExpanded((current) => !current)}
-                style={styles.showMore}
-                hitSlop={8}
-              >
-                <AppText weight="semibold" style={styles.showMoreText}>
-                  {descriptionExpanded
-                    ? t('dashboard.listings.detail.showLess')
-                    : t('dashboard.listings.detail.showMore')}
+              <View style={styles.descriptionWrap}>
+                <AppText
+                  style={[styles.descriptionText, styles.descriptionMeasure]}
+                  pointerEvents="none"
+                  onTextLayout={(event) => {
+                    if (event.nativeEvent.lines.length > 2) {
+                      setDescriptionTruncatable(true);
+                    }
+                  }}
+                >
+                  {description}
                 </AppText>
-                <FontAwesome
-                  name={descriptionExpanded ? 'chevron-up' : 'chevron-down'}
-                  size={10}
-                  color={colors.primary}
-                />
-              </Pressable>
+                <AppText
+                  style={styles.descriptionText}
+                  numberOfLines={descriptionExpanded ? undefined : 2}
+                >
+                  {description}
+                  {descriptionTruncatable ? (
+                    <AppText
+                      weight="semibold"
+                      style={styles.showMoreText}
+                      onPress={() => setDescriptionExpanded((current) => !current)}
+                      suppressHighlighting
+                    >
+                      {'  '}
+                      {descriptionExpanded
+                        ? t('dashboard.listings.detail.showLess')
+                        : t('dashboard.listings.detail.showMore')}
+                    </AppText>
+                  ) : null}
+                </AppText>
+              </View>
             </View>
 
             <View style={styles.card}>
@@ -559,19 +570,24 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 18,
   },
+  descriptionWrap: {
+    position: 'relative',
+  },
   descriptionText: {
     fontSize: 13,
     lineHeight: 18,
     color: colors.text.secondary,
   },
-  showMore: {
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  descriptionMeasure: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    opacity: 0,
   },
   showMoreText: {
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.primary,
   },
   headerRemoveButton: {
