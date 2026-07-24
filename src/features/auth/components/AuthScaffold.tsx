@@ -58,6 +58,8 @@ type AuthScaffoldProps = {
   showLegalFooter?: boolean;
   /** Defaults to true. Set false on tab screens that already have language in Settings. */
   showLanguageSwitcher?: boolean;
+  /** Optional control rendered on the right of the header top bar. */
+  headerRight?: React.ReactNode;
   /**
    * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
    */
@@ -79,6 +81,7 @@ export function AuthScaffold({
   scrollable = true,
   showLegalFooter = true,
   showLanguageSwitcher = true,
+  headerRight,
   compactHeader = false,
   stepCount,
   currentStep,
@@ -86,7 +89,8 @@ export function AuthScaffold({
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
   const isKeyboardVisible = useKeyboardVisible();
-  const showTopBar = Boolean(onBack) || showLanguageSwitcher;
+  const showTopBar =
+    Boolean(onBack) || showLanguageSwitcher || headerRight != null;
 
   const contentBottomPad = showLegalFooter
     ? spacing.xl
@@ -155,9 +159,14 @@ export function AuthScaffold({
                 >
                   <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
                 </Pressable>
-              ) : null}
+              ) : (
+                <View style={styles.topBarSpacer} />
+              )}
 
-              {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+              <View style={styles.topBarRight}>
+                {headerRight}
+                {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+              </View>
             </View>
           ) : null}
 
@@ -241,6 +250,14 @@ const styles = StyleSheet.create({
   },
   topBarNoBack: {
     justifyContent: 'flex-end',
+  },
+  topBarSpacer: {
+    width: 34,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   stepSlot: {
     marginHorizontal: spacing.xxl,

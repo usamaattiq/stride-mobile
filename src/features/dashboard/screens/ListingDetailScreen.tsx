@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import {
@@ -11,16 +11,15 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
@@ -35,7 +34,7 @@ type DetailTab = 'overview' | 'responses' | 'activity' | 'manage';
 function formatDateTime(iso: string, locale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
-    return '—';
+    return 'â€”';
   }
   const day = date.toLocaleDateString(locale, {
     day: 'numeric',
@@ -176,7 +175,6 @@ function ListingCell({ icon, label, value }: ListingCellProps): React.ReactEleme
 
 export function ListingDetailScreen(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
@@ -229,37 +227,47 @@ export function ListingDetailScreen(): React.ReactElement {
       .finally(() => setRemoving(false));
   };
 
+  const goBack = () => navigation.goBack();
+
   if (loading) {
     return (
-      <View style={[styles.root, styles.centered, { paddingTop: insets.top }]}>
-        <FocusAwareStatusBar style="dark" />
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <AuthScaffold
+        onBack={goBack}
+        title={t('dashboard.listings.detail.title')}
+        showLegalFooter={false}
+        showLanguageSwitcher={false}
+        compactHeader
+      >
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </AuthScaffold>
     );
   }
 
   if (!trip || loadError) {
     return (
-      <View
-        style={[
-          styles.root,
-          styles.centered,
-          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
-        ]}
+      <AuthScaffold
+        onBack={goBack}
+        title={t('dashboard.listings.detail.title')}
+        showLegalFooter={false}
+        showLanguageSwitcher={false}
+        compactHeader
       >
-        <FocusAwareStatusBar style="dark" />
-        <AppText style={styles.errorText}>
-          {loadError ?? t('dashboard.listings.detail.notFound')}
-        </AppText>
-        <Button label={t('common.ok')} onPress={() => navigation.goBack()} />
-      </View>
+        <View style={styles.centered}>
+          <AppText style={styles.errorText}>
+            {loadError ?? t('dashboard.listings.detail.notFound')}
+          </AppText>
+          <Button label={t('common.ok')} onPress={goBack} />
+        </View>
+      </AuthScaffold>
     );
   }
 
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = trip.arrivalCity
     ? cityDisplayName(trip.arrivalCity.label)
-    : '—';
+    : 'â€”';
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -309,33 +317,31 @@ export function ListingDetailScreen(): React.ReactElement {
   ];
 
   const openEdit = () => setInfoMessage(t('dashboard.listings.detail.editComingSoon'));
+  const openRemove = () => {
+    setRemoveError(null);
+    setConfirmRemove(true);
+  };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <FocusAwareStatusBar style="dark" />
-
-      <View style={styles.topBar}>
+    <AuthScaffold
+      onBack={goBack}
+      title={t('dashboard.listings.detail.title')}
+      showLegalFooter={false}
+      showLanguageSwitcher={false}
+      compactHeader
+      headerRight={
         <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          hitSlop={8}
+          onPress={openRemove}
+          style={styles.headerRemoveButton}
+          hitSlop={10}
           accessibilityRole="button"
+          accessibilityLabel={t('dashboard.listings.remove.a11y')}
         >
-          <FontAwesome name="chevron-left" size={16} color={colors.text.primary} />
+          <FontAwesome name="trash-o" size={16} color={colors.white} />
         </Pressable>
-        <AppText weight="bold" style={styles.topTitle}>
-          {t('dashboard.listings.detail.title')}
-        </AppText>
-        <View style={styles.backButton} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + spacing.md },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+      }
+    >
+      <View style={styles.content}>
         <View style={styles.summaryCard}>
           <View style={styles.badgeRow}>
             <View style={styles.rfqBadge}>
@@ -372,7 +378,7 @@ export function ListingDetailScreen(): React.ReactElement {
 
             <View style={styles.summaryCopy}>
               <AppText weight="bold" style={styles.summaryRoute} numberOfLines={2}>
-                {`${fromCity} → ${toCity}`}
+                {`${fromCity} â†’ ${toCity}`}
               </AppText>
               <View style={styles.summaryVehicleRow}>
                 <FontAwesome
@@ -387,7 +393,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <View style={styles.summaryVehicleRow}>
                 <FontAwesome name="car" size={12} color={colors.text.tertiary} />
                 <AppText style={styles.summaryMeta} numberOfLines={1}>
-                  {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
+                  {[classLabel, seatsLabel].filter(Boolean).join(' Â· ')}
                 </AppText>
               </View>
             </View>
@@ -471,7 +477,49 @@ export function ListingDetailScreen(): React.ReactElement {
 
         {tab === 'overview' ? (
           <>
-          
+            <View style={styles.card}>
+              <SectionHeader
+                icon="car"
+                subtitle={t('trips.create.vehicleTitle')}
+                title={vehicleTitle}
+                onEdit={openEdit}
+                editA11yLabel={editA11y}
+              />
+              <View style={styles.vehicleBody}>
+                <View style={styles.vehicleCopy}>
+                  <View style={styles.featuresRow}>
+                    <FeatureChip
+                      icon={
+                        <FontAwesome name="user" size={11} color={colors.text.secondary} />
+                      }
+                      label={seatsLabel ?? 'â€”'}
+                    />
+                    {classLabel ? (
+                      <FeatureChip
+                        showDivider
+                        icon={
+                          <FontAwesome name="car" size={11} color={colors.text.secondary} />
+                        }
+                        label={classLabel}
+                      />
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.vehicleThumb}>
+                  {trip.vehiclePhotoUrl ? (
+                    <Image
+                      source={{ uri: trip.vehiclePhotoUrl }}
+                      style={styles.vehicleThumbImage}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View style={styles.vehicleThumbFallback}>
+                      <FontAwesome name="car" size={22} color={colors.text.tertiary} />
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
 
             <View style={styles.card}>
               <SectionHeader
@@ -524,7 +572,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.departurePoint?.label ?? '—'}
+                          {trip.departurePoint?.label ?? 'â€”'}
                         </AppText>
                       </View>
                     </View>
@@ -555,7 +603,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <View style={styles.pointCopy}>
                         <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
                         <AppText weight="medium" style={styles.pointValue}>
-                          {trip.arrivalPoint?.label ?? '—'}
+                          {trip.arrivalPoint?.label ?? 'â€”'}
                         </AppText>
                       </View>
                     </View>
@@ -641,19 +689,6 @@ export function ListingDetailScreen(): React.ReactElement {
                 />
               </Pressable>
             </View>
-
-            <Pressable
-              onPress={() => {
-                setRemoveError(null);
-                setConfirmRemove(true);
-              }}
-              style={styles.removeButton}
-            >
-              <FontAwesome name="trash-o" size={14} color={colors.white} />
-              <AppText weight="bold" style={styles.removeButtonText}>
-                {t('dashboard.listings.remove.confirmAction')}
-              </AppText>
-            </Pressable>
           </>
         ) : tab === 'manage' ? (
           <View style={styles.card}>
@@ -666,10 +701,7 @@ export function ListingDetailScreen(): React.ReactElement {
             <Button
               label={t('dashboard.listings.remove.confirmAction')}
               variant="secondary"
-              onPress={() => {
-                setRemoveError(null);
-                setConfirmRemove(true);
-              }}
+              onPress={openRemove}
             />
           </View>
         ) : (
@@ -682,7 +714,7 @@ export function ListingDetailScreen(): React.ReactElement {
             </AppText>
           </View>
         )}
-      </ScrollView>
+      </View>
 
       <AppDialog
         visible={confirmRemove}
@@ -721,45 +753,23 @@ export function ListingDetailScreen(): React.ReactElement {
           onPress: () => setInfoMessage(null),
         }}
       />
-    </View>
+    </AuthScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background.canvas,
-  },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xl,
   },
   errorText: {
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  backButton: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topTitle: {
-    fontSize: 16,
-    color: colors.text.primary,
-  },
   content: {
-    paddingHorizontal: spacing.md,
     gap: spacing.xs,
   },
   summaryCard: {
@@ -1142,6 +1152,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.primary,
   },
+  headerRemoveButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
   emptyTabCard: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
@@ -1159,18 +1177,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text.secondary,
     textAlign: 'center',
-  },
-  removeButton: {
-    minHeight: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xxs,
-  },
-  removeButtonText: {
-    fontSize: 14,
-    color: colors.white,
   },
 });
