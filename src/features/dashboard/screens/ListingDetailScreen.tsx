@@ -48,25 +48,6 @@ function formatDateTime(iso: string, locale: string): string {
   return `${day} at ${time}`;
 }
 
-function formatDurationLabel(
-  hours: number,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const wholeHours = Math.floor(hours);
-  const minutes = Math.round((hours - wholeHours) * 60);
-
-  if (minutes === 0) {
-    return t('trips.create.durationValue', { count: wholeHours });
-  }
-  if (wholeHours === 0) {
-    return t('trips.create.durationMinutesOnly', { count: minutes });
-  }
-  return t('trips.create.durationHoursMinutes', {
-    hours: wholeHours,
-    minutes,
-  });
-}
-
 type SectionIconProps = {
   name: React.ComponentProps<typeof FontAwesome>['name'];
 };
@@ -93,26 +74,6 @@ function SectionHeader({ icon, title, subtitle }: SectionHeaderProps): React.Rea
         {subtitle ? <AppText style={styles.eyebrow}>{subtitle}</AppText> : null}
         <AppText weight="bold" style={styles.sectionTitle}>
           {title}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
-type ListingCellProps = {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-};
-
-function ListingCell({ icon, label, value }: ListingCellProps): React.ReactElement {
-  return (
-    <View style={styles.listingCell}>
-      <View style={styles.listingIconWrap}>{icon}</View>
-      <View style={styles.listingCopy}>
-        <AppText style={styles.listingLabel}>{label}</AppText>
-        <AppText weight="bold" style={styles.listingValue}>
-          {value}
         </AppText>
       </View>
     </View>
@@ -213,10 +174,6 @@ export function ListingDetailScreen(): React.ReactElement {
   const toCity = trip.arrivalCity
     ? cityDisplayName(trip.arrivalCity.label)
     : '—';
-  const listingLabel =
-    trip.listingType === 'auction'
-      ? t('trips.create.listingAuction')
-      : t('trips.create.listingRfq');
   const classLabel = trip.vehicleClass
     ? t(
         VEHICLE_CLASS_OPTIONS.find((item) => item.id === trip.vehicleClass)?.labelKey ??
@@ -227,11 +184,6 @@ export function ListingDetailScreen(): React.ReactElement {
     trip.vehicleMode === 'fullPrivate'
       ? t('trips.create.vehicleModeFullPrivate')
       : t('trips.create.vehicleModeShared');
-  const paymentLabel =
-    trip.paymentMethod === 'online'
-      ? t('trips.create.paymentOnline')
-      : t('trips.create.paymentCash');
-  const priceLabel = trip.startingPrice ?? t('trips.create.notSpecified');
   const locale = i18n.language;
   const vehicleTitle = trip.vehicleTitle ?? classLabel;
   const description =
@@ -405,41 +357,6 @@ export function ListingDetailScreen(): React.ReactElement {
                       </View>
                     </View>
                   </View>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <SectionHeader
-                icon="tag"
-                title={t('trips.create.listingTitle')}
-              />
-
-              <View style={styles.listingGrid}>
-                <View style={styles.listingRow}>
-                  <ListingCell
-                    icon={<FontAwesome name="list-ul" size={13} color={colors.primary} />}
-                    label={t('trips.create.listingTypeLabel')}
-                    value={listingLabel}
-                  />
-                  <ListingCell
-                    icon={<FontAwesome name="dollar" size={13} color={colors.primary} />}
-                    label={t('trips.create.startingPrice')}
-                    value={priceLabel}
-                  />
-                </View>
-                <View style={styles.listingDivider} />
-                <View style={styles.listingRow}>
-                  <ListingCell
-                    icon={<FontAwesome name="credit-card" size={13} color={colors.primary} />}
-                    label={t('trips.create.paymentMethodLabel')}
-                    value={paymentLabel}
-                  />
-                  <ListingCell
-                    icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
-                    label={t('trips.create.durationLabel')}
-                    value={formatDurationLabel(trip.durationHours, t)}
-                  />
                 </View>
               </View>
             </View>
@@ -639,44 +556,6 @@ const styles = StyleSheet.create({
   },
   pointValue: {
     fontSize: 13,
-    color: colors.text.primary,
-    lineHeight: 18,
-  },
-  listingGrid: {
-    gap: 0,
-  },
-  listingRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  listingDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
-    marginVertical: spacing.sm,
-  },
-  listingCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.xs,
-    minWidth: 0,
-  },
-  listingIconWrap: {
-    width: 18,
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  listingCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  listingLabel: {
-    fontSize: 11,
-    color: colors.text.tertiary,
-  },
-  listingValue: {
-    fontSize: 14,
     color: colors.text.primary,
     lineHeight: 18,
   },
