@@ -46,7 +46,8 @@ const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.24;
 const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.19;
 
 type AuthScaffoldProps = {
-  onBack: () => void;
+  /** Omit on tab roots where there is nowhere to go back. */
+  onBack?: () => void;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -55,6 +56,12 @@ type AuthScaffoldProps = {
   contentWrapStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
   showLegalFooter?: boolean;
+  /** Defaults to true. Set false on tab screens that already have language in Settings. */
+  showLanguageSwitcher?: boolean;
+  /**
+   * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
+   */
+  compactHeader?: boolean;
   /** Total number of steps in the flow. Renders a step indicator when set. */
   stepCount?: number;
   /** The active step (1-based). Required alongside `stepCount`. */
@@ -71,12 +78,15 @@ export function AuthScaffold({
   contentWrapStyle,
   scrollable = true,
   showLegalFooter = true,
+  showLanguageSwitcher = true,
+  compactHeader = false,
   stepCount,
   currentStep,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
   const isKeyboardVisible = useKeyboardVisible();
+  const showTopBar = Boolean(onBack) || showLanguageSwitcher;
 
   const contentBottomPad = showLegalFooter
     ? spacing.xl
@@ -86,18 +96,28 @@ export function AuthScaffold({
     <KeyboardAwareScrollView
       style={styles.cardScroll}
       contentContainerStyle={[
-        styles.cardWrapScroll,
+        compactHeader ? styles.cardWrapScrollCompact : styles.cardWrapScroll,
         { paddingBottom: contentBottomPad },
         contentWrapStyle,
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
     >
-      <View style={styles.cardOverlap}>{children}</View>
+      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
+        {children}
+      </View>
     </KeyboardAwareScrollView>
   ) : (
-    <View style={[styles.cardWrapStatic, { paddingBottom: contentBottomPad }, contentWrapStyle]}>
-      <View style={styles.cardOverlap}>{children}</View>
+    <View
+      style={[
+        compactHeader ? styles.cardWrapStaticCompact : styles.cardWrapStatic,
+        { paddingBottom: contentBottomPad },
+        contentWrapStyle,
+      ]}
+    >
+      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
+        {children}
+      </View>
     </View>
   );
 
@@ -108,7 +128,14 @@ export function AuthScaffold({
         <View
           style={[
             styles.header,
-            { height: hasStepper ? HEADER_HEIGHT_WITH_STEPPER : HEADER_HEIGHT_NO_STEPPER },
+            compactHeader ? styles.headerCompact : null,
+            !compactHeader
+              ? {
+                  height: hasStepper
+                    ? HEADER_HEIGHT_WITH_STEPPER
+                    : HEADER_HEIGHT_NO_STEPPER,
+                }
+              : null,
           ]}
         >
           <LinearGradient
@@ -116,24 +143,34 @@ export function AuthScaffold({
             style={StyleSheet.absoluteFill}
           />
 
-          <View style={styles.topBar}>
-            <Pressable
-              onPress={onBack}
-              style={styles.backButton}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
-            </Pressable>
+          {showTopBar ? (
+            <View style={[styles.topBar, !onBack && styles.topBarNoBack]}>
+              {onBack ? (
+                <Pressable
+                  onPress={onBack}
+                  style={styles.backButton}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                >
+                  <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
+                </Pressable>
+              ) : null}
 
-            <LanguageSwitcher variant="glass" />
-          </View>
+              {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+            </View>
+          ) : null}
 
-          <View style={styles.headerCopy}>
+          <View
+            style={[
+              styles.headerCopy,
+              compactHeader ? styles.headerCopyCompact : null,
+              !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
+            ]}
+          >
             <AppText
               weight="bold"
-              style={[styles.title, titleStyle]}
+              style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.6}
@@ -141,7 +178,15 @@ export function AuthScaffold({
               {title}
             </AppText>
             {subtitle ? (
-              <AppText style={[styles.subtitle, subtitleStyle]}>{subtitle}</AppText>
+              <AppText
+                style={[
+                  styles.subtitle,
+                  compactHeader && styles.subtitleCompact,
+                  subtitleStyle,
+                ]}
+              >
+                {subtitle}
+              </AppText>
             ) : null}
           </View>
 
@@ -152,7 +197,9 @@ export function AuthScaffold({
           ) : null}
         </View>
 
-        <View style={styles.cardWrap}>{body}</View>
+        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact]}>
+          {body}
+        </View>
 
         {showLegalFooter && !isKeyboardVisible ? (
           <LegalLinks
@@ -183,10 +230,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.primary,
   },
+  headerCompact: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  topBarNoBack: {
+    justifyContent: 'flex-end',
   },
   stepSlot: {
     marginHorizontal: spacing.xxl,
@@ -203,11 +257,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     minHeight: 72,
   },
+  headerCopyCompact: {
+    marginTop: 0,
+    minHeight: 0,
+  },
+  headerCopyNoTopBar: {
+    marginTop: spacing.xs,
+  },
   title: {
     color: colors.white,
     fontSize: 30,
     lineHeight: 36,
     maxWidth: 320,
+  },
+  titleCompact: {
+    fontSize: 22,
+    lineHeight: 28,
   },
   subtitle: {
     marginTop: spacing.xs,
@@ -217,11 +282,20 @@ const styles = StyleSheet.create({
     minHeight: 36,
     maxWidth: 320,
   },
+  subtitleCompact: {
+    minHeight: 0,
+    marginTop: 4,
+  },
   cardWrap: {
     flex: 1,
     backgroundColor: colors.white,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
+  },
+  cardWrapCompact: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -18,
   },
   cardScroll: {
     flex: 1,
@@ -232,14 +306,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.xl,
   },
+  cardWrapScrollCompact: {
+    flexGrow: 1,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+  },
   cardWrapStatic: {
     flex: 1,
     paddingTop: 72,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
+  cardWrapStaticCompact: {
+    flex: 1,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+  },
   cardOverlap: {
     marginTop: -62,
+  },
+  cardOverlapCompact: {
+    marginTop: 0,
   },
   legalFooter: {
     backgroundColor: colors.white,

@@ -4,21 +4,19 @@ import { Image } from 'expo-image';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
@@ -154,7 +152,6 @@ function TripListItem({ trip, onPress, onRemovePress }: TripListItemProps): Reac
 
 export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
   const { user } = useDashboardSession();
@@ -193,49 +190,34 @@ export function MyListingsScreen(): React.ReactElement {
 
   if (user.role !== 'driver') {
     return (
-      <View
-        style={[
-          styles.root,
-          styles.centered,
-          {
-            paddingTop: insets.top + spacing.xl,
-            paddingBottom: insets.bottom + spacing.xl,
-          },
-        ]}
+      <AuthScaffold
+        title={t('dashboard.listings.title')}
+        subtitle={t('dashboard.listings.passengerHint')}
+        showLegalFooter={false}
+        showLanguageSwitcher={false}
+        compactHeader
       >
-        <FocusAwareStatusBar style="dark" />
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.title')}
-        </AppText>
-        <AppText style={styles.subtitle}>{t('dashboard.listings.passengerHint')}</AppText>
-      </View>
+        <View style={styles.centered}>
+          <AppText style={styles.hintBody}>{t('dashboard.listings.passengerHint')}</AppText>
+        </View>
+      </AuthScaffold>
     );
   }
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: insets.top + spacing.md,
-          paddingBottom: insets.bottom + spacing.md,
-        },
-      ]}
+    <AuthScaffold
+      title={t('dashboard.listings.title')}
+      subtitle={t('dashboard.listings.subtitle')}
+      showLegalFooter={false}
+      showLanguageSwitcher={false}
+      compactHeader
     >
-      <FocusAwareStatusBar style="dark" />
-      <View style={styles.header}>
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.title')}
-        </AppText>
-        <AppText style={styles.subtitle}>{t('dashboard.listings.subtitle')}</AppText>
-      </View>
-
       {isLoading && trips.length === 0 ? (
-        <View style={styles.centeredBody}>
+        <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
         </View>
       ) : loadError && trips.length === 0 ? (
-        <View style={styles.centeredBody}>
+        <View style={styles.centered}>
           <AppText style={styles.errorText}>{loadError}</AppText>
           <Button
             label={t('dashboard.listings.retry')}
@@ -245,17 +227,16 @@ export function MyListingsScreen(): React.ReactElement {
           />
         </View>
       ) : trips.length === 0 ? (
-        <View style={styles.centeredBody}>
+        <View style={styles.centered}>
           <AppText weight="semibold" style={styles.emptyTitle}>
             {t('dashboard.listings.emptyTitle')}
           </AppText>
-          <AppText style={styles.subtitle}>{t('dashboard.listings.emptySubtitle')}</AppText>
+          <AppText style={styles.emptySubtitle}>
+            {t('dashboard.listings.emptySubtitle')}
+          </AppText>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.list}>
           {trips.map((trip) => (
             <TripListItem
               key={trip.id}
@@ -269,7 +250,7 @@ export function MyListingsScreen(): React.ReactElement {
               }}
             />
           ))}
-        </ScrollView>
+        </View>
       )}
 
       <AppDialog
@@ -300,53 +281,38 @@ export function MyListingsScreen(): React.ReactElement {
           onPress: handleConfirmRemove,
         }}
       />
-    </View>
+    </AuthScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background.canvas,
-    paddingHorizontal: spacing.md,
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  list: {
     gap: spacing.sm,
   },
-  header: {
-    gap: 4,
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: 24,
-    color: colors.text.primary,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  centeredBody: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  centered: {
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
   },
   emptyTitle: {
     fontSize: 16,
     color: colors.text.primary,
     textAlign: 'center',
   },
+  emptySubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  hintBody: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
   errorText: {
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
-  },
-  listContent: {
-    gap: spacing.sm,
-    paddingBottom: spacing.lg,
   },
   item: {
     flexDirection: 'row',
@@ -399,7 +365,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    // marginTop: 4,
   },
   vehicleMetaRow: {
     flex: 1,
