@@ -2,6 +2,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import {
   ActivityIndicator,
+  Dimensions,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,6 +27,7 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
+import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
@@ -30,6 +35,8 @@ import type { Trip } from '../types/trip.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
+
+const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
 function formatDateTime(iso: string, locale: string): string {
   const date = new Date(iso);
@@ -92,11 +99,51 @@ export function ListingDetailScreen(): React.ReactElement {
   const [loading, setLoading] = React.useState(!cached);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<DetailTab>('overview');
+  const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
+  const pagerRef = React.useRef<ScrollView>(null);
   const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
   const [descriptionTruncatable, setDescriptionTruncatable] = React.useState(false);
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+
+  const selectTab = React.useCallback(
+    (next: DetailTab, animated = true) => {
+      setTab(next);
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = next === 'overview' ? 0 : 1;
+      pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+    },
+    [pageWidth],
+  );
+
+  const onPagerLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const width = event.nativeEvent.layout.width;
+      if (width <= 0 || width === pageWidth) {
+        return;
+      }
+      setPageWidth(width);
+      const index = tab === 'overview' ? 0 : 1;
+      requestAnimationFrame(() => {
+        pagerRef.current?.scrollTo({ x: index * width, animated: false });
+      });
+    },
+    [pageWidth, tab],
+  );
+
+  const onPagerScrollEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+      setTab(index === 0 ? 'overview' : 'responses');
+    },
+    [pageWidth],
+  );
 
   React.useEffect(() => {
     if (cached) {
@@ -228,160 +275,153 @@ export function ListingDetailScreen(): React.ReactElement {
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsRow}
-        >
-          {tabs.map((item) => {
-            const active = tab === item.id;
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => setTab(item.id)}
-                style={[styles.tab, active && styles.tabActive]}
-              >
-                <AppText
-                  weight={active ? 'bold' : 'medium'}
-                  style={[styles.tabLabel, active && styles.tabLabelActive]}
-                >
-                  {item.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <SegmentControl options={tabs} value={tab} onChange={selectTab} />
 
-        {tab === 'overview' ? (
-          <>
-            <View style={styles.card}>
-              <SectionHeader
-                icon="align-left"
-                title={t('dashboard.listings.detail.description')}
-              />
-              <View style={styles.descriptionWrap}>
-                <AppText
-                  style={[styles.descriptionText, styles.descriptionMeasure]}
-                  pointerEvents="none"
-                  onTextLayout={(event) => {
-                    if (event.nativeEvent.lines.length > 2) {
-                      setDescriptionTruncatable(true);
-                    }
-                  }}
-                >
-                  {description}
-                </AppText>
-                <AppText
-                  style={styles.descriptionText}
-                  numberOfLines={descriptionExpanded ? undefined : 2}
-                >
-                  {description}
-                  {descriptionTruncatable ? (
-                    <AppText
-                      weight="semibold"
-                      style={styles.showMoreText}
-                      onPress={() => setDescriptionExpanded((current) => !current)}
-                      suppressHighlighting
-                    >
-                      {'  '}
-                      {descriptionExpanded
-                        ? t('dashboard.listings.detail.showLess')
-                        : t('dashboard.listings.detail.showMore')}
-                    </AppText>
-                  ) : null}
-                </AppText>
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <SectionHeader
-                icon="map-marker"
-                title={t('trips.create.detailsTitle')}
-              />
-
-              <View style={styles.timeline}>
-                <View style={styles.timelineRail}>
-                  <View style={[styles.timelineDot, styles.timelineDotStart]} />
-                  <View style={styles.timelineLine} />
-                  <View style={[styles.timelineDot, styles.timelineDotEnd]} />
+        <View style={styles.pager} onLayout={onPagerLayout}>
+          <ScrollView
+            ref={pagerRef}
+            horizontal
+            pagingEnabled
+            bounces={false}
+            decelerationRate="fast"
+            showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            onMomentumScrollEnd={onPagerScrollEnd}
+            scrollEventThrottle={16}
+          >
+            <View style={[styles.page, { width: pageWidth }]}>
+              <View style={styles.card}>
+                <SectionHeader
+                  icon="align-left"
+                  title={t('dashboard.listings.detail.description')}
+                />
+                <View style={styles.descriptionWrap}>
+                  <AppText
+                    style={[styles.descriptionText, styles.descriptionMeasure]}
+                    pointerEvents="none"
+                    onTextLayout={(event) => {
+                      if (event.nativeEvent.lines.length > 2) {
+                        setDescriptionTruncatable(true);
+                      }
+                    }}
+                  >
+                    {description}
+                  </AppText>
+                  <AppText
+                    style={styles.descriptionText}
+                    numberOfLines={descriptionExpanded ? undefined : 2}
+                  >
+                    {description}
+                    {descriptionTruncatable ? (
+                      <AppText
+                        weight="semibold"
+                        style={styles.showMoreText}
+                        onPress={() => setDescriptionExpanded((current) => !current)}
+                        suppressHighlighting
+                      >
+                        {'  '}
+                        {descriptionExpanded
+                          ? t('dashboard.listings.detail.showLess')
+                          : t('dashboard.listings.detail.showMore')}
+                      </AppText>
+                    ) : null}
+                  </AppText>
                 </View>
+              </View>
 
-                <View style={styles.timelineBody}>
-                  <View style={styles.endpointBlock}>
-                    <View style={styles.endpointTop}>
-                      <View style={styles.endpointCopy}>
-                        <AppText style={styles.eyebrow}>{t('trips.create.departure')}</AppText>
-                        <AppText weight="bold" style={styles.endpointCity}>
-                          {fromCity}
-                        </AppText>
-                      </View>
-                      <View style={styles.endpointWhen}>
-                        <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
-                        <View style={styles.endpointWhenCopy}>
-                          <AppText style={styles.whenLabel}>
-                            {t('trips.create.departureDateTime')}
-                          </AppText>
-                          <AppText weight="semibold" style={styles.whenValue}>
-                            {formatDateTime(trip.departureAt, locale)}
-                          </AppText>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.pointRow}>
-                      <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                      <View style={styles.pointCopy}>
-                        <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
-                        <AppText weight="medium" style={styles.pointValue}>
-                          {trip.departurePoint?.label ?? '—'}
-                        </AppText>
-                      </View>
-                    </View>
+              <View style={styles.card}>
+                <SectionHeader
+                  icon="map-marker"
+                  title={t('trips.create.detailsTitle')}
+                />
+
+                <View style={styles.timeline}>
+                  <View style={styles.timelineRail}>
+                    <View style={[styles.timelineDot, styles.timelineDotStart]} />
+                    <View style={styles.timelineLine} />
+                    <View style={[styles.timelineDot, styles.timelineDotEnd]} />
                   </View>
 
-                  <View style={styles.endpointBlock}>
-                    <View style={styles.endpointTop}>
-                      <View style={styles.endpointCopy}>
-                        <AppText style={styles.eyebrow}>{t('trips.create.arrival')}</AppText>
-                        <AppText weight="bold" style={styles.endpointCity}>
-                          {toCity}
-                        </AppText>
-                      </View>
-                      <View style={styles.endpointWhen}>
-                        <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
-                        <View style={styles.endpointWhenCopy}>
-                          <AppText style={styles.whenLabel}>
-                            {t('trips.create.arrivalDateTime')}
+                  <View style={styles.timelineBody}>
+                    <View style={styles.endpointBlock}>
+                      <View style={styles.endpointTop}>
+                        <View style={styles.endpointCopy}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.departure')}</AppText>
+                          <AppText weight="bold" style={styles.endpointCity}>
+                            {fromCity}
                           </AppText>
-                          <AppText weight="semibold" style={styles.whenValue}>
-                            {formatDateTime(trip.arrivalAt, locale)}
+                        </View>
+                        <View style={styles.endpointWhen}>
+                          <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
+                          <View style={styles.endpointWhenCopy}>
+                            <AppText style={styles.whenLabel}>
+                              {t('trips.create.departureDateTime')}
+                            </AppText>
+                            <AppText weight="semibold" style={styles.whenValue}>
+                              {formatDateTime(trip.departureAt, locale)}
+                            </AppText>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.pointRow}>
+                        <FontAwesome name="map-marker" size={12} color={colors.primary} />
+                        <View style={styles.pointCopy}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
+                          <AppText weight="medium" style={styles.pointValue}>
+                            {trip.departurePoint?.label ?? '—'}
                           </AppText>
                         </View>
                       </View>
                     </View>
-                    <View style={styles.pointRow}>
-                      <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                      <View style={styles.pointCopy}>
-                        <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
-                        <AppText weight="medium" style={styles.pointValue}>
-                          {trip.arrivalPoint?.label ?? '—'}
-                        </AppText>
+
+                    <View style={styles.endpointBlock}>
+                      <View style={styles.endpointTop}>
+                        <View style={styles.endpointCopy}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.arrival')}</AppText>
+                          <AppText weight="bold" style={styles.endpointCity}>
+                            {toCity}
+                          </AppText>
+                        </View>
+                        <View style={styles.endpointWhen}>
+                          <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
+                          <View style={styles.endpointWhenCopy}>
+                            <AppText style={styles.whenLabel}>
+                              {t('trips.create.arrivalDateTime')}
+                            </AppText>
+                            <AppText weight="semibold" style={styles.whenValue}>
+                              {formatDateTime(trip.arrivalAt, locale)}
+                            </AppText>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.pointRow}>
+                        <FontAwesome name="map-marker" size={12} color={colors.primary} />
+                        <View style={styles.pointCopy}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
+                          <AppText weight="medium" style={styles.pointValue}>
+                            {trip.arrivalPoint?.label ?? '—'}
+                          </AppText>
+                        </View>
                       </View>
                     </View>
                   </View>
                 </View>
               </View>
             </View>
-          </>
-        ) : (
-          <View style={styles.emptyTabCard}>
-            <AppText weight="semibold" style={styles.emptyTabTitle}>
-              {t('dashboard.listings.detail.comingSoonTitle')}
-            </AppText>
-            <AppText style={styles.emptyTabBody}>
-              {t('dashboard.listings.detail.comingSoonBody')}
-            </AppText>
-          </View>
-        )}
+
+            <View style={[styles.page, { width: pageWidth }]}>
+              <View style={styles.emptyTabCard}>
+                <AppText weight="semibold" style={styles.emptyTabTitle}>
+                  {t('dashboard.listings.detail.comingSoonTitle')}
+                </AppText>
+                <AppText style={styles.emptyTabBody}>
+                  {t('dashboard.listings.detail.comingSoonBody')}
+                </AppText>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
       </View>
 
       <AppDialog
@@ -429,24 +469,11 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.xs,
   },
-  tabsRow: {
-    gap: spacing.md,
-    paddingVertical: 2,
+  pager: {
+    overflow: 'hidden',
   },
-  tab: {
-    paddingBottom: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: colors.primary,
-  },
-  tabLabel: {
-    fontSize: 13,
-    color: colors.text.tertiary,
-  },
-  tabLabelActive: {
-    color: colors.primary,
+  page: {
+    gap: spacing.xs,
   },
   card: {
     borderWidth: StyleSheet.hairlineWidth,
