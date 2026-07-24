@@ -106,11 +106,9 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     !draft.vehicleId ||
     !draft.vehicleMode ||
     !draft.departureCity ||
-    !draft.departurePoint ||
     !draft.departureAt ||
+    !draft.departureUntil ||
     !draft.arrivalCity ||
-    !draft.arrivalPoint ||
-    !draft.arrivalAt ||
     !draft.listingType ||
     !draft.paymentMethod ||
     !draft.startMode
@@ -127,6 +125,30 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     return null;
   }
 
+  const departurePoint =
+    draft.departurePoint ??
+    ({
+      label: draft.departureCity.label,
+      latitude: 0,
+      longitude: 0,
+    } satisfies TripLocationPoint);
+
+  const arrivalPoint =
+    draft.arrivalPoint ??
+    ({
+      label: draft.arrivalCity.label,
+      latitude: 0,
+      longitude: 0,
+    } satisfies TripLocationPoint);
+
+  // When arrival isn't set, place it after the departure window so API validation passes.
+  const departureWindowEndMs = new Date(
+    draft.departureUntil ?? draft.departureAt,
+  ).getTime();
+  const arrivalAt =
+    draft.arrivalAt ??
+    new Date(departureWindowEndMs + 60 * 60 * 1000).toISOString();
+
   return {
     id,
     vehicleId: draft.vehicleId,
@@ -137,12 +159,12 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehicleTotalSeats: null,
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
-    departurePoint: draft.departurePoint,
+    departurePoint,
     departureAt: draft.departureAt,
     departureUntil: draft.departureUntil,
     arrivalCity: draft.arrivalCity,
-    arrivalPoint: draft.arrivalPoint,
-    arrivalAt: draft.arrivalAt,
+    arrivalPoint,
+    arrivalAt,
     listingType: draft.listingType,
     startingPrice: trimmedPrice,
     paymentMethod: draft.paymentMethod,

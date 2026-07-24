@@ -1,15 +1,21 @@
 import React from 'react';
-import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
+import { FontAwesome } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
-import { canPublishTripDraft, type TripDraft } from '@/features/dashboard/types/trip.types';
+import { ListingCard } from '@/features/dashboard/components/ListingCard';
 import { formatDateRangeLabel } from '@/features/dashboard/components/trip/dateRangeUtils';
+import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
+import {
+  draftToTrip,
+  type Trip,
+  type TripDraft,
+  type TripLocationPoint,
+} from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
@@ -28,13 +34,13 @@ type TripPreviewStepProps = {
   errorMessage?: string | null;
 };
 
-function formatDateTime(iso: string | null, locale: string): string {
+function formatDateTime(iso: string | null, locale: string): string | null {
   if (!iso) {
-    return '—';
+    return null;
   }
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
-    return '—';
+    return null;
   }
   const day = date.toLocaleDateString(locale, {
     day: 'numeric',
@@ -48,23 +54,24 @@ function formatDateTime(iso: string | null, locale: string): string {
   return `${day} at ${time}`;
 }
 
-function formatDurationLabel(
-  hours: number,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const wholeHours = Math.floor(hours);
-  const minutes = Math.round((hours - wholeHours) * 60);
+function enrichPreviewTrip(draft: TripDraft, vehicle: Vehicle | undefined): Trip | null {
+  const base = draftToTrip(draft, 'preview');
+  if (!base) {
+    return null;
+  }
 
-  if (minutes === 0) {
-    return t('trips.create.durationValue', { count: wholeHours });
-  }
-  if (wholeHours === 0) {
-    return t('trips.create.durationMinutesOnly', { count: minutes });
-  }
-  return t('trips.create.durationHoursMinutes', {
-    hours: wholeHours,
-    minutes,
-  });
+  return {
+    ...base,
+    vehicleTitle: vehicle?.title ?? base.vehicleTitle,
+    vehiclePhotoUrl:
+      vehicle?.photoDisplayUris?.[0] ?? vehicle?.photoUris[0] ?? base.vehiclePhotoUrl,
+    vehiclePhotoCount: vehicle?.photoUris.length ?? base.vehiclePhotoCount,
+    vehicleClass: vehicle?.vehicleClass ?? base.vehicleClass,
+    vehicleTotalSeats: vehicle?.totalSeats ?? base.vehicleTotalSeats,
+    // Keep only real points for maps / display (not city placeholders).
+    departurePoint: draft.departurePoint ?? base.departurePoint,
+    arrivalPoint: draft.arrivalPoint ?? base.arrivalPoint,
+  };
 }
 
 type SectionIconProps = {
@@ -82,79 +89,68 @@ function SectionIcon({ name }: SectionIconProps): React.ReactElement {
 type SectionHeaderProps = {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
   title: string;
-  subtitle?: string;
-  onEdit?: () => void;
-  editA11yLabel: string;
 };
 
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-  onEdit,
-  editA11yLabel,
-}: SectionHeaderProps): React.ReactElement {
+function SectionHeader({ icon, title }: SectionHeaderProps): React.ReactElement {
   return (
     <View style={styles.cardHeader}>
       <SectionIcon name={icon} />
       <View style={styles.cardHeaderCopy}>
-        {subtitle ? <AppText style={styles.eyebrow}>{subtitle}</AppText> : null}
         <AppText weight="bold" style={styles.sectionTitle}>
           {title}
         </AppText>
       </View>
-      {onEdit ? (
-        <Pressable
-          onPress={onEdit}
-          style={styles.editIconButton}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={editA11yLabel}
+    </View>
+  );
+}
+
+type LocationPointRowProps = {
+  eyebrow: string;
+  point: TripLocationPoint | null | undefined;
+  accessibilityLabel: string;
+};
+
+function LocationPointRow({
+  eyebrow,
+  point,
+  accessibilityLabel,
+}: LocationPointRowProps): React.ReactElement | null {
+  if (!point?.label?.trim()) {
+    return null;
+  }
+
+  const canOpen =
+    Number.isFinite(point.latitude) &&
+    Number.isFinite(point.longitude) &&
+    !(point.latitude === 0 && point.longitude === 0);
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.pointRow, pressed && canOpen && styles.pointRowPressed]}
+      disabled={!canOpen}
+      onPress={() => {
+        if (!canOpen) {
+          return;
+        }
+        void openInGoogleMaps(point);
+      }}
+      accessibilityRole={canOpen ? 'link' : 'text'}
+      accessibilityLabel={accessibilityLabel}
+    >
+      <FontAwesome name="map-marker" size={12} color={colors.primary} />
+      <View style={styles.pointCopy}>
+        <AppText style={styles.eyebrow}>{eyebrow}</AppText>
+        <AppText
+          weight="medium"
+          style={[styles.pointValue, canOpen && styles.pointValueLink]}
         >
-          <FontAwesome name="pencil" size={14} color={colors.primary} />
-        </Pressable>
+          {point.label.trim()}
+        </AppText>
+      </View>
+      {canOpen ? (
+        <FontAwesome name="external-link" size={11} color={colors.primary} />
       ) : null}
-    </View>
-  );
-}
-
-type FeatureChipProps = {
-  icon: React.ReactNode;
-  label: string;
-  showDivider?: boolean;
-};
-
-function FeatureChip({ icon, label, showDivider = false }: FeatureChipProps): React.ReactElement {
-  return (
-    <View style={styles.featureChip}>
-      {showDivider ? <View style={styles.featureDivider} /> : null}
-      <View style={styles.featureInner}>
-        {icon}
-        <AppText weight="semibold" style={styles.featureLabel} numberOfLines={1}>
-          {label}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
-type ListingCellProps = {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-};
-
-function ListingCell({ icon, label, value }: ListingCellProps): React.ReactElement {
-  return (
-    <View style={styles.listingCell}>
-      <View style={styles.listingIconWrap}>{icon}</View>
-      <View style={styles.listingCopy}>
-        <AppText style={styles.listingLabel}>{label}</AppText>
-        <AppText weight="bold" style={styles.listingValue}>
-          {value}
-        </AppText>
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -162,279 +158,201 @@ export function TripPreviewStep({
   draft,
   vehicle,
   onPublish,
-  onEditStep,
   publishing = false,
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const locale = i18n.language;
+  const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
+  const [descriptionTruncatable, setDescriptionTruncatable] = React.useState(false);
 
-  const vehicleModeLabel =
-    draft.vehicleMode === 'shared'
-      ? t('trips.create.vehicleModeShared')
-      : draft.vehicleMode === 'fullPrivate'
-        ? t('trips.create.vehicleModeFullPrivate')
-        : t('trips.create.notSpecified');
-
-  const listingLabel =
-    draft.listingType === 'rfq'
-      ? t('trips.create.listingRfq')
-      : draft.listingType === 'auction'
-        ? t('trips.create.listingAuction')
-        : t('trips.create.notSpecified');
-
-  const paymentLabel =
-    draft.paymentMethod === 'cash'
-      ? t('trips.create.paymentCash')
-      : draft.paymentMethod === 'online'
-        ? t('trips.create.paymentOnline')
-        : draft.paymentMethod === 'both'
-          ? t('trips.create.paymentBoth')
-          : t('trips.create.notSpecified');
-
-  const startLabel =
-    draft.startMode === 'instant'
-      ? t('trips.create.startInstant')
-      : draft.startMode === 'scheduled'
-        ? formatDateTime(draft.scheduledStartAt, locale)
-        : t('trips.create.notSpecified');
-
-  const priceLabel = draft.startingPrice.trim()
-    ? draft.startingPrice.trim()
-    : t('trips.create.notSpecified');
-
-  const photoUri = vehicle?.photoDisplayUris?.[0] ?? vehicle?.photoUris[0];
-  const departureCity = draft.departureCity
+  const trip = enrichPreviewTrip(draft, vehicle);
+  const fromCity = draft.departureCity
     ? cityDisplayName(draft.departureCity.label)
-    : '—';
-  const arrivalCity = draft.arrivalCity ? cityDisplayName(draft.arrivalCity.label) : '—';
-  const canPublish = canPublishTripDraft(draft);
-  const editA11y = t('dashboard.listings.detail.edit');
+    : null;
+  const toCity = draft.arrivalCity ? cityDisplayName(draft.arrivalCity.label) : null;
+  const modeLabel =
+    draft.vehicleMode === 'fullPrivate'
+      ? t('trips.create.vehicleModeFullPrivate')
+      : draft.vehicleMode === 'shared'
+        ? t('trips.create.vehicleModeShared')
+        : null;
+  const descriptionText = draft.description.trim()
+    ? draft.description.trim()
+    : fromCity && toCity
+      ? t('dashboard.listings.detail.descriptionBody', {
+          from: fromCity,
+          to: toCity,
+          vehicle: vehicle?.title ?? t('trips.create.previewVehicle'),
+          mode: modeLabel ?? t('trips.create.notSpecified'),
+        })
+      : null;
+  const departureWindow =
+    draft.departureAt || draft.departureUntil
+      ? formatDateRangeLabel(
+          draft.departureAt,
+          draft.departureUntil,
+          locale,
+          '',
+        )
+      : null;
+  const arrivalWhen = formatDateTime(draft.arrivalAt, locale);
+  const showDetails =
+    Boolean(fromCity) ||
+    Boolean(toCity) ||
+    Boolean(departureWindow) ||
+    Boolean(arrivalWhen) ||
+    Boolean(draft.departurePoint) ||
+    Boolean(draft.arrivalPoint);
 
   return (
     <View style={styles.root}>
-      <View style={styles.card}>
-        <SectionHeader
-          icon="car"
-          subtitle={t('trips.create.vehicleTitle')}
-          title={vehicle?.title ?? '—'}
-          onEdit={() => onEditStep('vehicle')}
-          editA11yLabel={editA11y}
-        />
-        <View style={styles.vehicleBody}>
-          <View style={styles.vehicleCopy}>
-            <View style={styles.featuresRow}>
-              <FeatureChip
-                icon={<FontAwesome name="user" size={11} color={colors.text.secondary} />}
-                label={
-                  vehicle ? t('vehicles.seatsCount', { count: vehicle.totalSeats }) : '—'
+      {trip ? <ListingCard trip={trip} showPhotoCount /> : null}
+
+      {descriptionText ? (
+        <View style={styles.card}>
+          <SectionHeader
+            icon="align-left"
+            title={t('dashboard.listings.detail.description')}
+          />
+          <View style={styles.descriptionWrap}>
+            <AppText
+              style={[styles.descriptionText, styles.descriptionMeasure]}
+              pointerEvents="none"
+              onTextLayout={(event) => {
+                if (event.nativeEvent.lines.length > 2) {
+                  setDescriptionTruncatable(true);
                 }
-              />
-              <FeatureChip
-                showDivider
-                icon={
-                  <MaterialCommunityIcons
-                    name="snowflake"
-                    size={12}
-                    color={colors.text.secondary}
+              }}
+            >
+              {descriptionText}
+            </AppText>
+            <AppText
+              style={styles.descriptionText}
+              numberOfLines={descriptionExpanded ? undefined : 2}
+            >
+              {descriptionText}
+              {descriptionTruncatable ? (
+                <AppText
+                  weight="semibold"
+                  style={styles.showMoreText}
+                  onPress={() => setDescriptionExpanded((current) => !current)}
+                  suppressHighlighting
+                >
+                  {'  '}
+                  {descriptionExpanded
+                    ? t('dashboard.listings.detail.showLess')
+                    : t('dashboard.listings.detail.showMore')}
+                </AppText>
+              ) : null}
+            </AppText>
+          </View>
+        </View>
+      ) : null}
+
+      {showDetails ? (
+        <View style={styles.card}>
+          <SectionHeader icon="map-marker" title={t('trips.create.detailsTitle')} />
+
+          <View style={styles.timeline}>
+            {fromCity && toCity ? (
+              <View style={styles.timelineRail}>
+                <View style={[styles.timelineDot, styles.timelineDotStart]} />
+                <View style={styles.timelineLine} />
+                <View style={[styles.timelineDot, styles.timelineDotEnd]} />
+              </View>
+            ) : null}
+
+            <View style={styles.timelineBody}>
+              {fromCity || departureWindow || draft.departurePoint ? (
+                <View style={styles.endpointBlock}>
+                  {fromCity ? (
+                    <View style={styles.endpointTop}>
+                      <View style={styles.endpointCopy}>
+                        <AppText style={styles.eyebrow}>{t('trips.create.departure')}</AppText>
+                        <AppText weight="bold" style={styles.endpointCity}>
+                          {fromCity}
+                        </AppText>
+                      </View>
+                      {departureWindow ? (
+                        <View style={styles.endpointWhen}>
+                          <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
+                          <View style={styles.endpointWhenCopy}>
+                            <AppText style={styles.whenLabel}>
+                              {t('trips.create.departureDateWindow')}
+                            </AppText>
+                            <AppText weight="semibold" style={styles.whenValue}>
+                              {departureWindow}
+                            </AppText>
+                          </View>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+
+                  <LocationPointRow
+                    eyebrow={t('trips.create.pickupPoint')}
+                    point={draft.departurePoint}
+                    accessibilityLabel={t('dashboard.listings.detail.openPickupInMaps', {
+                      place: draft.departurePoint?.label ?? '—',
+                    })}
                   />
-                }
-                label={
-                  vehicle?.hasAc ? t('trips.create.acAvailable') : t('vehicles.fields.acOff')
-                }
-              />
-            </View>
-          </View>
-          <View style={styles.vehicleThumb}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.vehicleThumbImage} contentFit="cover" />
-            ) : (
-              <View style={styles.vehicleThumbFallback}>
-                <FontAwesome name="car" size={22} color={colors.text.tertiary} />
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
+                </View>
+              ) : null}
 
-      <View style={styles.card}>
-        <SectionHeader
-          icon="exchange"
-          subtitle={t('trips.create.vehicleModeTitle')}
-          title={vehicleModeLabel}
-          onEdit={() => onEditStep('vehicleMode')}
-          editA11yLabel={editA11y}
-        />
-      </View>
+              {toCity || arrivalWhen || draft.arrivalPoint ? (
+                <View style={styles.endpointBlock}>
+                  {toCity ? (
+                    <View style={styles.endpointTop}>
+                      <View style={styles.endpointCopy}>
+                        <AppText style={styles.eyebrow}>{t('trips.create.arrival')}</AppText>
+                        <AppText weight="bold" style={styles.endpointCity}>
+                          {toCity}
+                        </AppText>
+                      </View>
+                      {arrivalWhen ? (
+                        <View style={styles.endpointWhen}>
+                          <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
+                          <View style={styles.endpointWhenCopy}>
+                            <AppText style={styles.whenLabel}>
+                              {t('trips.create.arrivalDateTime')}
+                            </AppText>
+                            <AppText weight="semibold" style={styles.whenValue}>
+                              {arrivalWhen}
+                            </AppText>
+                          </View>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
 
-      <View style={styles.card}>
-        <SectionHeader
-          icon="map-marker"
-          title={t('trips.create.detailsTitle')}
-          onEdit={() => onEditStep('details')}
-          editA11yLabel={editA11y}
-        />
-
-        <View style={styles.timeline}>
-          <View style={styles.timelineRail}>
-            <View style={[styles.timelineDot, styles.timelineDotStart]} />
-            <View style={styles.timelineLine} />
-            <View style={[styles.timelineDot, styles.timelineDotEnd]} />
-          </View>
-
-          <View style={styles.timelineBody}>
-            <View style={styles.endpointBlock}>
-              <View style={styles.endpointTop}>
-                <View style={styles.endpointCopy}>
-                  <AppText style={styles.eyebrow}>{t('trips.create.departure')}</AppText>
-                  <AppText weight="bold" style={styles.endpointCity}>
-                    {departureCity}
-                  </AppText>
+                  <LocationPointRow
+                    eyebrow={t('trips.create.dropoffPoint')}
+                    point={draft.arrivalPoint}
+                    accessibilityLabel={t('dashboard.listings.detail.openDropoffInMaps', {
+                      place: draft.arrivalPoint?.label ?? '—',
+                    })}
+                  />
                 </View>
-                <View style={styles.endpointWhen}>
-                  <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
-                  <View style={styles.endpointWhenCopy}>
-                    <AppText style={styles.whenLabel}>
-                      {t('trips.create.departureDateWindow')}
-                    </AppText>
-                    <AppText weight="semibold" style={styles.whenValue}>
-                      {formatDateRangeLabel(
-                        draft.departureAt,
-                        draft.departureUntil,
-                        locale,
-                        '—',
-                      )}
-                    </AppText>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.pointRow}>
-                <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                <View style={styles.pointCopy}>
-                  <AppText style={styles.eyebrow}>{t('trips.create.pickupPoint')}</AppText>
-                  <AppText weight="medium" style={styles.pointValue}>
-                    {draft.departurePoint?.label ?? '—'}
-                  </AppText>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.endpointBlock}>
-              <View style={styles.endpointTop}>
-                <View style={styles.endpointCopy}>
-                  <AppText style={styles.eyebrow}>{t('trips.create.arrival')}</AppText>
-                  <AppText weight="bold" style={styles.endpointCity}>
-                    {arrivalCity}
-                  </AppText>
-                </View>
-                <View style={styles.endpointWhen}>
-                  <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
-                  <View style={styles.endpointWhenCopy}>
-                    <AppText style={styles.whenLabel}>
-                      {t('trips.create.arrivalDateTime')}
-                    </AppText>
-                    <AppText weight="semibold" style={styles.whenValue}>
-                      {formatDateTime(draft.arrivalAt, locale)}
-                    </AppText>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.pointRow}>
-                <FontAwesome name="map-marker" size={12} color={colors.primary} />
-                <View style={styles.pointCopy}>
-                  <AppText style={styles.eyebrow}>{t('trips.create.dropoffPoint')}</AppText>
-                  <AppText weight="medium" style={styles.pointValue}>
-                    {draft.arrivalPoint?.label ?? '—'}
-                  </AppText>
-                </View>
-              </View>
+              ) : null}
             </View>
           </View>
         </View>
-      </View>
-
-      <View style={styles.card}>
-        <SectionHeader
-          icon="tag"
-          title={t('trips.create.listingTitle')}
-          onEdit={() => onEditStep('listing')}
-          editA11yLabel={editA11y}
-        />
-
-        <View style={styles.listingGrid}>
-          <View style={styles.listingRow}>
-            <ListingCell
-              icon={<FontAwesome name="list-ul" size={13} color={colors.primary} />}
-              label={t('trips.create.listingTypeLabel')}
-              value={listingLabel}
-            />
-            <ListingCell
-              icon={<FontAwesome name="dollar" size={13} color={colors.primary} />}
-              label={t('trips.create.startingPrice')}
-              value={priceLabel}
-            />
-          </View>
-          <View style={styles.listingDivider} />
-          <View style={styles.listingRow}>
-            <ListingCell
-              icon={<FontAwesome name="credit-card" size={13} color={colors.primary} />}
-              label={t('trips.create.paymentMethodLabel')}
-              value={paymentLabel}
-            />
-            <ListingCell
-              icon={<FontAwesome name="clock-o" size={13} color={colors.primary} />}
-              label={t('trips.create.durationLabel')}
-              value={formatDurationLabel(draft.durationHours, t)}
-            />
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <SectionHeader
-          icon="play-circle"
-          subtitle={t('trips.create.scheduleTitle')}
-          title={startLabel}
-          onEdit={() => onEditStep('schedule')}
-          editA11yLabel={editA11y}
-        />
-      </View>
-
-      <View style={styles.card}>
-        <SectionHeader
-          icon="align-left"
-          title={t('dashboard.listings.detail.description')}
-          onEdit={() => onEditStep('details')}
-          editA11yLabel={editA11y}
-        />
-        <AppText style={styles.descriptionText}>
-          {draft.description.trim()
-            ? draft.description.trim()
-            : t('dashboard.listings.detail.descriptionBody', {
-                from: departureCity,
-                to: arrivalCity,
-                vehicle: vehicle?.title ?? '—',
-                mode: vehicleModeLabel,
-              })}
-        </AppText>
-      </View>
+      ) : null}
 
       {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
-      {!canPublish && !errorMessage ? (
-        <AppText style={styles.errorText}>{t('trips.create.publishIncomplete')}</AppText>
-      ) : null}
 
       <Pressable
         onPress={onPublish}
-        disabled={publishing || !canPublish}
+        disabled={publishing}
         style={({ pressed }) => [
           styles.publishButton,
-          pressed && canPublish && !publishing && styles.publishButtonPressed,
-          (publishing || !canPublish) && styles.actionDisabled,
+          pressed && !publishing && styles.publishButtonPressed,
+          publishing && styles.actionDisabled,
         ]}
         accessibilityRole="button"
         accessibilityLabel={t('trips.create.publish')}
-        accessibilityState={{ busy: publishing, disabled: publishing || !canPublish }}
+        accessibilityState={{ busy: publishing, disabled: publishing }}
       >
         {publishing ? (
           <ActivityIndicator color={colors.white} />
@@ -453,13 +371,13 @@ export function TripPreviewStep({
 
 const styles = StyleSheet.create({
   root: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   card: {
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
     padding: spacing.sm,
     gap: spacing.sm,
   },
@@ -481,71 +399,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+  sectionTitle: {
+    fontSize: 15,
+    color: colors.text.primary,
   },
   eyebrow: {
     fontSize: 11,
     color: colors.text.tertiary,
   },
-  sectionTitle: {
-    fontSize: 15,
-    color: colors.text.primary,
+  descriptionWrap: {
+    position: 'relative',
   },
-  vehicleBody: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-  },
-  vehicleCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  vehicleThumb: {
-    width: 88,
-    height: 72,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.background.subtle,
-  },
-  vehicleThumbImage: {
-    width: '100%',
-    height: '100%',
-  },
-  vehicleThumbFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  featureChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  featureDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 14,
-    backgroundColor: colors.border.strong,
-    marginRight: spacing.xs,
-  },
-  featureInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  featureLabel: {
-    fontSize: 12,
+  descriptionText: {
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.text.secondary,
+  },
+  descriptionMeasure: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    opacity: 0,
+  },
+  showMoreText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
   },
   timeline: {
     flexDirection: 'row',
@@ -579,7 +459,7 @@ const styles = StyleSheet.create({
   timelineBody: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   endpointBlock: {
     gap: spacing.xs,
@@ -624,6 +504,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 6,
     paddingLeft: 2,
+    paddingVertical: 2,
+  },
+  pointRowPressed: {
+    opacity: 0.75,
   },
   pointCopy: {
     flex: 1,
@@ -635,48 +519,9 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 18,
   },
-  listingGrid: {
-    gap: 0,
-  },
-  listingRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  listingDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
-    marginVertical: spacing.sm,
-  },
-  listingCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.xs,
-    minWidth: 0,
-  },
-  listingIconWrap: {
-    width: 18,
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  listingCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  listingLabel: {
-    fontSize: 11,
-    color: colors.text.tertiary,
-  },
-  listingValue: {
-    fontSize: 14,
-    color: colors.text.primary,
-    lineHeight: 18,
-  },
-  descriptionText: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.text.secondary,
+  pointValueLink: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
   errorText: {
     fontSize: 12,

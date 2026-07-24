@@ -140,6 +140,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     void publishDraft()
       .then((trip) => {
         if (!trip) {
+          setPublishError(t('trips.create.publishFailed'));
           return;
         }
         setSuccessVisible(true);
