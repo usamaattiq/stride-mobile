@@ -252,6 +252,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
             draft={draft}
             vehicle={selectedVehicle}
             onPublish={handlePublish}
+            onEdit={() => goToPreviousStep()}
             publishing={isPublishing}
             errorMessage={publishError}
           />
