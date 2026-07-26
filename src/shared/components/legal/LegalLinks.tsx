@@ -1,10 +1,17 @@
 import React from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Linking,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
+import { complianceDocUrl } from '@/shared/config/compliance';
 import {
   useLegalDocumentSheets,
   type LegalDocumentSheetControl,
@@ -19,8 +26,26 @@ type LegalLinksProps = {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
+async function openComplianceOrSheet(
+  slug: 'terms-and-conditions' | 'privacy-policy',
+  locale: 'en' | 'ar',
+  openSheet: () => void,
+): Promise<void> {
+  const url = complianceDocUrl(slug, locale);
+  if (!url) {
+    openSheet();
+    return;
+  }
+  try {
+    await Linking.openURL(url);
+  } catch {
+    openSheet();
+  }
+}
+
 /**
- * Terms & Conditions | Privacy Policy — same look as Welcome, with bottom sheets.
+ * Terms & Conditions | Privacy Policy — opens hosted stride-compliance when
+ * `EXPO_PUBLIC_COMPLIANCE_BASE_URL` is set; otherwise falls back to bottom sheets.
  */
 export function LegalLinks({
   legalControl,
@@ -29,9 +54,26 @@ export function LegalLinks({
   containerStyle,
 }: LegalLinksProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const { isRTL } = useLanguage();
+  const { isRTL, currentLanguage } = useLanguage();
+  const locale = currentLanguage === 'ar' ? 'ar' : 'en';
   const internalLegal = useLegalDocumentSheets();
   const { openTerms, openPrivacy, legalSheets } = legalControl ?? internalLegal;
+
+  const handleTerms = (): void => {
+    if (onTermsPress) {
+      onTermsPress();
+      return;
+    }
+    void openComplianceOrSheet('terms-and-conditions', locale, openTerms);
+  };
+
+  const handlePrivacy = (): void => {
+    if (onPrivacyPress) {
+      onPrivacyPress();
+      return;
+    }
+    void openComplianceOrSheet('privacy-policy', locale, openPrivacy);
+  };
 
   return (
     <>
@@ -45,7 +87,7 @@ export function LegalLinks({
             weight="regular"
             accessibilityRole="link"
             accessibilityLabel={t('auth.welcome.terms')}
-            onPress={onTermsPress ?? openTerms}
+            onPress={handleTerms}
             style={styles.legalLink}
           >
             {t('auth.welcome.terms')}
@@ -55,7 +97,7 @@ export function LegalLinks({
             weight="regular"
             accessibilityRole="link"
             accessibilityLabel={t('auth.welcome.privacy')}
-            onPress={onPrivacyPress ?? openPrivacy}
+            onPress={handlePrivacy}
             style={styles.legalLink}
           >
             {t('auth.welcome.privacy')}

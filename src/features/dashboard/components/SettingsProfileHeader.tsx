@@ -14,8 +14,6 @@ type SettingsProfileHeaderProps = {
   /** Driver identity is complete only when NIC + license are both done. */
   isIdentityComplete: boolean;
   topInset: number;
-  onEditPhoto?: () => void;
-  onLogoutPress?: () => void;
   onVerifyPress?: () => void;
 };
 
@@ -27,7 +25,6 @@ export function SettingsProfileHeader({
   user,
   isIdentityComplete,
   topInset,
-  onLogoutPress,
   onVerifyPress,
 }: SettingsProfileHeaderProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -79,21 +76,6 @@ export function SettingsProfileHeader({
             </Pressable>
           )}
         </View>
-
-        {onLogoutPress ? (
-          <Pressable
-            style={styles.logoutButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.logout.title')}
-            onPress={onLogoutPress}
-            hitSlop={8}
-          >
-            <FontAwesome name="sign-out" size={14} color={colors.white} />
-            <AppText weight="medium" style={styles.logoutLabel}>
-              {t('profile.logout.title')}
-            </AppText>
-          </Pressable>
-        ) : null}
       </View>
     </View>
   );
@@ -109,18 +91,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-  },
-  logoutButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: spacing.xxs,
-    paddingLeft: spacing.xs,
-  },
-  logoutLabel: {
-    fontSize: 12,
-    color: colors.white,
-    textAlign: 'center',
   },
   avatarWrap: {
     position: 'relative',
@@ -158,12 +128,12 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   verifiedRow: {
-     alignSelf: 'flex-start',
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginTop: 6,
-        paddingVertical: 4,
+    paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: radius.full,
     backgroundColor: 'rgba(255, 255, 255, 0.18)',

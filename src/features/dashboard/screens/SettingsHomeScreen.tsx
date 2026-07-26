@@ -1,9 +1,10 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +19,7 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { LanguageSwitcherModal } from '@/shared/components/language-switcher/LanguageSwitcherModal';
 import { getLanguageOptions } from '@/shared/components/language-switcher/options';
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
+import { complianceDocUrl } from '@/shared/config/compliance';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -112,7 +114,6 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const handleLogout = () => {
     setDialog(null);
-    // Best-effort: local sign-out proceeds even if the network call fails.
     void authApi.logout().catch(() => undefined);
     void useAuthStore.getState().signOut();
     useProfileStore.getState().clearProfile();
@@ -176,12 +177,26 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'language':
         setLanguageModalVisible(true);
         break;
-      case 'terms':
-        legal.openTerms();
+      case 'terms': {
+        const locale = currentLanguage === 'ar' ? 'ar' : 'en';
+        const url = complianceDocUrl('terms-and-conditions', locale);
+        if (url) {
+          void Linking.openURL(url).catch(() => legal.openTerms());
+        } else {
+          legal.openTerms();
+        }
         break;
-      case 'privacy':
-        legal.openPrivacy();
+      }
+      case 'privacy': {
+        const locale = currentLanguage === 'ar' ? 'ar' : 'en';
+        const url = complianceDocUrl('privacy-policy', locale);
+        if (url) {
+          void Linking.openURL(url).catch(() => legal.openPrivacy());
+        } else {
+          legal.openPrivacy();
+        }
         break;
+      }
       case 'security':
         navigation.navigate('SecuritySettings');
         break;
@@ -221,8 +236,6 @@ export function SettingsHomeScreen(): React.ReactElement {
         user={user}
         isIdentityComplete={isIdentityComplete}
         topInset={insets.top}
-        onEditPhoto={() => setDialog('photo')}
-        onLogoutPress={() => setDialog('logout')}
         onVerifyPress={handleVerifyPress}
       />
 
@@ -256,6 +269,17 @@ export function SettingsHomeScreen(): React.ReactElement {
           </View>
 
           <View style={styles.footer}>
+            <Pressable
+              style={styles.logoutRow}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.logout.title')}
+              onPress={() => setDialog('logout')}
+            >
+              <FontAwesome name="sign-out" size={16} color="#DC2626" />
+              <AppText weight="bold" style={styles.logoutLabel}>
+                {t('profile.logout.title')}
+              </AppText>
+            </Pressable>
             <AppText style={styles.versionLabel}>
               {t('profile.versionLabel')} {APP_VERSION}
             </AppText>
@@ -306,17 +330,6 @@ export function SettingsHomeScreen(): React.ReactElement {
       />
 
       <AppDialog
-        visible={dialog === 'photo'}
-        icon="camera"
-        title={t('profile.photo.title')}
-        message={t('profile.photo.comingSoon')}
-        confirmAction={{
-          label: t('common.ok'),
-          onPress: () => setDialog(null),
-        }}
-      />
-
-      <AppDialog
         visible={dialog === 'logout'}
         icon="sign-out"
         title={t('profile.logout.title')}
@@ -342,8 +355,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     marginTop: -18,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
     backgroundColor: colors.background.subtle,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -354,18 +365,30 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm + 8,
   },
   menu: {
     gap: 8,
   },
   footer: {
     alignItems: 'center',
-    paddingTop: spacing.sm,
+    gap: spacing.xxs,
     marginTop: 'auto',
+  },
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  logoutLabel: {
+    fontSize: 17,
+    color: '#DC2626',
   },
   versionLabel: {
     fontSize: 12,
     color: colors.text.tertiary,
-    paddingVertical: spacing.xs,
   },
 });

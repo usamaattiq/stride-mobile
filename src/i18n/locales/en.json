@@ -223,6 +223,13 @@
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",
+      "card": {
+        "pricePerSeat": "Price per seat",
+        "priceWithCurrency": "PKR {{price}}",
+        "active": "Active",
+        "ended": "Ended",
+        "photoCount": "{{current}}/{{total}}"
+      },
       "detail": {
         "title": "Listing details",
         "route": "Route",
@@ -234,6 +241,7 @@
         "loadFailed": "Couldn't load listing details.",
         "statusLive": "Live",
         "statusEnded": "Ended",
+        "expiresInTimer": "Expires in {{time}}",
         "pickupPoints": "{{count}} Pickup Point",
         "pickupPoints_plural": "{{count}} Pickup Points",
         "dropoffPoints": "{{count}} Drop-off Point",
@@ -242,6 +250,8 @@
         "descriptionBody": "Trip from {{from}} to {{to}} with {{vehicle}} ({{mode}}). Review the schedule and pricing details below.",
         "showMore": "Show more",
         "showLess": "Show less",
+        "openPickupInMaps": "Open pickup point {{place}} in Google Maps",
+        "openDropoffInMaps": "Open drop-off point {{place}} in Google Maps",
         "paymentTerms": "Payment Terms",
         "share": "Share Listing",
         "edit": "Edit Listing",
@@ -481,15 +491,25 @@
       "vehicleModeSubtitle": "Offer shared seats or the full vehicle",
       "vehicleModeLabel": "Trip offering",
       "vehicleModeShared": "Shared vehicle",
+      "vehicleModeSharedHint": "Passengers share seats with other riders.",
       "vehicleModeFullPrivate": "Full private vehicle",
+      "vehicleModeFullPrivateHint": "One passenger books the entire vehicle.",
       "detailsTitle": "Trip details",
       "detailsSubtitle": "Set departure and arrival information",
       "departureCity": "Departure city",
       "departurePoint": "Departure point",
       "departureDateTime": "Departure date & time",
+      "departureDateWindow": "Departure date window",
+      "departureWindowHint": "Tap a start date, then an end date on the calendar",
+      "departureTime": "Departure time",
+      "selectDateRange": "Select date range",
+      "selectDate": "Select date",
+      "selectTime": "Select time",
       "arrivalCity": "Arrival city",
       "arrivalPoint": "Arrival point",
       "arrivalDateTime": "Arrival date & time",
+      "description": "Description",
+      "descriptionPlaceholder": "Add notes for passengers (optional)",
       "cityPlaceholder": "Search city",
       "cityNoResults": "No cities found. Try another search.",
       "cityApiHint": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to search cities.",
@@ -503,27 +523,47 @@
       "listingSubtitle": "Choose how passengers can book this trip",
       "listingTypeLabel": "Listing type",
       "listingRfq": "RFQ",
+      "listingRfqHint": "Passengers will send offers for your trip.",
       "listingAuction": "Auction",
+      "listingAuctionHint": "Passengers will place bids to win the trip.",
       "startingPrice": "Price per seat",
       "startingPricePlaceholder": "Enter price per seat",
       "paymentMethodLabel": "Payment method",
+      "paymentMethodHint": "Choose how you want to receive payments.",
       "paymentCash": "Cash",
       "paymentOnline": "Online",
+      "paymentBoth": "Both",
       "durationLabel": "Listing duration",
       "durationValue": "{{count}} hour(s)",
+      "durationMinutesOnly": "{{count}} min",
+      "durationHoursMinutes": "{{hours}}h {{minutes}}m",
       "scheduleTitle": "Start listing",
       "scheduleSubtitle": "Start instantly or schedule for later",
+      "schedulePrompt": "When do you want to start this listing?",
+      "schedulePromptHint": "You can start it right away or schedule it for a specific date and time.",
       "startModeLabel": "When to start",
-      "startInstant": "Start instantly",
-      "startScheduled": "Schedule for later",
+      "startInstant": "Start Instantly",
+      "startInstantHint": "Your listing will go live immediately.",
+      "startScheduled": "Schedule for Later",
+      "startScheduledHint": "Choose a future date and time.",
+      "scheduleChangeLaterTitle": "You can change this later",
+      "scheduleChangeLaterBody": "You'll be able to edit the start time before publishing.",
       "scheduledStart": "Start date & time",
       "previewTitle": "Preview trip",
       "previewSubtitle": "Review everything before publishing",
       "previewTrip": "Trip",
       "previewVehicle": "Vehicle",
       "previewListing": "Listing",
+      "previewListingDetails": "Listing Details",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "pickupPoint": "Pickup point",
+      "dropoffPoint": "Drop-off point",
+      "acAvailable": "AC Available",
+      "editTrip": "Edit trip",
       "notSpecified": "Not specified",
       "publish": "Publish trip",
+      "publishIncomplete": "Complete the required fields before publishing.",
       "publishFailed": "Couldn't publish this trip. Please try again.",
       "successTitle": "Trip published",
       "successBody": "Your trip is live. You can manage it from My Listings.",
@@ -582,6 +622,7 @@
     "cancel": "Cancel",
     "ok": "OK",
     "done": "Done",
+    "clear": "Clear",
     "continue": "Continue"
   },
   "legal": {
@@ -591,11 +632,11 @@
     },
     "terms": {
       "title": "Terms & Conditions",
-      "intro": "Welcome to Transit. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Welcome to Stride. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "acceptance": {
           "title": "1. Acceptance of Terms",
-          "body": "By creating an account or using any part of Transit, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
+          "body": "By creating an account or using any part of Stride, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
         },
         "eligibility": {
           "title": "2. Eligibility",
@@ -603,7 +644,7 @@
         },
         "platformUse": {
           "title": "3. Platform Use",
-          "body": "Transit helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
+          "body": "Stride helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
         },
         "accountsSecurity": {
           "title": "4. Accounts and Security",
@@ -615,17 +656,17 @@
         },
         "limitationLiability": {
           "title": "6. Limitation of Liability",
-          "body": "To the fullest extent permitted by law, Transit is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
+          "body": "To the fullest extent permitted by law, Stride is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
         },
         "changesTerms": {
           "title": "7. Changes to These Terms",
-          "body": "We may update these Terms & Conditions from time to time. Continued use of Transit after changes are published constitutes acceptance of the revised terms."
+          "body": "We may update these Terms & Conditions from time to time. Continued use of Stride after changes are published constitutes acceptance of the revised terms."
         }
       }
     },
     "privacy": {
       "title": "Privacy Policy",
-      "intro": "Your privacy matters to us. This Privacy Policy explains what information Transit may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Your privacy matters to us. This Privacy Policy explains what information Stride may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "informationCollect": {
           "title": "1. Information We Collect",
