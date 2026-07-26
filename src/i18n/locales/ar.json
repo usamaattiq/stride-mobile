@@ -223,6 +223,13 @@
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",
+      "card": {
+        "pricePerSeat": "السعر لكل مقعد",
+        "priceWithCurrency": "PKR {{price}}",
+        "active": "نشط",
+        "ended": "منتهية",
+        "photoCount": "{{current}}/{{total}}"
+      },
       "detail": {
         "title": "تفاصيل القائمة",
         "route": "المسار",
@@ -234,6 +241,7 @@
         "loadFailed": "تعذر تحميل تفاصيل القائمة.",
         "statusLive": "مباشر",
         "statusEnded": "منتهية",
+        "expiresInTimer": "تنتهي خلال {{time}}",
         "pickupPoints": "{{count}} نقطة صعود",
         "pickupPoints_plural": "{{count}} نقاط صعود",
         "dropoffPoints": "{{count}} نقطة إنزال",
@@ -242,6 +250,8 @@
         "descriptionBody": "رحلة من {{from}} إلى {{to}} بمركبة {{vehicle}} ({{mode}}). راجع الجدول والتسعير أدناه.",
         "showMore": "عرض المزيد",
         "showLess": "عرض أقل",
+        "openPickupInMaps": "فتح نقطة الالتقاط {{place}} في خرائط Google",
+        "openDropoffInMaps": "فتح نقطة التوصيل {{place}} في خرائط Google",
         "paymentTerms": "شروط الدفع",
         "share": "مشاركة القائمة",
         "edit": "تعديل القائمة",
@@ -481,15 +491,25 @@
       "vehicleModeSubtitle": "قدّم مقاعد مشتركة أو المركبة كاملة",
       "vehicleModeLabel": "عرض الرحلة",
       "vehicleModeShared": "مركبة مشتركة",
+      "vehicleModeSharedHint": "يشارك الركاب المقاعد مع ركاب آخرين.",
       "vehicleModeFullPrivate": "مركبة خاصة كاملة",
+      "vehicleModeFullPrivateHint": "يحجز راكب واحد المركبة بالكامل.",
       "detailsTitle": "تفاصيل الرحلة",
       "detailsSubtitle": "حدّد معلومات المغادرة والوصول",
       "departureCity": "مدينة المغادرة",
       "departurePoint": "نقطة المغادرة",
       "departureDateTime": "تاريخ ووقت المغادرة",
+      "departureDateWindow": "نافذة تاريخ المغادرة",
+      "departureWindowHint": "اضغط تاريخ البداية ثم تاريخ النهاية على التقويم",
+      "departureTime": "وقت المغادرة",
+      "selectDateRange": "اختر نطاق التاريخ",
+      "selectDate": "اختر التاريخ",
+      "selectTime": "اختر الوقت",
       "arrivalCity": "مدينة الوصول",
       "arrivalPoint": "نقطة الوصول",
       "arrivalDateTime": "تاريخ ووقت الوصول",
+      "description": "الوصف",
+      "descriptionPlaceholder": "أضف ملاحظات للركاب (اختياري)",
       "cityPlaceholder": "ابحث عن مدينة",
       "cityNoResults": "لم يتم العثور على مدن. جرّب بحثاً آخر.",
       "cityApiHint": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY للبحث عن المدن.",
@@ -503,27 +523,47 @@
       "listingSubtitle": "اختر كيف يمكن للركاب حجز هذه الرحلة",
       "listingTypeLabel": "نوع الإدراج",
       "listingRfq": "طلب عرض",
+      "listingRfqHint": "سيرسل الركاب عروضاً لرحلتك.",
       "listingAuction": "مزاد",
+      "listingAuctionHint": "سيقدم الركاب مزايدات للفوز بالرحلة.",
       "startingPrice": "السعر لكل مقعد",
       "startingPricePlaceholder": "أدخل السعر لكل مقعد",
       "paymentMethodLabel": "طريقة الدفع",
+      "paymentMethodHint": "اختر كيف تريد استلام المدفوعات.",
       "paymentCash": "نقداً",
       "paymentOnline": "إلكتروني",
+      "paymentBoth": "كلاهما",
       "durationLabel": "مدة الإدراج",
       "durationValue": "{{count}} ساعة",
+      "durationMinutesOnly": "{{count}} د",
+      "durationHoursMinutes": "{{hours}} س {{minutes}} د",
       "scheduleTitle": "بدء الإدراج",
       "scheduleSubtitle": "ابدأ فوراً أو جدول لاحقاً",
+      "schedulePrompt": "متى تريد بدء هذا الإدراج؟",
+      "schedulePromptHint": "يمكنك البدء فوراً أو جدولته لتاريخ ووقت محددين.",
       "startModeLabel": "متى يبدأ",
       "startInstant": "ابدأ فوراً",
+      "startInstantHint": "سيُنشر إدراجك فوراً.",
       "startScheduled": "جدولة لاحقاً",
+      "startScheduledHint": "اختر تاريخاً ووقتاً في المستقبل.",
+      "scheduleChangeLaterTitle": "يمكنك تغيير هذا لاحقاً",
+      "scheduleChangeLaterBody": "ستتمكن من تعديل وقت البدء قبل النشر.",
       "scheduledStart": "تاريخ ووقت البدء",
       "previewTitle": "معاينة الرحلة",
       "previewSubtitle": "راجع كل شيء قبل النشر",
       "previewTrip": "الرحلة",
       "previewVehicle": "المركبة",
       "previewListing": "الإدراج",
+      "previewListingDetails": "تفاصيل الإدراج",
+      "departure": "المغادرة",
+      "arrival": "الوصول",
+      "pickupPoint": "نقطة الالتقاط",
+      "dropoffPoint": "نقطة الإنزال",
+      "acAvailable": "مكيف متاح",
+      "editTrip": "تعديل الرحلة",
       "notSpecified": "غير محدد",
       "publish": "نشر الرحلة",
+      "publishIncomplete": "أكمل الحقول المطلوبة قبل النشر.",
       "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
       "successTitle": "تم نشر الرحلة",
       "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
@@ -582,6 +622,7 @@
     "cancel": "إلغاء",
     "ok": "حسنًا",
     "done": "تم",
+    "clear": "مسح",
     "continue": "متابعة"
   },
   "legal": {
@@ -591,11 +632,11 @@
     },
     "terms": {
       "title": "الشروط والأحكام",
-      "intro": "مرحباً بك في Transit. توضح هذه الشروط والأحكام كيفية استخدام منصة الحجز لدينا. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
+      "intro": "مرحباً بك في Stride. توضح هذه الشروط والأحكام كيفية استخدام منصة الحجز لدينا. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
       "sections": {
         "acceptance": {
           "title": "1. قبول الشروط",
-          "body": "بإنشاء حساب أو استخدام أي جزء من Transit، فإنك توافق على هذه الشروط والأحكام. إذا كنت لا توافق، يجب عليك عدم استخدام المنصة."
+          "body": "بإنشاء حساب أو استخدام أي جزء من Stride، فإنك توافق على هذه الشروط والأحكام. إذا كنت لا توافق، يجب عليك عدم استخدام المنصة."
         },
         "eligibility": {
           "title": "2. الأهلية",
@@ -603,7 +644,7 @@
         },
         "platformUse": {
           "title": "3. استخدام المنصة",
-          "body": "تساعدك Transit على مقارنة وحجز الحافلات والمركبات والرحلات الخاصة. توافق على استخدام المنصة لأغراض مشروعة فقط وعدم إساءة استخدام الحجوزات أو المدفوعات."
+          "body": "تساعدك Stride على مقارنة وحجز الحافلات والمركبات والرحلات الخاصة. توافق على استخدام المنصة لأغراض مشروعة فقط وعدم إساءة استخدام الحجوزات أو المدفوعات."
         },
         "accountsSecurity": {
           "title": "4. الحسابات والأمان",
@@ -615,17 +656,17 @@
         },
         "limitationLiability": {
           "title": "6. تحديد المسؤولية",
-          "body": "إلى أقصى حد يسمح به القانون، تُقدَّم Transit «كما هي». لسنا مسؤولين عن الخسائر غير المباشرة أو العرضية الناتجة عن استخدام المنصة أثناء سريان هذه السياسة التجريبية."
+          "body": "إلى أقصى حد يسمح به القانون، تُقدَّم Stride «كما هي». لسنا مسؤولين عن الخسائر غير المباشرة أو العرضية الناتجة عن استخدام المنصة أثناء سريان هذه السياسة التجريبية."
         },
         "changesTerms": {
           "title": "7. تغييرات الشروط",
-          "body": "قد نحدّث هذه الشروط والأحكام من وقت لآخر. استمرار استخدام Transit بعد نشر التغييرات يُعد قبولاً للشروط المعدّلة."
+          "body": "قد نحدّث هذه الشروط والأحكام من وقت لآخر. استمرار استخدام Stride بعد نشر التغييرات يُعد قبولاً للشروط المعدّلة."
         }
       }
     },
     "privacy": {
       "title": "سياسة الخصوصية",
-      "intro": "خصوصيتك تهمنا. توضح سياسة الخصوصية هذه المعلومات التي قد تجمعها Transit وكيف نستخدمها والخيارات المتاحة لك. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
+      "intro": "خصوصيتك تهمنا. توضح سياسة الخصوصية هذه المعلومات التي قد تجمعها Stride وكيف نستخدمها والخيارات المتاحة لك. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
       "sections": {
         "informationCollect": {
           "title": "1. المعلومات التي نجمعها",

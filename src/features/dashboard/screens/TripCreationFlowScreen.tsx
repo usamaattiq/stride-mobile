@@ -140,6 +140,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     void publishDraft()
       .then((trip) => {
         if (!trip) {
+          setPublishError(t('trips.create.publishFailed'));
           return;
         }
         setSuccessVisible(true);
@@ -252,6 +253,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
             draft={draft}
             vehicle={selectedVehicle}
             onPublish={handlePublish}
+            onEditStep={goToStep}
             publishing={isPublishing}
             errorMessage={publishError}
           />
