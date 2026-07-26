@@ -3,12 +3,10 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Dimensions,
-  Keyboard,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
+  type FocusEvent,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -16,19 +14,28 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { KeyboardAwareScrollView } from '@/shared/components/KeyboardAwareScrollView';
 import { LegalLinks } from '@/shared/components/legal/LegalLinks';
 import { LanguageSwitcher } from '@/shared/components/language-switcher';
+import { useKeyboardVisible } from '@/shared/hooks/useKeyboardVisible';
 import { colors, spacing } from '@/theme';
 
 import { SignupStepIndicator } from './SignupStepIndicator';
 
-// Lets any field rendered inside the scrollable body (via AuthTextField, etc.)
-// scroll itself above the keyboard on focus — RN's ScrollView doesn't do this
-// automatically, see scrollResponderScrollNativeHandleToKeyboard.
-const AuthScrollToInputContext = React.createContext<(nodeHandle: number) => void>(() => {});
-
-export function useAuthScrollToInput(): (nodeHandle: number) => void {
-  return React.useContext(AuthScrollToInputContext);
+/**
+ * Legacy helper — keyboard-controller scrolls focused inputs automatically inside
+ * `KeyboardAwareScrollView`. Keep chaining `onFocus` through this hook.
+ */
+export function useKeyboardFocusScroll(
+  onFocus?: (event: FocusEvent) => void,
+): (event: FocusEvent) => void {
+  return React.useCallback(
+    (event: FocusEvent) => {
+      onFocus?.(event);
+    },
+    [onFocus],
+  );
 }
 
 // Use the physical screen height (not 'window', which shrinks with the Android
@@ -39,7 +46,8 @@ const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.24;
 const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.19;
 
 type AuthScaffoldProps = {
-  onBack: () => void;
+  /** Omit on tab roots where there is nowhere to go back. */
+  onBack?: () => void;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -48,6 +56,14 @@ type AuthScaffoldProps = {
   contentWrapStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
   showLegalFooter?: boolean;
+  /** Defaults to true. Set false on tab screens that already have language in Settings. */
+  showLanguageSwitcher?: boolean;
+  /** Optional control rendered on the right of the header top bar. */
+  headerRight?: React.ReactNode;
+  /**
+   * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
+   */
+  compactHeader?: boolean;
   /** Total number of steps in the flow. Renders a step indicator when set. */
   stepCount?: number;
   /** The active step (1-based). Required alongside `stepCount`. */
@@ -64,97 +80,66 @@ export function AuthScaffold({
   contentWrapStyle,
   scrollable = true,
   showLegalFooter = true,
+  showLanguageSwitcher = true,
+  headerRight,
+  compactHeader = false,
   stepCount,
   currentStep,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  // Which field to scroll to, and whether the keyboard is already up — tracked
-  // separately from the scroll itself because `scrollResponderScrollNativeHandleToKeyboard`
-  // only computes a correct offset once the keyboard's metrics are known, and
-  // `focus` vs `keyboardDidShow` aren't guaranteed to fire in a fixed order.
-  // Triggering the scroll from `keyboardDidShow` instead of `focus` guarantees
-  // the metrics are populated, instead of only working when focus happens to
-  // lose that race.
-  const focusedNodeRef = React.useRef<number | null>(null);
-  const keyboardVisibleRef = React.useRef(false);
+  const isKeyboardVisible = useKeyboardVisible();
+  const showTopBar =
+    Boolean(onBack) || showLanguageSwitcher || headerRight != null;
 
-  const scrollFocusedInputIntoView = React.useCallback(() => {
-    const nodeHandle = focusedNodeRef.current;
-    if (nodeHandle == null) {
-      return;
-    }
-    // Extra offset so the focused field lands with some breathing room above
-    // the keyboard instead of touching it.
-    scrollViewRef.current?.scrollResponderScrollNativeHandleToKeyboard(
-      nodeHandle,
-      spacing.lg,
-      true,
-    );
-  }, []);
-
-  React.useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => {
-      keyboardVisibleRef.current = true;
-      scrollFocusedInputIntoView();
-    });
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
-      keyboardVisibleRef.current = false;
-    });
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [scrollFocusedInputIntoView]);
-
-  const scrollToInput = React.useCallback(
-    (nodeHandle: number) => {
-      focusedNodeRef.current = nodeHandle;
-      // If the keyboard is already open (switching fields via "next"), there's
-      // no keyboardDidShow coming — scroll immediately using known metrics.
-      if (keyboardVisibleRef.current) {
-        scrollFocusedInputIntoView();
-      }
-    },
-    [scrollFocusedInputIntoView],
-  );
-
-  // Without the legal footer there's no bottom chrome, so pad for the safe area.
   const contentBottomPad = showLegalFooter
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
 
   const body = scrollable ? (
-    <ScrollView
-      ref={scrollViewRef}
+    <KeyboardAwareScrollView
       style={styles.cardScroll}
       contentContainerStyle={[
-        styles.cardWrapScroll,
+        compactHeader ? styles.cardWrapScrollCompact : styles.cardWrapScroll,
         { paddingBottom: contentBottomPad },
         contentWrapStyle,
       ]}
-      showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      nestedScrollEnabled
     >
-      <AuthScrollToInputContext.Provider value={scrollToInput}>
-        <View style={styles.cardOverlap}>{children}</View>
-      </AuthScrollToInputContext.Provider>
-    </ScrollView>
+      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
+        {children}
+      </View>
+    </KeyboardAwareScrollView>
   ) : (
-    <View style={[styles.cardWrapStatic, { paddingBottom: contentBottomPad }, contentWrapStyle]}>
-      <View style={styles.cardOverlap}>{children}</View>
+    <View
+      style={[
+        compactHeader ? styles.cardWrapStaticCompact : styles.cardWrapStatic,
+        { paddingBottom: contentBottomPad },
+        contentWrapStyle,
+      ]}
+    >
+      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
+        {children}
+      </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
           style={[
             styles.header,
-            { height: hasStepper ? HEADER_HEIGHT_WITH_STEPPER : HEADER_HEIGHT_NO_STEPPER },
+            compactHeader ? styles.headerCompact : null,
+            !compactHeader
+              ? {
+                  height: hasStepper
+                    ? HEADER_HEIGHT_WITH_STEPPER
+                    : HEADER_HEIGHT_NO_STEPPER,
+                }
+              : null,
           ]}
         >
           <LinearGradient
@@ -162,24 +147,39 @@ export function AuthScaffold({
             style={StyleSheet.absoluteFill}
           />
 
-          <View style={styles.topBar}>
-            <Pressable
-              onPress={onBack}
-              style={styles.backButton}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
-            </Pressable>
+          {showTopBar ? (
+            <View style={[styles.topBar, !onBack && styles.topBarNoBack]}>
+              {onBack ? (
+                <Pressable
+                  onPress={onBack}
+                  style={styles.backButton}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                >
+                  <FontAwesome name="chevron-left" size={12} color="#FFFFFF" />
+                </Pressable>
+              ) : (
+                <View style={styles.topBarSpacer} />
+              )}
 
-            <LanguageSwitcher variant="glass" />
-          </View>
+              <View style={styles.topBarRight}>
+                {headerRight}
+                {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+              </View>
+            </View>
+          ) : null}
 
-          <View style={styles.headerCopy}>
+          <View
+            style={[
+              styles.headerCopy,
+              compactHeader ? styles.headerCopyCompact : null,
+              !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
+            ]}
+          >
             <AppText
               weight="bold"
-              style={[styles.title, titleStyle]}
+              style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.6}
@@ -187,7 +187,15 @@ export function AuthScaffold({
               {title}
             </AppText>
             {subtitle ? (
-              <AppText style={[styles.subtitle, subtitleStyle]}>{subtitle}</AppText>
+              <AppText
+                style={[
+                  styles.subtitle,
+                  compactHeader && styles.subtitleCompact,
+                  subtitleStyle,
+                ]}
+              >
+                {subtitle}
+              </AppText>
             ) : null}
           </View>
 
@@ -198,13 +206,14 @@ export function AuthScaffold({
           ) : null}
         </View>
 
-        <View style={styles.cardWrap}>{body}</View>
+        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact]}>
+          {body}
+        </View>
 
-        {showLegalFooter ? (
+        {showLegalFooter && !isKeyboardVisible ? (
           <LegalLinks
             containerStyle={[
               styles.legalFooter,
-              // Match Welcome: sit on the bottom safe-area edge
               { paddingBottom: Math.max(insets.bottom, spacing.xs) },
             ]}
           />
@@ -230,13 +239,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.primary,
   },
+  headerCompact: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  topBarNoBack: {
+    justifyContent: 'flex-end',
+  },
+  topBarSpacer: {
+    width: 34,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   stepSlot: {
-    // marginTop: spacing.md,
     marginHorizontal: spacing.xxl,
   },
   backButton: {
@@ -251,11 +274,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     minHeight: 72,
   },
+  headerCopyCompact: {
+    marginTop: 0,
+    minHeight: 0,
+  },
+  headerCopyNoTopBar: {
+    marginTop: spacing.xs,
+  },
   title: {
     color: colors.white,
     fontSize: 30,
     lineHeight: 36,
     maxWidth: 320,
+  },
+  titleCompact: {
+    fontSize: 22,
+    lineHeight: 28,
   },
   subtitle: {
     marginTop: spacing.xs,
@@ -265,11 +299,20 @@ const styles = StyleSheet.create({
     minHeight: 36,
     maxWidth: 320,
   },
+  subtitleCompact: {
+    minHeight: 0,
+    marginTop: 4,
+  },
   cardWrap: {
     flex: 1,
     backgroundColor: colors.white,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
+  },
+  cardWrapCompact: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -18,
   },
   cardScroll: {
     flex: 1,
@@ -280,14 +323,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.xl,
   },
+  cardWrapScrollCompact: {
+    flexGrow: 1,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+  },
   cardWrapStatic: {
     flex: 1,
     paddingTop: 72,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
+  cardWrapStaticCompact: {
+    flex: 1,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+  },
   cardOverlap: {
     marginTop: -62,
+  },
+  cardOverlapCompact: {
+    marginTop: 0,
   },
   legalFooter: {
     backgroundColor: colors.white,

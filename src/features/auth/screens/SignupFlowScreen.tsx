@@ -1,14 +1,23 @@
 import React from 'react';
-import { Alert, BackHandler, Keyboard } from 'react-native';
+import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { authApi } from '@/services/api/authApi';
+import { getErrorMessage } from '@/services/api/errorMessage';
+import { getDeviceId } from '@/services/deviceId';
+import { AppDialog } from '@/shared/components/AppDialog';
+import { useAuthStore } from '@/store/authStore';
+import { useDevicePrefsStore } from '@/store/devicePrefsStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useSignupDraftStore } from '@/store/signupDraftStore';
 
 import { AuthScaffold } from '../components/AuthScaffold';
-import { useSignupDraft } from '../context/SignupDraftContext';
 import type { AuthStackParamList } from '../navigation/types';
+import { toPhoneIdentity } from '../utils/phone-identity';
+import { toSignupSubmitPayload } from '../utils/signup-payload.mapper';
 import { formatPhoneDisplay } from '../types/signup.types';
 import { SignupDocumentsScreen } from './SignupDocumentsScreen';
 import { SignupOtpScreen } from './SignupOtpScreen';
@@ -41,8 +50,16 @@ type Nav = NativeStackNavigationProp<AuthStackParamList>;
 export function SignupFlowScreen(): React.ReactElement {
   const navigation = useNavigation<Nav>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const { draft, patchDraft } = useSignupDraft();
+  const { draft, patchDraft } = useSignupDraftStore();
   const [step, setStep] = React.useState<SignupStep>('phone');
+  const [otpResentVisible, setOtpResentVisible] = React.useState(false);
+  const [skipDocumentsVisible, setSkipDocumentsVisible] = React.useState(false);
+  const [sendingOtp, setSendingOtp] = React.useState(false);
+  const [sendOtpError, setSendOtpError] = React.useState<string | null>(null);
+  const [verifyingOtp, setVerifyingOtp] = React.useState(false);
+  const [verifyOtpError, setVerifyOtpError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
   // Set when we intentionally leave the flow (e.g. finishing signup), so the
   // `beforeRemove` guard below doesn't hijack it into stepping backward.
   const isLeavingRef = React.useRef(false);
@@ -125,83 +142,183 @@ export function SignupFlowScreen(): React.ReactElement {
 
   const onBack = step === 'phone' ? leaveFlow : () => goToPreviousStep();
 
+  const handleSendOtp = async () => {
+    setSendOtpError(null);
+    setSendingOtp(true);
+    try {
+      await authApi.sendSignupOtp(toPhoneIdentity(draft.country, draft.phoneDigits));
+      goToStep('otp');
+    } catch (error) {
+      setSendOtpError(getErrorMessage(error, t('auth.signup.phone.sendFailed')));
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      await authApi.sendSignupOtp(toPhoneIdentity(draft.country, draft.phoneDigits));
+      patchDraft({ otp: '' });
+      setOtpResentVisible(true);
+    } catch (error) {
+      setVerifyOtpError(getErrorMessage(error, t('auth.signup.otp.resendFailed')));
+    }
+  };
+
+  const handleVerifyOtp = async (otpOverride?: string) => {
+    const otpValue = otpOverride ?? draft.otp;
+    setVerifyOtpError(null);
+    setVerifyingOtp(true);
+    try {
+      await authApi.verifySignupOtp(toPhoneIdentity(draft.country, draft.phoneDigits), otpValue);
+      goToStep('personal');
+    } catch (error) {
+      patchDraft({ otp: '' });
+      setVerifyOtpError(getErrorMessage(error, t('auth.signup.otp.verifyFailed')));
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleFinishSignup = async () => {
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const deviceId = await getDeviceId();
+      const payload = await toSignupSubmitPayload(draft, deviceId);
+      const result = await authApi.submitSignup(payload);
+
+      await useAuthStore.getState().setAuthenticated(result.accessToken);
+      useProfileStore.getState().setProfile(result.profile);
+
+      const devicePrefs = useDevicePrefsStore.getState();
+      await devicePrefs.setLastPhone({
+        phoneDigits: draft.phoneDigits,
+        countryCode: draft.country.code,
+        countryCallingCode: draft.country.callingCode,
+      });
+      await devicePrefs.setBiometricEnabled(draft.biometricEnabled);
+      if (draft.biometricEnabled) {
+        await devicePrefs.setCachedMpin(draft.mpin);
+      }
+
+      Keyboard.dismiss();
+      isLeavingRef.current = true;
+      navigation.replace('SignupSuccess');
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, t('auth.signup.security.submitFailed')));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <AuthScaffold
-      onBack={onBack}
-      title={header.title}
-      subtitle={header.subtitle}
-      stepCount={TOTAL_STEPS}
-      currentStep={STEP_PROGRESS[step]}
-      showLegalFooter={step === 'phone' || step === 'otp'}
-    >
-      {step === 'phone' ? (
-        <SignupPhoneScreen
-          country={draft.country}
-          phoneDigits={draft.phoneDigits}
-          onChangeCountry={(country) => patchDraft({ country })}
-          onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
-          onContinue={() => goToStep('otp')}
-        />
-      ) : null}
+    <>
+      <AuthScaffold
+        onBack={onBack}
+        title={header.title}
+        subtitle={header.subtitle}
+        stepCount={TOTAL_STEPS}
+        currentStep={STEP_PROGRESS[step]}
+        showLegalFooter={step === 'phone' || step === 'otp'}
+      >
+        {step === 'phone' ? (
+          <SignupPhoneScreen
+            country={draft.country}
+            phoneDigits={draft.phoneDigits}
+            onChangeCountry={(country) => patchDraft({ country })}
+            onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
+            onContinue={() => void handleSendOtp()}
+            loading={sendingOtp}
+            errorMessage={sendOtpError}
+          />
+        ) : null}
 
-      {step === 'otp' ? (
-        <SignupOtpScreen
-          otp={draft.otp}
-          onChangeOtp={(otp) => patchDraft({ otp })}
-          onContinue={() => goToStep('personal')}
-          onResend={() => {
-            patchDraft({ otp: '' });
-            Alert.alert('OTP resent', 'A new code was sent (demo).');
-          }}
-        />
-      ) : null}
+        {step === 'otp' ? (
+          <SignupOtpScreen
+            otp={draft.otp}
+            onChangeOtp={(otp) => patchDraft({ otp })}
+            onContinue={(value) => void handleVerifyOtp(value)}
+            onResend={() => void handleResendOtp()}
+            loading={verifyingOtp}
+            errorMessage={verifyOtpError}
+          />
+        ) : null}
 
-      {step === 'personal' ? (
-        <SignupPersonalInfoScreen
-          country={draft.country}
-          phoneDigits={draft.phoneDigits}
-          fullName={draft.fullName}
-          email={draft.email}
-          address={draft.address}
-          locationCoords={draft.locationCoords}
-          profilePhotoUri={draft.profilePhotoUri}
-          onChangeFullName={(fullName) => patchDraft({ fullName })}
-          onChangeEmail={(email) => patchDraft({ email })}
-          onChangeAddress={(address) => patchDraft({ address })}
-          onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
-          onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
-          onContinue={() => goToStep('documents')}
-        />
-      ) : null}
+        {step === 'personal' ? (
+          <SignupPersonalInfoScreen
+            country={draft.country}
+            phoneDigits={draft.phoneDigits}
+            fullName={draft.fullName}
+            email={draft.email}
+            address={draft.address}
+            locationCoords={draft.locationCoords}
+            profilePhotoUri={draft.profilePhotoUri}
+            onChangeFullName={(fullName) => patchDraft({ fullName })}
+            onChangeEmail={(email) => patchDraft({ email })}
+            onChangeAddress={(address) => patchDraft({ address })}
+            onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
+            onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
+            onContinue={() => goToStep('documents')}
+          />
+        ) : null}
 
-      {step === 'documents' ? (
-        <SignupDocumentsScreen
-          nicNumber={draft.nicNumber}
-          nicFrontUri={draft.nicFrontUri}
-          nicBackUri={draft.nicBackUri}
-          onChangeNicNumber={(nicNumber) => patchDraft({ nicNumber })}
-          onChangeNicFront={(nicFrontUri) => patchDraft({ nicFrontUri })}
-          onChangeNicBack={(nicBackUri) => patchDraft({ nicBackUri })}
-          onContinue={() => goToStep('security')}
-          onSkip={() => goToStep('security')}
-        />
-      ) : null}
+        {step === 'documents' ? (
+          <SignupDocumentsScreen
+            nicNumber={draft.nicNumber}
+            nicFrontUri={draft.nicFrontUri}
+            nicBackUri={draft.nicBackUri}
+            onChangeNicNumber={(nicNumber) => patchDraft({ nicNumber })}
+            onChangeNicFront={(nicFrontUri) => patchDraft({ nicFrontUri })}
+            onChangeNicBack={(nicBackUri) => patchDraft({ nicBackUri })}
+            onContinue={() => goToStep('security')}
+            onSkip={() => setSkipDocumentsVisible(true)}
+          />
+        ) : null}
 
-      {step === 'security' ? (
-        <SignupSecurityScreen
-          mpin={draft.mpin}
-          mpinConfirm={draft.mpinConfirm}
-          biometricEnabled={draft.biometricEnabled}
-          onChangeMpin={(mpin) => patchDraft({ mpin })}
-          onChangeMpinConfirm={(mpinConfirm) => patchDraft({ mpinConfirm })}
-          onChangeBiometric={(biometricEnabled) => patchDraft({ biometricEnabled })}
-          onContinue={() => {
-            Keyboard.dismiss();
-            isLeavingRef.current = true;
-            navigation.replace('SignupSuccess');
-          }}
-        />
-      ) : null}
-    </AuthScaffold>
+        {step === 'security' ? (
+          <SignupSecurityScreen
+            mpin={draft.mpin}
+            mpinConfirm={draft.mpinConfirm}
+            biometricEnabled={draft.biometricEnabled}
+            onChangeMpin={(mpin) => patchDraft({ mpin })}
+            onChangeMpinConfirm={(mpinConfirm) => patchDraft({ mpinConfirm })}
+            onChangeBiometric={(biometricEnabled) => patchDraft({ biometricEnabled })}
+            onContinue={() => void handleFinishSignup()}
+            submitting={submitting}
+            errorMessage={submitError}
+          />
+        ) : null}
+      </AuthScaffold>
+
+      <AppDialog
+        visible={otpResentVisible}
+        icon="check-circle"
+        title={t('auth.signup.otp.resentTitle')}
+        message={t('auth.signup.otp.resentBody')}
+        confirmAction={{
+          label: t('auth.signup.otp.resentConfirm'),
+          onPress: () => setOtpResentVisible(false),
+        }}
+      />
+
+      <AppDialog
+        visible={skipDocumentsVisible}
+        icon="exclamation-triangle"
+        title={t('auth.signup.documents.skipConfirmTitle')}
+        message={t('auth.signup.documents.skipConfirmBody')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setSkipDocumentsVisible(false),
+        }}
+        confirmAction={{
+          label: t('auth.signup.documents.skipConfirmConfirm'),
+          onPress: () => {
+            setSkipDocumentsVisible(false);
+            goToStep('security');
+          },
+        }}
+      />
+    </>
   );
 }

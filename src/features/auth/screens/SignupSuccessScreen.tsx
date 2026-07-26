@@ -1,16 +1,19 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { Animated, StyleSheet, View, type DimensionValue } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Animated, Easing, StyleSheet, View, type DimensionValue } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { AppTopBar } from '@/shared/components/AppTopBar';
 import { Button } from '@/shared/components/Button';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { useProfileStore } from '@/store/profileStore';
 import { colors, radius, spacing } from '@/theme';
 
-const CREDITS = 50;
+const DEFAULT_CREDITS = 50;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -47,8 +50,10 @@ export function SignupSuccessScreen({
 }: SignupSuccessScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
+  const credits = useProfileStore((state) => state.profile?.credits ?? DEFAULT_CREDITS);
   const badgeScale = React.useRef(new Animated.Value(0)).current;
   const contentOpacity = React.useRef(new Animated.Value(0)).current;
+  const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
 
   React.useEffect(() => {
     Animated.sequence([
@@ -64,29 +69,68 @@ export function SignupSuccessScreen({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [badgeScale, contentOpacity]);
+
+    // Confetti holds for a beat, then drifts down and dissolves — like it's
+    // celebrating the tick before settling.
+    Animated.stagger(
+      70,
+      confettiAnims.map((anim) =>
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 1600,
+          delay: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ),
+    ).start();
+  }, [badgeScale, contentOpacity, confettiAnims]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <FocusAwareStatusBar style="dark" />
+
+      <LinearGradient
+        colors={[colors.primarySoft, colors.white]}
+        style={styles.bgGradient}
+        pointerEvents="none"
+      />
+
+      <AppTopBar left="none" showLanguageSwitcher includeSafeArea={false} />
 
       <View style={styles.confettiLayer} pointerEvents="none">
-        {CONFETTI.map((piece, index) => (
-          <View
-            key={index}
-            style={[
-              styles.confettiPiece,
-              {
-                top: piece.top,
-                left: piece.left,
-                width: piece.size,
-                height: piece.size * 0.5,
-                backgroundColor: piece.color,
-                transform: [{ rotate: piece.rotate }],
-              },
-            ]}
-          />
-        ))}
+        {CONFETTI.map((piece, index) => {
+          const anim = confettiAnims[index]!;
+          const fallDistance = 90 + (index % 3) * 24;
+          return (
+            <Animated.View
+              key={index}
+              style={[
+                styles.confettiPiece,
+                {
+                  top: piece.top,
+                  left: piece.left,
+                  width: piece.size,
+                  height: piece.size * 0.5,
+                  backgroundColor: piece.color,
+                  opacity: anim.interpolate({
+                    inputRange: [0, 0.6, 1],
+                    outputRange: [1, 1, 0],
+                  }),
+                  transform: [
+                    {
+                      translateY: anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, fallDistance],
+                      }),
+                    },
+                    { rotate: piece.rotate },
+                  ],
+                },
+              ]}
+            />
+          );
+        })}
       </View>
 
       <View style={styles.content}>
@@ -106,7 +150,7 @@ export function SignupSuccessScreen({
                 {t('auth.signup.success.creditsEarned')}
               </AppText>
               <AppText weight="bold" style={styles.creditsAmount}>
-                {t('auth.signup.success.credits', { count: CREDITS })}
+                {t('auth.signup.success.credits', { count: credits })}
               </AppText>
               <AppText style={styles.creditsReason}>
                 {t('auth.signup.success.creditsReason')}
@@ -133,6 +177,13 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  bgGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   confettiLayer: {
     ...StyleSheet.absoluteFillObject,

@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/shared/components/AppText';
@@ -17,6 +18,7 @@ export type AppTopBarProps = {
   /** Left side content mode. */
   left?: 'logo' | 'back' | 'none';
   title?: string;
+  subtitle?: string;
   brandName?: string;
   onBackPress?: () => void;
   showLanguageSwitcher?: boolean;
@@ -31,6 +33,7 @@ export function AppTopBar({
   variant = 'default',
   left = 'none',
   title,
+  subtitle,
   brandName,
   onBackPress,
   showLanguageSwitcher = false,
@@ -66,21 +69,26 @@ export function AppTopBar({
               pressed && styles.pressed,
             ]}
           >
-            <AppText style={[styles.backIcon, onImage && styles.backIconOnImage]}>
-              ←
-            </AppText>
+            <FontAwesome
+              name="chevron-left"
+              size={12}
+              color={onImage ? colors.text.inverse : colors.text.primary}
+            />
           </Pressable>
         ) : null}
       </View>
 
       {title ? (
-        <AppText
-          weight="bold"
-          numberOfLines={1}
-          style={[styles.title, onImage && styles.titleOnImage]}
-        >
-          {title}
-        </AppText>
+        <View style={styles.titleBlock}>
+          <AppText
+            weight="bold"
+            numberOfLines={1}
+            style={[styles.title, onImage && styles.titleOnImage]}
+          >
+            {title}
+          </AppText>
+       
+        </View>
       ) : (
         <View style={styles.titleSpacer} />
       )}
@@ -117,19 +125,32 @@ const styles = StyleSheet.create({
   titleSpacer: {
     flex: 1,
   },
+  titleBlock: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 1,
+  },
   title: {
     ...typography.button,
-    flex: 1,
     textAlign: 'center',
     color: colors.text.primary,
   },
   titleOnImage: {
     color: colors.text.inverse,
   },
+  subtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: colors.text.secondary,
+  },
+  subtitleOnImage: {
+    color: colors.text.inverseMuted,
+  },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,16 +163,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.28)',
-  },
-  backIcon: {
-    fontSize: 22,
-    lineHeight: 24,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginTop: -1,
-  },
-  backIconOnImage: {
-    color: colors.text.inverse,
   },
   pressed: {
     opacity: 0.75,

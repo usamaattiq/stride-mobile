@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +10,10 @@ import {
 
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
+
+import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
+
+import { useKeyboardFocusScroll } from './AuthScaffold';
 
 export type OtpInputProps = {
   length: number;
@@ -27,93 +32,108 @@ export function OtpInput({
   secureTextEntry = false,
   onFilled,
 }: OtpInputProps): React.ReactElement {
-  const inputRefs = React.useRef<Array<TextInput | null>>([]);
-  const [focusedIndex, setFocusedIndex] = React.useState<number | null>(null);
+  const inputRef = React.useRef<TextInput>(null);
+  const previousLengthRef = React.useRef(0);
+  const accessoryId = React.useId();
+  const [isFocused, setIsFocused] = React.useState(false);
+  const handleKeyboardFocus = useKeyboardFocusScroll();
   const digits = value.replace(/\D/g, '').slice(0, length);
   const digitFont = getFontFamily('en', 'regular');
 
-  const setDigit = (index: number, digit: string) => {
-    const chars = Array.from({ length }, (_, i) => digits[i] ?? '');
-    chars[index] = digit;
-    const next = chars.join('').replace(/\s/g, '');
-    onChange(next);
-    if (next.length === length) {
-      onFilled?.(next);
+  React.useEffect(() => {
+    previousLengthRef.current = digits.length;
+  }, [digits]);
+
+  const handleChangeText = React.useCallback(
+    (text: string) => {
+      const next = text.replace(/\D/g, '').slice(0, length);
+      const prevLength = previousLengthRef.current;
+      previousLengthRef.current = next.length;
+      onChange(next);
+      if (next.length === length && prevLength !== length) {
+        onFilled?.(next);
+      }
+    },
+    [length, onChange, onFilled],
+  );
+
+  const activeIndex = isFocused
+    ? Math.min(digits.length, length - 1)
+    : null;
+
+  const handleDone = React.useCallback(() => {
+    if (digits.length === length) {
+      onFilled?.(digits);
     }
-  };
+  }, [digits, length, onFilled]);
 
   return (
-    <View style={styles.row}>
-      {Array.from({ length }).map((_, index) => {
-        const char = digits[index] ?? '';
-        const isFocused = focusedIndex === index;
+    <Pressable
+      style={styles.wrap}
+      onPress={() => inputRef.current?.focus()}
+      accessibilityRole="none"
+    >
+      <View style={styles.row} pointerEvents="none">
+        {Array.from({ length }).map((_, index) => {
+          const char = digits[index] ?? '';
+          const isActive = activeIndex === index;
 
-        return (
-          <View
-            key={index}
-            style={[
-              styles.cell,
-              char ? styles.cellFilled : null,
-              isFocused ? styles.cellFocused : null,
-            ]}
-          >
-            <Text
-              pointerEvents="none"
-              style={[styles.overlayDigit, { fontFamily: digitFont }]}
+          return (
+            <View
+              key={index}
+              style={[
+                styles.cell,
+                char ? styles.cellFilled : null,
+                isActive ? styles.cellFocused : null,
+              ]}
             >
-              {char ? (secureTextEntry ? '•' : char) : ''}
-            </Text>
-            <TextInput
-              ref={(el) => {
-                inputRefs.current[index] = el;
-              }}
-              value=""
-              onChangeText={(text) => {
-                const cleaned = text.replace(/\D/g, '');
-                if (cleaned.length > 1) {
-                  const pasted = cleaned.slice(0, length);
-                  onChange(pasted);
-                  if (pasted.length === length) onFilled?.(pasted);
-                  const focusAt = Math.min(pasted.length, length - 1);
-                  inputRefs.current[focusAt]?.focus();
-                  return;
-                }
-                if (cleaned) {
-                  setDigit(index, cleaned);
-                  if (index < length - 1) {
-                    inputRefs.current[index + 1]?.focus();
-                  }
-                }
-              }}
-              onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === 'Backspace') {
-                  if (char) {
-                    setDigit(index, '');
-                  } else if (index > 0) {
-                    setDigit(index - 1, '');
-                    inputRefs.current[index - 1]?.focus();
-                  }
-                }
-              }}
-              onFocus={() => setFocusedIndex(index)}
-              onBlur={() => setFocusedIndex((current) => (current === index ? null : current))}
-              keyboardType="number-pad"
-              maxLength={length}
-              autoFocus={autoFocus && index === 0}
-              style={styles.input}
-              caretHidden
-              selectTextOnFocus={false}
-            />
-          </View>
-        );
-      })}
-    </View>
+              <Text style={[styles.overlayDigit, { fontFamily: digitFont }]}>
+                {char ? (secureTextEntry ? '•' : char) : ''}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      <TextInput
+        ref={inputRef}
+        value={digits}
+        onChangeText={handleChangeText}
+        onFocus={(event) => {
+          setIsFocused(true);
+          handleKeyboardFocus(event);
+        }}
+        onBlur={() => setIsFocused(false)}
+        keyboardType="number-pad"
+        inputMode="numeric"
+        maxLength={length}
+        autoFocus={autoFocus}
+        autoComplete={
+          secureTextEntry ? 'off' : Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'
+        }
+        textContentType={secureTextEntry ? 'none' : 'oneTimeCode'}
+        importantForAutofill={secureTextEntry ? 'no' : 'yes'}
+        inputAccessoryViewID={accessoryId}
+        caretHidden
+        selectTextOnFocus={false}
+        style={styles.hiddenInput}
+      />
+
+      <KeyboardDoneBar
+        nativeID={accessoryId}
+        disabled={digits.length !== length}
+        onDone={handleDone}
+      />
+    </Pressable>
   );
 }
 
 const CELL_HEIGHT = 52;
 
 const styles = StyleSheet.create({
+  wrap: {
+    position: 'relative',
+  },
   row: {
     flexDirection: 'row',
     gap: spacing.xs,
@@ -138,7 +158,6 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   overlayDigit: {
-    position: 'absolute',
     fontSize: 22,
     lineHeight: CELL_HEIGHT,
     color: colors.text.primary,
@@ -148,7 +167,7 @@ const styles = StyleSheet.create({
       default: {},
     }),
   },
-  input: {
+  hiddenInput: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.02,
     color: 'transparent',

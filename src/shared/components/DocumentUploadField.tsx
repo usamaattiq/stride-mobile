@@ -10,7 +10,7 @@ import { colors, radius, spacing } from '@/theme';
 // ID-1 card ratio (≈1.585) rounded to a clean value for the crop UI.
 const DEFAULT_ASPECT: [number, number] = [16, 10];
 
-type DocumentUploadFieldProps = {
+export type DocumentUploadFieldProps = {
   label: string;
   uri?: string | null;
   onChange: (uri: string | null) => void;
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   box: {
-    minHeight: 120,
+    height: 120,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -121,8 +121,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   preview: {
-    width: '100%',
-    aspectRatio: 16 / 10,
+    ...StyleSheet.absoluteFillObject,
   },
   editBadge: {
     position: 'absolute',
@@ -142,7 +141,6 @@ const styles = StyleSheet.create({
   },
   empty: {
     flex: 1,
-    minHeight: 120,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,

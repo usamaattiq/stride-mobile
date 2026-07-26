@@ -1,0 +1,80 @@
+import { SHOW_DEMO_DASHBOARD_DATA } from './demo';
+import type { HomeFeedItem } from '../types/requests.types';
+
+const DEMO_REVERSE_REQUESTS_DATA: HomeFeedItem[] = [
+  {
+    type: 'request',
+    data: {
+      id: '1',
+      kinds: ['auction'],
+      category: 'auction',
+      postedAgo: '2h ago',
+      fromCity: 'Lahore',
+      toCity: 'Islamabad',
+      fromArea: 'DHA, Lahore',
+      toArea: 'F-6, Islamabad',
+      dateRange: '12 Jul – 14 Jul, 2024',
+      timeLabel: 'Anytime',
+      vehicle: 'SUV / Van',
+      seats: '4 - 6 Seats',
+      bags: '2 - 4 Bags',
+      priceLabelKey: 'startingPrice',
+      price: 'PKR 18,000',
+      statusBadge: { tone: 'danger', label: 'Ends in 18h 24m' },
+      footerLabel: '7 Offers Placed',
+      ctaKey: 'viewDetails',
+    },
+  },
+  { type: 'ad', id: 'ad-1' },
+  {
+    type: 'request',
+    data: {
+      id: '2',
+      kinds: ['rfq'],
+      category: 'rfq',
+      postedAgo: '5h ago',
+      fromCity: 'Karachi',
+      toCity: 'Multan',
+      fromArea: 'Clifton, Karachi',
+      toArea: 'Cantt, Multan',
+      dateRange: '15 Jul – 16 Jul, 2024',
+      timeLabel: '08:00 AM - 10:00 AM',
+      vehicle: 'Coaster',
+      seats: '10 - 14 Seats',
+      bags: '6 - 8 Bags',
+      priceLabelKey: 'budget',
+      price: 'PKR 45,000',
+      statusBadge: { tone: 'purple', label: 'Waiting for offers' },
+      footerLabel: 'Be the first to offer',
+      ctaKey: 'placeOffer',
+    },
+  },
+  {
+    type: 'request',
+    data: {
+      id: '3',
+      kinds: ['auction', 'rfq'],
+      category: 'fullVehicle',
+      postedAgo: '1d ago',
+      fromCity: 'Faisalabad',
+      toCity: 'Peshawar',
+      fromArea: 'Clock Tower',
+      toArea: 'University Town',
+      dateRange: '18 Jul, 2024',
+      timeLabel: '06:00 AM - 09:00 AM',
+      vehicle: 'Hiace',
+      seats: '8 - 12 Seats',
+      bags: '4 - 6 Bags',
+      priceLabelKey: 'startingPrice',
+      price: 'PKR 32,000',
+      statusBadge: { tone: 'danger', label: 'Ends in 2d 4h' },
+      footerLabel: '3 Offers Placed',
+      ctaKey: 'viewDetails',
+      bookmarked: true,
+    },
+  },
+];
+
+export const DEMO_REVERSE_REQUESTS: HomeFeedItem[] = SHOW_DEMO_DASHBOARD_DATA
+  ? DEMO_REVERSE_REQUESTS_DATA
+  : [];
