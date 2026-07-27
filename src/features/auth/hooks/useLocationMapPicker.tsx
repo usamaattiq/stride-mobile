@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   mapSearchButton: {
     minWidth: 72,
     minHeight: 44,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',

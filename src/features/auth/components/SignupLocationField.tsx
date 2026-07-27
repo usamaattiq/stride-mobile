@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     minHeight: 38,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.primaryDisabled,
     backgroundColor: colors.primarySoft,

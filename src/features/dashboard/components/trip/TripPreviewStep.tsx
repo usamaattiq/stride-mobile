@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   publishButton: {
     minHeight: 52,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',

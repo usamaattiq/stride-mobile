@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minHeight: 42,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.primaryDisabled,
     backgroundColor: colors.primarySoft,
