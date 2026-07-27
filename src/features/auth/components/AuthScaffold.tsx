@@ -107,9 +107,7 @@ export function AuthScaffold({
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
     >
-      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
-        {children}
-      </View>
+      {children}
     </KeyboardAwareScrollView>
   ) : (
     <View
@@ -119,9 +117,7 @@ export function AuthScaffold({
         contentWrapStyle,
       ]}
     >
-      <View style={compactHeader ? styles.cardOverlapCompact : styles.cardOverlap}>
-        {children}
-      </View>
+      {children}
     </View>
   );
 
@@ -308,6 +304,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
+    marginTop: -spacing.sm,
   },
   cardWrapCompact: {
     borderTopLeftRadius: 20,
@@ -319,33 +316,23 @@ const styles = StyleSheet.create({
   },
   cardWrapScroll: {
     flexGrow: 1,
-    paddingTop: 72,
+    paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
   },
   cardWrapScrollCompact: {
     flexGrow: 1,
     paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
   },
   cardWrapStatic: {
     flex: 1,
-    paddingTop: 72,
+    paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
   },
   cardWrapStaticCompact: {
     flex: 1,
     paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  cardOverlap: {
-    marginTop: -62,
-  },
-  cardOverlapCompact: {
-    marginTop: 0,
   },
   legalFooter: {
     backgroundColor: colors.white,

@@ -71,7 +71,7 @@ export function SettingsProfileHeader({
               <FontAwesome
                 name="exclamation-circle"
                 size={13}
-                color={colors.white}
+                color={colors.primary}
               />
               <AppText weight="semibold" style={styles.unverifiedLabel}>
                 {t('profile.verification.notVerified')}
@@ -144,10 +144,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: colors.primarySoft,
   },
   unverifiedLabel: {
     fontSize: 12,
-    color: colors.white,
+    color: colors.primary,
   },
 });
