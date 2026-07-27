@@ -121,7 +121,7 @@ export function ListingCard({
               <FontAwesome name="car" size={22} color={colors.text.tertiary} />
             </View>
           )}
-          {showPhotoCount && photoTotal > 0 ? (
+          {showPhotoCount && photoTotal > 1 ? (
             <View style={styles.photoBadge}>
               <FontAwesome name="image" size={9} color={colors.white} />
               <AppText weight="semibold" style={styles.photoBadgeText}>
