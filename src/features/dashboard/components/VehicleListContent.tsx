@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   item: {
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     overflow: 'hidden',
@@ -252,7 +252,6 @@ const styles = StyleSheet.create({
   },
   itemSelected: {
     borderColor: colors.primary,
-    borderWidth: 1.5,
   },
   gradientWash: {
     position: 'absolute',
