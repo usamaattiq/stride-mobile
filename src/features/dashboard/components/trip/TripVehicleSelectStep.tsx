@@ -14,7 +14,7 @@ import { spacing } from '@/theme';
 type TripVehicleSelectStepProps = {
   vehicles: Vehicle[];
   selectedVehicleId: string | null;
-  onSelectVehicle: (vehicleId: string) => void;
+  onSelectVehicle: (vehicleId: string | null) => void;
   onContinue: () => void;
   onAddVehicle: () => void;
 };
@@ -45,11 +45,12 @@ export function TripVehicleSelectStep({
             key={vehicle.id}
             vehicle={vehicle}
             selected={vehicle.id === selectedVehicleId}
-            onPress={() => onSelectVehicle(vehicle.id)}
+            onPress={() =>
+              onSelectVehicle(vehicle.id === selectedVehicleId ? null : vehicle.id)
+            }
           />
         ))}
 
-        <Button label={t('vehicles.addVehicle')} onPress={onAddVehicle} variant="secondary" />
         <Button
           label={t('common.continue')}
           onPress={onContinue}

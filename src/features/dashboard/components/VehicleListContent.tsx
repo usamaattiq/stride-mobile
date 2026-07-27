@@ -154,51 +154,36 @@ export function VehicleListItem({
             ) : null}
           </View>
 
-          <View style={styles.metaRow}>
-            <FontAwesome name="car" size={11} color={colors.primary} />
-            <AppText style={styles.metaText} numberOfLines={1}>
-              {classLabel}
-            </AppText>
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
+              <FontAwesome name="car" size={11} color={colors.primary} />
+              <AppText style={styles.metaText} numberOfLines={1}>
+                {classLabel}
+              </AppText>
+            </View>
+            <View style={styles.detailItem}>
+              <FontAwesome name="users" size={11} color={colors.primary} />
+              <AppText style={styles.metaText} numberOfLines={1}>
+                {t('vehicles.seatsCount', { count: vehicle.totalSeats })}
+              </AppText>
+            </View>
           </View>
 
-          <View style={styles.metaRow}>
-            <FontAwesome name="users" size={11} color={colors.primary} />
-            <AppText style={styles.metaText} numberOfLines={1}>
-              {t('vehicles.seatsCount', { count: vehicle.totalSeats })}
-            </AppText>
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
+              <FontAwesome name="id-card-o" size={11} color={colors.primary} />
+              <AppText style={styles.metaText} numberOfLines={1}>
+                {vehicle.plateNumber}
+              </AppText>
+            </View>
+            <View style={styles.detailItem}>
+              <FontAwesome name="snowflake-o" size={11} color={colors.primary} />
+              <AppText style={styles.metaText} numberOfLines={1}>
+                {acLabel}
+              </AppText>
+            </View>
           </View>
         </View>
-      </View>
-
-      <View style={styles.footer}>
-        <View style={styles.footerItem}>
-          <View style={styles.footerIcon}>
-            <FontAwesome name="id-card-o" size={11} color={colors.primary} />
-          </View>
-          <AppText weight="semibold" style={styles.footerPlain} numberOfLines={1}>
-            {vehicle.plateNumber}
-          </AppText>
-        </View>
-
-        <View style={styles.footerDivider} />
-
-        <View style={styles.footerItem}>
-          <View style={styles.footerIcon}>
-            <FontAwesome name="snowflake-o" size={11} color={colors.primary} />
-          </View>
-          <AppText weight="semibold" style={styles.footerPlain} numberOfLines={1}>
-            {acLabel}
-          </AppText>
-        </View>
-
-        {selected ? (
-          <View style={styles.statusBadge}>
-            <FontAwesome name="check-circle" size={10} color={colors.accent.green.text} />
-            <AppText weight="semibold" style={styles.statusText}>
-              {t('vehicles.selected')}
-            </AppText>
-          </View>
-        ) : null}
       </View>
     </Pressable>
   );
@@ -273,17 +258,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    bottom: 36,
+    bottom: 0,
     width: '58%',
   },
   mainRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.sm,
+    gap: spacing.xs,
+    padding: spacing.xs,
   },
   thumbnail: {
-    width: 88,
-    height: 96,
+    width: 64,
+    height: 72,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
@@ -363,55 +348,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  footer: {
+  detailsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border.default,
-    backgroundColor: 'rgba(249, 250, 251, 0.72)',
   },
-  footerItem: {
+  detailItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     minWidth: 0,
-  },
-  footerDivider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: 'stretch',
-    backgroundColor: colors.border.default,
-    marginVertical: 2,
-  },
-  footerIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  footerPlain: {
-    flexShrink: 1,
-    fontSize: 12,
-    color: colors.text.primary,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent.green.soft,
-    flexShrink: 0,
-  },
-  statusText: {
-    fontSize: 10,
-    color: colors.accent.green.text,
   },
   empty: {
     flexGrow: 1,
