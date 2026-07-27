@@ -81,12 +81,7 @@ export function SignupSuccessRoute(): React.ReactElement {
     navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
   };
 
-  return (
-    <SignupSuccessScreen
-      onGoToDashboard={goDashboard}
-      onStartExploring={goDashboard}
-    />
-  );
+  return <SignupSuccessScreen onGoToDashboard={goDashboard} />;
 }
 
 const styles = StyleSheet.create({

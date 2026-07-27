@@ -41,12 +41,10 @@ const CONFETTI: {
 
 type SignupSuccessScreenProps = {
   onGoToDashboard: () => void;
-  onStartExploring: () => void;
 };
 
 export function SignupSuccessScreen({
   onGoToDashboard,
-  onStartExploring,
 }: SignupSuccessScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
@@ -163,11 +161,6 @@ export function SignupSuccessScreen({
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Button label={t('auth.signup.success.dashboard')} onPress={onGoToDashboard} />
-        <Button
-          label={t('auth.signup.success.explore')}
-          variant="secondary"
-          onPress={onStartExploring}
-        />
       </View>
     </SafeAreaView>
   );

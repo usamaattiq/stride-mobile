@@ -18,6 +18,7 @@ type HomeHeaderProps = {
   onChatPress?: () => void;
   onNotificationsPress?: () => void;
   onCreditsPress?: () => void;
+  onProfilePress?: () => void;
 };
 
 export function HomeHeader({
@@ -30,6 +31,7 @@ export function HomeHeader({
   onChatPress,
   onNotificationsPress,
   onCreditsPress,
+  onProfilePress,
 }: HomeHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -38,15 +40,23 @@ export function HomeHeader({
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.xs }]}>
       <View style={styles.profile}>
-        {avatarUri ? (
-          <Image source={{ uri: avatarUri }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <AppText weight="bold" style={styles.avatarInitial}>
-              {firstName.charAt(0).toUpperCase()}
-            </AppText>
-          </View>
-        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.home.profileA11y')}
+          onPress={onProfilePress}
+          hitSlop={8}
+          style={({ pressed }) => pressed && styles.pressed}
+        >
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <AppText weight="bold" style={styles.avatarInitial}>
+                {firstName.charAt(0).toUpperCase()}
+              </AppText>
+            </View>
+          )}
+        </Pressable>
         <View style={styles.greeting}>
           <AppText weight="bold" style={styles.hello} numberOfLines={1}>
             {t('dashboard.home.hello', { name: firstName })}

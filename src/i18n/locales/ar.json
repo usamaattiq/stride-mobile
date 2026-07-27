@@ -105,8 +105,7 @@
         "creditsEarned": "لقد ربحت",
         "credits": "{{count}} نقطة",
         "creditsReason": "مقابل أول إعلان لك",
-        "dashboard": "الذهاب إلى لوحة التحكم",
-        "explore": "ابدأ الاستكشاف"
+        "dashboard": "الذهاب إلى لوحة التحكم"
       }
     },
     "login": {
@@ -177,6 +176,7 @@
       "credits": "رصيد",
       "chatA11y": "فتح المحادثات",
       "notificationsA11y": "فتح الإشعارات",
+      "profileA11y": "فتح الإعدادات",
       "creditsA11y": "{{count}} رصيد",
       "bannerTitle": "طلبات العودة المتاحة",
       "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
