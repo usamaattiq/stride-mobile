@@ -90,7 +90,7 @@ export function TripScheduleStep({
               >
                 {selected ? (
                   <View style={styles.checkBadge}>
-                    <FontAwesome name="check" size={10} color={colors.white} />
+                    <FontAwesome name="check" size={9} color={colors.white} />
                   </View>
                 ) : null}
 
@@ -196,9 +196,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',

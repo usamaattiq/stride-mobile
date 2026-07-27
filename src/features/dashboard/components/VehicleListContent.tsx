@@ -149,7 +149,7 @@ export function VehicleListItem({
               </Pressable>
             ) : selected ? (
               <View style={styles.selectedBadge}>
-                <FontAwesome name="check" size={11} color={colors.white} />
+                <FontAwesome name="check" size={9} color={colors.white} />
               </View>
             ) : null}
           </View>
@@ -329,9 +329,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   selectedBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
