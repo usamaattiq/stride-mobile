@@ -14,6 +14,7 @@ type TripPointFieldProps = {
   value: TripLocationPoint | null;
   onSelectOnMap: () => void;
   required?: boolean;
+  optional?: boolean;
 };
 
 export function TripPointField({
@@ -21,6 +22,7 @@ export function TripPointField({
   value,
   onSelectOnMap,
   required = false,
+  optional = false,
 }: TripPointFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const resolvedLabel = useResolvedLocationPointLabel(value, '');
@@ -30,6 +32,7 @@ export function TripPointField({
       <AppText weight="medium" style={styles.label}>
         {label}
         {required ? <AppText style={styles.required}> *</AppText> : null}
+        {optional ? <AppText style={styles.optional}> (optional)</AppText> : null}
       </AppText>
 
       {value ? (
@@ -68,6 +71,10 @@ const styles = StyleSheet.create({
   required: {
     fontSize: 13,
     color: colors.primary,
+  },
+  optional: {
+    fontSize: 12,
+    color: colors.text.tertiary,
   },
   valueBox: {
     minHeight: 46,
