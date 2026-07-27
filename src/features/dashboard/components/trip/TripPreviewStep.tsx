@@ -14,6 +14,7 @@ import {
 } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { useResolvedLocationPointLabel } from '@/shared/hooks/useResolvedLocationPointLabel';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
@@ -115,11 +116,14 @@ function LocationPointRow({
   point,
   accessibilityLabel,
 }: LocationPointRowProps): React.ReactElement | null {
-  if (!point?.label?.trim()) {
+  const label = useResolvedLocationPointLabel(point, '');
+
+  if (!label.trim()) {
     return null;
   }
 
   const canOpen =
+    point != null &&
     Number.isFinite(point.latitude) &&
     Number.isFinite(point.longitude) &&
     !(point.latitude === 0 && point.longitude === 0);
@@ -129,7 +133,7 @@ function LocationPointRow({
       style={({ pressed }) => [styles.pointRow, pressed && canOpen && styles.pointRowPressed]}
       disabled={!canOpen}
       onPress={() => {
-        if (!canOpen) {
+        if (!point || !canOpen) {
           return;
         }
         void openInGoogleMaps(point);
@@ -144,7 +148,7 @@ function LocationPointRow({
           weight="medium"
           style={[styles.pointValue, canOpen && styles.pointValueLink]}
         >
-          {point.label.trim()}
+          {label}
         </AppText>
       </View>
       {canOpen ? (
@@ -207,7 +211,7 @@ export function TripPreviewStep({
 
   return (
     <View style={styles.root}>
-      {trip ? <ListingCard trip={trip} showPhotoCount /> : null}
+      {trip ? <ListingCard trip={trip} /> : null}
 
       {descriptionText ? (
         <View style={styles.card}>

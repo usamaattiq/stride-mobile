@@ -23,6 +23,7 @@ import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { useResolvedLocationPointLabel } from '@/shared/hooks/useResolvedLocationPointLabel';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
@@ -100,7 +101,7 @@ function LocationPointRow({
   point,
   accessibilityLabel,
 }: LocationPointRowProps): React.ReactElement {
-  const label = point?.label?.trim() || '—';
+  const label = useResolvedLocationPointLabel(point);
   const canOpen =
     point != null &&
     Number.isFinite(point.latitude) &&

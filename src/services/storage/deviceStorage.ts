@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
-  lastPhoneDigits: 'stride.auth.lastPhoneDigits',
-  lastCountryCode: 'stride.auth.lastCountryCode',
-  lastCountryCallingCode: 'stride.auth.lastCountryCallingCode',
-  biometricEnabled: 'stride.security.biometricEnabled',
+  lastPhoneDigits: 'musafir.auth.lastPhoneDigits',
+  lastCountryCode: 'musafir.auth.lastCountryCode',
+  lastCountryCallingCode: 'musafir.auth.lastCountryCallingCode',
+  biometricEnabled: 'musafir.security.biometricEnabled',
 } as const;
 
 export type LastPhonePreference = {

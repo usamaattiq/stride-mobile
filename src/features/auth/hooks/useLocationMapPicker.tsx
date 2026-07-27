@@ -36,6 +36,12 @@ type MapRegion = {
   longitude: number;
 };
 
+type MapPin = {
+  latitude: number;
+  longitude: number;
+  label?: string;
+};
+
 // Default map focus (Karachi) used when no coordinates are available yet.
 const DEFAULT_REGION: MapRegion = {
   latitude: 24.8607,
@@ -67,7 +73,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   const [mapSearchResults, setMapSearchResults] = useState<MapSearchResult[]>([]);
   const [mapSearchLoading, setMapSearchLoading] = useState(false);
   const [mapSearchShowEmpty, setMapSearchShowEmpty] = useState(false);
-  const [mapPin, setMapPin] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapPin, setMapPin] = useState<MapPin | null>(null);
   // Seeds the WebView HTML only when the picker opens — must NOT track live pan
   // updates (mapPin), otherwise every pan reloads the whole WebView instead of
   // just panning the already-loaded map.
@@ -76,7 +82,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
 
   const pinMapToLocation = useCallback((latitude: number, longitude: number, address?: string) => {
     mapWebViewRef.current?.injectJavaScript(
-      `window.__STRIDE_SET_LOCATION && window.__STRIDE_SET_LOCATION(${latitude}, ${longitude}, ${JSON.stringify(address ?? '')}); true;`,
+      `window.__MUSAFIR_SET_LOCATION && window.__MUSAFIR_SET_LOCATION(${latitude}, ${longitude}, ${JSON.stringify(address ?? '')}); true;`,
     );
   }, []);
 
@@ -122,7 +128,11 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       setMapSearchShowEmpty(false);
 
       if (initial) {
-        const seed = { latitude: initial.latitude, longitude: initial.longitude };
+        const seed: MapPin = {
+          latitude: initial.latitude,
+          longitude: initial.longitude,
+          label: initial.label?.trim() || undefined,
+        };
         setMapPin(seed);
         setMapHtmlSeed(seed);
       } else {
@@ -181,7 +191,11 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       return;
     }
 
-    const label = await resolveAddressLabel(mapPin.latitude, mapPin.longitude);
+    const cachedLabel = mapPin.label?.trim();
+    const label =
+      cachedLabel && cachedLabel.length > 0
+        ? cachedLabel
+        : await resolveAddressLabel(mapPin.latitude, mapPin.longitude);
     confirmSelectionRef.current?.({
       label,
       latitude: mapPin.latitude,
@@ -195,9 +209,15 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       const payload = JSON.parse(event.nativeEvent.data) as {
         latitude?: number;
         longitude?: number;
+        address?: string;
       };
       if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
-        setMapPin({ latitude: payload.latitude, longitude: payload.longitude });
+        const address = payload.address?.trim();
+        setMapPin((current) => ({
+          latitude: payload.latitude as number,
+          longitude: payload.longitude as number,
+          label: address || current?.label,
+        }));
       }
     } catch {
       // no-op
@@ -209,6 +229,11 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       skipMapSearchRef.current = true;
       setMapSearchQuery(result.label);
       setMapSearchResults([]);
+      setMapPin({
+        latitude: result.latitude,
+        longitude: result.longitude,
+        label: result.label,
+      });
       pinMapToLocation(result.latitude, result.longitude, result.label);
     },
     [pinMapToLocation],

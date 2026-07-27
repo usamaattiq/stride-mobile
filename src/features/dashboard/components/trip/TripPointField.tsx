@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { useResolvedLocationPointLabel } from '@/shared/hooks/useResolvedLocationPointLabel';
 import { colors, radius, spacing } from '@/theme';
 
 type TripPointFieldProps = {
@@ -22,6 +23,7 @@ export function TripPointField({
   required = false,
 }: TripPointFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const resolvedLabel = useResolvedLocationPointLabel(value, '');
 
   return (
     <View style={styles.wrap}>
@@ -34,7 +36,7 @@ export function TripPointField({
         <View style={styles.valueBox}>
           <FontAwesome name="map-marker" size={14} color={colors.primary} />
           <AppText style={styles.valueText} numberOfLines={2}>
-            {value.label}
+            {resolvedLabel}
           </AppText>
         </View>
       ) : (

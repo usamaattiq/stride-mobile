@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "stride",
+      "brandName": "musafir",
       "title": "احجز رحلتك التالية في دقائق",
       "subtitle": "قارن الحافلات والمركبات والرحلات الخاصة عبر كل المسارات.",
       "signUp": "إنشاء حساب",
@@ -256,7 +256,7 @@
         "share": "مشاركة القائمة",
         "edit": "تعديل القائمة",
         "editComingSoon": "تعديل القوائم سيكون متاحًا قريبًا.",
-        "shareMessage": "قائمة Stride: {{from}} → {{to}}. السعر {{price}} /مقعد.",
+        "shareMessage": "قائمة Musafir: {{from}} → {{to}}. السعر {{price}} /مقعد.",
         "comingSoonTitle": "قريبًا",
         "comingSoonBody": "سيكون هذا القسم متاحًا في تحديث لاحق.",
         "manageHint": "أزل هذه القائمة إذا لم تعد بحاجة إليها.",
@@ -311,7 +311,7 @@
       },
       "becomeDriver": {
         "title": "كن سائقاً",
-        "subtitle": "قدّم رحلات واكسب مع Stride",
+        "subtitle": "قدّم رحلات واكسب مع Musafir",
         "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
         "confirmCta": "كن سائقاً"
       },
@@ -416,7 +416,7 @@
     "listSubtitle": "أضف وأدر المركبات التي تقودها",
     "addVehicle": "إضافة مركبة",
     "emptyTitle": "لا توجد مركبات بعد",
-    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Stride.",
+    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Musafir.",
     "detailsTitle": "تفاصيل المركبة",
     "detailsSubtitle": "أخبرنا عن مركبتك",
     "continue": "متابعة",
