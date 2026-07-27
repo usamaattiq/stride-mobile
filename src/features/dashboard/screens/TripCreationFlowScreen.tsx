@@ -216,7 +216,6 @@ export function TripCreationFlowScreen(): React.ReactElement {
         subtitle={header.subtitle}
         showLegalFooter={false}
         showLanguageSwitcher={false}
-        compactHeader
         stepCount={TOTAL_STEPS}
         currentStep={STEP_PROGRESS[step]}
       >
