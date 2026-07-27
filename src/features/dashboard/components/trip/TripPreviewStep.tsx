@@ -224,9 +224,7 @@ export function TripPreviewStep({
               style={[styles.descriptionText, styles.descriptionMeasure]}
               pointerEvents="none"
               onTextLayout={(event) => {
-                if (event.nativeEvent.lines.length > 2) {
-                  setDescriptionTruncatable(true);
-                }
+                setDescriptionTruncatable(event.nativeEvent.lines.length > 2);
               }}
             >
               {descriptionText}
@@ -236,20 +234,20 @@ export function TripPreviewStep({
               numberOfLines={descriptionExpanded ? undefined : 2}
             >
               {descriptionText}
-              {descriptionTruncatable ? (
-                <AppText
-                  weight="semibold"
-                  style={styles.showMoreText}
-                  onPress={() => setDescriptionExpanded((current) => !current)}
-                  suppressHighlighting
-                >
-                  {'  '}
+            </AppText>
+            {descriptionTruncatable ? (
+              <Pressable
+                onPress={() => setDescriptionExpanded((current) => !current)}
+                hitSlop={6}
+                accessibilityRole="button"
+              >
+                <AppText weight="semibold" style={styles.showMoreText}>
                   {descriptionExpanded
                     ? t('dashboard.listings.detail.showLess')
                     : t('dashboard.listings.detail.showMore')}
                 </AppText>
-              ) : null}
-            </AppText>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : null}
@@ -413,6 +411,7 @@ const styles = StyleSheet.create({
   },
   descriptionWrap: {
     position: 'relative',
+    gap: 4,
   },
   descriptionText: {
     fontSize: 13,
@@ -424,6 +423,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
+    width: '100%',
     opacity: 0,
   },
   showMoreText: {

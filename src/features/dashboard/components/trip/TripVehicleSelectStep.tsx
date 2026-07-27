@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AuthCard } from '@/features/auth/components/AuthCard';
 import {
   VehicleListItem,
   VehiclesEmptyState,
@@ -31,19 +30,16 @@ export function TripVehicleSelectStep({
 
   if (vehicles.length === 0) {
     return (
-      <AuthCard>
-        <VehiclesEmptyState
-          title={t('trips.create.noVehiclesTitle')}
-          subtitle={t('trips.create.noVehiclesSubtitle')}
-          onAddPress={onAddVehicle}
-        />
-      </AuthCard>
+      <VehiclesEmptyState
+        title={t('trips.create.noVehiclesTitle')}
+        subtitle={t('trips.create.noVehiclesSubtitle')}
+        onAddPress={onAddVehicle}
+      />
     );
   }
 
   return (
-    <AuthCard>
-      <View style={styles.form}>
+    <View style={styles.form}>
         {vehicles.map((vehicle) => (
           <VehicleListItem
             key={vehicle.id}
@@ -59,8 +55,7 @@ export function TripVehicleSelectStep({
           onPress={onContinue}
           disabled={!selectedVehicleId}
         />
-      </View>
-    </AuthCard>
+    </View>
   );
 }
 

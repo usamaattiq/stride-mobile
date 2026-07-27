@@ -3,7 +3,6 @@ import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AuthCard } from '@/features/auth/components/AuthCard';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
 import type { TripDraft, TripStartMode } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
@@ -67,8 +66,7 @@ export function TripScheduleStep({
   };
 
   return (
-    <AuthCard>
-      <View style={styles.form}>
+    <View style={styles.form}>
         <View style={styles.header}>
           <View style={styles.headerIcon}>
             <MaterialCommunityIcons name="calendar-clock" size={26} color={colors.primary} />
@@ -140,8 +138,7 @@ export function TripScheduleStep({
           onPress={onContinue}
           disabled={!isScheduleComplete(draft)}
         />
-      </View>
-    </AuthCard>
+    </View>
   );
 }
 

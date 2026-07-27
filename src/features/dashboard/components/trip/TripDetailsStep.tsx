@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker';
 import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
@@ -46,8 +45,7 @@ export function TripDetailsStep({
 
   return (
     <>
-      <AuthCard>
-        <View style={styles.form}>
+      <View style={styles.form}>
           <CitySearchField
             label={t('trips.create.departureCity')}
             placeholder={t('trips.create.cityPlaceholder')}
@@ -141,8 +139,7 @@ export function TripDetailsStep({
             onPress={onContinue}
             disabled={!isDetailsComplete(draft)}
           />
-        </View>
-      </AuthCard>
+      </View>
       {mapPickerSheet}
     </>
   );

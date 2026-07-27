@@ -423,6 +423,7 @@
     "classPlaceholder": "Select vehicle class",
     "classPickerTitle": "Select vehicle class",
     "seatsCount": "{{count}} seats",
+    "selected": "Selected",
     "remove": {
       "title": "Remove vehicle",
       "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",

@@ -3,7 +3,6 @@ import { FontAwesome, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { DurationSlider } from '@/features/dashboard/components/trip/DurationSlider';
 import type {
@@ -149,8 +148,7 @@ export function TripRfqAuctionStep({
   ];
 
   return (
-    <AuthCard>
-      <View style={styles.form}>
+    <View style={styles.form}>
         <View style={styles.section}>
           <AppText weight="medium" style={styles.sectionLabel}>
             {t('trips.create.listingTypeLabel')}
@@ -213,8 +211,7 @@ export function TripRfqAuctionStep({
           onPress={onContinue}
           disabled={!isListingComplete(draft)}
         />
-      </View>
-    </AuthCard>
+    </View>
   );
 }
 

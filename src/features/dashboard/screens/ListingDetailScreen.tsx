@@ -2,6 +2,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -151,6 +152,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const [tab, setTab] = React.useState<DetailTab>('overview');
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
+  const scrollX = React.useRef(new Animated.Value(0)).current;
   const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
   const [descriptionTruncatable, setDescriptionTruncatable] = React.useState(false);
   const [confirmRemove, setConfirmRemove] = React.useState(false);
@@ -165,8 +167,41 @@ export function ListingDetailScreen(): React.ReactElement {
       }
       const index = next === 'overview' ? 0 : 1;
       pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+      if (!animated) {
+        scrollX.setValue(index * pageWidth);
+      }
+    },
+    [pageWidth, scrollX],
+  );
+
+  const animatedTabIndex = React.useMemo(() => {
+    if (pageWidth <= 0) {
+      return undefined;
+    }
+    return scrollX.interpolate({
+      inputRange: [0, pageWidth],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+  }, [pageWidth, scrollX]);
+
+  const syncTabFromOffset = React.useCallback(
+    (offsetX: number) => {
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = Math.round(offsetX / pageWidth);
+      const nextTab: DetailTab = index === 0 ? 'overview' : 'responses';
+      setTab((current) => (current === nextTab ? current : nextTab));
     },
     [pageWidth],
+  );
+
+  const onPagerScrollEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      syncTabFromOffset(event.nativeEvent.contentOffset.x);
+    },
+    [syncTabFromOffset],
   );
 
   const onPagerLayout = React.useCallback(
@@ -177,22 +212,12 @@ export function ListingDetailScreen(): React.ReactElement {
       }
       setPageWidth(width);
       const index = tab === 'overview' ? 0 : 1;
+      scrollX.setValue(index * width);
       requestAnimationFrame(() => {
         pagerRef.current?.scrollTo({ x: index * width, animated: false });
       });
     },
-    [pageWidth, tab],
-  );
-
-  const onPagerScrollEnd = React.useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (pageWidth <= 0) {
-        return;
-      }
-      const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
-      setTab(index === 0 ? 'overview' : 'responses');
-    },
-    [pageWidth],
+    [pageWidth, scrollX, tab],
   );
 
   React.useEffect(() => {
@@ -212,6 +237,11 @@ export function ListingDetailScreen(): React.ReactElement {
       })
       .finally(() => setLoading(false));
   }, [cached, route.params.tripId, t]);
+
+  React.useEffect(() => {
+    setDescriptionExpanded(false);
+    setDescriptionTruncatable(false);
+  }, [trip?.id, trip?.description]);
 
   const handleRemove = () => {
     if (!trip || removing) {
@@ -325,10 +355,15 @@ export function ListingDetailScreen(): React.ReactElement {
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        <SegmentControl options={tabs} value={tab} onChange={selectTab} />
+        <SegmentControl
+          options={tabs}
+          value={tab}
+          onChange={selectTab}
+          animatedIndex={animatedTabIndex}
+        />
 
         <View style={styles.pager} onLayout={onPagerLayout}>
-          <ScrollView
+          <Animated.ScrollView
             ref={pagerRef}
             horizontal
             pagingEnabled
@@ -337,6 +372,10 @@ export function ListingDetailScreen(): React.ReactElement {
             showsHorizontalScrollIndicator={false}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+              useNativeDriver: true,
+            })}
+            onScrollEndDrag={onPagerScrollEnd}
             onMomentumScrollEnd={onPagerScrollEnd}
             scrollEventThrottle={16}
           >
@@ -351,9 +390,7 @@ export function ListingDetailScreen(): React.ReactElement {
                     style={[styles.descriptionText, styles.descriptionMeasure]}
                     pointerEvents="none"
                     onTextLayout={(event) => {
-                      if (event.nativeEvent.lines.length > 2) {
-                        setDescriptionTruncatable(true);
-                      }
+                      setDescriptionTruncatable(event.nativeEvent.lines.length > 2);
                     }}
                   >
                     {description}
@@ -363,20 +400,20 @@ export function ListingDetailScreen(): React.ReactElement {
                     numberOfLines={descriptionExpanded ? undefined : 2}
                   >
                     {description}
-                    {descriptionTruncatable ? (
-                      <AppText
-                        weight="semibold"
-                        style={styles.showMoreText}
-                        onPress={() => setDescriptionExpanded((current) => !current)}
-                        suppressHighlighting
-                      >
-                        {'  '}
+                  </AppText>
+                  {descriptionTruncatable ? (
+                    <Pressable
+                      onPress={() => setDescriptionExpanded((current) => !current)}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                    >
+                      <AppText weight="semibold" style={styles.showMoreText}>
                         {descriptionExpanded
                           ? t('dashboard.listings.detail.showLess')
                           : t('dashboard.listings.detail.showMore')}
                       </AppText>
-                    ) : null}
-                  </AppText>
+                    </Pressable>
+                  ) : null}
                 </View>
               </View>
 
@@ -471,7 +508,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 </AppText>
               </View>
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       </View>
 
@@ -658,6 +695,7 @@ const styles = StyleSheet.create({
   },
   descriptionWrap: {
     position: 'relative',
+    gap: 4,
   },
   descriptionText: {
     fontSize: 13,
@@ -669,6 +707,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
+    width: '100%',
     opacity: 0,
   },
   showMoreText: {
