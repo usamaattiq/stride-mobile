@@ -29,7 +29,7 @@ type SectionIconProps = {
 function SectionIcon({ name }: SectionIconProps): React.ReactElement {
   return (
     <View style={styles.sectionIcon}>
-      <FontAwesome name={name} size={14} color={colors.primary} />
+      <FontAwesome name={name} size={18} color={colors.primary} />
     </View>
   );
 }
@@ -286,10 +286,10 @@ const styles = StyleSheet.create({
   sectionIcon: {
     width: 32,
     height: 32,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+    //  borderRadius: radius.sm,
+    // backgroundColor: colors.primarySoft,
   },
   sectionTitle: {
     fontSize: 15,
