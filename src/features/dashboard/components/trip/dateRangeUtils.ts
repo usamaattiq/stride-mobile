@@ -69,3 +69,27 @@ export function formatDateRangeLabel(
   }
   return fallback;
 }
+
+export function formatTripDateTime(
+  iso: string | null | undefined,
+  locale: string,
+  fallback = '—',
+): string {
+  if (!iso) {
+    return fallback;
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+  const day = date.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const time = date.toLocaleTimeString(locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return `${day} at ${time}`;
+}
