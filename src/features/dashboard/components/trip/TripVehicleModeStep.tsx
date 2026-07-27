@@ -3,6 +3,7 @@ import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { AuthCard } from '@/features/auth/components/AuthCard';
 import type { TripVehicleMode } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
@@ -48,7 +49,8 @@ export function TripVehicleModeStep({
   ];
 
   return (
-    <View style={styles.form}>
+    <AuthCard>
+      <View style={styles.form}>
         <AppText weight="medium" style={styles.label}>
           {t('trips.create.vehicleModeLabel')}
           <AppText style={styles.required}> *</AppText>
@@ -87,7 +89,8 @@ export function TripVehicleModeStep({
         </View>
 
       <Button label={t('common.continue')} onPress={onContinue} disabled={!value} />
-    </View>
+      </View>
+    </AuthCard>
   );
 }
 

@@ -96,6 +96,7 @@ export function VehicleListScreen(): React.ReactElement {
       subtitle={t('vehicles.listSubtitle')}
       showLegalFooter={false}
       showLanguageSwitcher={false}
+      compactHeader
       headerRight={
         <Pressable
           onPress={openAddFlow}

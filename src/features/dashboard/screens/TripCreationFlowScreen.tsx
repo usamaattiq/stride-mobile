@@ -218,6 +218,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         subtitle={header.subtitle}
         showLegalFooter={false}
         showLanguageSwitcher={false}
+        compactHeader
         headerRight={
           step === 'vehicle' ? (
             <Pressable

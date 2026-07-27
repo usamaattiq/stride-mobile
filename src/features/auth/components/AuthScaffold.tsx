@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   cardWrapScroll: {
     flexGrow: 1,
     paddingTop: 72,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
   cardWrapScrollCompact: {
