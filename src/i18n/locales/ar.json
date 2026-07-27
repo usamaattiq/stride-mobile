@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "stride",
+      "brandName": "musafir",
       "title": "احجز رحلتك التالية في دقائق",
       "subtitle": "قارن الحافلات والمركبات والرحلات الخاصة عبر كل المسارات.",
       "signUp": "إنشاء حساب",
@@ -105,8 +105,7 @@
         "creditsEarned": "لقد ربحت",
         "credits": "{{count}} نقطة",
         "creditsReason": "مقابل أول إعلان لك",
-        "dashboard": "الذهاب إلى لوحة التحكم",
-        "explore": "ابدأ الاستكشاف"
+        "dashboard": "الذهاب إلى لوحة التحكم"
       }
     },
     "login": {
@@ -177,6 +176,7 @@
       "credits": "رصيد",
       "chatA11y": "فتح المحادثات",
       "notificationsA11y": "فتح الإشعارات",
+      "profileA11y": "فتح الإعدادات",
       "creditsA11y": "{{count}} رصيد",
       "bannerTitle": "طلبات العودة المتاحة",
       "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
@@ -256,7 +256,7 @@
         "share": "مشاركة القائمة",
         "edit": "تعديل القائمة",
         "editComingSoon": "تعديل القوائم سيكون متاحًا قريبًا.",
-        "shareMessage": "قائمة Stride: {{from}} → {{to}}. السعر {{price}} /مقعد.",
+        "shareMessage": "قائمة Musafir: {{from}} → {{to}}. السعر {{price}} /مقعد.",
         "comingSoonTitle": "قريبًا",
         "comingSoonBody": "سيكون هذا القسم متاحًا في تحديث لاحق.",
         "manageHint": "أزل هذه القائمة إذا لم تعد بحاجة إليها.",
@@ -311,7 +311,7 @@
       },
       "becomeDriver": {
         "title": "كن سائقاً",
-        "subtitle": "قدّم رحلات واكسب مع Stride",
+        "subtitle": "قدّم رحلات واكسب مع Musafir",
         "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
         "confirmCta": "كن سائقاً"
       },
@@ -416,13 +416,14 @@
     "listSubtitle": "أضف وأدر المركبات التي تقودها",
     "addVehicle": "إضافة مركبة",
     "emptyTitle": "لا توجد مركبات بعد",
-    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Stride.",
+    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Musafir.",
     "detailsTitle": "تفاصيل المركبة",
     "detailsSubtitle": "أخبرنا عن مركبتك",
     "continue": "متابعة",
     "classPlaceholder": "اختر فئة المركبة",
     "classPickerTitle": "اختر فئة المركبة",
     "seatsCount": "{{count}} مقاعد",
+    "selected": "محددة",
     "remove": {
       "title": "إزالة المركبة",
       "confirm": "هل أنت متأكد أنك تريد إزالة \"{{title}}\"؟ لا يمكن التراجع عن هذا الإجراء.",

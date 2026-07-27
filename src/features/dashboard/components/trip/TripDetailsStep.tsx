@@ -6,14 +6,12 @@ import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker';
 import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
-import { DateRangeCalendarField } from '@/features/dashboard/components/trip/DateRangeCalendarField';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
 import { TripPointField } from '@/features/dashboard/components/trip/TripPointField';
 import type { TripDraft } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
-import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 type TripDetailsStepProps = {
   draft: TripDraft;
@@ -22,11 +20,11 @@ type TripDetailsStepProps = {
 };
 
 function isDetailsComplete(draft: TripDraft): boolean {
+  const startDateRequired = draft.vehicleMode === 'shared';
   return Boolean(
     draft.departureCity &&
       draft.arrivalCity &&
-      draft.departureAt &&
-      draft.departureUntil,
+      (!startDateRequired || draft.departureAt),
   );
 }
 
@@ -37,6 +35,8 @@ export function TripDetailsStep({
 }: TripDetailsStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
+
+  const startDateRequired = draft.vehicleMode === 'shared';
 
   const departureWindowEnd = draft.departureUntil
     ? new Date(draft.departureUntil)
@@ -64,37 +64,20 @@ export function TripDetailsStep({
                 onChange({ departurePoint: selection });
               }, draft.departurePoint)
             }
+            optional
           />
 
-          <AppText weight="medium" style={styles.rowLabel}>
-            {t('trips.create.departureDateTime')}
-            <AppText style={styles.required}> *</AppText>
-          </AppText>
-          <View style={styles.row}>
-            <View style={styles.rowItemWide}>
-              <DateRangeCalendarField
-                label={t('trips.create.departureDateWindow')}
-                startIso={draft.departureAt}
-                endIso={draft.departureUntil}
-                onChange={({ startIso, endIso }) =>
-                  onChange({ departureAt: startIso, departureUntil: endIso })
-                }
-                required
-                hideLabel
-              />
-            </View>
-
-            <View style={styles.rowItemNarrow}>
-              <DateTimePickerField
-                label={t('trips.create.departureTime')}
-                value={draft.departureAt}
-                onChange={(departureAt) => onChange({ departureAt, departureTimeSet: true })}
-                mode="time"
-                timeConfirmed={draft.departureTimeSet}
-                hideLabel
-              />
-            </View>
-          </View>
+          <DateTimePickerField
+            label={t('trips.create.departureDateTime')}
+            value={draft.departureAt}
+            onChange={(departureAt, part) =>
+              onChange(part === 'time' ? { departureAt, departureTimeSet: true } : { departureAt })
+            }
+            minimumDate={new Date()}
+            timeConfirmed={draft.departureTimeSet}
+            required={startDateRequired}
+            optional={!startDateRequired}
+          />
 
           <CitySearchField
             label={t('trips.create.arrivalCity')}
@@ -112,6 +95,7 @@ export function TripDetailsStep({
                 onChange({ arrivalPoint: selection });
               }, draft.arrivalPoint)
             }
+            optional
           />
 
           <DateTimePickerField
@@ -122,6 +106,7 @@ export function TripDetailsStep({
             }
             minimumDate={departureWindowEnd}
             timeConfirmed={draft.arrivalTimeSet}
+            optional
           />
 
           <AuthTextField
@@ -151,24 +136,6 @@ export function TripDetailsStep({
 const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
-  },
-  rowLabel: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  required: {
-    fontSize: 13,
-    color: colors.primary,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  rowItemWide: {
-    flex: 6,
-  },
-  rowItemNarrow: {
-    flex: 4,
   },
   textArea: {
     minHeight: 96,

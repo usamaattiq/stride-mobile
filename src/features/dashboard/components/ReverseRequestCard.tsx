@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
   },
   ctaAuction: {
     backgroundColor: colors.primary,

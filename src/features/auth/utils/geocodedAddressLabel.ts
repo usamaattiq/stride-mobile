@@ -2,6 +2,10 @@ import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import type { LocationGeocodedAddress } from 'expo-location';
 
+import { ENV } from '@/shared/config/env';
+
+import { reverseGeocodeLocation } from './signup-map-geocode';
+
 function normalizeLocationSegment(segment: string): string {
   return segment.trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -46,14 +50,38 @@ export function formatGeocodedAddressLabel(address: LocationGeocodedAddress): st
   return parts.join(', ');
 }
 
+function coordinateFallbackLabel(latitude: number, longitude: number): string {
+  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+}
+
+const COORDINATE_LABEL_PATTERN = /^-?\d+\.\d{1,6},\s*-?\d+\.\d{1,6}$/;
+
+export function isCoordinateLabel(label: string): boolean {
+  return COORDINATE_LABEL_PATTERN.test(label.trim());
+}
+
 export async function resolveAddressLabel(latitude: number, longitude: number): Promise<string> {
   try {
     const places = await Location.reverseGeocodeAsync({ latitude, longitude });
     const first = places[0];
-    if (!first) return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    const label = formatGeocodedAddressLabel(first);
-    return label || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    if (first) {
+      const label = formatGeocodedAddressLabel(first);
+      if (label) {
+        return label;
+      }
+    }
   } catch {
-    return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    // Fall through to Google Geocoding API.
   }
+
+  const googleLabel = await reverseGeocodeLocation(
+    latitude,
+    longitude,
+    ENV.googleMapsApiKey,
+  );
+  if (googleLabel) {
+    return googleLabel;
+  }
+
+  return coordinateFallbackLabel(latitude, longitude);
 }

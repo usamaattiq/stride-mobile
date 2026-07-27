@@ -79,7 +79,7 @@ export function buildSignupMapPickerHtml(
         idleTimer = setTimeout(publishMapCenter, 250);
       }
 
-      window.__STRIDE_SET_LOCATION = function(lat, lng, address) {
+      window.__MUSAFIR_SET_LOCATION = function(lat, lng, address) {
         if (!map) return;
         map.panTo({ lat, lng });
         map.setZoom(16);

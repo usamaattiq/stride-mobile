@@ -3,7 +3,7 @@ import { secureStorage } from '@/services/storage/secureStorage';
 function generateDeviceId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).slice(2, 10);
-  return `stride-${timestamp}-${random}`;
+  return `musafir-${timestamp}-${random}`;
 }
 
 let cachedDeviceId: string | null = null;

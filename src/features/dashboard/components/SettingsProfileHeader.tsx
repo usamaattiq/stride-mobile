@@ -45,19 +45,22 @@ export function SettingsProfileHeader({
         </View>
 
         <View style={styles.copy}>
-          <AppText weight="bold" style={styles.name} numberOfLines={1}>
-            {user.fullName}
-          </AppText>
+          <View style={styles.nameRow}>
+            <AppText weight="bold" style={styles.name} numberOfLines={1}>
+              {user.fullName}
+            </AppText>
+            {isIdentityComplete ? (
+              <FontAwesome
+                name="check-circle"
+                size={16}
+                color={colors.white}
+                accessibilityLabel={t('profile.verification.verified')}
+              />
+            ) : null}
+          </View>
           <AppText style={styles.role}>{t(roleLabelKey(user.role))}</AppText>
 
-          {isIdentityComplete ? (
-            <View style={styles.verifiedRow}>
-              <FontAwesome name="check-circle" size={14} color={colors.white} />
-              <AppText weight="semibold" style={styles.verifiedLabel}>
-                {t('profile.verification.verified')}
-              </AppText>
-            </View>
-          ) : (
+          {!isIdentityComplete ? (
             <Pressable
               style={styles.unverifiedButton}
               accessibilityRole="button"
@@ -68,13 +71,13 @@ export function SettingsProfileHeader({
               <FontAwesome
                 name="exclamation-circle"
                 size={13}
-                color={colors.white}
+                color={colors.primary}
               />
               <AppText weight="semibold" style={styles.unverifiedLabel}>
                 {t('profile.verification.notVerified')}
               </AppText>
             </Pressable>
-          )}
+          ) : null}
         </View>
       </View>
     </View>
@@ -116,6 +119,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 0,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   name: {
     flexShrink: 1,
     fontSize: 20,
@@ -127,21 +135,6 @@ const styles = StyleSheet.create({
     color: colors.text.inverseMuted,
     lineHeight: 14,
   },
-  verifiedRow: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  verifiedLabel: {
-    fontSize: 13,
-    color: colors.white,
-  },
   unverifiedButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -151,10 +144,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: colors.primarySoft,
   },
   unverifiedLabel: {
     fontSize: 12,
-    color: colors.white,
+    color: colors.primary,
   },
 });

@@ -34,6 +34,11 @@ export function HomeScreen(): React.ReactElement {
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
+  const goToSettings = React.useCallback(() => {
+    navigation
+      .getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>()
+      ?.navigate('Settings');
+  }, [navigation]);
 
   const roleLabel =
     user.role === 'driver'
@@ -83,6 +88,7 @@ export function HomeScreen(): React.ReactElement {
         hasUnreadMessages={user.hasUnreadMessages}
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
+        onProfilePress={goToSettings}
       />
 
       <View style={styles.body}>

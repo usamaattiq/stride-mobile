@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "stride",
+      "brandName": "musafir",
       "title": "Book your next trip in minutes",
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
@@ -105,8 +105,7 @@
         "creditsEarned": "You earned",
         "credits": "{{count}} Credits",
         "creditsReason": "for your first listing",
-        "dashboard": "Go to Dashboard",
-        "explore": "Start Exploring"
+        "dashboard": "Go to Dashboard"
       }
     },
     "login": {
@@ -177,6 +176,7 @@
       "credits": "Credits",
       "chatA11y": "Open chats",
       "notificationsA11y": "Open notifications",
+      "profileA11y": "Open settings",
       "creditsA11y": "{{count}} credits",
       "bannerTitle": "Available Reverse Requests",
       "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
@@ -256,7 +256,7 @@
         "share": "Share Listing",
         "edit": "Edit Listing",
         "editComingSoon": "Editing listings will be available soon.",
-        "shareMessage": "Stride listing: {{from}} → {{to}}. Price {{price}} /seat.",
+        "shareMessage": "Musafir listing: {{from}} → {{to}}. Price {{price}} /seat.",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available in a future update.",
         "manageHint": "Remove this listing if it is no longer needed.",
@@ -311,7 +311,7 @@
       },
       "becomeDriver": {
         "title": "Become a driver",
-        "subtitle": "Offer rides and earn with Stride",
+        "subtitle": "Offer rides and earn with Musafir",
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
@@ -416,13 +416,14 @@
     "listSubtitle": "Add and manage the vehicles you drive",
     "addVehicle": "Add vehicle",
     "emptyTitle": "No vehicles yet",
-    "emptySubtitle": "Add your first vehicle to start offering rides on Stride.",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Musafir.",
     "detailsTitle": "Vehicle details",
     "detailsSubtitle": "Tell us about your vehicle",
     "continue": "Continue",
     "classPlaceholder": "Select vehicle class",
     "classPickerTitle": "Select vehicle class",
     "seatsCount": "{{count}} seats",
+    "selected": "Selected",
     "remove": {
       "title": "Remove vehicle",
       "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",

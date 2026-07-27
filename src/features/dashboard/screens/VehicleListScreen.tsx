@@ -1,9 +1,11 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   View,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -93,6 +95,19 @@ export function VehicleListScreen(): React.ReactElement {
       title={t('vehicles.listTitle')}
       subtitle={t('vehicles.listSubtitle')}
       showLegalFooter={false}
+      showLanguageSwitcher={false}
+      compactHeader
+      headerRight={
+        <Pressable
+          onPress={openAddFlow}
+          style={styles.addButton}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t('vehicles.addVehicle')}
+        >
+          <FontAwesome name="plus" size={16} color={colors.white} />
+        </Pressable>
+      }
     >
       {isLoading && vehicles.length === 0 ? (
         <View style={styles.centered}>
@@ -123,7 +138,6 @@ export function VehicleListScreen(): React.ReactElement {
               }}
             />
           ))}
-          <Button label={t('vehicles.addVehicle')} onPress={openAddFlow} />
         </View>
       )}
 
@@ -157,6 +171,14 @@ export function VehicleListScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
+  addButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
   content: {
     gap: spacing.sm,
   },

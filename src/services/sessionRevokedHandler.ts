@@ -9,7 +9,7 @@ let handling = false;
 
 /**
  * Fires when the server reports SESSION_REVOKED (e.g. the user signed in on another
- * device — Stride keeps a single active session per user). Multiple in-flight requests
+ * device — Musafir keeps a single active session per user). Multiple in-flight requests
  * can fail with this at once; the guard ensures only one sign-out + one alert happen.
  */
 export const sessionRevokedHandler = {

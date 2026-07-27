@@ -13,6 +13,8 @@ type SegmentControlProps<T extends string> = {
   options: Array<SegmentOption<T>>;
   value: T;
   onChange: (value: T) => void;
+  /** Fractional tab index (0..options.length-1) for swipe-synced thumb movement. */
+  animatedIndex?: Animated.AnimatedInterpolation<number>;
 };
 
 const TRACK_PADDING = 3;
@@ -21,6 +23,7 @@ export function SegmentControl<T extends string>({
   options,
   value,
   onChange,
+  animatedIndex,
 }: SegmentControlProps<T>): React.ReactElement {
   const selectedIndex = Math.max(
     0,
@@ -30,13 +33,16 @@ export function SegmentControl<T extends string>({
   const thumbX = React.useRef(new Animated.Value(selectedIndex)).current;
 
   React.useEffect(() => {
+    if (animatedIndex) {
+      return;
+    }
     Animated.spring(thumbX, {
       toValue: selectedIndex,
       useNativeDriver: true,
       tension: 280,
       friction: 28,
     }).start();
-  }, [selectedIndex, thumbX]);
+  }, [animatedIndex, selectedIndex, thumbX]);
 
   const onTrackLayout = (event: LayoutChangeEvent) => {
     setTrackWidth(event.nativeEvent.layout.width);
@@ -45,10 +51,23 @@ export function SegmentControl<T extends string>({
   const segmentCount = Math.max(options.length, 1);
   const innerWidth = Math.max(trackWidth - TRACK_PADDING * 2, 0);
   const thumbWidth = innerWidth / segmentCount;
-  const thumbTranslateX = thumbX.interpolate({
-    inputRange: options.map((_, index) => index),
-    outputRange: options.map((_, index) => TRACK_PADDING + index * thumbWidth),
-  });
+  const thumbTranslateX = React.useMemo(() => {
+    const inputRange = options.map((_, index) => index);
+    const outputRange = options.map((_, index) => TRACK_PADDING + index * thumbWidth);
+
+    if (animatedIndex) {
+      return animatedIndex.interpolate({
+        inputRange,
+        outputRange,
+        extrapolate: 'clamp',
+      });
+    }
+
+    return thumbX.interpolate({
+      inputRange,
+      outputRange,
+    });
+  }, [animatedIndex, options, thumbWidth, thumbX]);
 
   return (
     <View
@@ -97,7 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     position: 'relative',
     padding: TRACK_PADDING,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     backgroundColor: colors.background.subtle,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
@@ -107,7 +126,7 @@ const styles = StyleSheet.create({
     top: TRACK_PADDING,
     bottom: TRACK_PADDING,
     left: 0,
-    borderRadius: radius.sm,
+    borderRadius: radius.full,
     backgroundColor: colors.white,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
@@ -124,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
+    borderRadius: radius.full,
   },
   label: {
     fontSize: 13,

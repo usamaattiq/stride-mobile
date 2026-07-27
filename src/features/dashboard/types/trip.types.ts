@@ -102,12 +102,13 @@ export function canPublishTripDraft(draft: TripDraft): boolean {
 }
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
+  const departureRequired = draft.vehicleMode === 'shared';
+
   if (
     !draft.vehicleId ||
     !draft.vehicleMode ||
     !draft.departureCity ||
-    !draft.departureAt ||
-    !draft.departureUntil ||
+    (departureRequired && !draft.departureAt) ||
     !draft.arrivalCity ||
     !draft.listingType ||
     !draft.paymentMethod ||
@@ -141,9 +142,12 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
       longitude: 0,
     } satisfies TripLocationPoint);
 
+  // Private-vehicle bookings can skip the departure date entirely — default to now.
+  const departureAt = draft.departureAt ?? new Date().toISOString();
+
   // When arrival isn't set, place it after the departure window so API validation passes.
   const departureWindowEndMs = new Date(
-    draft.departureUntil ?? draft.departureAt,
+    draft.departureUntil ?? departureAt,
   ).getTime();
   const arrivalAt =
     draft.arrivalAt ??
@@ -160,7 +164,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
-    departureAt: draft.departureAt,
+    departureAt,
     departureUntil: draft.departureUntil,
     arrivalCity: draft.arrivalCity,
     arrivalPoint,
