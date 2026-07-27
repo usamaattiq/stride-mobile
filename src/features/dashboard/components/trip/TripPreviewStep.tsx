@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   timelineBody: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.sm,
+    gap: spacing.xxl,
   },
   endpointBlock: {
     gap: spacing.xs,
