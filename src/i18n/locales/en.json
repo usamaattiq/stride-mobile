@@ -245,6 +245,9 @@
       "passengerCountValue": "{{count}} passengers",
       "decreasePassengers": "Decrease passengers",
       "increasePassengers": "Increase passengers",
+      "suggestedDepartures": "Suggested Departures",
+      "suggestedArrivals": "Suggested Arrivals",
+      "back": "Back",
       "searchAction": "Search trips"
     },
     "listings": {

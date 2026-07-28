@@ -5,12 +5,8 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
-  TextInput,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { FontAwesome } from '@expo/vector-icons';
@@ -21,19 +17,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { TripCity, TripVehicleMode } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
-import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
-import { ENV } from '@/shared/config/env';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
-import { searchCities } from '@/shared/utils/city-search';
-import { colors, getFontFamily, radius, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 import { FeedPaginationBar } from './FeedPaginationBar';
 import { ListingCard } from './ListingCard';
 import { RequestsEmptyState } from './RequestsEmptyState';
+import { SearchCityPickerModal } from './SearchCityPickerModal';
+import { SegmentControl } from './SegmentControl';
 import { isSameLocalDay, startOfLocalDay } from './trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
@@ -42,10 +36,9 @@ import { mapTripDtoToTrip } from '../utils/trip.mapper';
 const PAGE_SIZE = 5;
 const MIN_PASSENGERS = 1;
 const MAX_PASSENGERS = 50;
-const CITY_RESULT_ROW_HEIGHT = 48;
-const CITY_RESULTS_MAX_HEIGHT = CITY_RESULT_ROW_HEIGHT * 3;
 
 type QuickDate = 'today' | 'tomorrow' | 'custom';
+type CityPickerMode = 'departure' | 'arrival' | null;
 
 function addDays(base: Date, days: number): Date {
   const next = startOfLocalDay(base);
@@ -73,7 +66,6 @@ function resolveQuickDate(date: Date, today: Date): QuickDate {
 
 export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const { currentLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
@@ -84,6 +76,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [departureDate, setDepartureDate] = React.useState(() => startOfLocalDay(new Date()));
   const [passengerCount, setPassengerCount] = React.useState(1);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
 
   const [applied, setApplied] = React.useState({
     vehicleMode: 'shared' as TripVehicleMode,
@@ -102,6 +95,14 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
 
   const today = startOfLocalDay(new Date());
   const quickDate = resolveQuickDate(departureDate, today);
+
+  const vehicleModeOptions = React.useMemo(
+    () => [
+      { id: 'shared' as const, label: t('dashboard.search.shared') },
+      { id: 'fullPrivate' as const, label: t('dashboard.search.private') },
+    ],
+    [t],
+  );
 
   const loadTrips = React.useCallback(async () => {
     setIsLoading(true);
@@ -179,6 +180,21 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     setDepartureDate(startOfLocalDay(selected));
   };
 
+  const handleCityPickerClose = React.useCallback(() => {
+    setCityPickerMode(null);
+  }, []);
+
+  const cityPickerModeRef = React.useRef(cityPickerMode);
+  cityPickerModeRef.current = cityPickerMode;
+
+  const handleCityPickerSelect = React.useCallback((city: TripCity) => {
+    if (cityPickerModeRef.current === 'arrival') {
+      setArrivalCity(city);
+    } else {
+      setDepartureCity(city);
+    }
+  }, []);
+
   const listHeader = (
     <View style={styles.resultsHeader}>
       <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
@@ -195,58 +211,44 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
           </AppText>
         </View>
 
-        <View style={styles.segment}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: vehicleMode === 'shared' }}
-            onPress={() => setVehicleMode('shared')}
-            style={[styles.segmentItem, vehicleMode === 'shared' && styles.segmentItemActive]}
-          >
-            <AppText
-              weight="semibold"
-              style={[
-                styles.segmentLabel,
-                vehicleMode === 'shared' ? styles.segmentLabelActive : styles.segmentLabelIdle,
-              ]}
-            >
-              {t('dashboard.search.shared')}
-            </AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: vehicleMode === 'fullPrivate' }}
-            onPress={() => setVehicleMode('fullPrivate')}
-            style={[styles.segmentItem, vehicleMode === 'fullPrivate' && styles.segmentItemActive]}
-          >
-            <AppText
-              weight="semibold"
-              style={[
-                styles.segmentLabel,
-                vehicleMode === 'fullPrivate' ? styles.segmentLabelActive : styles.segmentLabelIdle,
-              ]}
-            >
-              {t('dashboard.search.private')}
-            </AppText>
-          </Pressable>
+        <View style={styles.segmentWrap}>
+          <SegmentControl
+            variant="onBrand"
+            options={vehicleModeOptions}
+            value={vehicleMode}
+            onChange={setVehicleMode}
+          />
         </View>
 
         <View style={styles.routeBlock}>
-          <SearchCityField
-            icon="arrow-up"
-            placeholder={t('dashboard.search.departure')}
-            value={departureCity}
-            onChange={setDepartureCity}
-            language={currentLanguage}
-            inputStyle={styles.routeCityInput}
-          />
-          <SearchCityField
-            icon="arrow-down"
-            placeholder={t('dashboard.search.arrival')}
-            value={arrivalCity}
-            onChange={setArrivalCity}
-            language={currentLanguage}
-            inputStyle={styles.routeCityInput}
-          />
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setCityPickerMode('departure')}
+            style={({ pressed }) => [styles.field, styles.routeCityInput, pressed && styles.pressed]}
+          >
+            <FontAwesome name="arrow-up" size={13} color={colors.white} />
+            <AppText
+              weight="semibold"
+              style={[styles.fieldValue, !departureCity && styles.fieldPlaceholder]}
+              numberOfLines={1}
+            >
+              {departureCity?.label ?? t('dashboard.search.departure')}
+            </AppText>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setCityPickerMode('arrival')}
+            style={({ pressed }) => [styles.field, styles.routeCityInput, pressed && styles.pressed]}
+          >
+            <FontAwesome name="arrow-down" size={13} color={colors.white} />
+            <AppText
+              weight="semibold"
+              style={[styles.fieldValue, !arrivalCity && styles.fieldPlaceholder]}
+              numberOfLines={1}
+            >
+              {arrivalCity?.label ?? t('dashboard.search.arrival')}
+            </AppText>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('dashboard.search.swapCities')}
@@ -391,6 +393,14 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         />
       </View>
 
+      <SearchCityPickerModal
+        visible={cityPickerMode != null}
+        mode={cityPickerMode ?? 'departure'}
+        value={cityPickerMode === 'arrival' ? arrivalCity : departureCity}
+        onClose={handleCityPickerClose}
+        onSelect={handleCityPickerSelect}
+      />
+
       {showDatePicker ? (
         Platform.OS === 'ios' ? (
           <Modal transparent animationType="fade" visible onRequestClose={() => setShowDatePicker(false)}>
@@ -429,138 +439,6 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   );
 });
 
-type SearchCityFieldProps = {
-  icon: React.ComponentProps<typeof FontAwesome>['name'];
-  placeholder: string;
-  value: TripCity | null;
-  onChange: (city: TripCity | null) => void;
-  language: string;
-  inputStyle?: StyleProp<ViewStyle>;
-};
-
-function SearchCityField({
-  icon,
-  placeholder,
-  value,
-  onChange,
-  language,
-  inputStyle,
-}: SearchCityFieldProps): React.ReactElement {
-  const { t } = useTranslation(undefined, { i18n: appI18n });
-  const [query, setQuery] = React.useState(value?.label ?? '');
-  const [results, setResults] = React.useState<TripCity[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [showEmpty, setShowEmpty] = React.useState(false);
-  const [isFocused, setIsFocused] = React.useState(false);
-  const skipSearchRef = React.useRef(false);
-
-  React.useEffect(() => {
-    if (isFocused) {
-      return;
-    }
-    setQuery(value?.label ?? '');
-  }, [isFocused, value?.label]);
-
-  React.useEffect(() => {
-    if (skipSearchRef.current) {
-      skipSearchRef.current = false;
-      return;
-    }
-
-    if (!isFocused) {
-      setResults([]);
-      setShowEmpty(false);
-      setLoading(false);
-      return;
-    }
-
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setResults([]);
-      setShowEmpty(false);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setLoading(true);
-      setShowEmpty(false);
-      void searchCities(trimmed, ENV.googleMapsApiKey)
-        .then((items) => {
-          setResults(items);
-          setShowEmpty(items.length === 0);
-        })
-        .finally(() => setLoading(false));
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [isFocused, query]);
-
-  const handleSelect = (city: TripCity) => {
-    const selected = { ...city, label: cityDisplayName(city.label) };
-    skipSearchRef.current = true;
-    setQuery(selected.label);
-    setResults([]);
-    setShowEmpty(false);
-    setIsFocused(false);
-    onChange(selected);
-  };
-
-  return (
-    <View style={styles.cityFieldWrap}>
-      <View style={[styles.field, inputStyle]}>
-        <FontAwesome name={icon} size={13} color={colors.white} />
-        <TextInput
-          value={query}
-          onChangeText={(text) => {
-            setQuery(text);
-            if (value) {
-              onChange(null);
-            }
-          }}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-            setResults([]);
-            setShowEmpty(false);
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={colors.text.onBrandMuted}
-          style={[styles.cityInput, { fontFamily: getFontFamily(language, 'semibold') }]}
-        />
-        {loading ? <ActivityIndicator size="small" color={colors.white} /> : null}
-      </View>
-
-      {results.length > 0 ? (
-        <View style={styles.cityResults}>
-          <ScrollView
-            nestedScrollEnabled
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={results.length > 3}
-            style={styles.cityResultsScroll}
-          >
-            {results.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => handleSelect(item)}
-                style={styles.cityResultRow}
-                accessibilityRole="button"
-              >
-                <AppText style={styles.cityResultText} numberOfLines={2}>
-                  {item.label}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      ) : null}
-
-      {!loading && showEmpty ? (
-        <AppText style={styles.cityHint}>{t('trips.create.cityNoResults')}</AppText>
-      ) : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -573,48 +451,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   titleRow: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     minHeight: 40,
     marginBottom: spacing.xs,
   },
   title: {
     color: colors.white,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
   },
-  segment: {
+  segmentWrap: {
     alignSelf: 'flex-start',
     width: '50%',
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    minHeight: 42,
-  },
-  segmentItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm,
-  },
-  segmentItemActive: {
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
-  segmentLabel: {
-    fontSize: 14,
-  },
-  segmentLabelActive: {
-    color: colors.white,
-  },
-  segmentLabelIdle: {
-    color: colors.text.onBrandMuted,
   },
   routeBlock: {
     position: 'relative',
     gap: spacing.xs,
-    zIndex: 4,
   },
   routeCityInput: {
     paddingRight: 52,
@@ -659,6 +512,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: colors.white,
+  },
+  fieldPlaceholder: {
+    color: colors.text.onBrandMuted,
   },
   quickDateRow: {
     flexDirection: 'row',
@@ -749,46 +605,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.text.secondary,
     textAlign: 'center',
-  },
-  cityFieldWrap: {
-    zIndex: 1,
-  },
-  cityInput: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.white,
-    paddingVertical: spacing.xs,
-  },
-  cityResults: {
-    marginTop: spacing.xs,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
-    maxHeight: CITY_RESULTS_MAX_HEIGHT,
-    zIndex: 30,
-    elevation: 8,
-  },
-  cityResultsScroll: {
-    maxHeight: CITY_RESULTS_MAX_HEIGHT,
-  },
-  cityResultRow: {
-    minHeight: CITY_RESULT_ROW_HEIGHT,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border.default,
-  },
-  cityResultText: {
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  cityHint: {
-    marginTop: spacing.xs,
-    fontSize: 12,
-    color: colors.text.onBrandMuted,
   },
   pressed: {
     opacity: 0.85,

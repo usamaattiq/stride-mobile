@@ -245,6 +245,9 @@
       "passengerCountValue": "{{count}} ركاب",
       "decreasePassengers": "تقليل عدد الركاب",
       "increasePassengers": "زيادة عدد الركاب",
+      "suggestedDepartures": "المغادرات المقترحة",
+      "suggestedArrivals": "الوصولات المقترحة",
+      "back": "رجوع",
       "searchAction": "بحث عن الرحلات"
     },
     "listings": {
