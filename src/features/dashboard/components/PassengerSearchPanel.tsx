@@ -584,6 +584,8 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   segment: {
+    alignSelf: 'flex-start',
+    width: '50%',
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
