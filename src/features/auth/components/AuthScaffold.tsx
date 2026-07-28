@@ -316,22 +316,22 @@ const styles = StyleSheet.create({
   },
   cardWrapScroll: {
     flexGrow: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapScrollCompact: {
     flexGrow: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapStatic: {
     flex: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapStaticCompact: {
     flex: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   legalFooter: {
