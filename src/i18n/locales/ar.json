@@ -233,6 +233,20 @@
       "emptyTitle": "لا توجد إشعارات",
       "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم."
     },
+    "search": {
+      "shared": "مشتركة",
+      "private": "خاصة",
+      "departure": "المغادرة",
+      "arrival": "الوصول",
+      "swapCities": "تبديل المغادرة والوصول",
+      "today": "اليوم",
+      "tomorrow": "غداً",
+      "passengerCount": "راكب",
+      "passengerCountValue": "{{count}} ركاب",
+      "decreasePassengers": "تقليل عدد الركاب",
+      "increasePassengers": "زيادة عدد الركاب",
+      "searchAction": "بحث عن الرحلات"
+    },
     "listings": {
       "title": "قوائمي",
       "subtitle": "أدِر الرحلات والمسارات التي أضفتها.",

@@ -233,6 +233,20 @@
       "emptyTitle": "No notifications",
       "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
     },
+    "search": {
+      "shared": "Shared",
+      "private": "Private",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "swapCities": "Swap departure and arrival",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "passengerCount": "Passenger",
+      "passengerCountValue": "{{count}} passengers",
+      "decreasePassengers": "Decrease passengers",
+      "increasePassengers": "Increase passengers",
+      "searchAction": "Search trips"
+    },
     "listings": {
       "title": "My Listings",
       "subtitle": "Manage the rides and routes you have listed.",

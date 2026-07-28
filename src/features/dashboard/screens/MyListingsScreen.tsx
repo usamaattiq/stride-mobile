@@ -18,7 +18,7 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
-import { PassengerHomeFeedPanel } from '../components/PassengerHomeFeedPanel';
+import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
@@ -63,19 +63,7 @@ export function MyListingsScreen(): React.ReactElement {
   };
 
   if (user.role !== 'driver') {
-    return (
-      <AuthScaffold
-        title={t('dashboard.listings.searchTitle')}
-        subtitle={t('dashboard.listings.searchSubtitle')}
-        showLegalFooter={false}
-        showLanguageSwitcher={false}
-        compactHeader
-        scrollable={false}
-        contentWrapStyle={styles.searchContentWrap}
-      >
-        <PassengerHomeFeedPanel />
-      </AuthScaffold>
-    );
+    return <PassengerSearchPanel />;
   }
 
   return (
@@ -183,10 +171,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
-  },
-  searchContentWrap: {
-    flex: 1,
-    paddingHorizontal: 0,
-    paddingTop: 0,
   },
 });
