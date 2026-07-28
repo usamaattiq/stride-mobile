@@ -55,3 +55,23 @@ export type CreateTripPayload = {
   scheduledStartAt?: string | null;
   description?: string | null;
 };
+
+export type PaginatedTripsDto = {
+  items: TripDto[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type BrowseTripsParams = {
+  q?: string;
+  listingType?: 'rfq' | 'auction';
+  paymentMethod?: 'cash' | 'online' | 'both';
+  departureCityId?: string;
+  arrivalCityId?: string;
+  vehicleMode?: 'shared' | 'fullPrivate';
+  minSeats?: number;
+  page?: number;
+  limit?: number;
+};

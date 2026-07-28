@@ -8,13 +8,21 @@ import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
 import type { RequestCategory } from '../types/requests.types';
+import type { TripListingCategory } from '../types/tripBrowse.types';
 
-type RequestCategoryChipsProps = {
-  active: RequestCategory;
-  onChange: (category: RequestCategory) => void;
-};
+type RequestCategoryChipsProps =
+  | {
+      variant?: 'requests';
+      active: RequestCategory;
+      onChange: (category: RequestCategory) => void;
+    }
+  | {
+      variant: 'listing';
+      active: TripListingCategory;
+      onChange: (category: TripListingCategory) => void;
+    };
 
-const CATEGORIES: {
+const REQUEST_CATEGORIES: {
   id: RequestCategory;
   labelKey: string;
   icon?: React.ComponentProps<typeof FontAwesome5>['name'];
@@ -26,11 +34,18 @@ const CATEGORIES: {
   { id: 'shared', labelKey: 'dashboard.home.categoryShared' },
 ];
 
-export function RequestCategoryChips({
-  active,
-  onChange,
-}: RequestCategoryChipsProps): React.ReactElement {
+const LISTING_CATEGORIES: {
+  id: TripListingCategory;
+  labelKey: string;
+}[] = [
+  { id: 'all', labelKey: 'dashboard.home.categoryAllListings' },
+  { id: 'rfq', labelKey: 'dashboard.home.categoryRfq' },
+  { id: 'auction', labelKey: 'dashboard.home.categoryAuction' },
+];
+
+export function RequestCategoryChips(props: RequestCategoryChipsProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const categories = props.variant === 'listing' ? LISTING_CATEGORIES : REQUEST_CATEGORIES;
 
   return (
     <ScrollView
@@ -38,21 +53,21 @@ export function RequestCategoryChips({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
-      {CATEGORIES.map((category) => {
-        const selected = active === category.id;
+      {categories.map((category) => {
+        const selected = props.active === category.id;
         return (
           <Pressable
             key={category.id}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            onPress={() => onChange(category.id)}
+            onPress={() => props.onChange(category.id as never)}
             style={({ pressed }) => [
               styles.chip,
               selected ? styles.chipSelected : styles.chipIdle,
               pressed && styles.pressed,
             ]}
           >
-            {category.icon ? (
+            {'icon' in category && category.icon ? (
               <FontAwesome5
                 name={category.icon}
                 size={11}
@@ -69,9 +84,6 @@ export function RequestCategoryChips({
           </Pressable>
         );
       })}
-      <View style={styles.more}>
-        <FontAwesome5 name="chevron-down" size={10} color={colors.text.tertiary} />
-      </View>
     </ScrollView>
   );
 }
@@ -107,15 +119,6 @@ const styles = StyleSheet.create({
   },
   labelIdle: {
     color: colors.text.primary,
-  },
-  more: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.85,

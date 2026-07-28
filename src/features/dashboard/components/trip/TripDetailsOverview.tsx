@@ -15,7 +15,7 @@ export type TripDetailsOverviewProps = {
   fromCity?: string | null;
   toCity?: string | null;
   /** When omitted, the departure schedule row is hidden. */
-  departureWindow?: string;
+  departureWhen?: string;
   /** When omitted, the arrival schedule row is hidden. */
   arrivalWhen?: string;
   departurePoint?: TripLocationPoint | null;
@@ -111,7 +111,7 @@ export function TripDetailsOverview({
   description,
   fromCity,
   toCity,
-  departureWindow,
+  departureWhen,
   arrivalWhen,
   departurePoint,
   arrivalPoint,
@@ -126,13 +126,13 @@ export function TripDetailsOverview({
   const showDetails =
     Boolean(fromCity) ||
     Boolean(toCity) ||
-    departureWindow !== undefined ||
+    departureWhen !== undefined ||
     arrivalWhen !== undefined ||
     Boolean(departurePoint) ||
     Boolean(arrivalPoint);
 
   const showDepartureBlock =
-    Boolean(fromCity) || departureWindow !== undefined || Boolean(departurePoint);
+    Boolean(fromCity) || departureWhen !== undefined || Boolean(departurePoint);
   const showArrivalBlock =
     Boolean(toCity) || arrivalWhen !== undefined || Boolean(arrivalPoint);
 
@@ -192,15 +192,15 @@ export function TripDetailsOverview({
                           {fromCity}
                         </AppText>
                       </View>
-                      {departureWindow !== undefined ? (
+                      {departureWhen !== undefined ? (
                         <View style={styles.endpointWhen}>
                           <FontAwesome name="calendar" size={11} color={colors.text.tertiary} />
                           <View style={styles.endpointWhenCopy}>
                             <AppText style={styles.whenLabel}>
-                              {t('trips.create.departureDateWindow')}
+                              {t('trips.create.departureDateTime')}
                             </AppText>
                             <AppText weight="semibold" style={styles.whenValue}>
-                              {departureWindow}
+                              {departureWhen}
                             </AppText>
                           </View>
                         </View>

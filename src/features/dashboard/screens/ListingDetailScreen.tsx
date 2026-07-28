@@ -28,13 +28,11 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
-import {
-  formatDateRangeLabel,
-  formatTripDateTime,
-} from '../components/trip/dateRangeUtils';
+import { formatTripDateTime } from '../components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
@@ -49,6 +47,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
+  const { user } = useDashboardSession();
   const { getTripById, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
@@ -240,15 +239,17 @@ export function ListingDetailScreen(): React.ReactElement {
       showLanguageSwitcher={false}
       compactHeader
       headerRight={
-        <Pressable
-          onPress={openRemove}
-          style={styles.headerRemoveButton}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.remove.a11y')}
-        >
-          <FontAwesome name="trash-o" size={16} color={colors.white} />
-        </Pressable>
+        user.role === 'driver' ? (
+          <Pressable
+            onPress={openRemove}
+            style={styles.headerRemoveButton}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('dashboard.listings.remove.a11y')}
+          >
+            <FontAwesome name="trash-o" size={16} color={colors.white} />
+          </Pressable>
+        ) : undefined
       }
     >
       <View style={styles.content}>
@@ -283,12 +284,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 description={description}
                 fromCity={fromCity}
                 toCity={toCity}
-                departureWindow={formatDateRangeLabel(
-                  trip.departureAt,
-                  trip.departureUntil,
-                  locale,
-                  '—',
-                )}
+                departureWhen={formatTripDateTime(trip.departureAt, locale)}
                 arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
                 departurePoint={trip.departurePoint}
                 arrivalPoint={trip.arrivalPoint}

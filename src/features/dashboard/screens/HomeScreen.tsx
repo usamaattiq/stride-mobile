@@ -14,6 +14,7 @@ import { HomeFeedPanel } from '../components/HomeFeedPanel';
 import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
+import { PassengerHomeFeedPanel } from '../components/PassengerHomeFeedPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList, HomePanel, HomeStackParamList } from '../navigation/types';
 
@@ -92,7 +93,9 @@ export function HomeScreen(): React.ReactElement {
       />
 
       <View style={styles.body}>
-        {panel === 'feed' ? <HomeFeedPanel /> : null}
+        {panel === 'feed' ? (
+          user.role === 'passenger' ? <PassengerHomeFeedPanel /> : <HomeFeedPanel />
+        ) : null}
         {panel === 'messages' ? <MessagesPanel /> : null}
         {panel === 'notifications' ? <NotificationsPanel /> : null}
       </View>

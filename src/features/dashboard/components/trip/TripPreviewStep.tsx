@@ -4,10 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
-import {
-  formatDateRangeLabel,
-  formatTripDateTime,
-} from '@/features/dashboard/components/trip/dateRangeUtils';
+import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '@/features/dashboard/components/trip/TripDetailsOverview';
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import {
@@ -87,10 +84,9 @@ export function TripPreviewStep({
           mode: modeLabel ?? t('trips.create.notSpecified'),
         })
       : null);
-  const departureWindow =
-    draft.departureAt || draft.departureUntil
-      ? formatDateRangeLabel(draft.departureAt, draft.departureUntil, locale, '')
-      : undefined;
+  const departureWhen = draft.departureAt
+    ? formatTripDateTime(draft.departureAt, locale, '')
+    : undefined;
   const arrivalWhen = draft.arrivalAt
     ? formatTripDateTime(draft.arrivalAt, locale, '')
     : undefined;
@@ -103,7 +99,7 @@ export function TripPreviewStep({
         description={description}
         fromCity={fromCity}
         toCity={toCity}
-        departureWindow={departureWindow}
+        departureWhen={departureWhen}
         arrivalWhen={arrivalWhen}
         departurePoint={draft.departurePoint}
         arrivalPoint={draft.arrivalPoint}
