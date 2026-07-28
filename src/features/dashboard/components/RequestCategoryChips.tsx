@@ -22,7 +22,7 @@ const CATEGORIES: {
   { id: 'all', labelKey: 'dashboard.home.categoryAll' },
   { id: 'rfq', labelKey: 'dashboard.home.categoryRfq' },
   { id: 'auction', labelKey: 'dashboard.home.categoryAuction' },
-  { id: 'fullVehicle', labelKey: 'dashboard.home.categoryFullVehicle', icon: 'shuttle-van' },
+  { id: 'fullVehicle', labelKey: 'dashboard.home.categoryPrivate' },
   { id: 'shared', labelKey: 'dashboard.home.categoryShared' },
 ];
 
