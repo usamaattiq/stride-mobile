@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
 
@@ -10,12 +10,7 @@ import { colors, radius, spacing } from '@/theme';
 const MIN_HOURS = 0.5;
 const MAX_HOURS = 24;
 const SLIDER_STEP_HOURS = 0.5;
-const TICK_STEP_HOURS = 3;
-
-const TICK_HOURS = Array.from(
-  { length: Math.floor(MAX_HOURS / TICK_STEP_HOURS) },
-  (_, index) => (index + 1) * TICK_STEP_HOURS,
-);
+const TICK_HOURS = [6, 12, 18, 24];
 
 type DurationSliderProps = {
   value: number;
@@ -72,11 +67,7 @@ export function DurationSlider({ value, onChange, label }: DurationSliderProps):
         thumbTintColor={colors.primary}
       />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.ticks}
-      >
+      <View style={styles.ticks}>
         {TICK_HOURS.map((hour) => {
           const selected = hour === safeValue;
           return (
@@ -98,7 +89,7 @@ export function DurationSlider({ value, onChange, label }: DurationSliderProps):
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -120,7 +111,8 @@ const styles = StyleSheet.create({
     height: 40,
   },
   ticks: {
-    gap: spacing.xs,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingVertical: spacing.xxs,
   },
   tick: {
