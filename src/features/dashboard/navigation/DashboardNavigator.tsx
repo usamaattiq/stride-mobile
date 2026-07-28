@@ -41,7 +41,7 @@ const TAB_ICONS: Record<Exclude<keyof DashboardTabParamList, 'CreateTrip'>, TabI
   Settings: 'cog',
 };
 
-/** Content area for icon + label (library adds bottom inset on top of this). */
+/** Content area for icon + label. */
 const TAB_BAR_CONTENT_HEIGHT = 64;
 const DRIVER_TAB_BAR_EXTRA = 12;
 
@@ -61,7 +61,8 @@ function DashboardTabs(): React.ReactElement {
   const { beginCreateTrip } = useTrips();
   const isDriver = user.role === 'driver';
 
-  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + insets.bottom + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
+  const safeBottomInset = insets.bottom;
+  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
 
   return (
     <Tab.Navigator
@@ -81,7 +82,7 @@ function DashboardTabs(): React.ReactElement {
         ],
         tabBarIconStyle: styles.tabIcon,
         tabBarItemStyle: styles.tabItem,
-        tabBarStyle: [styles.tabBar, { height: tabBarHeight }],
+        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }],
         tabBarIcon: ({ color }) => {
           if (route.name === 'CreateTrip') {
             return null;
