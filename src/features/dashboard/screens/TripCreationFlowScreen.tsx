@@ -7,6 +7,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { CITY_RESULTS_MAX_HEIGHT } from '@/features/dashboard/components/trip/CitySearchField';
 import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetailsStep';
 import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
 import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
@@ -20,7 +21,7 @@ import { exitTripCreation, exitTripCreationToListings } from '@/features/dashboa
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 type TripCreationStep =
   | 'vehicle'
@@ -233,6 +234,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         }
         stepCount={TOTAL_STEPS}
         currentStep={STEP_PROGRESS[step]}
+        scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
         {step === 'vehicle' ? (
           <TripVehicleSelectStep

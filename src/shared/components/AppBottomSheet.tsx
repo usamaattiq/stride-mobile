@@ -1,15 +1,13 @@
 import React from 'react';
 import {
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/theme';
@@ -61,8 +59,8 @@ export function AppBottomSheet({
           >
             <KeyboardAvoidingView
               style={styles.sheetInner}
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+              behavior="padding"
+              keyboardVerticalOffset={insets.top}
             >
               {children}
             </KeyboardAvoidingView>

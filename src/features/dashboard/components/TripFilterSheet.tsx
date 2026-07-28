@@ -1,9 +1,12 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
+import {
+  CITY_RESULTS_MAX_HEIGHT,
+  CitySearchField,
+} from '@/features/dashboard/components/trip/CitySearchField';
 import type { TripBrowseFilters } from '@/features/dashboard/types/tripBrowse.types';
 import {
   countActiveTripBrowseFilters,
@@ -59,6 +62,22 @@ export function TripFilterSheet({
     width: number;
   } | null>(null);
   const seatTriggerRef = React.useRef<View>(null);
+  const scrollRef = React.useRef<ScrollView>(null);
+  const departureFieldY = React.useRef(0);
+  const arrivalFieldY = React.useRef(0);
+
+  const scrollFieldIntoView = React.useCallback((yRef: React.MutableRefObject<number>) => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(yRef.current - spacing.sm, 0), animated: true });
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+    return () => hideSub.remove();
+  }, []);
 
   const closeSeatDropdown = React.useCallback(() => {
     setSeatDropdownOpen(false);
@@ -115,50 +134,15 @@ export function TripFilterSheet({
         <AppText weight="semibold" style={styles.sheetTitle}>
           {t('dashboard.home.filterSheetTitle')}
         </AppText>
-        <View style={styles.headerActions}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={!hasActiveFilters}
-            onPress={handleReset}
-            style={({ pressed }) => [
-              styles.headerActionButton,
-              !hasActiveFilters && styles.headerActionDisabled,
-              pressed && hasActiveFilters && styles.pressed,
-            ]}
-          >
-            <AppText
-              weight="semibold"
-              style={[styles.headerActionText, !hasActiveFilters && styles.headerActionTextDisabled]}
-            >
-              {t('dashboard.home.filterReset')}
-            </AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            disabled={!hasActiveFilters}
-            onPress={handleApply}
-            style={({ pressed }) => [
-              styles.headerActionPrimary,
-              !hasActiveFilters && styles.headerActionPrimaryDisabled,
-              pressed && hasActiveFilters && styles.pressed,
-            ]}
-          >
-            <View style={styles.headerActionPrimaryContent}>
-              <FontAwesome
-                name="check"
-                size={12}
-                color={hasActiveFilters ? colors.white : colors.text.tertiary}
-              />
-            </View>
-          </Pressable>
-        </View>
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContent}
+        scrollEnabled={false}
       >
         <FilterSection title={t('dashboard.home.filterSeats')}>
           <View ref={seatTriggerRef} collapsable={false} style={styles.seatDropdownWrap}>
@@ -187,21 +171,27 @@ export function TripFilterSheet({
           </View>
         </FilterSection>
 
-        <CitySearchField
-          key={`departure-${resetSeed}`}
-          label={t('dashboard.home.filterDepartureCity')}
-          placeholder={t('trips.create.cityPlaceholder')}
-          value={draft.departureCity}
-          onChange={(departureCity) => patchDraft({ departureCity })}
-        />
+        <View onLayout={(event) => { departureFieldY.current = event.nativeEvent.layout.y; }}>
+          <CitySearchField
+            key={`departure-${resetSeed}`}
+            label={t('dashboard.home.filterDepartureCity')}
+            placeholder={t('trips.create.cityPlaceholder')}
+            value={draft.departureCity}
+            onChange={(departureCity) => patchDraft({ departureCity })}
+            onFocus={() => scrollFieldIntoView(departureFieldY)}
+          />
+        </View>
 
-        <CitySearchField
-          key={`arrival-${resetSeed}`}
-          label={t('dashboard.home.filterArrivalCity')}
-          placeholder={t('trips.create.cityPlaceholder')}
-          value={draft.arrivalCity}
-          onChange={(arrivalCity) => patchDraft({ arrivalCity })}
-        />
+        <View onLayout={(event) => { arrivalFieldY.current = event.nativeEvent.layout.y; }}>
+          <CitySearchField
+            key={`arrival-${resetSeed}`}
+            label={t('dashboard.home.filterArrivalCity')}
+            placeholder={t('trips.create.cityPlaceholder')}
+            value={draft.arrivalCity}
+            onChange={(arrivalCity) => patchDraft({ arrivalCity })}
+            onFocus={() => scrollFieldIntoView(arrivalFieldY)}
+          />
+        </View>
 
         <FilterSection title={t('dashboard.home.filterVehicleMode')}>
           <ChipRow>
@@ -244,6 +234,43 @@ export function TripFilterSheet({
         </FilterSection>
 
       </ScrollView>
+
+      <View style={styles.footerRow}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!hasActiveFilters}
+          onPress={handleReset}
+          style={({ pressed }) => [
+            styles.footerResetButton,
+            !hasActiveFilters && styles.headerActionDisabled,
+            pressed && hasActiveFilters && styles.pressed,
+          ]}
+        >
+          <AppText
+            weight="semibold"
+            style={[styles.footerResetText, !hasActiveFilters && styles.headerActionTextDisabled]}
+          >
+            {t('dashboard.home.filterReset')}
+          </AppText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!hasActiveFilters}
+          onPress={handleApply}
+          style={({ pressed }) => [
+            styles.footerApplyButton,
+            !hasActiveFilters && styles.headerActionPrimaryDisabled,
+            pressed && hasActiveFilters && styles.pressed,
+          ]}
+        >
+          <AppText
+            weight="bold"
+            style={[styles.footerApplyText, !hasActiveFilters && styles.footerApplyTextDisabled]}
+          >
+            {t('dashboard.home.filterApply')}
+          </AppText>
+        </Pressable>
+      </View>
 
       <Modal
         visible={seatDropdownOpen && seatDropdownLayout != null}
@@ -382,27 +409,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  headerActionButton: {
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-  },
-  headerActionPrimary: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-  },
   headerActionDisabled: {
     opacity: 0.45,
   },
@@ -410,28 +416,51 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryDisabled,
     borderColor: colors.primaryDisabled,
   },
-  headerActionText: {
-    fontSize: 12,
-    color: colors.text.primary,
-  },
-  headerActionPrimaryText: {
-    fontSize: 12,
-    color: colors.white,
-  },
-  headerActionPrimaryContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerActionTextDisabled: {
     color: colors.text.tertiary,
   },
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.md,
+    paddingBottom: CITY_RESULTS_MAX_HEIGHT + spacing.md,
   },
   scroll: {
     flex: 1,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+  },
+  footerResetButton: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerResetText: {
+    fontSize: 14,
+    color: colors.primary,
+  },
+  footerApplyButton: {
+    flex: 2,
+    minHeight: 48,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerApplyText: {
+    fontSize: 14,
+    color: colors.white,
+  },
+  footerApplyTextDisabled: {
+    color: colors.text.tertiary,
   },
   section: {
     gap: spacing.xs,

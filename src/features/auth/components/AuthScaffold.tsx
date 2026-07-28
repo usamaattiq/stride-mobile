@@ -68,6 +68,12 @@ type AuthScaffoldProps = {
   stepCount?: number;
   /** The active step (1-based). Required alongside `stepCount`. */
   currentStep?: number;
+  /**
+   * Extra space kept between a focused input and the keyboard, forwarded to the
+   * scrollable body. Bump this on screens with dropdowns/panels that render below a
+   * field (e.g. city search results) so they aren't left hidden under the keyboard.
+   */
+  scrollBottomOffset?: number;
 };
 
 export function AuthScaffold({
@@ -85,6 +91,7 @@ export function AuthScaffold({
   compactHeader = false,
   stepCount,
   currentStep,
+  scrollBottomOffset,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -106,6 +113,7 @@ export function AuthScaffold({
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
+      bottomOffset={scrollBottomOffset}
     >
       {children}
     </KeyboardAwareScrollView>
