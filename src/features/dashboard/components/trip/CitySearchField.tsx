@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -17,12 +18,17 @@ import { searchCities } from '@/shared/utils/city-search';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
+const CITY_RESULT_ROW_HEIGHT = 48;
+const CITY_RESULTS_VISIBLE_COUNT = 3;
+export const CITY_RESULTS_MAX_HEIGHT = CITY_RESULT_ROW_HEIGHT * CITY_RESULTS_VISIBLE_COUNT;
+
 type CitySearchFieldProps = {
   label: string;
   value: TripCity | null;
   onChange: (city: TripCity) => void;
   placeholder: string;
   required?: boolean;
+  onFocus?: () => void;
 };
 
 export function CitySearchField({
@@ -31,6 +37,7 @@ export function CitySearchField({
   onChange,
   placeholder,
   required = false,
+  onFocus,
 }: CitySearchFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
@@ -88,6 +95,7 @@ export function CitySearchField({
     setQuery(selected.label);
     setResults([]);
     setShowEmpty(false);
+    setIsFocused(false);
     onChange(selected);
   };
 
@@ -102,7 +110,10 @@ export function CitySearchField({
         <TextInput
           value={query}
           onChangeText={setQuery}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocus?.();
+          }}
           onBlur={() => {
             setIsFocused(false);
             setResults([]);
@@ -121,18 +132,25 @@ export function CitySearchField({
 
       {results.length > 0 ? (
         <View style={styles.results}>
-          {results.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => handleSelect(item)}
-              style={styles.resultRow}
-              accessibilityRole="button"
-            >
-              <AppText style={styles.resultText} numberOfLines={2}>
-                {item.label}
-              </AppText>
-            </Pressable>
-          ))}
+          <ScrollView
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={results.length > CITY_RESULTS_VISIBLE_COUNT}
+            style={styles.resultsScroll}
+          >
+            {results.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => handleSelect(item)}
+                style={styles.resultRow}
+                accessibilityRole="button"
+              >
+                <AppText style={styles.resultText} numberOfLines={2}>
+                  {item.label}
+                </AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       ) : null}
 
@@ -178,10 +196,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     overflow: 'hidden',
+    maxHeight: CITY_RESULTS_MAX_HEIGHT,
+    zIndex: 20,
+    elevation: 6,
+  },
+  resultsScroll: {
+    maxHeight: CITY_RESULTS_MAX_HEIGHT,
   },
   resultRow: {
+    minHeight: CITY_RESULT_ROW_HEIGHT,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.default,
   },

@@ -212,7 +212,7 @@
       "filterArrivalCity": "Arrival city",
       "filterVehicleMode": "Shared or private",
       "filterSeats": "Number of seats",
-      "filterSeatsCount": "{{count}}+ seats",
+      "filterSeatsCount": "{{count}} seats",
       "filterAny": "Any",
       "filterReset": "Reset",
       "filterApply": "Apply filters"

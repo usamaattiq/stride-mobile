@@ -9,6 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/theme';
@@ -40,31 +41,34 @@ export function AppBottomSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.modalRoot}>
-        <Pressable
-          style={styles.backdrop}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-        />
-        <View
-          style={[
-            styles.sheet,
-            {
-              height: `${Math.round(clampedRatio * 100)}%`,
-              paddingBottom: Math.max(insets.bottom, spacing.sm),
-            },
-            sheetStyle,
-          ]}
-        >
-          <KeyboardAvoidingView
-            style={styles.sheetInner}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardProvider>
+        <View style={styles.modalRoot}>
+          <Pressable
+            style={styles.backdrop}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          />
+          <View
+            style={[
+              styles.sheet,
+              {
+                height: `${Math.round(clampedRatio * 100)}%`,
+                paddingBottom: Math.max(insets.bottom, spacing.sm),
+              },
+              sheetStyle,
+            ]}
           >
-            {children}
-          </KeyboardAvoidingView>
+            <KeyboardAvoidingView
+              style={styles.sheetInner}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+            >
+              {children}
+            </KeyboardAvoidingView>
+          </View>
         </View>
-      </View>
+      </KeyboardProvider>
     </Modal>
   );
 }

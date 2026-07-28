@@ -212,7 +212,7 @@
       "filterArrivalCity": "مدينة الوصول",
       "filterVehicleMode": "مشترك أو خاص",
       "filterSeats": "عدد المقاعد",
-      "filterSeatsCount": "{{count}}+ مقاعد",
+      "filterSeatsCount": "{{count}} مقاعد",
       "filterAny": "الكل",
       "filterReset": "إعادة تعيين",
       "filterApply": "تطبيق التصفية"
