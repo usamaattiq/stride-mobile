@@ -164,6 +164,7 @@
     "tabs": {
       "Home": "Home",
       "MyListings": "My Listings",
+      "Search": "Search",
       "MyOffers": "My Offers",
       "Settings": "Settings",
       "createTripA11y": "Create trip"
@@ -235,9 +236,10 @@
     "listings": {
       "title": "My Listings",
       "subtitle": "Manage the rides and routes you have listed.",
+      "searchTitle": "Search",
+      "searchSubtitle": "Find and book trips posted by drivers near you.",
       "emptyTitle": "No listings yet",
       "emptySubtitle": "Publish a trip and it will show up here.",
-      "passengerHint": "Switch to driver mode to create and manage trip listings.",
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",

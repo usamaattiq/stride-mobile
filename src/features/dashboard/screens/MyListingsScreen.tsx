@@ -18,6 +18,7 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
+import { PassengerHomeFeedPanel } from '../components/PassengerHomeFeedPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
@@ -64,15 +65,15 @@ export function MyListingsScreen(): React.ReactElement {
   if (user.role !== 'driver') {
     return (
       <AuthScaffold
-        title={t('dashboard.listings.title')}
-        subtitle={t('dashboard.listings.passengerHint')}
+        title={t('dashboard.listings.searchTitle')}
+        subtitle={t('dashboard.listings.searchSubtitle')}
         showLegalFooter={false}
         showLanguageSwitcher={false}
         compactHeader
+        scrollable={false}
+        contentWrapStyle={styles.searchContentWrap}
       >
-        <View style={styles.centered}>
-          <AppText style={styles.hintBody}>{t('dashboard.listings.passengerHint')}</AppText>
-        </View>
+        <PassengerHomeFeedPanel />
       </AuthScaffold>
     );
   }
@@ -178,14 +179,14 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
   },
-  hintBody: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
   errorText: {
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
+  },
+  searchContentWrap: {
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
 });

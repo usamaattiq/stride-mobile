@@ -164,6 +164,7 @@
     "tabs": {
       "Home": "الرئيسية",
       "MyListings": "قوائمي",
+      "Search": "بحث",
       "MyOffers": "عروضي",
       "Settings": "الإعدادات",
       "createTripA11y": "إنشاء رحلة"
@@ -235,9 +236,10 @@
     "listings": {
       "title": "قوائمي",
       "subtitle": "أدِر الرحلات والمسارات التي أضفتها.",
+      "searchTitle": "بحث",
+      "searchSubtitle": "ابحث عن رحلات نشرها السائقون واحجزها.",
       "emptyTitle": "لا توجد قوائم بعد",
       "emptySubtitle": "انشر رحلة وستظهر هنا.",
-      "passengerHint": "بدّل إلى وضع السائق لإنشاء وإدارة قوائم الرحلات.",
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",

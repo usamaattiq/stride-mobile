@@ -75,7 +75,9 @@ function DashboardTabs(): React.ReactElement {
         tabBarLabel:
           route.name === 'CreateTrip'
             ? undefined
-            : t(`dashboard.tabs.${route.name}`),
+            : route.name === 'MyListings' && !isDriver
+              ? t('dashboard.tabs.Search')
+              : t(`dashboard.tabs.${route.name}`),
         tabBarLabelStyle: [
           styles.tabLabel,
           { fontFamily: getFontFamily(currentLanguage, 'medium') },
@@ -87,7 +89,10 @@ function DashboardTabs(): React.ReactElement {
           if (route.name === 'CreateTrip') {
             return null;
           }
-          const iconName = TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
+          const iconName =
+            route.name === 'MyListings' && !isDriver
+              ? 'search'
+              : TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
           return <FontAwesome name={iconName} size={22} color={color} />;
         },
       })}
