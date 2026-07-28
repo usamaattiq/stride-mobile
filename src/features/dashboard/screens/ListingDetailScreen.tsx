@@ -48,6 +48,7 @@ export function ListingDetailScreen(): React.ReactElement {
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
   const { getTripById, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
@@ -255,54 +256,68 @@ export function ListingDetailScreen(): React.ReactElement {
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        <SegmentControl
-          options={tabs}
-          value={tab}
-          onChange={selectTab}
-          animatedIndex={animatedTabIndex}
-        />
+        {isPassenger ? (
+          <TripDetailsOverview
+            description={description}
+            fromCity={fromCity}
+            toCity={toCity}
+            departureWhen={formatTripDateTime(trip.departureAt, locale)}
+            arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+            departurePoint={trip.departurePoint}
+            arrivalPoint={trip.arrivalPoint}
+          />
+        ) : (
+          <>
+            <SegmentControl
+              options={tabs}
+              value={tab}
+              onChange={selectTab}
+              animatedIndex={animatedTabIndex}
+            />
 
-        <View style={styles.pager} onLayout={onPagerLayout}>
-          <Animated.ScrollView
-            ref={pagerRef}
-            horizontal
-            pagingEnabled
-            bounces={false}
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled
-            keyboardShouldPersistTaps="handled"
-            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-              useNativeDriver: true,
-            })}
-            onScrollEndDrag={onPagerScrollEnd}
-            onMomentumScrollEnd={onPagerScrollEnd}
-            scrollEventThrottle={16}
-          >
-            <View style={[styles.page, { width: pageWidth }]}>
-              <TripDetailsOverview
-                description={description}
-                fromCity={fromCity}
-                toCity={toCity}
-                departureWhen={formatTripDateTime(trip.departureAt, locale)}
-                arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
-                departurePoint={trip.departurePoint}
-                arrivalPoint={trip.arrivalPoint}
-              />
-            </View>
+            <View style={styles.pager} onLayout={onPagerLayout}>
+              <Animated.ScrollView
+                ref={pagerRef}
+                horizontal
+                pagingEnabled
+                bounces={false}
+                decelerationRate="fast"
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                keyboardShouldPersistTaps="handled"
+                onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+                  useNativeDriver: true,
+                })}
+                onScrollEndDrag={onPagerScrollEnd}
+                onMomentumScrollEnd={onPagerScrollEnd}
+                scrollEventThrottle={16}
+              >
+                <View style={[styles.page, { width: pageWidth }]}>
+                  <TripDetailsOverview
+                    description={description}
+                    fromCity={fromCity}
+                    toCity={toCity}
+                    departureWhen={formatTripDateTime(trip.departureAt, locale)}
+                    arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+                    departurePoint={trip.departurePoint}
+                    arrivalPoint={trip.arrivalPoint}
+                  />
+                </View>
 
-            <View style={[styles.page, { width: pageWidth }]}>
-              <View style={styles.emptyTabCard}>
-                <AppText weight="semibold" style={styles.emptyTabTitle}>
-                  {t('dashboard.listings.detail.comingSoonTitle')}
-                </AppText>
-                <AppText style={styles.emptyTabBody}>
-                  {t('dashboard.listings.detail.comingSoonBody')}
-                </AppText>
-              </View>
+                <View style={[styles.page, { width: pageWidth }]}>
+                  <View style={styles.emptyTabCard}>
+                    <AppText weight="semibold" style={styles.emptyTabTitle}>
+                      {t('dashboard.listings.detail.comingSoonTitle')}
+                    </AppText>
+                    <AppText style={styles.emptyTabBody}>
+                      {t('dashboard.listings.detail.comingSoonBody')}
+                    </AppText>
+                  </View>
+                </View>
+              </Animated.ScrollView>
             </View>
-          </Animated.ScrollView>
-        </View>
+          </>
+        )}
       </View>
 
       <AppDialog

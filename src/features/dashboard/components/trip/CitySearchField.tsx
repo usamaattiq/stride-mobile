@@ -38,11 +38,26 @@ export function CitySearchField({
   const [results, setResults] = React.useState<TripCity[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [showEmpty, setShowEmpty] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
   const skipSearchRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (isFocused) {
+      return;
+    }
+    setQuery(value?.label ?? '');
+  }, [isFocused, value?.label]);
 
   React.useEffect(() => {
     if (skipSearchRef.current) {
       skipSearchRef.current = false;
+      return;
+    }
+
+    if (!isFocused) {
+      setResults([]);
+      setShowEmpty(false);
+      setLoading(false);
       return;
     }
 
@@ -65,7 +80,7 @@ export function CitySearchField({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [isFocused, query]);
 
   const handleSelect = (city: TripCity) => {
     const selected = { ...city, label: cityDisplayName(city.label) };
@@ -87,6 +102,12 @@ export function CitySearchField({
         <TextInput
           value={query}
           onChangeText={setQuery}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            setIsFocused(false);
+            setResults([]);
+            setShowEmpty(false);
+          }}
           placeholder={placeholder}
           placeholderTextColor={colors.text.tertiary}
           style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}

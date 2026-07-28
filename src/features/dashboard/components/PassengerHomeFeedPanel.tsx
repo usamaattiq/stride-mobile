@@ -167,9 +167,11 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
       <TripFilterSheet
         visible={filterSheetVisible}
         filters={pendingFilters}
-        onChange={setPendingFilters}
         onClose={() => setFilterSheetVisible(false)}
-        onApply={() => setFilters(pendingFilters)}
+        onApply={(nextFilters) => {
+          setPendingFilters(nextFilters);
+          setFilters(nextFilters);
+        }}
       />
     </>
   );

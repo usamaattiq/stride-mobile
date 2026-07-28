@@ -173,7 +173,7 @@ export function ListingCard({
                 <View style={styles.metaRow}>
                   <FontAwesome
                     name={trip.vehicleMode === 'fullPrivate' ? 'lock' : 'users'}
-                    size={11}
+                    size={trip.vehicleMode === 'fullPrivate' ? 14 : 11}
                     color={colors.primary}
                   />
                   <AppText style={styles.metaText} numberOfLines={1}>

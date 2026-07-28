@@ -18,9 +18,8 @@ import { colors, radius, spacing } from '@/theme';
 type TripFilterSheetProps = {
   visible: boolean;
   filters: TripBrowseFilters;
-  onChange: (filters: TripBrowseFilters) => void;
   onClose: () => void;
-  onApply: () => void;
+  onApply: (filters: TripBrowseFilters) => void;
 };
 
 type ChipOption<T extends string> = {
@@ -44,7 +43,6 @@ const SEAT_OPTIONS = [1, 2, 4, 6, 8] as const;
 export function TripFilterSheet({
   visible,
   filters,
-  onChange,
   onClose,
   onApply,
 }: TripFilterSheetProps): React.ReactElement {
@@ -66,16 +64,18 @@ export function TripFilterSheet({
   };
 
   const handleReset = () => {
-    setDraft(EMPTY_TRIP_BROWSE_FILTERS);
+    const clearedFilters = EMPTY_TRIP_BROWSE_FILTERS;
+    setDraft(clearedFilters);
     setResetSeed((current) => current + 1);
+    onApply(clearedFilters);
+    onClose();
   };
 
   const handleApply = () => {
     if (!hasActiveFilters) {
       return;
     }
-    onChange(draft);
-    onApply();
+    onApply(draft);
     onClose();
   };
 
