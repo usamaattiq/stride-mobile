@@ -12,7 +12,6 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import type { TripCity, TripVehicleMode } from '@/features/dashboard/types/trip.types';
@@ -20,7 +19,6 @@ import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, radius, spacing } from '@/theme';
 
 import { FeedPaginationBar } from './FeedPaginationBar';
@@ -66,7 +64,6 @@ function resolveQuickDate(date: Date, today: Date): QuickDate {
 
 export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
 
@@ -203,14 +200,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
 
   return (
     <View style={styles.root}>
-      <FocusAwareStatusBar style="light" />
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, spacing.sm) }]}>
-        <View style={styles.titleRow}>
-          <AppText weight="bold" style={styles.title}>
-            {t('dashboard.listings.searchTitle')}
-          </AppText>
-        </View>
-
+      <View style={styles.form}>
         <View style={styles.segmentWrap}>
           <SegmentControl
             variant="onBrand"
@@ -444,22 +434,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
-  header: {
-    backgroundColor: colors.primary,
+  form: {
+    // paddingTop: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.lg,
     gap: spacing.sm,
-  },
-  titleRow: {
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    minHeight: 40,
-    marginBottom: spacing.xs,
-  },
-  title: {
-    color: colors.white,
-    fontSize: 22,
-    lineHeight: 28,
+    backgroundColor: colors.primary,
   },
   segmentWrap: {
     alignSelf: 'flex-start',
@@ -581,7 +561,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    marginTop: -spacing.xs,
+    // marginTop: -spacing.sm,
     overflow: 'hidden',
   },
   listContent: {

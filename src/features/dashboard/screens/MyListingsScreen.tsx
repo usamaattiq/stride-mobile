@@ -63,7 +63,20 @@ export function MyListingsScreen(): React.ReactElement {
   };
 
   if (user.role !== 'driver') {
-    return <PassengerSearchPanel />;
+    return (
+      <AuthScaffold
+        title={t('dashboard.listings.searchTitle')}
+        subtitle={t('dashboard.listings.searchSubtitle')}
+        subtitleStyle={styles.searchSubtitle}
+        showLegalFooter={false}
+        showLanguageSwitcher={false}
+        compactHeader
+        scrollable={false}
+        contentWrapStyle={styles.searchContentWrap}
+      >
+        <PassengerSearchPanel />
+      </AuthScaffold>
+    );
   }
 
   return (
@@ -171,5 +184,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
+  },
+  searchContentWrap: {
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  searchSubtitle: {
+    marginBottom: spacing.xs,
   },
 });
