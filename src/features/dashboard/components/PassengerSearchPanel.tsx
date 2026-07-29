@@ -3,27 +3,36 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { FontAwesome } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import type { TripCity, TripVehicleMode } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import { getErrorMessage } from '@/services/api/errorMessage';
+import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
+import { ListingCard } from './ListingCard';
+import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { SearchCityPickerModal } from './SearchCityPickerModal';
 import { SegmentControl } from './SegmentControl';
 import { isSameLocalDay, startOfLocalDay } from './trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
+import type { Trip } from '../types/trip.types';
+import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 const MIN_PASSENGERS = 1;
 const MAX_PASSENGERS = 50;
+const FEATURED_POOL_SIZE = 20;
+const FEATURED_TRIP_COUNT = 2;
 
 type QuickDate = 'today' | 'tomorrow' | 'custom';
 type CityPickerMode = 'departure' | 'arrival' | null;
@@ -52,6 +61,18 @@ function resolveQuickDate(date: Date, today: Date): QuickDate {
   return 'custom';
 }
 
+function pickRandomTrips(trips: Trip[], count: number): Trip[] {
+  if (trips.length === 0) {
+    return [];
+  }
+  const shuffled = [...trips];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
 export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
@@ -66,9 +87,34 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
   const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
+  const [featuredTrips, setFeaturedTrips] = React.useState<Trip[]>([]);
+  const [isLoadingFeatured, setIsLoadingFeatured] = React.useState(true);
+  const [featuredError, setFeaturedError] = React.useState<string | null>(null);
 
   const today = startOfLocalDay(new Date());
   const quickDate = resolveQuickDate(departureDate, today);
+
+  const loadFeaturedTrips = React.useCallback(async () => {
+    setIsLoadingFeatured(true);
+    setFeaturedError(null);
+    try {
+      const result = await tripApi.browse({ page: 1, limit: FEATURED_POOL_SIZE });
+      setFeaturedTrips(
+        pickRandomTrips(result.items.map(mapTripDtoToTrip), FEATURED_TRIP_COUNT),
+      );
+    } catch (error) {
+      setFeaturedTrips([]);
+      setFeaturedError(getErrorMessage(error, t('dashboard.search.featuredLoadError')));
+    } finally {
+      setIsLoadingFeatured(false);
+    }
+  }, [t]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      void loadFeaturedTrips();
+    }, [loadFeaturedTrips]),
+  );
 
   const vehicleModeOptions = React.useMemo(
     () => [
@@ -340,7 +386,35 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
       </View>
 
       <View style={styles.resultsCard}>
-        <AppText style={styles.searchHint}>{t('dashboard.search.searchHint')}</AppText>
+        {isLoadingFeatured ? (
+          <View style={styles.featuredContent}>
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+          </View>
+        ) : featuredTrips.length > 0 ? (
+          <ScrollView
+            contentContainerStyle={styles.featuredScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <AppText weight="bold" style={styles.featuredTitle}>
+              {t('dashboard.search.featuredTrips')}
+            </AppText>
+            {featuredTrips.map((trip) => (
+              <ListingCard
+                key={trip.id}
+                trip={trip}
+                onPress={() => navigation.navigate('ListingDetail', { tripId: trip.id })}
+              />
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.featuredEmpty}>
+            {featuredError ? (
+              <AppText style={styles.featuredError}>{featuredError}</AppText>
+            ) : null}
+            <AppText style={styles.searchHint}>{t('dashboard.search.searchHint')}</AppText>
+          </View>
+        )}
       </View>
 
       <SearchCityPickerModal
@@ -536,9 +610,38 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     overflow: 'hidden',
+  },
+  featuredScrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  featuredContent: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  featuredTitle: {
+    fontSize: 16,
+    color: colors.text.primary,
+    marginBottom: spacing.xxs,
+  },
+  featuredEmpty: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
+  },
+  featuredError: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
+    textAlign: 'center',
   },
   searchHint: {
     fontSize: 14,

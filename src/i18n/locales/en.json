@@ -256,6 +256,8 @@
       "chooseDeparture": "Please choose departure city",
       "chooseArrival": "Please choose arrival city",
       "searchHint": "Set your route and tap search to find trips.",
+      "featuredTrips": "Suggested trips",
+      "featuredLoadError": "Could not load trips right now.",
       "results": {
         "title": "Trips",
         "subtitle": "Route map and matching listings",
