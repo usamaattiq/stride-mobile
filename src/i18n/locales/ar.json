@@ -257,6 +257,7 @@
       "results": {
         "title": "الرحلات",
         "subtitle": "خريطة المسار والقوائم المطابقة",
+        "availableTrips": "الرحلات المتاحة",
         "summary": "{{date}} · {{count}} ركاب",
         "mapUnavailable": "خريطة المسار غير متاحة حالياً."
       }

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   View,
@@ -9,9 +8,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
+import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
@@ -19,6 +20,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import { FeedPaginationBar } from '../components/FeedPaginationBar';
 import { ListingCard } from '../components/ListingCard';
+import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { RequestsEmptyState } from '../components/RequestsEmptyState';
 import { SearchRouteMap } from '../components/SearchRouteMap';
 import { isSameLocalDay } from '../components/trip/dateRangeUtils';
@@ -28,9 +30,11 @@ import { mapTripDtoToTrip } from '../utils/trip.mapper';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 
 const PAGE_SIZE = 5;
+const SKELETON_KEYS = [0, 1, 2];
 const CARD_OVERLAP = 14;
 
 export function SearchResultsScreen(): React.ReactElement {
+  const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'SearchResults'>>();
@@ -53,6 +57,8 @@ export function SearchResultsScreen(): React.ReactElement {
   const [totalPages, setTotalPages] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [mapReady, setMapReady] = React.useState(false);
+  const onMapReady = React.useCallback(() => setMapReady(true), []);
 
   const fromLabel = cityDisplayName(departureCity.label);
   const toLabel = cityDisplayName(arrivalCity.label);
@@ -63,8 +69,8 @@ export function SearchResultsScreen(): React.ReactElement {
     setLoadError(null);
     try {
       const result = await tripApi.browse({
-        departureCityId: departureCity.id,
-        arrivalCityId: arrivalCity.id,
+        departureCity: departureCity.label,
+        arrivalCity: arrivalCity.label,
         vehicleMode,
         minSeats: passengerCount,
         page: 1,
@@ -104,6 +110,16 @@ export function SearchResultsScreen(): React.ReactElement {
     </View>
   ) : null;
 
+  const skeletonList = (
+    <View style={styles.cardPad}>
+      {SKELETON_KEYS.map((key) => (
+        <View key={key} style={styles.skeletonItem}>
+          <ListingCardSkeleton />
+        </View>
+      ))}
+    </View>
+  );
+
   return (
     <AuthScaffold
       onBack={() => navigation.goBack()}
@@ -116,42 +132,51 @@ export function SearchResultsScreen(): React.ReactElement {
       contentWrapStyle={styles.contentWrap}
     >
       {/* Map sits in the grey/white area just below the red header */}
-      <SearchRouteMap departureLabel={fromLabel} arrivalLabel={toLabel} />
+      <SearchRouteMap departureLabel={fromLabel} arrivalLabel={toLabel} onReady={onMapReady} />
 
       {/* White card overlaps the bottom of the map */}
       <View style={[styles.resultsCard, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-        <FlatList
-          data={trips}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.cardPad}>
-              <ListingCard
-                trip={item}
-                onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
-              />
+        {mapReady ? (
+          <>
+            <View style={styles.availableTripsHeader}>
+              <AppText weight="bold" style={styles.availableTripsText}>
+                {t('dashboard.search.results.availableTrips')}
+              </AppText>
             </View>
-          )}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={
-            isLoading ? (
-              <View style={styles.centered}>
-                <ActivityIndicator color={colors.primary} />
-              </View>
-            ) : loadError ? (
-              <View style={styles.centered}>
-                <AppText style={styles.errorText}>{loadError}</AppText>
-              </View>
-            ) : (
-              <View style={styles.cardPad}>
-                <RequestsEmptyState variant="trips" />
-              </View>
-            )
-          }
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        />
+            <FlatList
+              data={trips}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.cardPad}>
+                  <ListingCard
+                    trip={item}
+                    onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
+                  />
+                </View>
+              )}
+              ListHeaderComponent={listHeader}
+              ListEmptyComponent={
+                isLoading ? (
+                  skeletonList
+                ) : loadError ? (
+                  <View style={styles.centered}>
+                    <AppText style={styles.errorText}>{loadError}</AppText>
+                  </View>
+                ) : (
+                  <View style={styles.cardPad}>
+                    <RequestsEmptyState variant="trips" />
+                  </View>
+                )
+              }
+              contentContainerStyle={styles.listContent}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            />
+          </>
+        ) : (
+          skeletonList
+        )}
       </View>
     </AuthScaffold>
   );
@@ -172,6 +197,15 @@ const styles = StyleSheet.create({
     marginTop: -CARD_OVERLAP,
     overflow: 'hidden',
   },
+  availableTripsHeader: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  availableTripsText: {
+    fontSize: 15,
+    color: colors.text.primary,
+  },
   listContent: {
     flexGrow: 1,
     paddingTop: spacing.sm,
@@ -185,6 +219,9 @@ const styles = StyleSheet.create({
   },
   cardPad: {
     paddingHorizontal: spacing.md,
+  },
+  skeletonItem: {
+    marginTop: spacing.sm,
   },
   separator: {
     height: spacing.sm,

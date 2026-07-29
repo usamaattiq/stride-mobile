@@ -68,8 +68,8 @@ export type BrowseTripsParams = {
   q?: string;
   listingType?: 'rfq' | 'auction';
   paymentMethod?: 'cash' | 'online' | 'both';
-  departureCityId?: string;
-  arrivalCityId?: string;
+  departureCity?: string;
+  arrivalCity?: string;
   vehicleMode?: 'shared' | 'fullPrivate';
   minSeats?: number;
   page?: number;

@@ -14,6 +14,7 @@ import { buildSearchRouteMapHtml } from '../utils/search-route-map';
 type SearchRouteMapProps = {
   departureLabel: string;
   arrivalLabel: string;
+  onReady?: () => void;
 };
 
 type ResolvedPoint = {
@@ -25,11 +26,14 @@ type ResolvedPoint = {
 export const SearchRouteMap = React.memo(function SearchRouteMap({
   departureLabel,
   arrivalLabel,
+  onReady,
 }: SearchRouteMapProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [html, setHtml] = React.useState<string | null>(null);
+  const onReadyRef = React.useRef(onReady);
+  onReadyRef.current = onReady;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -43,6 +47,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
         if (!cancelled) {
           setError(t('dashboard.search.results.mapUnavailable'));
           setLoading(false);
+          onReadyRef.current?.();
         }
         return;
       }
@@ -60,6 +65,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
           if (!cancelled) {
             setError(t('dashboard.search.results.mapUnavailable'));
             setLoading(false);
+            onReadyRef.current?.();
           }
           return;
         }
@@ -82,6 +88,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
         if (!cancelled) {
           setError(t('dashboard.search.results.mapUnavailable'));
           setLoading(false);
+          onReadyRef.current?.();
         }
       }
     }
@@ -104,7 +111,10 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
           scrollEnabled={false}
           bounces={false}
           setSupportMultipleWindows={false}
-          onLoadEnd={() => setLoading(false)}
+          onLoadEnd={() => {
+            setLoading(false);
+            onReadyRef.current?.();
+          }}
         />
       ) : null}
 

@@ -257,6 +257,7 @@
       "results": {
         "title": "Trips",
         "subtitle": "Route map and matching listings",
+        "availableTrips": "Available Trips",
         "summary": "{{date}} · {{count}} passengers",
         "mapUnavailable": "Route map is unavailable right now."
       }
