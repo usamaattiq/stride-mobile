@@ -25,6 +25,7 @@ import { openTripCreationFlow } from './homeStackNavigation';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
+import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { MyOffersScreen } from '../screens/MyOffersScreen';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
 import type { DashboardTabParamList } from './types';
@@ -133,6 +134,7 @@ function DashboardRoot(): React.ReactElement {
       <RootStack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
       <RootStack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
       <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />
+      <RootStack.Screen name="SearchResults" component={SearchResultsScreen} />
     </RootStack.Navigator>
   );
 }

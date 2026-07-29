@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
   Modal,
   Platform,
   Pressable,
@@ -10,28 +8,20 @@ import {
 } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { FontAwesome } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import type { TripCity, TripVehicleMode } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
-import { getErrorMessage } from '@/services/api/errorMessage';
-import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
-import { FeedPaginationBar } from './FeedPaginationBar';
-import { ListingCard } from './ListingCard';
-import { RequestsEmptyState } from './RequestsEmptyState';
 import { SearchCityPickerModal } from './SearchCityPickerModal';
 import { SegmentControl } from './SegmentControl';
 import { isSameLocalDay, startOfLocalDay } from './trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip } from '../types/trip.types';
-import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
-const PAGE_SIZE = 5;
 const MIN_PASSENGERS = 1;
 const MAX_PASSENGERS = 50;
 
@@ -74,22 +64,8 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [passengerCount, setPassengerCount] = React.useState(1);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
+  const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
-
-  const [applied, setApplied] = React.useState({
-    vehicleMode: 'shared' as TripVehicleMode,
-    departureCity: null as TripCity | null,
-    arrivalCity: null as TripCity | null,
-    departureDate: null as Date | null,
-    passengerCount: null as number | null,
-  });
-  const [hasSearched, setHasSearched] = React.useState(false);
-
-  const [page, setPage] = React.useState(1);
-  const [trips, setTrips] = React.useState<Trip[]>([]);
-  const [totalPages, setTotalPages] = React.useState(0);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const today = startOfLocalDay(new Date());
   const quickDate = resolveQuickDate(departureDate, today);
@@ -102,68 +78,39 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     [t],
   );
 
-  const loadTrips = React.useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(null);
-    try {
-      const result = await tripApi.browse({
-        departureCityId: applied.departureCity?.id,
-        arrivalCityId: applied.arrivalCity?.id,
-        vehicleMode: hasSearched ? applied.vehicleMode : undefined,
-        minSeats: applied.passengerCount ?? undefined,
-        page: 1,
-        limit: 50,
-      });
-
-      const mapped = result.items.map(mapTripDtoToTrip);
-      const dayFiltered =
-        applied.departureDate == null
-          ? mapped
-          : mapped.filter((trip) =>
-              isSameLocalDay(new Date(trip.departureAt), applied.departureDate!),
-            );
-
-      const total = dayFiltered.length;
-      const pages = total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
-      const safePage = pages > 0 ? Math.min(page, pages) : 1;
-      const start = (safePage - 1) * PAGE_SIZE;
-      setTrips(dayFiltered.slice(start, start + PAGE_SIZE));
-      setTotalPages(pages);
-      if (safePage !== page) {
-        setPage(safePage);
-      }
-    } catch (error) {
-      setLoadError(getErrorMessage(error, 'Failed to load trips'));
-      setTrips([]);
-      setTotalPages(0);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applied, hasSearched, page]);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      void loadTrips();
-    }, [loadTrips]),
-  );
-
-  React.useEffect(() => {
-    setPage(1);
-  }, [applied, hasSearched]);
-
   const handleSearch = () => {
-    setApplied({
-      vehicleMode,
+    let hasError = false;
+    if (!departureCity) {
+      setDepartureError(t('dashboard.search.chooseDeparture'));
+      hasError = true;
+    } else {
+      setDepartureError(null);
+    }
+    if (!arrivalCity) {
+      setArrivalError(
+        departureCity
+          ? t('dashboard.search.chooseArrival')
+          : t('dashboard.search.chooseDepartureFirst'),
+      );
+      hasError = true;
+    } else if (!hasError) {
+      setArrivalError(null);
+    }
+    if (hasError || !departureCity || !arrivalCity) {
+      return;
+    }
+
+    navigation.navigate('SearchResults', {
       departureCity,
       arrivalCity,
-      departureDate: startOfLocalDay(departureDate),
+      departureDateISO: startOfLocalDay(departureDate).toISOString(),
+      vehicleMode,
       passengerCount,
     });
-    setHasSearched(true);
-    setPage(1);
   };
 
   const handleSwapCities = () => {
+    setDepartureError(null);
     setArrivalError(null);
     setDepartureCity(arrivalCity);
     setArrivalCity(departureCity);
@@ -211,17 +158,12 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     }
 
     setDepartureCity(city);
+    setDepartureError(null);
     setArrivalError(null);
     if (arrivalCityRef.current?.id === city.id) {
       setArrivalCity(null);
     }
   }, [t]);
-
-  const listHeader = (
-    <View style={styles.resultsHeader}>
-      <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
-    </View>
-  );
 
   return (
     <View style={styles.root}>
@@ -239,10 +181,16 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
           <Pressable
             accessibilityRole="button"
             onPress={() => {
+              setDepartureError(null);
               setArrivalError(null);
               setCityPickerMode('departure');
             }}
-            style={({ pressed }) => [styles.field, styles.routeCityInput, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.field,
+              styles.routeCityInput,
+              departureError ? styles.fieldError : null,
+              pressed && styles.pressed,
+            ]}
           >
             <FontAwesome name="arrow-up" size={13} color={colors.white} />
             <AppText
@@ -253,6 +201,9 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
               {departureCity?.label ?? t('dashboard.search.departure')}
             </AppText>
           </Pressable>
+          {departureError ? (
+            <AppText style={styles.arrivalErrorText}>{departureError}</AppText>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             onPress={openArrivalPicker}
@@ -389,34 +340,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
       </View>
 
       <View style={styles.resultsCard}>
-        <FlatList
-          data={trips}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ListingCard
-              trip={item}
-              onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
-            />
-          )}
-          ListHeaderComponent={totalPages > 1 ? listHeader : null}
-          ListEmptyComponent={
-            isLoading ? (
-              <View style={styles.centered}>
-                <ActivityIndicator color={colors.primary} />
-              </View>
-            ) : loadError ? (
-              <View style={styles.centered}>
-                <AppText style={styles.errorText}>{loadError}</AppText>
-              </View>
-            ) : (
-              <RequestsEmptyState variant="trips" />
-            )
-          }
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        />
+        <AppText style={styles.searchHint}>{t('dashboard.search.searchHint')}</AppText>
       </View>
 
       <SearchCityPickerModal
@@ -610,28 +534,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    // marginTop: -spacing.sm,
     overflow: 'hidden',
-  },
-  listContent: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  resultsHeader: {
-    marginBottom: spacing.sm,
-    alignItems: 'flex-end',
-  },
-  separator: {
-    height: spacing.sm,
-  },
-  centered: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xl,
   },
-  errorText: {
+  searchHint: {
+    fontSize: 14,
+    lineHeight: 20,
     color: colors.text.secondary,
     textAlign: 'center',
   },

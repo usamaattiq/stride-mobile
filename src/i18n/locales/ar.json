@@ -250,7 +250,16 @@
       "back": "رجوع",
       "searchAction": "بحث عن الرحلات",
       "chooseDepartureFirst": "يرجى اختيار مدينة المغادرة أولاً",
-      "sameCityNotAllowed": "يجب أن تختلف مدينة الوصول عن المغادرة"
+      "sameCityNotAllowed": "يجب أن تختلف مدينة الوصول عن المغادرة",
+      "chooseDeparture": "يرجى اختيار مدينة المغادرة",
+      "chooseArrival": "يرجى اختيار مدينة الوصول",
+      "searchHint": "حدد مسارك واضغط بحث للعثور على الرحلات.",
+      "results": {
+        "title": "الرحلات",
+        "subtitle": "خريطة المسار والقوائم المطابقة",
+        "summary": "{{date}} · {{count}} ركاب",
+        "mapUnavailable": "خريطة المسار غير متاحة حالياً."
+      }
     },
     "listings": {
       "title": "قوائمي",

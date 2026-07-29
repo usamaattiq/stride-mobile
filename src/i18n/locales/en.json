@@ -250,7 +250,16 @@
       "back": "Back",
       "searchAction": "Search trips",
       "chooseDepartureFirst": "Please choose departure city first",
-      "sameCityNotAllowed": "Arrival city must be different from departure"
+      "sameCityNotAllowed": "Arrival city must be different from departure",
+      "chooseDeparture": "Please choose departure city",
+      "chooseArrival": "Please choose arrival city",
+      "searchHint": "Set your route and tap search to find trips.",
+      "results": {
+        "title": "Trips",
+        "subtitle": "Route map and matching listings",
+        "summary": "{{date}} · {{count}} passengers",
+        "mapUnavailable": "Route map is unavailable right now."
+      }
     },
     "listings": {
       "title": "My Listings",

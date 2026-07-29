@@ -54,6 +54,8 @@ type AuthScaffoldProps = {
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
   contentWrapStyle?: StyleProp<ViewStyle>;
+  headerStyle?: StyleProp<ViewStyle>;
+  cardWrapStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
   showLegalFooter?: boolean;
   /** Defaults to true. Set false on tab screens that already have language in Settings. */
@@ -84,6 +86,8 @@ export function AuthScaffold({
   titleStyle,
   subtitleStyle,
   contentWrapStyle,
+  headerStyle,
+  cardWrapStyle,
   scrollable = true,
   showLegalFooter = true,
   showLanguageSwitcher = true,
@@ -144,6 +148,7 @@ export function AuthScaffold({
                     : HEADER_HEIGHT_NO_STEPPER,
                 }
               : null,
+            headerStyle,
           ]}
         >
           <LinearGradient
@@ -210,7 +215,7 @@ export function AuthScaffold({
           ) : null}
         </View>
 
-        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact]}>
+        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact, cardWrapStyle]}>
           {body}
         </View>
 
@@ -313,6 +318,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginTop: -spacing.sm,
+    overflow: 'hidden',
   },
   cardWrapCompact: {
     borderTopLeftRadius: 20,
