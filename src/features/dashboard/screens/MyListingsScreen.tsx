@@ -5,6 +5,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -14,26 +15,44 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
+import { HomeHeader } from '../components/HomeHeader';
 import { ListingCard } from '../components/ListingCard';
 import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
+import type { DashboardTabParamList } from '../navigation/types';
 import type { Trip } from '../types/trip.types';
 
 export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
+  const tabNavigation =
+    useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'MyListings'>>();
   const { user } = useDashboardSession();
   const { trips, isLoading, loadError, refreshTrips, removeTrip } = useTrips();
 
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+
+  const roleLabel =
+    user.role === 'driver'
+      ? t('profile.roles.driver')
+      : t('profile.roles.passenger');
+
+  const goToSettings = React.useCallback(() => {
+    tabNavigation.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
+  }, [tabNavigation]);
+
+  const goToHome = React.useCallback(() => {
+    tabNavigation.navigate({ name: 'Home', params: { screen: 'HomeMain' } });
+  }, [tabNavigation]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -64,18 +83,22 @@ export function MyListingsScreen(): React.ReactElement {
 
   if (user.role !== 'driver') {
     return (
-      <AuthScaffold
-        title={t('dashboard.listings.searchTitle')}
-        subtitle={t('dashboard.listings.searchSubtitle')}
-        subtitleStyle={styles.searchSubtitle}
-        showLegalFooter={false}
-        showLanguageSwitcher={false}
-        compactHeader
-        scrollable={false}
-        contentWrapStyle={styles.searchContentWrap}
-      >
+      <View style={styles.searchRoot}>
+        <FocusAwareStatusBar style="light" />
+        <HomeHeader
+          firstName={user.firstName}
+          roleLabel={roleLabel}
+          avatarUri={user.avatarUri}
+          credits={user.credits}
+          notificationCount={user.notificationCount}
+          hasUnreadMessages={user.hasUnreadMessages}
+          variant="onBrand"
+          onChatPress={goToHome}
+          onNotificationsPress={goToHome}
+          onProfilePress={goToSettings}
+        />
         <PassengerSearchPanel />
-      </AuthScaffold>
+      </View>
     );
   }
 
@@ -162,6 +185,10 @@ export function MyListingsScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
+  searchRoot: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
   list: {
     gap: spacing.sm,
   },
@@ -184,13 +211,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
-  },
-  searchContentWrap: {
-    flex: 1,
-    paddingHorizontal: 0,
-    paddingTop: 0,
-  },
-  searchSubtitle: {
-    marginBottom: spacing.xs,
   },
 });

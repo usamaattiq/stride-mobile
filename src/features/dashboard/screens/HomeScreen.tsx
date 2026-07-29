@@ -14,7 +14,7 @@ import { HomeFeedPanel } from '../components/HomeFeedPanel';
 import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
-import { PassengerHomeFeedPanel } from '../components/PassengerHomeFeedPanel';
+import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList, HomePanel, HomeStackParamList } from '../navigation/types';
 
@@ -33,12 +33,15 @@ export function HomeScreen(): React.ReactElement {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
 
+  const isPassenger = user.role === 'passenger';
+  const brandedHeader = isPassenger && panel === 'feed';
+
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
   const goToSettings = React.useCallback(() => {
     navigation
       .getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>()
-      ?.navigate('Settings');
+      ?.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
   }, [navigation]);
 
   const roleLabel =
@@ -78,8 +81,8 @@ export function HomeScreen(): React.ReactElement {
   }, [navigation]);
 
   return (
-    <View style={styles.root}>
-      <FocusAwareStatusBar style="dark" />
+    <View style={[styles.root, brandedHeader && styles.rootBranded]}>
+      <FocusAwareStatusBar style={brandedHeader ? 'light' : 'dark'} />
       <HomeHeader
         firstName={user.firstName}
         roleLabel={roleLabel}
@@ -87,6 +90,7 @@ export function HomeScreen(): React.ReactElement {
         credits={user.credits}
         notificationCount={user.notificationCount}
         hasUnreadMessages={user.hasUnreadMessages}
+        variant={brandedHeader ? 'onBrand' : 'default'}
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
         onProfilePress={goToSettings}
@@ -94,7 +98,7 @@ export function HomeScreen(): React.ReactElement {
 
       <View style={styles.body}>
         {panel === 'feed' ? (
-          user.role === 'passenger' ? <PassengerHomeFeedPanel /> : <HomeFeedPanel />
+          isPassenger ? <PassengerSearchPanel /> : <HomeFeedPanel />
         ) : null}
         {panel === 'messages' ? <MessagesPanel /> : null}
         {panel === 'notifications' ? <NotificationsPanel /> : null}
@@ -107,6 +111,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background.canvas,
+  },
+  rootBranded: {
+    backgroundColor: colors.primary,
   },
   body: {
     flex: 1,
