@@ -8,13 +8,14 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
+import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 import { FeedPaginationBar } from '../components/FeedPaginationBar';
 import { ListingCard } from '../components/ListingCard';
@@ -24,10 +25,13 @@ import { isSameLocalDay } from '../components/trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
+import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 
 const PAGE_SIZE = 5;
+const CARD_OVERLAP = 14;
 
 export function SearchResultsScreen(): React.ReactElement {
+  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'SearchResults'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'SearchResults'>>();
@@ -94,16 +98,11 @@ export function SearchResultsScreen(): React.ReactElement {
     void loadTrips();
   }, [loadTrips]);
 
-  const listHeader = (
-    <View>
-      <SearchRouteMap departureLabel={fromLabel} arrivalLabel={toLabel} />
-      {totalPages > 1 ? (
-        <View style={styles.paginationWrap}>
-          <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
-        </View>
-      ) : null}
+  const listHeader = totalPages > 1 ? (
+    <View style={styles.paginationWrap}>
+      <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
     </View>
-  );
+  ) : null;
 
   return (
     <AuthScaffold
@@ -116,38 +115,44 @@ export function SearchResultsScreen(): React.ReactElement {
       scrollable={false}
       contentWrapStyle={styles.contentWrap}
     >
-      <FlatList
-        data={trips}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.cardPad}>
-            <ListingCard
-              trip={item}
-              onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
-            />
-          </View>
-        )}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.centered}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : loadError ? (
-            <View style={styles.centered}>
-              <AppText style={styles.errorText}>{loadError}</AppText>
-            </View>
-          ) : (
+      {/* Map sits in the grey/white area just below the red header */}
+      <SearchRouteMap departureLabel={fromLabel} arrivalLabel={toLabel} />
+
+      {/* White card overlaps the bottom of the map */}
+      <View style={[styles.resultsCard, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <FlatList
+          data={trips}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
             <View style={styles.cardPad}>
-              <RequestsEmptyState variant="trips" />
+              <ListingCard
+                trip={item}
+                onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
+              />
             </View>
-          )
-        }
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      />
+          )}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={
+            isLoading ? (
+              <View style={styles.centered}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : loadError ? (
+              <View style={styles.centered}>
+                <AppText style={styles.errorText}>{loadError}</AppText>
+              </View>
+            ) : (
+              <View style={styles.cardPad}>
+                <RequestsEmptyState variant="trips" />
+              </View>
+            )
+          }
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
+      </View>
     </AuthScaffold>
   );
 }
@@ -159,9 +164,18 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
   },
+  resultsCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    marginTop: -CARD_OVERLAP,
+    overflow: 'hidden',
+  },
   listContent: {
     flexGrow: 1,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   paginationWrap: {
     alignItems: 'flex-end',
