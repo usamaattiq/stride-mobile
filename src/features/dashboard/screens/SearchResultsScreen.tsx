@@ -20,7 +20,6 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
-import { FeedPaginationBar } from '../components/FeedPaginationBar';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { RequestsEmptyState } from '../components/RequestsEmptyState';
@@ -37,7 +36,6 @@ import {
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 
-const PAGE_SIZE = 5;
 const SKELETON_KEYS = [0, 1, 2];
 const CARD_OVERLAP = 14;
 
@@ -85,9 +83,7 @@ export function SearchResultsScreen(): React.ReactElement {
     [departureDateISO],
   );
 
-  const [page, setPage] = React.useState(1);
   const [trips, setTrips] = React.useState<Trip[]>([]);
-  const [totalPages, setTotalPages] = React.useState(0);
   const [resultsCount, setResultsCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
@@ -123,39 +119,20 @@ export function SearchResultsScreen(): React.ReactElement {
           matchesPriceRange(trip, filters.priceRange),
       );
 
-      const total = filtered.length;
-      const pages = total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
-      const safePage = pages > 0 ? Math.min(page, pages) : 1;
-      const start = (safePage - 1) * PAGE_SIZE;
-      setTrips(filtered.slice(start, start + PAGE_SIZE));
-      setTotalPages(pages);
-      setResultsCount(total);
-      if (safePage !== page) {
-        setPage(safePage);
-      }
+      setTrips(filtered);
+      setResultsCount(filtered.length);
     } catch (error) {
       setLoadError(getErrorMessage(error, 'Failed to load trips'));
       setTrips([]);
-      setTotalPages(0);
       setResultsCount(0);
     } finally {
       setIsLoading(false);
     }
-  }, [arrivalCity.id, departureCity.id, departureDate, filters, page, passengerCount, vehicleMode]);
-
-  React.useEffect(() => {
-    setPage(1);
-  }, [filters]);
+  }, [arrivalCity.id, departureCity.id, departureDate, filters, passengerCount, vehicleMode]);
 
   React.useEffect(() => {
     void loadTrips();
   }, [loadTrips]);
-
-  const listHeader = totalPages > 1 ? (
-    <View style={styles.paginationWrap}>
-      <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
-    </View>
-  ) : null;
 
   const skeletonList = (
     <View style={styles.cardPad}>
@@ -216,7 +193,6 @@ export function SearchResultsScreen(): React.ReactElement {
                   />
                 </View>
               )}
-              ListHeaderComponent={listHeader}
               ListEmptyComponent={
                 isLoading ? (
                   skeletonList
@@ -272,7 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.xxs,
   },
   availableTripsText: {
     fontSize: 15,
@@ -312,12 +288,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  paginationWrap: {
-    alignItems: 'flex-end',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
   },
   cardPad: {
     paddingHorizontal: spacing.md,
