@@ -44,6 +44,10 @@ function enrichPreviewTrip(draft: TripDraft, vehicle: Vehicle | undefined): Trip
     vehicleTitle: vehicle?.title ?? base.vehicleTitle,
     vehiclePhotoUrl:
       vehicle?.photoDisplayUris?.[0] ?? vehicle?.photoUris[0] ?? base.vehiclePhotoUrl,
+    vehiclePhotoUrls:
+      vehicle?.photoDisplayUris?.length
+        ? vehicle.photoDisplayUris
+        : vehicle?.photoUris ?? base.vehiclePhotoUrls,
     vehiclePhotoCount: vehicle?.photoUris.length ?? base.vehiclePhotoCount,
     vehicleClass: vehicle?.vehicleClass ?? base.vehicleClass,
     vehicleTotalSeats: vehicle?.totalSeats ?? base.vehicleTotalSeats,

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
@@ -75,6 +76,12 @@ export function ListingCard({
         : null;
   const active = isListingActive(trip);
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
+  const galleryImages = trip.vehiclePhotoUrls.length
+    ? trip.vehiclePhotoUrls
+    : trip.vehiclePhotoUrl
+      ? [trip.vehiclePhotoUrl]
+      : [];
+  const [galleryVisible, setGalleryVisible] = React.useState(false);
   const price = trip.startingPrice?.trim() || null;
   const listingLabel =
     trip.listingType === 'auction'
@@ -109,7 +116,13 @@ export function ListingCard({
       />
 
       <View style={styles.mainRow}>
-        <View style={styles.thumbnail}>
+        <Pressable
+          style={styles.thumbnail}
+          disabled={!galleryImages.length}
+          onPress={() => setGalleryVisible(true)}
+          accessibilityRole={galleryImages.length ? 'button' : undefined}
+          accessibilityLabel={t('dashboard.listings.card.viewPhotos')}
+        >
           {trip.vehiclePhotoUrl ? (
             <Image
               source={{ uri: trip.vehiclePhotoUrl }}
@@ -132,7 +145,7 @@ export function ListingCard({
               </AppText>
             </View>
           ) : null}
-        </View>
+        </Pressable>
 
         <View style={styles.itemBody}>
           <View style={styles.itemTopRow}>
@@ -245,20 +258,29 @@ export function ListingCard({
     </>
   );
 
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        style={styles.item}
-        accessibilityRole="button"
-        accessibilityLabel={`${fromCity} to ${toCity}`}
-      >
-        {content}
-      </Pressable>
-    );
-  }
+  const item = onPress ? (
+    <Pressable
+      onPress={onPress}
+      style={styles.item}
+      accessibilityRole="button"
+      accessibilityLabel={`${fromCity} to ${toCity}`}
+    >
+      {content}
+    </Pressable>
+  ) : (
+    <View style={styles.item}>{content}</View>
+  );
 
-  return <View style={styles.item}>{content}</View>;
+  return (
+    <>
+      {item}
+      <ImageGalleryModal
+        visible={galleryVisible}
+        images={galleryImages}
+        onClose={() => setGalleryVisible(false)}
+      />
+    </>
+  );
 }
 
 const styles = StyleSheet.create({

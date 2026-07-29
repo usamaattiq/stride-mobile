@@ -277,7 +277,8 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "Active",
         "ended": "Ended",
-        "photoCount": "{{current}}/{{total}}"
+        "photoCount": "{{current}}/{{total}}",
+        "viewPhotos": "View photos"
       },
       "detail": {
         "title": "Listing details",

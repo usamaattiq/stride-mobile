@@ -15,6 +15,7 @@ export type TripDto = {
   vehicleTitle: string | null;
   vehiclePhotoUrls: string[];
   vehiclePhotoViewUrl?: string | null;
+  vehiclePhotoViewUrls?: string[];
   vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | 'hiace' | 'minibus' | 'pickup' | null;
   vehicleTotalSeats: number | null;
   vehicleMode: 'shared' | 'fullPrivate';
