@@ -59,10 +59,6 @@ export function TripProvider({
     }
   }, []);
 
-  React.useEffect(() => {
-    void refreshTrips().catch(() => undefined);
-  }, [refreshTrips]);
-
   const clearDraft = React.useCallback(() => {
     setDraft(createEmptyTripDraft());
   }, []);

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
-  ActivityIndicator,
+  FlatList,
+  InteractionManager,
   StyleSheet,
   View,
 } from 'react-native';
@@ -21,12 +22,15 @@ import { colors, spacing } from '@/theme';
 
 import { HomeHeader } from '../components/HomeHeader';
 import { ListingCard } from '../components/ListingCard';
+import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { DashboardTabParamList } from '../navigation/types';
 import type { Trip } from '../types/trip.types';
+
+const SKELETON_COUNT = 4;
 
 export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -35,11 +39,13 @@ export function MyListingsScreen(): React.ReactElement {
   const tabNavigation =
     useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'MyListings'>>();
   const { user } = useDashboardSession();
-  const { trips, isLoading, loadError, refreshTrips, removeTrip } = useTrips();
+  const { trips, loadError, refreshTrips, removeTrip } = useTrips();
 
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+  /** True from tab focus until the deferred fetch finishes — keeps the screen light. */
+  const [isScreenLoading, setIsScreenLoading] = React.useState(user.role === 'driver');
 
   const roleLabel =
     user.role === 'driver'
@@ -57,9 +63,27 @@ export function MyListingsScreen(): React.ReactElement {
   useFocusEffect(
     React.useCallback(() => {
       if (user.role !== 'driver') {
+        setIsScreenLoading(false);
         return;
       }
-      void refreshTrips().catch(() => undefined);
+
+      let cancelled = false;
+      setIsScreenLoading(true);
+
+      const task = InteractionManager.runAfterInteractions(() => {
+        void refreshTrips()
+          .catch(() => undefined)
+          .finally(() => {
+            if (!cancelled) {
+              setIsScreenLoading(false);
+            }
+          });
+      });
+
+      return () => {
+        cancelled = true;
+        task.cancel();
+      };
     }, [refreshTrips, user.role]),
   );
 
@@ -80,6 +104,23 @@ export function MyListingsScreen(): React.ReactElement {
         setRemoving(false);
       });
   };
+
+  const renderTrip = React.useCallback(
+    ({ item }: { item: Trip }) => (
+      <ListingCard
+        trip={item}
+        showPhotoCount={false}
+        onPress={() => {
+          navigation.navigate('ListingDetail', { tripId: item.id });
+        }}
+        onRemovePress={() => {
+          setRemoveError(null);
+          setTripToRemove(item);
+        }}
+      />
+    ),
+    [navigation],
+  );
 
   if (user.role !== 'driver') {
     return (
@@ -102,6 +143,50 @@ export function MyListingsScreen(): React.ReactElement {
     );
   }
 
+  const listBody = isScreenLoading ? (
+    <View style={styles.skeletonList}>
+      {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+        <ListingCardSkeleton key={`listing-skeleton-${index}`} />
+      ))}
+    </View>
+  ) : loadError && trips.length === 0 ? (
+    <View style={styles.centered}>
+      <AppText style={styles.errorText}>{loadError}</AppText>
+      <Button
+        label={t('dashboard.listings.retry')}
+        onPress={() => {
+          setIsScreenLoading(true);
+          void refreshTrips()
+            .catch(() => undefined)
+            .finally(() => setIsScreenLoading(false));
+        }}
+      />
+    </View>
+  ) : trips.length === 0 ? (
+    <View style={styles.centered}>
+      <AppText weight="semibold" style={styles.emptyTitle}>
+        {t('dashboard.listings.emptyTitle')}
+      </AppText>
+      <AppText style={styles.emptySubtitle}>
+        {t('dashboard.listings.emptySubtitle')}
+      </AppText>
+    </View>
+  ) : (
+    <FlatList
+      data={trips}
+      keyExtractor={(item) => item.id}
+      renderItem={renderTrip}
+      contentContainerStyle={styles.listContent}
+      ItemSeparatorComponent={ListSeparator}
+      showsVerticalScrollIndicator={false}
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
+      windowSize={5}
+      removeClippedSubviews
+      updateCellsBatchingPeriod={50}
+    />
+  );
+
   return (
     <AuthScaffold
       title={t('dashboard.listings.title')}
@@ -109,48 +194,10 @@ export function MyListingsScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
+      scrollable={false}
+      contentWrapStyle={styles.contentWrap}
     >
-      {isLoading && trips.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : loadError && trips.length === 0 ? (
-        <View style={styles.centered}>
-          <AppText style={styles.errorText}>{loadError}</AppText>
-          <Button
-            label={t('dashboard.listings.retry')}
-            onPress={() => {
-              void refreshTrips().catch(() => undefined);
-            }}
-          />
-        </View>
-      ) : trips.length === 0 ? (
-        <View style={styles.centered}>
-          <AppText weight="semibold" style={styles.emptyTitle}>
-            {t('dashboard.listings.emptyTitle')}
-          </AppText>
-          <AppText style={styles.emptySubtitle}>
-            {t('dashboard.listings.emptySubtitle')}
-          </AppText>
-        </View>
-      ) : (
-        <View style={styles.list}>
-          {trips.map((trip) => (
-            <ListingCard
-              key={trip.id}
-              trip={trip}
-              showPhotoCount={false}
-              onPress={() => {
-                navigation.navigate('ListingDetail', { tripId: trip.id });
-              }}
-              onRemovePress={() => {
-                setRemoveError(null);
-                setTripToRemove(trip);
-              }}
-            />
-          ))}
-        </View>
-      )}
+      {listBody}
 
       <AppDialog
         visible={tripToRemove !== null}
@@ -184,13 +231,31 @@ export function MyListingsScreen(): React.ReactElement {
   );
 }
 
+function ListSeparator(): React.ReactElement {
+  return <View style={styles.separator} />;
+}
+
 const styles = StyleSheet.create({
   searchRoot: {
     flex: 1,
     backgroundColor: colors.primary,
   },
-  list: {
+  contentWrap: {
+    flex: 1,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 0,
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.huge + spacing.md,
+  },
+  skeletonList: {
     gap: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  separator: {
+    height: spacing.sm,
   },
   centered: {
     gap: spacing.md,
