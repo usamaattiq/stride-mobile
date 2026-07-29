@@ -66,6 +66,8 @@ type AuthScaffoldProps = {
    * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
    */
   compactHeader?: boolean;
+  /** Places the title centered on the same row as the back button. */
+  centerTitleInTopBar?: boolean;
   /** Total number of steps in the flow. Renders a step indicator when set. */
   stepCount?: number;
   /** The active step (1-based). Required alongside `stepCount`. */
@@ -93,6 +95,7 @@ export function AuthScaffold({
   showLanguageSwitcher = true,
   headerRight,
   compactHeader = false,
+  centerTitleInTopBar = false,
   stepCount,
   currentStep,
   scrollBottomOffset,
@@ -106,6 +109,9 @@ export function AuthScaffold({
   const contentBottomPad = showLegalFooter
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
+
+  const showTitleInTopBar = centerTitleInTopBar && Boolean(title);
+  const showTitleInHeaderCopy = Boolean(title) && !showTitleInTopBar;
 
   const body = scrollable ? (
     <KeyboardAwareScrollView
@@ -141,6 +147,7 @@ export function AuthScaffold({
           style={[
             styles.header,
             compactHeader ? styles.headerCompact : null,
+            compactHeader && centerTitleInTopBar ? styles.headerCompactCenteredTitle : null,
             !compactHeader
               ? {
                   height: hasStepper
@@ -172,41 +179,60 @@ export function AuthScaffold({
                 <View style={styles.topBarSpacer} />
               )}
 
+              {showTitleInTopBar ? (
+                <View style={styles.topBarCenter} pointerEvents="none">
+                  <AppText
+                    weight="semibold"
+                    style={[styles.topBarTitle, titleStyle]}
+                    numberOfLines={1}
+                  >
+                    {title}
+                  </AppText>
+                </View>
+              ) : null}
+
               <View style={styles.topBarRight}>
                 {headerRight}
                 {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+                {showTitleInTopBar && !headerRight && !showLanguageSwitcher ? (
+                  <View style={styles.topBarSpacer} />
+                ) : null}
               </View>
             </View>
           ) : null}
 
-          <View
-            style={[
-              styles.headerCopy,
-              compactHeader ? styles.headerCopyCompact : null,
-              !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
-            ]}
-          >
-            <AppText
-              weight="bold"
-              style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.6}
+          {showTitleInHeaderCopy || subtitle ? (
+            <View
+              style={[
+                styles.headerCopy,
+                compactHeader ? styles.headerCopyCompact : null,
+                !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
+              ]}
             >
-              {title}
-            </AppText>
-            {subtitle ? (
-              <AppText
-                style={[
-                  styles.subtitle,
-                  compactHeader && styles.subtitleCompact,
-                  subtitleStyle,
-                ]}
-              >
-                {subtitle}
-              </AppText>
-            ) : null}
-          </View>
+              {showTitleInHeaderCopy ? (
+                <AppText
+                  weight="bold"
+                  style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                >
+                  {title}
+                </AppText>
+              ) : null}
+              {subtitle ? (
+                <AppText
+                  style={[
+                    styles.subtitle,
+                    compactHeader && styles.subtitleCompact,
+                    subtitleStyle,
+                  ]}
+                >
+                  {subtitle}
+                </AppText>
+              ) : null}
+            </View>
+          ) : null}
 
           {stepCount && currentStep ? (
             <View style={styles.stepSlot}>
@@ -252,13 +278,31 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
+  headerCompactCenteredTitle: {
+    // paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    position: 'relative',
   },
   topBarNoBack: {
     justifyContent: 'flex-end',
+  },
+  topBarCenter: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xxl + spacing.sm,
+  },
+  topBarTitle: {
+    color: colors.white,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: '100%',
   },
   topBarSpacer: {
     width: 34,
@@ -267,6 +311,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    zIndex: 1,
   },
   stepSlot: {
     marginHorizontal: spacing.xxl,
@@ -278,6 +323,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
+    zIndex: 1,
   },
   headerCopy: {
     marginTop: spacing.md,

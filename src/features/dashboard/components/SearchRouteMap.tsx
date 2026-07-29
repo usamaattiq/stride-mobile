@@ -125,7 +125,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
 
 const styles = StyleSheet.create({
   root: {
-    height: 168,
+    height: 200,
     overflow: 'hidden',
     backgroundColor: colors.background.subtle,
   },

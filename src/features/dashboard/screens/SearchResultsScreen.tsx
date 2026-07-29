@@ -8,10 +8,8 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
-import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
@@ -30,7 +28,6 @@ import { mapTripDtoToTrip } from '../utils/trip.mapper';
 const PAGE_SIZE = 5;
 
 export function SearchResultsScreen(): React.ReactElement {
-  const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'SearchResults'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'SearchResults'>>();
@@ -55,11 +52,6 @@ export function SearchResultsScreen(): React.ReactElement {
 
   const fromLabel = cityDisplayName(departureCity.label);
   const toLabel = cityDisplayName(arrivalCity.label);
-  const dateLabel = departureDate.toLocaleDateString(i18n.language, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
   const routeTitle = `${fromLabel} → ${toLabel}`;
 
   const loadTrips = React.useCallback(async () => {
@@ -105,17 +97,11 @@ export function SearchResultsScreen(): React.ReactElement {
   const listHeader = (
     <View>
       <SearchRouteMap departureLabel={fromLabel} arrivalLabel={toLabel} />
-      <View style={styles.metaRow}>
-        <AppText style={styles.routeMeta}>
-          {t('dashboard.search.results.summary', {
-            date: dateLabel,
-            count: passengerCount,
-          })}
-        </AppText>
-        {totalPages > 1 ? (
+      {totalPages > 1 ? (
+        <View style={styles.paginationWrap}>
           <FeedPaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 
@@ -126,9 +112,9 @@ export function SearchResultsScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
+      centerTitleInTopBar
       scrollable={false}
       contentWrapStyle={styles.contentWrap}
-      titleStyle={styles.headerTitle}
     >
       <FlatList
         data={trips}
@@ -173,28 +159,15 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
   },
-  headerTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    maxWidth: '100%',
-  },
   listContent: {
     flexGrow: 1,
     paddingBottom: spacing.lg,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+  paginationWrap: {
+    alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xs,
-  },
-  routeMeta: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.text.secondary,
   },
   cardPad: {
     paddingHorizontal: spacing.md,
