@@ -72,17 +72,19 @@ const styles = StyleSheet.create({
   mainRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs + 2,
+    paddingBottom: spacing.xs,
   },
   thumbnail: {
-    width: 88,
-    height: 96,
+    width: 76,
+    height: 82,
     borderRadius: radius.sm,
   },
   itemBody: {
     flex: 1,
     minWidth: 0,
-    gap: 8,
+    gap: 6,
   },
   routeRow: {
     flexDirection: 'row',
@@ -91,20 +93,20 @@ const styles = StyleSheet.create({
   },
   routeCity: {
     width: 64,
-    height: 14,
+    height: 13,
   },
   routeCitySmall: {
     width: 64,
-    height: 14,
+    height: 13,
   },
   metaLine: {
     width: '70%',
-    height: 11,
+    height: 10,
   },
   bodyDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border.default,
-    marginVertical: 2,
+    marginVertical: 1,
   },
   detailsPriceRow: {
     flexDirection: 'row',
@@ -114,32 +116,32 @@ const styles = StyleSheet.create({
   detailsCol: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 4,
   },
   metaLineShort: {
     width: '50%',
-    height: 11,
+    height: 10,
   },
   priceBlock: {
-    width: 56,
-    height: 22,
+    width: 48,
+    height: 18,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
   },
   footerChip: {
     flex: 1,
-    height: 14,
+    height: 12,
   },
   footerBadge: {
-    width: 54,
-    height: 20,
+    width: 48,
+    height: 18,
     borderRadius: radius.full,
     flexShrink: 0,
   },

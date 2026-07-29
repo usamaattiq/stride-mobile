@@ -131,7 +131,7 @@ export function ListingCard({
             />
           ) : (
             <View style={styles.thumbnailFallback}>
-              <FontAwesome name="car" size={22} color={colors.text.tertiary} />
+              <FontAwesome name="car" size={18} color={colors.text.tertiary} />
             </View>
           )}
           {showPhotoCount && photoTotal > 1 ? (
@@ -300,17 +300,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    bottom: 36,
+    bottom: 32,
     width: '58%',
   },
   mainRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs + 2,
+    paddingBottom: spacing.xs,
   },
   thumbnail: {
-    width: 88,
-    height: 96,
+    width: 84,
+    height: 78,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
@@ -343,7 +345,7 @@ const styles = StyleSheet.create({
   itemBody: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 3,
   },
   itemTopRow: {
     flexDirection: 'row',
@@ -363,8 +365,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   removeButton: {
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     flexShrink: 1,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.secondary,
   },
   bodyDivider: {
@@ -394,15 +396,15 @@ const styles = StyleSheet.create({
   detailsCol: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 3,
   },
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
   },
   priceAmount: {
-    fontSize: 22,
-    lineHeight: 26,
+    fontSize: 20,
+    lineHeight: 22,
     color: colors.primary,
   },
   priceSuffix: {
@@ -414,7 +416,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
     backgroundColor: 'rgba(249, 250, 251, 0.72)',
@@ -433,29 +435,29 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   footerIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
   },
   footerPrimary: {
     flexShrink: 1,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.primary,
   },
   footerPlain: {
     flexShrink: 1,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.primary,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: radius.full,
     backgroundColor: colors.accent.green.soft,
     flexShrink: 0,
