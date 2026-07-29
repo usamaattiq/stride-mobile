@@ -281,7 +281,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
             onPress={handleSwapCities}
             style={({ pressed }) => [styles.swapButton, pressed && styles.pressed]}
           >
-            <FontAwesome name="exchange" size={14} color={colors.white} style={styles.swapIcon} />
+            <FontAwesome name="exchange" size={13} color={colors.white} style={styles.swapIcon} />
           </Pressable>
         </View>
 
@@ -291,7 +291,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
             onPress={() => setShowDatePicker(true)}
             style={({ pressed }) => [styles.dateMainPress, pressed && styles.pressed]}
           >
-            <FontAwesome name="calendar" size={14} color={colors.white} />
+            <FontAwesome name="calendar" size={13} color={colors.white} />
             <AppText weight="semibold" style={styles.fieldValue}>
               {formatSearchDate(departureDate, i18n.language)}
             </AppText>
@@ -332,7 +332,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
 
         <View style={styles.bottomRow}>
           <View style={[styles.field, styles.passengerField]}>
-            <FontAwesome name="user" size={14} color={colors.white} />
+            <FontAwesome name="user" size={13} color={colors.white} />
             <AppText weight="semibold" style={styles.passengerLabel} numberOfLines={1}>
               {t('dashboard.search.passengerCount')}
             </AppText>
@@ -383,7 +383,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
             onPress={handleSearch}
             style={({ pressed }) => [styles.searchButton, pressed && styles.pressed]}
           >
-            <FontAwesome name="search" size={18} color={colors.primary} />
+            <FontAwesome name="search" size={17} color={colors.primary} />
           </Pressable>
         </View>
       </View>
@@ -472,10 +472,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   form: {
-    // paddingTop: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: 6,
     backgroundColor: colors.primary,
   },
   segmentWrap: {
@@ -484,31 +483,31 @@ const styles = StyleSheet.create({
   },
   routeBlock: {
     position: 'relative',
-    gap: spacing.xs,
+    gap: 6,
   },
   routeCityInput: {
-    paddingRight: 52,
+    paddingRight: 48,
   },
   fieldError: {
-    borderColor: colors.white,
+    borderColor: 'rgba(255,255,255,0.4)',
     borderBottomColor: '#FFB4A8',
     borderBottomWidth: 2,
   },
   arrivalErrorText: {
     marginTop: 2,
-    marginBottom: 2,
+    marginBottom: 0,
     paddingHorizontal: spacing.xs,
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 15,
     color: '#FFD5CF',
   },
   swapButton: {
     position: 'absolute',
     right: spacing.sm,
-    top: 30,
+    top: 28,
     marginTop: 0,
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: radius.sm,
     backgroundColor: colors.primaryPressed,
     borderWidth: 1,
@@ -521,12 +520,12 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '90deg' }],
   },
   field: {
-    minHeight: 48,
+    minHeight: 46,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
     backgroundColor: 'rgba(255,255,255,0.12)',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.md - 2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -536,7 +535,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 46,
+    minHeight: 44,
   },
   fieldValue: {
     flex: 1,
@@ -549,7 +548,7 @@ const styles = StyleSheet.create({
   quickDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.md - 2,
   },
   quickDate: {
     fontSize: 13,
@@ -580,8 +579,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   stepperButton: {
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
@@ -593,14 +592,14 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   stepperValue: {
-    minWidth: 24,
+    minWidth: 22,
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 15,
     color: colors.white,
   },
   searchButton: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
     backgroundColor: colors.white,
     alignItems: 'center',

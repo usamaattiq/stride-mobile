@@ -81,7 +81,10 @@ export function SegmentControl<T extends string>({
       style={[styles.track, isOnBrand && styles.trackOnBrand]}
       accessibilityRole="tablist"
     >
-      <View style={styles.inner} onLayout={onInnerLayout}>
+      <View
+        style={[styles.inner, isOnBrand && styles.innerOnBrand]}
+        onLayout={onInnerLayout}
+      >
         {innerWidth > 0 && thumbWidth > 0 ? (
           <Animated.View
             pointerEvents="none"
@@ -103,7 +106,11 @@ export function SegmentControl<T extends string>({
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               onPress={() => onChange(option.id)}
-              style={({ pressed }) => [styles.segment, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.segment,
+                isOnBrand && styles.segmentOnBrand,
+                pressed && styles.pressed,
+              ]}
             >
               <AppText
                 weight={selected ? 'bold' : 'medium'}
@@ -138,13 +145,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
-    minHeight: 42,
+    minHeight: 38,
   },
   inner: {
     flexGrow: 1,
     flexDirection: 'row',
     position: 'relative',
     minHeight: 36,
+  },
+  innerOnBrand: {
+    minHeight: 32,
   },
   thumb: {
     position: 'absolute',
@@ -176,12 +186,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radius.full,
   },
+  segmentOnBrand: {
+    minHeight: 32,
+  },
   label: {
     fontSize: 13,
     color: colors.text.secondary,
   },
   labelOnBrand: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text.onBrandMuted,
   },
   labelSelected: {
