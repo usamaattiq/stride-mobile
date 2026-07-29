@@ -3,7 +3,6 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
-import { AppText } from '@/shared/components/AppText';
 import { colors, spacing } from '@/theme';
 
 import { DashboardSearchBar } from './DashboardSearchBar';
@@ -47,9 +46,6 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
 
   const listHeader = (
     <View style={styles.listHeader}>
-      <AppText weight="bold" style={styles.title}>
-        {t('dashboard.messages.title')}
-      </AppText>
       <DashboardSearchBar
         value={query}
         onChangeText={setQuery}
@@ -100,15 +96,12 @@ const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.sm,
   },
   listHeader: {
     gap: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  title: {
-    fontSize: 24,
-    color: colors.text.primary,
   },
   separator: {
     height: spacing.xs,

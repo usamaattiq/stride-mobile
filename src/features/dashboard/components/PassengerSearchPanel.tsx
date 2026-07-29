@@ -397,6 +397,7 @@ const styles = StyleSheet.create({
   },
   form: {
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     gap: 6,
     backgroundColor: colors.primary,

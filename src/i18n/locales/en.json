@@ -220,6 +220,7 @@
     },
     "messages": {
       "title": "Messages",
+      "subtitle": "Chats about trips, bookings, and listings.",
       "searchPlaceholder": "Search messages...",
       "filterAll": "All Messages",
       "filterUnread": "Unread",
@@ -230,6 +231,7 @@
     },
     "notifications": {
       "title": "Notifications",
+      "subtitle": "Updates about offers, bookings, and listings.",
       "emptyTitle": "No notifications",
       "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
     },

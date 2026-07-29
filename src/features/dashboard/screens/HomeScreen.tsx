@@ -7,8 +7,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 import { HomeFeedPanel } from '../components/HomeFeedPanel';
 import { HomeHeader } from '../components/HomeHeader';
@@ -34,7 +35,7 @@ export function HomeScreen(): React.ReactElement {
   const [panel, setPanel] = React.useState<HomePanel>('feed');
 
   const isPassenger = user.role === 'passenger';
-  const brandedHeader = isPassenger && panel === 'feed';
+  const showPanelChrome = panel === 'messages' || panel === 'notifications';
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
@@ -48,6 +49,20 @@ export function HomeScreen(): React.ReactElement {
     user.role === 'driver'
       ? t('profile.roles.driver')
       : t('profile.roles.passenger');
+
+  const panelTitle =
+    panel === 'messages'
+      ? t('dashboard.messages.title')
+      : panel === 'notifications'
+        ? t('dashboard.notifications.title')
+        : null;
+
+  const panelSubtitle =
+    panel === 'messages'
+      ? t('dashboard.messages.subtitle')
+      : panel === 'notifications'
+        ? t('dashboard.notifications.subtitle')
+        : null;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -81,8 +96,8 @@ export function HomeScreen(): React.ReactElement {
   }, [navigation]);
 
   return (
-    <View style={[styles.root, brandedHeader && styles.rootBranded]}>
-      <FocusAwareStatusBar style={brandedHeader ? 'light' : 'dark'} />
+    <View style={styles.root}>
+      <FocusAwareStatusBar style="light" />
       <HomeHeader
         firstName={user.firstName}
         roleLabel={roleLabel}
@@ -90,13 +105,26 @@ export function HomeScreen(): React.ReactElement {
         credits={user.credits}
         notificationCount={user.notificationCount}
         hasUnreadMessages={user.hasUnreadMessages}
-        variant={brandedHeader ? 'onBrand' : 'default'}
+        variant="onBrand"
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
         onProfilePress={goToSettings}
       />
 
-      <View style={styles.body}>
+      {showPanelChrome && panelTitle ? (
+        <View style={styles.panelHeader}>
+          <AppText weight="bold" style={styles.panelTitle} numberOfLines={1}>
+            {panelTitle}
+          </AppText>
+          {panelSubtitle ? (
+            <AppText style={styles.panelSubtitle} numberOfLines={2}>
+              {panelSubtitle}
+            </AppText>
+          ) : null}
+        </View>
+      ) : null}
+
+      <View style={[styles.body, showPanelChrome && styles.bodyCurved]}>
         {panel === 'feed' ? (
           isPassenger ? <PassengerSearchPanel /> : <HomeFeedPanel />
         ) : null}
@@ -110,12 +138,32 @@ export function HomeScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background.canvas,
-  },
-  rootBranded: {
     backgroundColor: colors.primary,
+  },
+  panelHeader: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxl,
+  },
+  panelTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors.white,
+  },
+  panelSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.text.onBrandMuted,
   },
   body: {
     flex: 1,
+    backgroundColor: colors.background.canvas,
+  },
+  bodyCurved: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -18,
+    overflow: 'hidden',
   },
 });
