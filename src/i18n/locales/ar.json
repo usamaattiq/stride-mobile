@@ -248,7 +248,9 @@
       "suggestedDepartures": "المغادرات المقترحة",
       "suggestedArrivals": "الوصولات المقترحة",
       "back": "رجوع",
-      "searchAction": "بحث عن الرحلات"
+      "searchAction": "بحث عن الرحلات",
+      "chooseDepartureFirst": "يرجى اختيار مدينة المغادرة أولاً",
+      "sameCityNotAllowed": "يجب أن تختلف مدينة الوصول عن المغادرة"
     },
     "listings": {
       "title": "قوائمي",

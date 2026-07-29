@@ -32,6 +32,8 @@ type SearchCityPickerModalProps = {
   visible: boolean;
   mode: 'departure' | 'arrival';
   value: TripCity | null;
+  /** City id that cannot be selected (e.g. departure when picking arrival). */
+  excludeCityId?: string | null;
   onClose: () => void;
   onSelect: (city: TripCity) => void;
 };
@@ -100,6 +102,7 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   visible,
   mode,
   value,
+  excludeCityId = null,
   onClose,
   onSelect,
 }: SearchCityPickerModalProps): React.ReactElement | null {
@@ -141,8 +144,12 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
 
   const cities = React.useMemo(() => {
     const suggested = filterSuggested(query);
-    return suggested.length > 0 ? suggested : remoteResults;
-  }, [query, remoteResults]);
+    const source = suggested.length > 0 ? suggested : remoteResults;
+    if (!excludeCityId) {
+      return source;
+    }
+    return source.filter((city) => city.id !== excludeCityId);
+  }, [excludeCityId, query, remoteResults]);
 
   const finishClose = React.useCallback(() => {
     const selected = pendingSelectRef.current;
@@ -212,7 +219,9 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     }
 
     const trimmed = query.trim();
-    const localMatches = filterSuggested(trimmed);
+    const localMatches = filterSuggested(trimmed).filter(
+      (city) => !excludeCityId || city.id !== excludeCityId,
+    );
     if (trimmed.length < 2 || localMatches.length > 0) {
       setRemoteResults((current) => (current.length === 0 ? current : []));
       setShowEmpty(false);
@@ -229,8 +238,11 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
           if (searchGenRef.current !== gen) {
             return;
           }
-          setRemoteResults(items);
-          setShowEmpty(items.length === 0);
+          const filtered = excludeCityId
+            ? items.filter((city) => city.id !== excludeCityId)
+            : items;
+          setRemoteResults(filtered);
+          setShowEmpty(filtered.length === 0);
         })
         .finally(() => {
           if (searchGenRef.current === gen) {
@@ -243,14 +255,17 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
       clearTimeout(timer);
       searchGenRef.current += 1;
     };
-  }, [query, rendered]);
+  }, [excludeCityId, query, rendered]);
 
   const handleSelect = React.useCallback(
     (city: TripCity) => {
+      if (excludeCityId && city.id === excludeCityId) {
+        return;
+      }
       pendingSelectRef.current = { ...city, label: cityDisplayName(city.label) };
       runClose();
     },
-    [runClose],
+    [excludeCityId, runClose],
   );
 
   const renderItem = React.useCallback(

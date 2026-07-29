@@ -248,7 +248,9 @@
       "suggestedDepartures": "Suggested Departures",
       "suggestedArrivals": "Suggested Arrivals",
       "back": "Back",
-      "searchAction": "Search trips"
+      "searchAction": "Search trips",
+      "chooseDepartureFirst": "Please choose departure city first",
+      "sameCityNotAllowed": "Arrival city must be different from departure"
     },
     "listings": {
       "title": "My Listings",

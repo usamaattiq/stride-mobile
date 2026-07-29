@@ -74,6 +74,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [passengerCount, setPassengerCount] = React.useState(1);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
+  const [arrivalError, setArrivalError] = React.useState<string | null>(null);
 
   const [applied, setApplied] = React.useState({
     vehicleMode: 'shared' as TripVehicleMode,
@@ -111,7 +112,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         vehicleMode: hasSearched ? applied.vehicleMode : undefined,
         minSeats: applied.passengerCount ?? undefined,
         page: 1,
-        limit: 100,
+        limit: 50,
       });
 
       const mapped = result.items.map(mapTripDtoToTrip);
@@ -163,6 +164,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   };
 
   const handleSwapCities = () => {
+    setArrivalError(null);
     setDepartureCity(arrivalCity);
     setArrivalCity(departureCity);
   };
@@ -181,16 +183,39 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     setCityPickerMode(null);
   }, []);
 
+  const openArrivalPicker = React.useCallback(() => {
+    if (!departureCity) {
+      setArrivalError(t('dashboard.search.chooseDepartureFirst'));
+      return;
+    }
+    setArrivalError(null);
+    setCityPickerMode('arrival');
+  }, [departureCity, t]);
+
   const cityPickerModeRef = React.useRef(cityPickerMode);
   cityPickerModeRef.current = cityPickerMode;
+  const departureCityRef = React.useRef(departureCity);
+  departureCityRef.current = departureCity;
+  const arrivalCityRef = React.useRef(arrivalCity);
+  arrivalCityRef.current = arrivalCity;
 
   const handleCityPickerSelect = React.useCallback((city: TripCity) => {
     if (cityPickerModeRef.current === 'arrival') {
+      if (departureCityRef.current?.id === city.id) {
+        setArrivalError(t('dashboard.search.sameCityNotAllowed'));
+        return;
+      }
+      setArrivalError(null);
       setArrivalCity(city);
-    } else {
-      setDepartureCity(city);
+      return;
     }
-  }, []);
+
+    setDepartureCity(city);
+    setArrivalError(null);
+    if (arrivalCityRef.current?.id === city.id) {
+      setArrivalCity(null);
+    }
+  }, [t]);
 
   const listHeader = (
     <View style={styles.resultsHeader}>
@@ -213,7 +238,10 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         <View style={styles.routeBlock}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => setCityPickerMode('departure')}
+            onPress={() => {
+              setArrivalError(null);
+              setCityPickerMode('departure');
+            }}
             style={({ pressed }) => [styles.field, styles.routeCityInput, pressed && styles.pressed]}
           >
             <FontAwesome name="arrow-up" size={13} color={colors.white} />
@@ -227,8 +255,13 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            onPress={() => setCityPickerMode('arrival')}
-            style={({ pressed }) => [styles.field, styles.routeCityInput, pressed && styles.pressed]}
+            onPress={openArrivalPicker}
+            style={({ pressed }) => [
+              styles.field,
+              styles.routeCityInput,
+              arrivalError ? styles.fieldError : null,
+              pressed && styles.pressed,
+            ]}
           >
             <FontAwesome name="arrow-down" size={13} color={colors.white} />
             <AppText
@@ -239,6 +272,9 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
               {arrivalCity?.label ?? t('dashboard.search.arrival')}
             </AppText>
           </Pressable>
+          {arrivalError ? (
+            <AppText style={styles.arrivalErrorText}>{arrivalError}</AppText>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('dashboard.search.swapCities')}
@@ -387,6 +423,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         visible={cityPickerMode != null}
         mode={cityPickerMode ?? 'departure'}
         value={cityPickerMode === 'arrival' ? arrivalCity : departureCity}
+        excludeCityId={cityPickerMode === 'arrival' ? departureCity?.id : undefined}
         onClose={handleCityPickerClose}
         onSelect={handleCityPickerSelect}
       />
@@ -452,11 +489,24 @@ const styles = StyleSheet.create({
   routeCityInput: {
     paddingRight: 52,
   },
+  fieldError: {
+    borderColor: colors.white,
+    borderBottomColor: '#FFB4A8',
+    borderBottomWidth: 2,
+  },
+  arrivalErrorText: {
+    marginTop: 2,
+    marginBottom: 2,
+    paddingHorizontal: spacing.xs,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#FFD5CF',
+  },
   swapButton: {
     position: 'absolute',
     right: spacing.sm,
-    top: '50%',
-    marginTop: -18,
+    top: 30,
+    marginTop: 0,
     width: 36,
     height: 36,
     borderRadius: radius.sm,
