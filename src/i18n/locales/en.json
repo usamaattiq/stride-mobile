@@ -259,7 +259,9 @@
         "subtitle": "Route map and matching listings",
         "availableTrips": "Available Trips",
         "summary": "{{date}} · {{count}} passengers",
-        "mapUnavailable": "Route map is unavailable right now."
+        "mapUnavailable": "Route map is unavailable right now.",
+        "priceRange": "Price range",
+        "listingType": "Listing type"
       }
     },
     "listings": {

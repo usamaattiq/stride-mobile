@@ -1,6 +1,38 @@
-import type { TripCity, TripPaymentMethod, TripVehicleMode } from './trip.types';
+import type { TripCity, TripListingType, TripPaymentMethod, TripVehicleMode } from './trip.types';
 
 export type TripListingCategory = 'all' | 'rfq' | 'auction';
+
+export type PriceRange = {
+  min: number | null;
+  max: number | null;
+};
+
+/** Extra filters surfaced from a search-results screen (route/date/mode already fixed by the search form). */
+export type SearchResultsFilters = {
+  listingType: TripListingType | null;
+  paymentMethod: TripPaymentMethod | null;
+  priceRange: PriceRange;
+};
+
+export const EMPTY_SEARCH_RESULTS_FILTERS: SearchResultsFilters = {
+  listingType: null,
+  paymentMethod: null,
+  priceRange: { min: null, max: null },
+};
+
+export function countActiveSearchResultsFilters(filters: SearchResultsFilters): number {
+  let count = 0;
+  if (filters.listingType) {
+    count += 1;
+  }
+  if (filters.paymentMethod) {
+    count += 1;
+  }
+  if (filters.priceRange.min != null || filters.priceRange.max != null) {
+    count += 1;
+  }
+  return count;
+}
 
 export type TripBrowseFilters = {
   paymentMethod: TripPaymentMethod | null;

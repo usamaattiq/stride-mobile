@@ -1,9 +1,11 @@
 import React from 'react';
 import {
   FlatList,
+  Pressable,
   StyleSheet,
   View,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,16 +24,47 @@ import { FeedPaginationBar } from '../components/FeedPaginationBar';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { RequestsEmptyState } from '../components/RequestsEmptyState';
+import { SearchResultsFilterSheet } from '../components/SearchResultsFilterSheet';
 import { SearchRouteMap } from '../components/SearchRouteMap';
 import { isSameLocalDay } from '../components/trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
+import {
+  countActiveSearchResultsFilters,
+  EMPTY_SEARCH_RESULTS_FILTERS,
+  type SearchResultsFilters,
+} from '../types/tripBrowse.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 
 const PAGE_SIZE = 5;
 const SKELETON_KEYS = [0, 1, 2];
 const CARD_OVERLAP = 14;
+
+function parsePrice(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+  const numeric = Number.parseFloat(value.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function matchesPriceRange(trip: Trip, priceRange: SearchResultsFilters['priceRange']): boolean {
+  if (priceRange.min == null && priceRange.max == null) {
+    return true;
+  }
+  const price = parsePrice(trip.startingPrice);
+  if (price == null) {
+    return false;
+  }
+  if (priceRange.min != null && price < priceRange.min) {
+    return false;
+  }
+  if (priceRange.max != null && price > priceRange.max) {
+    return false;
+  }
+  return true;
+}
 
 export function SearchResultsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -59,6 +92,9 @@ export function SearchResultsScreen(): React.ReactElement {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const onMapReady = React.useCallback(() => setMapReady(true), []);
+  const [filters, setFilters] = React.useState<SearchResultsFilters>(EMPTY_SEARCH_RESULTS_FILTERS);
+  const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
+  const filterCount = countActiveSearchResultsFilters(filters);
 
   const fromLabel = cityDisplayName(departureCity.label);
   const toLabel = cityDisplayName(arrivalCity.label);
@@ -73,20 +109,24 @@ export function SearchResultsScreen(): React.ReactElement {
         arrivalCity: arrivalCity.label,
         vehicleMode,
         minSeats: passengerCount,
+        listingType: filters.listingType ?? undefined,
+        paymentMethod: filters.paymentMethod ?? undefined,
         page: 1,
         limit: 50,
       });
 
       const mapped = result.items.map(mapTripDtoToTrip);
-      const dayFiltered = mapped.filter((trip) =>
-        isSameLocalDay(new Date(trip.departureAt), departureDate),
+      const filtered = mapped.filter(
+        (trip) =>
+          isSameLocalDay(new Date(trip.departureAt), departureDate) &&
+          matchesPriceRange(trip, filters.priceRange),
       );
 
-      const total = dayFiltered.length;
+      const total = filtered.length;
       const pages = total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
       const safePage = pages > 0 ? Math.min(page, pages) : 1;
       const start = (safePage - 1) * PAGE_SIZE;
-      setTrips(dayFiltered.slice(start, start + PAGE_SIZE));
+      setTrips(filtered.slice(start, start + PAGE_SIZE));
       setTotalPages(pages);
       if (safePage !== page) {
         setPage(safePage);
@@ -98,7 +138,11 @@ export function SearchResultsScreen(): React.ReactElement {
     } finally {
       setIsLoading(false);
     }
-  }, [arrivalCity.id, departureCity.id, departureDate, page, passengerCount, vehicleMode]);
+  }, [arrivalCity.id, departureCity.id, departureDate, filters, page, passengerCount, vehicleMode]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
   React.useEffect(() => {
     void loadTrips();
@@ -142,6 +186,21 @@ export function SearchResultsScreen(): React.ReactElement {
               <AppText weight="bold" style={styles.availableTripsText}>
                 {t('dashboard.search.results.availableTrips')}
               </AppText>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('dashboard.home.filterA11y')}
+                onPress={() => setFilterSheetVisible(true)}
+                style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}
+              >
+                <FontAwesome name="sliders" size={14} color={colors.text.primary} />
+                {filterCount > 0 ? (
+                  <View style={styles.filterBadge}>
+                    <AppText weight="bold" style={styles.filterBadgeText}>
+                      {String(filterCount)}
+                    </AppText>
+                  </View>
+                ) : null}
+              </Pressable>
             </View>
             <FlatList
               data={trips}
@@ -178,6 +237,13 @@ export function SearchResultsScreen(): React.ReactElement {
           skeletonList
         )}
       </View>
+
+      <SearchResultsFilterSheet
+        visible={filterSheetVisible}
+        filters={filters}
+        onClose={() => setFilterSheetVisible(false)}
+        onApply={setFilters}
+      />
     </AuthScaffold>
   );
 }
@@ -198,6 +264,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   availableTripsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.xs,
@@ -205,6 +274,36 @@ const styles = StyleSheet.create({
   availableTripsText: {
     fontSize: 15,
     color: colors.text.primary,
+  },
+  filterButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    color: colors.white,
+    lineHeight: 11,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   listContent: {
     flexGrow: 1,
