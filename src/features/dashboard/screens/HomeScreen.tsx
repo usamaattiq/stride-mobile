@@ -36,6 +36,8 @@ export function HomeScreen(): React.ReactElement {
 
   const isPassenger = user.role === 'passenger';
   const showPanelChrome = panel === 'messages' || panel === 'notifications';
+  /** Driver feed + messages/notifications share the curved white sheet under the red header. */
+  const showCurvedBody = showPanelChrome || (!isPassenger && panel === 'feed');
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
@@ -124,7 +126,13 @@ export function HomeScreen(): React.ReactElement {
         </View>
       ) : null}
 
-      <View style={[styles.body, showPanelChrome && styles.bodyCurved]}>
+      <View
+        style={[
+          styles.body,
+          showCurvedBody && styles.bodyCurved,
+          showPanelChrome && styles.bodyCurvedOverlap,
+        ]}
+      >
         {panel === 'feed' ? (
           isPassenger ? <PassengerSearchPanel /> : <HomeFeedPanel />
         ) : null}
@@ -163,7 +171,10 @@ const styles = StyleSheet.create({
   bodyCurved: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    marginTop: -18,
     overflow: 'hidden',
+  },
+  /** Only tuck under red title chrome (messages/notifications), not the profile header. */
+  bodyCurvedOverlap: {
+    marginTop: -18,
   },
 });
