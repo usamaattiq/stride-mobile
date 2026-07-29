@@ -557,6 +557,7 @@
       "arrivalCity": "مدينة الوصول",
       "arrivalPoint": "نقطة الوصول",
       "arrivalDateTime": "تاريخ ووقت الوصول",
+      "arrivalAfterDepartureError": "يجب أن يكون وقت الوصول بعد المغادرة",
       "description": "الوصف",
       "descriptionPlaceholder": "أضف ملاحظات للركاب (اختياري)",
       "cityPlaceholder": "ابحث عن مدينة",

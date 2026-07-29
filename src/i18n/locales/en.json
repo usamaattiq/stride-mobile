@@ -557,6 +557,7 @@
       "arrivalCity": "Arrival city",
       "arrivalPoint": "Arrival point",
       "arrivalDateTime": "Arrival date & time",
+      "arrivalAfterDepartureError": "Arrival must be after departure",
       "description": "Description",
       "descriptionPlaceholder": "Add notes for passengers (optional)",
       "cityPlaceholder": "Search city",

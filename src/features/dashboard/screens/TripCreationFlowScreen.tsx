@@ -58,11 +58,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
-  const { vehicles, getVehicleById, beginAddVehicle } = useVehicles();
+  const { vehicles, refreshVehicles, getVehicleById, beginAddVehicle } = useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>('vehicle');
   const [successVisible, setSuccessVisible] = React.useState(false);
   const [publishError, setPublishError] = React.useState<string | null>(null);
   const isLeavingRef = React.useRef(false);
+  const didReturnFromVehicleRef = React.useRef(false);
 
   React.useEffect(() => {
     if (route.params?.flowKey === undefined) {
@@ -78,10 +79,13 @@ export function TripCreationFlowScreen(): React.ReactElement {
     if (!selectVehicleId) {
       return;
     }
-    patchDraft({ vehicleId: selectVehicleId });
-    setStep('vehicle');
-    navigation.setParams({ selectVehicleId: undefined });
-  }, [navigation, patchDraft, route.params?.selectVehicleId]);
+    // Refresh vehicle list so the newly added vehicle is available in state.
+    void refreshVehicles().catch(() => undefined).finally(() => {
+      patchDraft({ vehicleId: selectVehicleId });
+      setStep('vehicle');
+      navigation.setParams({ selectVehicleId: undefined });
+    });
+  }, [navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -160,6 +164,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
   };
 
   const handleAddVehicle = () => {
+    didReturnFromVehicleRef.current = true;
     beginAddVehicle();
     navigation.navigate('VehicleDetails', {
       mode: 'add',
