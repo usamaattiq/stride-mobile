@@ -258,6 +258,7 @@
         "title": "الرحلات",
         "subtitle": "خريطة المسار والقوائم المطابقة",
         "availableTrips": "الرحلات المتاحة",
+        "tripsFound": "الرحلات الموجودة ({{count}})",
         "summary": "{{date}} · {{count}} ركاب",
         "mapUnavailable": "خريطة المسار غير متاحة حالياً.",
         "priceRange": "نطاق السعر",

@@ -88,6 +88,7 @@ export function SearchResultsScreen(): React.ReactElement {
   const [page, setPage] = React.useState(1);
   const [trips, setTrips] = React.useState<Trip[]>([]);
   const [totalPages, setTotalPages] = React.useState(0);
+  const [resultsCount, setResultsCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
@@ -128,6 +129,7 @@ export function SearchResultsScreen(): React.ReactElement {
       const start = (safePage - 1) * PAGE_SIZE;
       setTrips(filtered.slice(start, start + PAGE_SIZE));
       setTotalPages(pages);
+      setResultsCount(total);
       if (safePage !== page) {
         setPage(safePage);
       }
@@ -135,6 +137,7 @@ export function SearchResultsScreen(): React.ReactElement {
       setLoadError(getErrorMessage(error, 'Failed to load trips'));
       setTrips([]);
       setTotalPages(0);
+      setResultsCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +187,7 @@ export function SearchResultsScreen(): React.ReactElement {
           <>
             <View style={styles.availableTripsHeader}>
               <AppText weight="bold" style={styles.availableTripsText}>
-                {t('dashboard.search.results.availableTrips')}
+                {t('dashboard.search.results.tripsFound', { count: resultsCount })}
               </AppText>
               <Pressable
                 accessibilityRole="button"
