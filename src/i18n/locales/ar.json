@@ -262,7 +262,8 @@
         "summary": "{{date}} · {{count}} ركاب",
         "mapUnavailable": "خريطة المسار غير متاحة حالياً.",
         "priceRange": "نطاق السعر",
-        "listingType": "نوع الإعلان"
+        "listingType": "نوع الإعلان",
+        "vehicleType": "نوع المركبة"
       }
     },
     "listings": {
@@ -513,10 +514,7 @@
       "sedan": "سيدان",
       "bus": "حافلة",
       "van": "فان",
-      "coaster": "كوستر",
-      "hiace": "هايس",
-      "minibus": "ميني باص",
-      "pickup": "بيك أب"
+      "coaster": "كوستر"
     },
     "photos": {
       "title": "صور المركبة",

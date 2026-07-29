@@ -108,6 +108,7 @@ export function SearchResultsScreen(): React.ReactElement {
         minSeats: passengerCount,
         listingType: filters.listingType ?? undefined,
         paymentMethod: filters.paymentMethod ?? undefined,
+        vehicleClass: filters.vehicleClass ?? undefined,
         page: 1,
         limit: 50,
       });

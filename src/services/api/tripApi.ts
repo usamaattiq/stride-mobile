@@ -21,6 +21,9 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
   if (params.vehicleMode) {
     search.set('vehicleMode', params.vehicleMode);
   }
+  if (params.vehicleClass) {
+    search.set('vehicleClass', params.vehicleClass);
+  }
   if (params.minSeats != null) {
     search.set('minSeats', String(params.minSeats));
   }

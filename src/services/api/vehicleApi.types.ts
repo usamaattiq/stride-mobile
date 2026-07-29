@@ -1,12 +1,4 @@
-export type VehicleClassDto =
-  | 'suv'
-  | 'sedan'
-  | 'bus'
-  | 'van'
-  | 'coaster'
-  | 'hiace'
-  | 'minibus'
-  | 'pickup';
+export type VehicleClassDto = 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
 
 export type VehicleDto = {
   id: string;

@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { VEHICLE_CLASS_OPTIONS } from '@/features/dashboard/constants/vehicleClasses';
 import type { TripListingType, TripPaymentMethod } from '@/features/dashboard/types/trip.types';
 import {
   countActiveSearchResultsFilters,
@@ -80,7 +81,7 @@ export function SearchResultsFilterSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.5}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.61}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>
@@ -115,6 +116,24 @@ export function SearchResultsFilterSheet({
                   selected={selected}
                   onPress={() =>
                     patchDraft({ listingType: selected ? null : option.id })
+                  }
+                />
+              );
+            })}
+          </ChipRow>
+        </FilterSection>
+
+        <FilterSection title={t('dashboard.search.results.vehicleType')}>
+          <ChipRow>
+            {VEHICLE_CLASS_OPTIONS.map((option) => {
+              const selected = draft.vehicleClass === option.id;
+              return (
+                <FilterChip
+                  key={option.id}
+                  label={t(option.labelKey)}
+                  selected={selected}
+                  onPress={() =>
+                    patchDraft({ vehicleClass: selected ? null : option.id })
                   }
                 />
               );

@@ -262,7 +262,8 @@
         "summary": "{{date}} · {{count}} passengers",
         "mapUnavailable": "Route map is unavailable right now.",
         "priceRange": "Price range",
-        "listingType": "Listing type"
+        "listingType": "Listing type",
+        "vehicleType": "Vehicle type"
       }
     },
     "listings": {
@@ -513,10 +514,7 @@
       "sedan": "Sedan",
       "bus": "Bus",
       "van": "Van",
-      "coaster": "Coaster",
-      "hiace": "Hiace",
-      "minibus": "Minibus",
-      "pickup": "Pickup"
+      "coaster": "Coaster"
     },
     "photos": {
       "title": "Vehicle photos",

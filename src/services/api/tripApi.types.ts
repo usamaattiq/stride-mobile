@@ -16,7 +16,7 @@ export type TripDto = {
   vehiclePhotoUrls: string[];
   vehiclePhotoViewUrl?: string | null;
   vehiclePhotoViewUrls?: string[];
-  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | 'hiace' | 'minibus' | 'pickup' | null;
+  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
   vehicleTotalSeats: number | null;
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
@@ -72,6 +72,7 @@ export type BrowseTripsParams = {
   departureCity?: string;
   arrivalCity?: string;
   vehicleMode?: 'shared' | 'fullPrivate';
+  vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
   minSeats?: number;
   page?: number;
   limit?: number;

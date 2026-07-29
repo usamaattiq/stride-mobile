@@ -1,3 +1,4 @@
+import type { VehicleClass } from './vehicle.types';
 import type { TripCity, TripListingType, TripPaymentMethod, TripVehicleMode } from './trip.types';
 
 export type TripListingCategory = 'all' | 'rfq' | 'auction';
@@ -11,12 +12,14 @@ export type PriceRange = {
 export type SearchResultsFilters = {
   listingType: TripListingType | null;
   paymentMethod: TripPaymentMethod | null;
+  vehicleClass: VehicleClass | null;
   priceRange: PriceRange;
 };
 
 export const EMPTY_SEARCH_RESULTS_FILTERS: SearchResultsFilters = {
   listingType: null,
   paymentMethod: null,
+  vehicleClass: null,
   priceRange: { min: null, max: null },
 };
 
@@ -26,6 +29,9 @@ export function countActiveSearchResultsFilters(filters: SearchResultsFilters): 
     count += 1;
   }
   if (filters.paymentMethod) {
+    count += 1;
+  }
+  if (filters.vehicleClass) {
     count += 1;
   }
   if (filters.priceRange.min != null || filters.priceRange.max != null) {
