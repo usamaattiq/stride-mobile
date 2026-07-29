@@ -7,6 +7,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { CITY_RESULTS_MAX_HEIGHT } from '@/features/dashboard/components/trip/CitySearchField';
 import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetailsStep';
 import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
 import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
@@ -20,7 +21,7 @@ import { exitTripCreation, exitTripCreationToListings } from '@/features/dashboa
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 type TripCreationStep =
   | 'vehicle'
@@ -57,11 +58,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
-  const { vehicles, getVehicleById, beginAddVehicle } = useVehicles();
+  const { vehicles, refreshVehicles, getVehicleById, beginAddVehicle } = useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>('vehicle');
   const [successVisible, setSuccessVisible] = React.useState(false);
   const [publishError, setPublishError] = React.useState<string | null>(null);
   const isLeavingRef = React.useRef(false);
+  const didReturnFromVehicleRef = React.useRef(false);
 
   React.useEffect(() => {
     if (route.params?.flowKey === undefined) {
@@ -77,10 +79,13 @@ export function TripCreationFlowScreen(): React.ReactElement {
     if (!selectVehicleId) {
       return;
     }
-    patchDraft({ vehicleId: selectVehicleId });
-    setStep('vehicle');
-    navigation.setParams({ selectVehicleId: undefined });
-  }, [navigation, patchDraft, route.params?.selectVehicleId]);
+    // Refresh vehicle list so the newly added vehicle is available in state.
+    void refreshVehicles().catch(() => undefined).finally(() => {
+      patchDraft({ vehicleId: selectVehicleId });
+      setStep('vehicle');
+      navigation.setParams({ selectVehicleId: undefined });
+    });
+  }, [navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -159,6 +164,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
   };
 
   const handleAddVehicle = () => {
+    didReturnFromVehicleRef.current = true;
     beginAddVehicle();
     navigation.navigate('VehicleDetails', {
       mode: 'add',
@@ -233,6 +239,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         }
         stepCount={TOTAL_STEPS}
         currentStep={STEP_PROGRESS[step]}
+        scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
         {step === 'vehicle' ? (
           <TripVehicleSelectStep

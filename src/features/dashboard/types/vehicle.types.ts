@@ -1,12 +1,4 @@
-export type VehicleClass =
-  | 'suv'
-  | 'sedan'
-  | 'bus'
-  | 'van'
-  | 'coaster'
-  | 'hiace'
-  | 'minibus'
-  | 'pickup';
+export type VehicleClass = 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
 
 export type Vehicle = {
   id: string;
@@ -45,7 +37,7 @@ export function createEmptyVehicleDraft(): VehicleDraft {
     description: '',
     plateNumber: '',
     hasAc: true,
-    totalSeats: '',
+    totalSeats: '4',
     vehicleClass: null,
     brand: '',
     model: '',

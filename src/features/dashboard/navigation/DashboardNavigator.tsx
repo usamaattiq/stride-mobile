@@ -25,6 +25,7 @@ import { openTripCreationFlow } from './homeStackNavigation';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
+import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { MyOffersScreen } from '../screens/MyOffersScreen';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
 import type { DashboardTabParamList } from './types';
@@ -41,7 +42,7 @@ const TAB_ICONS: Record<Exclude<keyof DashboardTabParamList, 'CreateTrip'>, TabI
   Settings: 'cog',
 };
 
-/** Content area for icon + label (library adds bottom inset on top of this). */
+/** Content area for icon + label. */
 const TAB_BAR_CONTENT_HEIGHT = 64;
 const DRIVER_TAB_BAR_EXTRA = 12;
 
@@ -61,7 +62,8 @@ function DashboardTabs(): React.ReactElement {
   const { beginCreateTrip } = useTrips();
   const isDriver = user.role === 'driver';
 
-  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + insets.bottom + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
+  const safeBottomInset = insets.bottom;
+  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
 
   return (
     <Tab.Navigator
@@ -74,19 +76,24 @@ function DashboardTabs(): React.ReactElement {
         tabBarLabel:
           route.name === 'CreateTrip'
             ? undefined
-            : t(`dashboard.tabs.${route.name}`),
+            : route.name === 'MyListings' && !isDriver
+              ? t('dashboard.tabs.Search')
+              : t(`dashboard.tabs.${route.name}`),
         tabBarLabelStyle: [
           styles.tabLabel,
           { fontFamily: getFontFamily(currentLanguage, 'medium') },
         ],
         tabBarIconStyle: styles.tabIcon,
         tabBarItemStyle: styles.tabItem,
-        tabBarStyle: [styles.tabBar, { height: tabBarHeight }],
+        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }],
         tabBarIcon: ({ color }) => {
           if (route.name === 'CreateTrip') {
             return null;
           }
-          const iconName = TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
+          const iconName =
+            route.name === 'MyListings' && !isDriver
+              ? 'search'
+              : TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
           return <FontAwesome name={iconName} size={22} color={color} />;
         },
       })}
@@ -127,6 +134,7 @@ function DashboardRoot(): React.ReactElement {
       <RootStack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
       <RootStack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
       <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />
+      <RootStack.Screen name="SearchResults" component={SearchResultsScreen} />
     </RootStack.Navigator>
   );
 }

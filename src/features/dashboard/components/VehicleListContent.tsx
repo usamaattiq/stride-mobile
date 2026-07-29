@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   thumbnail: {
-    width: 64,
-    height: 72,
+    width: 84,
+    height: 78,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,

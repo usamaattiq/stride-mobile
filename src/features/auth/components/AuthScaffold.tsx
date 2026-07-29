@@ -54,6 +54,8 @@ type AuthScaffoldProps = {
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
   contentWrapStyle?: StyleProp<ViewStyle>;
+  headerStyle?: StyleProp<ViewStyle>;
+  cardWrapStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
   showLegalFooter?: boolean;
   /** Defaults to true. Set false on tab screens that already have language in Settings. */
@@ -64,10 +66,18 @@ type AuthScaffoldProps = {
    * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
    */
   compactHeader?: boolean;
+  /** Places the title centered on the same row as the back button. */
+  centerTitleInTopBar?: boolean;
   /** Total number of steps in the flow. Renders a step indicator when set. */
   stepCount?: number;
   /** The active step (1-based). Required alongside `stepCount`. */
   currentStep?: number;
+  /**
+   * Extra space kept between a focused input and the keyboard, forwarded to the
+   * scrollable body. Bump this on screens with dropdowns/panels that render below a
+   * field (e.g. city search results) so they aren't left hidden under the keyboard.
+   */
+  scrollBottomOffset?: number;
 };
 
 export function AuthScaffold({
@@ -78,13 +88,17 @@ export function AuthScaffold({
   titleStyle,
   subtitleStyle,
   contentWrapStyle,
+  headerStyle,
+  cardWrapStyle,
   scrollable = true,
   showLegalFooter = true,
   showLanguageSwitcher = true,
   headerRight,
   compactHeader = false,
+  centerTitleInTopBar = false,
   stepCount,
   currentStep,
+  scrollBottomOffset,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -96,6 +110,9 @@ export function AuthScaffold({
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
 
+  const showTitleInTopBar = centerTitleInTopBar && Boolean(title);
+  const showTitleInHeaderCopy = Boolean(title) && !showTitleInTopBar;
+
   const body = scrollable ? (
     <KeyboardAwareScrollView
       style={styles.cardScroll}
@@ -106,6 +123,7 @@ export function AuthScaffold({
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
+      bottomOffset={scrollBottomOffset}
     >
       {children}
     </KeyboardAwareScrollView>
@@ -122,13 +140,14 @@ export function AuthScaffold({
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
           style={[
             styles.header,
             compactHeader ? styles.headerCompact : null,
+            compactHeader && centerTitleInTopBar ? styles.headerCompactCenteredTitle : null,
             !compactHeader
               ? {
                   height: hasStepper
@@ -136,6 +155,7 @@ export function AuthScaffold({
                     : HEADER_HEIGHT_NO_STEPPER,
                 }
               : null,
+            headerStyle,
           ]}
         >
           <LinearGradient
@@ -159,41 +179,60 @@ export function AuthScaffold({
                 <View style={styles.topBarSpacer} />
               )}
 
+              {showTitleInTopBar ? (
+                <View style={styles.topBarCenter} pointerEvents="none">
+                  <AppText
+                    weight="semibold"
+                    style={[styles.topBarTitle, titleStyle]}
+                    numberOfLines={1}
+                  >
+                    {title}
+                  </AppText>
+                </View>
+              ) : null}
+
               <View style={styles.topBarRight}>
                 {headerRight}
                 {showLanguageSwitcher ? <LanguageSwitcher variant="glass" /> : null}
+                {showTitleInTopBar && !headerRight && !showLanguageSwitcher ? (
+                  <View style={styles.topBarSpacer} />
+                ) : null}
               </View>
             </View>
           ) : null}
 
-          <View
-            style={[
-              styles.headerCopy,
-              compactHeader ? styles.headerCopyCompact : null,
-              !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
-            ]}
-          >
-            <AppText
-              weight="bold"
-              style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.6}
+          {showTitleInHeaderCopy || subtitle ? (
+            <View
+              style={[
+                styles.headerCopy,
+                compactHeader ? styles.headerCopyCompact : null,
+                !showTopBar && !compactHeader ? styles.headerCopyNoTopBar : null,
+              ]}
             >
-              {title}
-            </AppText>
-            {subtitle ? (
-              <AppText
-                style={[
-                  styles.subtitle,
-                  compactHeader && styles.subtitleCompact,
-                  subtitleStyle,
-                ]}
-              >
-                {subtitle}
-              </AppText>
-            ) : null}
-          </View>
+              {showTitleInHeaderCopy ? (
+                <AppText
+                  weight="bold"
+                  style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                >
+                  {title}
+                </AppText>
+              ) : null}
+              {subtitle ? (
+                <AppText
+                  style={[
+                    styles.subtitle,
+                    compactHeader && styles.subtitleCompact,
+                    subtitleStyle,
+                  ]}
+                >
+                  {subtitle}
+                </AppText>
+              ) : null}
+            </View>
+          ) : null}
 
           {stepCount && currentStep ? (
             <View style={styles.stepSlot}>
@@ -202,7 +241,7 @@ export function AuthScaffold({
           ) : null}
         </View>
 
-        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact]}>
+        <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact, cardWrapStyle]}>
           {body}
         </View>
 
@@ -239,13 +278,31 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
+  headerCompactCenteredTitle: {
+    // paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    position: 'relative',
   },
   topBarNoBack: {
     justifyContent: 'flex-end',
+  },
+  topBarCenter: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xxl + spacing.sm,
+  },
+  topBarTitle: {
+    color: colors.white,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: '100%',
   },
   topBarSpacer: {
     width: 34,
@@ -254,6 +311,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    zIndex: 1,
   },
   stepSlot: {
     marginHorizontal: spacing.xxl,
@@ -265,6 +323,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
+    zIndex: 1,
   },
   headerCopy: {
     marginTop: spacing.md,
@@ -305,6 +364,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginTop: -spacing.sm,
+    overflow: 'hidden',
   },
   cardWrapCompact: {
     borderTopLeftRadius: 20,
@@ -316,22 +376,22 @@ const styles = StyleSheet.create({
   },
   cardWrapScroll: {
     flexGrow: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapScrollCompact: {
     flexGrow: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapStatic: {
     flex: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   cardWrapStaticCompact: {
     flex: 1,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   legalFooter: {

@@ -10,8 +10,9 @@ import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTi
 import { TripPointField } from '@/features/dashboard/components/trip/TripPointField';
 import type { TripDraft } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 type TripDetailsStepProps = {
   draft: TripDraft;
@@ -26,6 +27,18 @@ function isDetailsComplete(draft: TripDraft): boolean {
       draft.arrivalCity &&
       (!startDateRequired || draft.departureAt),
   );
+}
+
+function getArrivalTimeError(draft: TripDraft, t: (key: string) => string): string | null {
+  if (!draft.departureAt || !draft.arrivalAt) {
+    return null;
+  }
+  const depMs = new Date(draft.departureAt).getTime();
+  const arrMs = new Date(draft.arrivalAt).getTime();
+  if (arrMs <= depMs) {
+    return t('trips.create.arrivalAfterDepartureError');
+  }
+  return null;
 }
 
 export function TripDetailsStep({
@@ -43,6 +56,9 @@ export function TripDetailsStep({
     : draft.departureAt
       ? new Date(draft.departureAt)
       : undefined;
+
+  const arrivalTimeError = getArrivalTimeError(draft, t);
+  const canContinue = isDetailsComplete(draft) && !arrivalTimeError;
 
   return (
     <>
@@ -108,6 +124,9 @@ export function TripDetailsStep({
             timeConfirmed={draft.arrivalTimeSet}
             optional
           />
+          {arrivalTimeError ? (
+            <AppText style={styles.fieldError}>{arrivalTimeError}</AppText>
+          ) : null}
 
           <AuthTextField
             label={t('trips.create.description')}
@@ -124,7 +143,7 @@ export function TripDetailsStep({
           <Button
             label={t('common.continue')}
             onPress={onContinue}
-            disabled={!isDetailsComplete(draft)}
+            disabled={!canContinue}
           />
         </View>
       </AuthCard>
@@ -140,5 +159,10 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 96,
     paddingTop: spacing.sm,
+  },
+  fieldError: {
+    fontSize: 12,
+    color: colors.primary,
+    marginTop: -spacing.xs,
   },
 });
