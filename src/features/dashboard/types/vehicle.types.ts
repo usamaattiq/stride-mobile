@@ -37,7 +37,7 @@ export function createEmptyVehicleDraft(): VehicleDraft {
     description: '',
     plateNumber: '',
     hasAc: true,
-    totalSeats: '',
+    totalSeats: '4',
     vehicleClass: null,
     brand: '',
     model: '',

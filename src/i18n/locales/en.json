@@ -505,6 +505,8 @@
       "acOff": "Non-AC",
       "totalSeats": "Total seats",
       "totalSeatsPlaceholder": "Enter number of seats",
+      "decreaseSeats": "Decrease seats",
+      "increaseSeats": "Increase seats",
       "class": "Vehicle class",
       "brand": "Brand",
       "brandPlaceholder": "e.g. Toyota",

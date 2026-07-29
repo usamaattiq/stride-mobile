@@ -60,7 +60,12 @@ export function VehicleDetailsScreen(): React.ReactElement {
       <VehicleDetailsForm
         draft={draft}
         seatsError={seatsError}
-        onChange={patchDraft}
+        onChange={(partial) => {
+          if (partial.totalSeats != null) {
+            setSeatsError(undefined);
+          }
+          patchDraft(partial);
+        }}
         onSubmit={handleContinue}
         submitLabel={t('vehicles.continue')}
       />

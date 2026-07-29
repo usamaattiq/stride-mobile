@@ -505,6 +505,8 @@
       "acOff": "بدون تكييف",
       "totalSeats": "إجمالي المقاعد",
       "totalSeatsPlaceholder": "أدخل عدد المقاعد",
+      "decreaseSeats": "تقليل المقاعد",
+      "increaseSeats": "زيادة المقاعد",
       "class": "فئة المركبة",
       "brand": "العلامة التجارية",
       "brandPlaceholder": "مثال: Toyota",
