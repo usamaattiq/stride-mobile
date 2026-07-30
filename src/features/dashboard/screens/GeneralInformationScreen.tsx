@@ -31,7 +31,11 @@ export function GeneralInformationScreen(): React.ReactElement {
   const [locationCoords, setLocationCoords] = React.useState<{
     latitude: number;
     longitude: number;
-  } | null>(null);
+  } | null>(
+    user.latitude != null && user.longitude != null
+      ? { latitude: user.latitude, longitude: user.longitude }
+      : null,
+  );
   const [saving, setSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [savedVisible, setSavedVisible] = React.useState(false);
@@ -41,7 +45,12 @@ export function GeneralInformationScreen(): React.ReactElement {
     setEmail(user.email);
     setAddress(user.address);
     setProfilePhotoUri(user.avatarUri ?? null);
-  }, [user.fullName, user.email, user.address, user.avatarUri]);
+    setLocationCoords(
+      user.latitude != null && user.longitude != null
+        ? { latitude: user.latitude, longitude: user.longitude }
+        : null,
+    );
+  }, [user.fullName, user.email, user.address, user.avatarUri, user.latitude, user.longitude]);
 
   const isDirty =
     fullName.trim() !== user.fullName ||
