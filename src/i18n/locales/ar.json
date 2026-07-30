@@ -285,6 +285,8 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "نشط",
         "ended": "منتهية",
+        "timerHours": "متبقي {{hours}}س {{minutes}}د",
+        "timerMinutes": "متبقي {{minutes}}د",
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "عرض الصور"
       },

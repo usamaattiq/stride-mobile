@@ -285,6 +285,8 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "Active",
         "ended": "Ended",
+        "timerHours": "{{hours}}h {{minutes}}m left",
+        "timerMinutes": "{{minutes}}m left",
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "View photos"
       },
