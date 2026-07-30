@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.silveraxisltd.musafir"
     },
     "android": {
-      "softwareKeyboardLayoutMode": "resize",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/splash-logo.png"

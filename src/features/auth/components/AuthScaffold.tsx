@@ -38,9 +38,9 @@ export function useKeyboardFocusScroll(
   );
 }
 
-// Use the physical screen height (not 'window', which shrinks with the Android
-// keyboard under softwareKeyboardLayoutMode: 'resize') so the header keeps a
-// fixed height and never gets clipped when the keyboard opens.
+// Use the physical screen height (not 'window', which would shrink with the
+// Android keyboard under softwareKeyboardLayoutMode: 'resize' — deliberately
+// not used, see app.json) so the header keeps a fixed height regardless.
 const SCREEN_HEIGHT = Dimensions.get('screen').height;
 const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.24;
 const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.19;

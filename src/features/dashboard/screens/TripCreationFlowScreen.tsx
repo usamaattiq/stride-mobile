@@ -58,7 +58,8 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
-  const { vehicles, refreshVehicles, getVehicleById, beginAddVehicle } = useVehicles();
+  const { vehicles, isLoading: isLoadingVehicles, refreshVehicles, getVehicleById, beginAddVehicle } =
+    useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>('vehicle');
   const [successVisible, setSuccessVisible] = React.useState(false);
   const [publishError, setPublishError] = React.useState<string | null>(null);
@@ -225,7 +226,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         showLegalFooter={false}
         showLanguageSwitcher={false}
         headerRight={
-          step === 'vehicle' ? (
+          step === 'vehicle' && !isLoadingVehicles ? (
             <Pressable
               onPress={handleAddVehicle}
               style={styles.addButton}
@@ -244,10 +245,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
         {step === 'vehicle' ? (
           <TripVehicleSelectStep
             vehicles={vehicles}
+            isLoading={isLoadingVehicles}
             selectedVehicleId={draft.vehicleId}
             onSelectVehicle={(vehicleId) => patchDraft({ vehicleId })}
             onContinue={goToNextStep}
-            onAddVehicle={handleAddVehicle}
           />
         ) : null}
 

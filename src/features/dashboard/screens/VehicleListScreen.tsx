@@ -98,15 +98,17 @@ export function VehicleListScreen(): React.ReactElement {
       showLanguageSwitcher={false}
       compactHeader
       headerRight={
-        <Pressable
-          onPress={openAddFlow}
-          style={styles.addButton}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('vehicles.addVehicle')}
-        >
-          <FontAwesome name="plus" size={16} color={colors.white} />
-        </Pressable>
+        isLoading && vehicles.length === 0 ? undefined : (
+          <Pressable
+            onPress={openAddFlow}
+            style={styles.addButton}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('vehicles.addVehicle')}
+          >
+            <FontAwesome name="plus" size={16} color={colors.white} />
+          </Pressable>
+        )
       }
     >
       {isLoading && vehicles.length === 0 ? (
@@ -124,7 +126,7 @@ export function VehicleListScreen(): React.ReactElement {
           />
         </View>
       ) : vehicles.length === 0 ? (
-        <VehiclesEmptyState onAddPress={openAddFlow} />
+        <VehiclesEmptyState />
       ) : (
         <View style={styles.content}>
           {vehicles.map((vehicle) => (

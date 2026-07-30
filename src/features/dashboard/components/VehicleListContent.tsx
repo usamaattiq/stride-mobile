@@ -190,11 +190,9 @@ export function VehicleListItem({
 }
 
 export function VehiclesEmptyState({
-  onAddPress,
   title,
   subtitle,
 }: {
-  onAddPress: () => void;
   title?: string;
   subtitle?: string;
 }): React.ReactElement {
@@ -209,7 +207,6 @@ export function VehiclesEmptyState({
       <AppText style={styles.emptySubtitle}>
         {subtitle ?? t('vehicles.emptySubtitle')}
       </AppText>
-      <Button label={t('vehicles.addVehicle')} onPress={onAddPress} style={styles.emptyButton} />
     </View>
   );
 }
@@ -376,9 +373,5 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: spacing.sm,
-  },
-  emptyButton: {
-    minWidth: 180,
   },
 });

@@ -67,36 +67,34 @@ export function VehiclePhotosForm({
           <AppText style={styles.required}> *</AppText>
         </AppText>
 
-        {hasPhotos ? (
-          <View style={styles.grid}>
-            {photoUris.map((uri, index) => (
-              <View key={`${uri}-${index}`} style={styles.gridItem}>
-                <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
-                <Pressable
-                  onPress={() => onRemovePhoto(index)}
-                  style={styles.removeBadge}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
-                >
-                  <FontAwesome name="times" size={10} color={colors.white} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <FontAwesome name="picture-o" size={28} color={colors.text.tertiary} />
-            <AppText style={styles.emptyHint}>{t('vehicles.photos.emptyHint')}</AppText>
-          </View>
-        )}
+        <View style={styles.grid}>
+          {photoUris.map((uri, index) => (
+            <View key={`${uri}-${index}`} style={styles.gridItem}>
+              <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
+              <Pressable
+                onPress={() => onRemovePhoto(index)}
+                style={styles.removeBadge}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
+              >
+                <FontAwesome name="times" size={10} color={colors.white} />
+              </Pressable>
+            </View>
+          ))}
 
-        <Button
-          label={t('vehicles.photos.addPictures')}
-          variant="secondary"
-          onPress={pickImages}
-          accessibilityHint={t('vehicles.photos.addPicturesHint')}
-        />
+          <Pressable
+            onPress={pickImages}
+            style={[styles.gridItem, styles.addTile]}
+            accessibilityRole="button"
+            accessibilityLabel={t('vehicles.photos.addPictures')}
+            accessibilityHint={t('vehicles.photos.addPicturesHint')}
+          >
+            <View style={styles.addIconWrap}>
+              <FontAwesome name="plus" size={20} color={colors.primary} />
+            </View>
+          </Pressable>
+        </View>
 
         <Button
           label={submitLabel}
@@ -150,21 +148,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(10, 10, 10, 0.65)',
   },
-  emptyState: {
-    minHeight: 120,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
+  addTile: {
     borderStyle: 'dashed',
-    backgroundColor: colors.background.subtle,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    padding: spacing.md,
   },
-  emptyHint: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    textAlign: 'center',
+  addIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
   },
 });
