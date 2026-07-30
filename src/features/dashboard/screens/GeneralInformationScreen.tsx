@@ -79,6 +79,7 @@ export function GeneralInformationScreen(): React.ReactElement {
         title={t('generalInformation.title')}
         subtitle={t('generalInformation.subtitle')}
         showLegalFooter={false}
+        showLanguageSwitcher={false}
       >
         <PersonalInformationForm
           fullName={fullName}

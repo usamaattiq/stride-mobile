@@ -94,7 +94,12 @@ export function SignupSuccessScreen({
         pointerEvents="none"
       />
 
-      <AppTopBar left="none" showLanguageSwitcher includeSafeArea={false} />
+      <AppTopBar
+        left="none"
+        showLanguageSwitcher
+        includeSafeArea={false}
+        style={styles.topBar}
+      />
 
       <View style={styles.confettiLayer} pointerEvents="none">
         {CONFETTI.map((piece, index) => {
@@ -170,6 +175,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  // Matches AuthScaffold's header inset (Signup/Login) so the language
+  // button sits at the same distance from the edge across auth screens.
+  topBar: {
+    paddingHorizontal: spacing.md,
   },
   bgGradient: {
     position: 'absolute',

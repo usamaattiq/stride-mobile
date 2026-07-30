@@ -36,6 +36,7 @@ export function SecuritySettingsScreen(): React.ReactElement {
       title={t('securitySettings.title')}
       subtitle={t('securitySettings.subtitle')}
       showLegalFooter={false}
+      showLanguageSwitcher={false}
     >
       <SecuritySetupForm
         mode="manage"

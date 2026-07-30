@@ -125,6 +125,7 @@ export function DriverVerificationScreen(): React.ReactElement {
             : t('driverVerification.subtitle')
         }
         showLegalFooter={false}
+        showLanguageSwitcher={false}
       >
         <AuthCard>
           <IdentityDocumentVerification

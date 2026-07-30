@@ -15,7 +15,7 @@ import { AppText } from '@/shared/components/AppText';
 import { AppTopBar } from '@/shared/components/AppTopBar';
 import { colors, spacing, typography } from '@/theme';
 
-import { WELCOME_HERO_IMAGE } from '../constants/welcome';
+const WELCOME_HERO_IMAGE = require('@/assets/images/welcome-hero.jpg');
 
 type WelcomeHeroProps = {
   enterAnim: Animated.Value;
@@ -55,7 +55,7 @@ export function WelcomeHero({ enterAnim }: WelcomeHeroProps) {
     >
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: imageOpacity }]}>
         <Image
-          source={{ uri: WELCOME_HERO_IMAGE }}
+          source={WELCOME_HERO_IMAGE}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={400}
