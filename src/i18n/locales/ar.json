@@ -329,6 +329,47 @@
           "responses": "الردود ({{count}})",
           "activity": "النشاط",
           "manage": "إدارة"
+        },
+        "responses": {
+          "title": "الردود",
+          "capacity": "{{confirmed}} من {{total}} مقاعد مؤكدة",
+          "refresh": "تحديث",
+          "loadFailed": "تعذر تحميل الردود.",
+          "actionFailed": "تعذر إتمام هذا الإجراء.",
+          "retry": "حاول مرة أخرى",
+          "emptyTitle": "لا توجد ردود بعد",
+          "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
+          "offerLabel": "الرد رقم {{index}}",
+          "seats_one": "مقعد {{count}}",
+          "seats_other": "{{count}} مقاعد",
+          "accept": "قبول",
+          "reject": "رفض",
+          "rejectConfirmTitle": "رفض هذا العرض؟",
+          "rejectConfirmBody": "سيتم إعلام الراكب بأن عرضه قد رُفض.",
+          "offerStatus": {
+            "active": "قيد الانتظار",
+            "selected": "بانتظار التأكيد",
+            "confirmed": "مؤكد",
+            "withdrawn": "مسحوب",
+            "declined": "مرفوض",
+            "timed_out": "منتهي الصلاحية"
+          }
+        },
+        "offer": {
+          "title": "عرضك",
+          "loadFailed": "تعذر تحميل عروض هذه القائمة.",
+          "submitFailed": "تعذر إرسال عرضك.",
+          "withdrawFailed": "تعذر سحب عرضك.",
+          "retry": "حاول مرة أخرى",
+          "seatsLabel": "المقاعد",
+          "seatsPlaceholder": "عدد المقاعد",
+          "priceLabel": "سعرك",
+          "pricePlaceholder": "أدخل السعر الذي تعرضه",
+          "submit": "إرسال العرض",
+          "withdraw": "سحب العرض",
+          "withdrawConfirmTitle": "سحب هذا العرض؟",
+          "withdrawConfirmBody": "لن يرى السائق هذا العرض بعد الآن.",
+          "closed": "لم تعد هذه القائمة تقبل العروض."
         }
       },
       "remove": {

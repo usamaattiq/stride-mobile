@@ -329,6 +329,47 @@
           "responses": "Responses ({{count}})",
           "activity": "Activity",
           "manage": "Manage"
+        },
+        "responses": {
+          "title": "Responses",
+          "capacity": "{{confirmed}} of {{total}} seats confirmed",
+          "refresh": "Refresh",
+          "loadFailed": "Couldn't load responses.",
+          "actionFailed": "Couldn't complete that action.",
+          "retry": "Try again",
+          "emptyTitle": "No responses yet",
+          "emptyBody": "Passenger offers for this trip will show up here.",
+          "offerLabel": "Response #{{index}}",
+          "seats_one": "{{count}} seat",
+          "seats_other": "{{count}} seats",
+          "accept": "Accept",
+          "reject": "Reject",
+          "rejectConfirmTitle": "Reject this offer?",
+          "rejectConfirmBody": "The passenger will be notified that their offer was declined.",
+          "offerStatus": {
+            "active": "Pending",
+            "selected": "Awaiting confirmation",
+            "confirmed": "Confirmed",
+            "withdrawn": "Withdrawn",
+            "declined": "Declined",
+            "timed_out": "Expired"
+          }
+        },
+        "offer": {
+          "title": "Your offer",
+          "loadFailed": "Couldn't load this listing's offers.",
+          "submitFailed": "Couldn't send your offer.",
+          "withdrawFailed": "Couldn't withdraw your offer.",
+          "retry": "Try again",
+          "seatsLabel": "Seats",
+          "seatsPlaceholder": "Number of seats",
+          "priceLabel": "Your price",
+          "pricePlaceholder": "Enter the price you're offering",
+          "submit": "Send offer",
+          "withdraw": "Withdraw offer",
+          "withdrawConfirmTitle": "Withdraw this offer?",
+          "withdrawConfirmBody": "The driver will no longer see this offer.",
+          "closed": "This listing is no longer accepting offers."
         }
       },
       "remove": {
