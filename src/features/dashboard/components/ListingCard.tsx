@@ -287,10 +287,12 @@ export function ListingCard({
       accessibilityRole="button"
       accessibilityLabel={`${fromCity} to ${toCity}`}
     >
-      {content}
+      <View style={styles.itemInner}>{content}</View>
     </Pressable>
   ) : (
-    <View style={styles.item}>{content}</View>
+    <View style={styles.item}>
+      <View style={styles.itemInner}>{content}</View>
+    </View>
   );
 
   return (
@@ -308,15 +310,18 @@ export function ListingCard({
 const styles = StyleSheet.create({
   item: {
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
     shadowColor: '#B42318',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
+  },
+  itemInner: {
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
   },
   gradientWash: {
     position: 'absolute',
