@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import type { NavigationProp } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -121,7 +122,26 @@ function DashboardTabs(): React.ReactElement {
         />
       ) : null}
       <Tab.Screen name="MyOffers" component={MyOffersScreen} />
-      <Tab.Screen name="Settings" component={SettingsStackNavigator} />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsStackNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            // Always land on Settings home when the tab is pressed,
+            // even if a nested screen (e.g. General Information) is open.
+            const settingsRoute = navigation
+              .getState()
+              .routes.find((tabRoute) => tabRoute.name === 'Settings');
+            const nestedState = settingsRoute?.state;
+            if (nestedState != null && (nestedState.index ?? 0) > 0) {
+              navigation.dispatch({
+                ...StackActions.popToTop(),
+                target: nestedState.key,
+              });
+            }
+          },
+        })}
+      />
     </Tab.Navigator>
   );
 }
