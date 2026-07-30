@@ -442,7 +442,10 @@
       "saveFailed": "تعذر تحديث رمز MPIN. حاول مرة أخرى."
     },
     "biometric": {
-      "sectionTitle": "الدخول البيومتري"
+      "sectionTitle": "الدخول البيومتري",
+      "confirmMpinTitle": "أكد رمز MPIN",
+      "confirmMpinBody": "أدخل رمز MPIN الحالي حتى يتمكن الدخول البيومتري من تسجيل دخولك في المرة القادمة.",
+      "confirmMpinCta": "متابعة"
     }
   },
   "biometric": {

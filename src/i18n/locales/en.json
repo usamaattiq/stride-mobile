@@ -442,7 +442,10 @@
       "saveFailed": "We couldn't update your MPIN. Please try again."
     },
     "biometric": {
-      "sectionTitle": "Biometric login"
+      "sectionTitle": "Biometric login",
+      "confirmMpinTitle": "Confirm your MPIN",
+      "confirmMpinBody": "Enter your current MPIN so biometric login can sign you in next time.",
+      "confirmMpinCta": "Continue"
     }
   },
   "biometric": {

@@ -158,9 +158,10 @@ export function LoginFlowScreen(): React.ReactElement {
       countryCode: country.code,
       countryCallingCode: country.callingCode,
     });
-    if (profile.biometricEnabled) {
-      await devicePrefs.setCachedMpin(usedMpin);
-    }
+    // Always cache the MPIN so enabling Face ID later in Settings can unlock
+    // biometric login on the very next sign-in (not only after a second login).
+    await devicePrefs.setCachedMpin(usedMpin);
+    await devicePrefs.setBiometricEnabled(profile.biometricEnabled);
 
     Keyboard.dismiss();
     isLeavingRef.current = true;
