@@ -102,14 +102,6 @@ export function TripResponsesPanel({
     return <View />;
   }
 
-  const capacityLabel =
-    snapshot.totalQuantity != null
-      ? t('dashboard.listings.detail.responses.capacity', {
-          confirmed: snapshot.confirmedQuantity,
-          total: snapshot.totalQuantity,
-        })
-      : null;
-
   return (
     <View style={styles.root}>
       <View style={styles.headerRow}>
@@ -117,7 +109,6 @@ export function TripResponsesPanel({
           <AppText weight="bold" style={styles.headerTitle}>
             {t('dashboard.listings.detail.responses.title')}
           </AppText>
-          {capacityLabel ? <AppText style={styles.headerSubtitle}>{capacityLabel}</AppText> : null}
         </View>
         <Pressable
           onPress={load}
@@ -242,10 +233,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     color: colors.text.primary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.text.tertiary,
   },
   emptyCard: {
     borderWidth: StyleSheet.hairlineWidth,
