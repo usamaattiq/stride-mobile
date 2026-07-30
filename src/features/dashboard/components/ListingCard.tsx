@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingVertical: 2,
     borderRadius: radius.full,
     backgroundColor: colors.white,
     borderWidth: 1,
