@@ -59,6 +59,15 @@ export function VehiclePhotosForm({
 
   const hasPhotos = photoUris.length > 0;
 
+  // Relying on `aspectRatio` for square sizing is unreliable when a tile ends
+  // up alone on the last flex-wrap row (e.g. an even photo count leaves the
+  // add tile solo) — its height can fail to compute correctly. Measuring the
+  // grid's actual width and setting explicit pixel width/height on every tile
+  // sidesteps that entirely.
+  const [gridWidth, setGridWidth] = React.useState(0);
+  const tileSize = gridWidth > 0 ? (gridWidth - GRID_GAP) / 2 : null;
+  const tileSizeStyle = tileSize ? { width: tileSize, height: tileSize } : null;
+
   return (
     <AuthCard>
       <View style={styles.form}>
@@ -67,9 +76,12 @@ export function VehiclePhotosForm({
           <AppText style={styles.required}> *</AppText>
         </AppText>
 
-        <View style={styles.grid}>
+        <View
+          style={styles.grid}
+          onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
+        >
           {photoUris.map((uri, index) => (
-            <View key={`${uri}-${index}`} style={styles.gridItem}>
+            <View key={`${uri}-${index}`} style={[styles.gridItem, tileSizeStyle]}>
               <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
               <Pressable
                 onPress={() => onRemovePhoto(index)}
@@ -85,7 +97,11 @@ export function VehiclePhotosForm({
 
           <Pressable
             onPress={pickImages}
-            style={[styles.gridItem, styles.addTile]}
+            style={[
+              styles.gridItem,
+              styles.addTile,
+              hasPhotos ? tileSizeStyle : styles.addTileEmpty,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={t('vehicles.photos.addPictures')}
             accessibilityHint={t('vehicles.photos.addPicturesHint')}
@@ -93,6 +109,9 @@ export function VehiclePhotosForm({
             <View style={styles.addIconWrap}>
               <FontAwesome name="plus" size={20} color={colors.primary} />
             </View>
+            {!hasPhotos ? (
+              <AppText style={styles.addTileHint}>{t('vehicles.photos.addPictures')}</AppText>
+            ) : null}
           </Pressable>
         </View>
 
@@ -153,6 +172,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addTileEmpty: {
+    width: '100%',
+    aspectRatio: undefined,
+    minHeight: 140,
+    gap: spacing.xs,
+  },
   addIconWrap: {
     width: 44,
     height: 44,
@@ -160,5 +185,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
+  },
+  addTileHint: {
+    fontSize: 13,
+    color: colors.text.secondary,
   },
 });
