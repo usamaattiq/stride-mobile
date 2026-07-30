@@ -216,7 +216,9 @@
       "filterSeatsCount": "{{count}} seats",
       "filterAny": "Any",
       "filterReset": "Reset",
-      "filterApply": "Apply filters"
+      "filterApply": "Apply filters",
+      "listingsFilterEmptyTitle": "No matches",
+      "listingsFilterEmptySubtitle": "Try adjusting or clearing your filters."
     },
     "messages": {
       "title": "Messages",

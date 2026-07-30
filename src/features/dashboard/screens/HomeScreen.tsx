@@ -11,7 +11,7 @@ import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, spacing } from '@/theme';
 
-import { HomeFeedPanel } from '../components/HomeFeedPanel';
+import { DriverListingsPanel } from '../components/DriverListingsPanel';
 import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
@@ -134,7 +134,7 @@ export function HomeScreen(): React.ReactElement {
         ]}
       >
         {panel === 'feed' ? (
-          isPassenger ? <PassengerSearchPanel /> : <HomeFeedPanel />
+          isPassenger ? <PassengerSearchPanel /> : <DriverListingsPanel />
         ) : null}
         {panel === 'messages' ? <MessagesPanel /> : null}
         {panel === 'notifications' ? <NotificationsPanel /> : null}

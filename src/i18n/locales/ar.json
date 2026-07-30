@@ -216,7 +216,9 @@
       "filterSeatsCount": "{{count}} مقاعد",
       "filterAny": "الكل",
       "filterReset": "إعادة تعيين",
-      "filterApply": "تطبيق التصفية"
+      "filterApply": "تطبيق التصفية",
+      "listingsFilterEmptyTitle": "لا توجد نتائج",
+      "listingsFilterEmptySubtitle": "حاول تعديل أو مسح عوامل التصفية."
     },
     "messages": {
       "title": "الرسائل",
