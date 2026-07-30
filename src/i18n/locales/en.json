@@ -24,7 +24,7 @@
     "signup": {
       "phone": {
         "title": "Enter Mobile Number",
-        "subtitle": "We'll send tou a verification code",
+        "subtitle": "We'll send you a verification code",
         "placeholder": "300 1234567",
         "cta": "Send OTP",
         "sendFailed": "We couldn't send the verification code. Please try again."

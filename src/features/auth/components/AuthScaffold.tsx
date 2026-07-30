@@ -140,7 +140,7 @@ export function AuthScaffold({
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
