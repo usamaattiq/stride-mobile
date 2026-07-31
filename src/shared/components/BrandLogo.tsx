@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+﻿import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -11,7 +11,7 @@ type BrandLogoProps = {
 
 export function BrandLogo({
   light = false,
-  brandName = 'musafir',
+  brandName = 'musafir249',
 }: BrandLogoProps) {
   const wordmarkColor = light ? colors.text.inverse : colors.text.primary;
 

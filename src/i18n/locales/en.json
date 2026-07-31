@@ -1,4 +1,4 @@
-{
+﻿{
   "language": {
     "english": "English",
     "arabic": "Arabic",
@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "musafir",
+      "brandName": "musafir249",
       "title": "Book your next trip in minutes",
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
@@ -321,7 +321,7 @@
         "share": "Share Listing",
         "edit": "Edit Listing",
         "editComingSoon": "Editing listings will be available soon.",
-        "shareMessage": "Musafir listing: {{from}} → {{to}}. Price {{price}} /seat.",
+        "shareMessage": "Musafir249 listing: {{from}} → {{to}}. Price {{price}} /seat.",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available in a future update.",
         "manageHint": "Remove this listing if it is no longer needed.",
@@ -420,7 +420,7 @@
       },
       "becomeDriver": {
         "title": "Become a driver",
-        "subtitle": "Offer rides and earn with Musafir",
+        "subtitle": "Offer rides and earn with Musafir249",
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
@@ -528,7 +528,7 @@
     "listSubtitle": "Add and manage the vehicles you drive",
     "addVehicle": "Add vehicle",
     "emptyTitle": "No vehicles yet",
-    "emptySubtitle": "Add your first vehicle to start offering rides on Musafir.",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Musafir249.",
     "detailsTitle": "Vehicle details",
     "detailsSubtitle": "Tell us about your vehicle",
     "continue": "Continue",
@@ -746,11 +746,11 @@
     },
     "terms": {
       "title": "Terms & Conditions",
-      "intro": "Welcome to Transit. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Welcome to Musafir249. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "acceptance": {
           "title": "1. Acceptance of Terms",
-          "body": "By creating an account or using any part of Transit, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
+          "body": "By creating an account or using any part of Musafir249, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
         },
         "eligibility": {
           "title": "2. Eligibility",
@@ -758,7 +758,7 @@
         },
         "platformUse": {
           "title": "3. Platform Use",
-          "body": "Transit helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
+          "body": "Musafir249 helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
         },
         "accountsSecurity": {
           "title": "4. Accounts and Security",
@@ -770,17 +770,17 @@
         },
         "limitationLiability": {
           "title": "6. Limitation of Liability",
-          "body": "To the fullest extent permitted by law, Transit is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
+          "body": "To the fullest extent permitted by law, Musafir249 is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
         },
         "changesTerms": {
           "title": "7. Changes to These Terms",
-          "body": "We may update these Terms & Conditions from time to time. Continued use of Transit after changes are published constitutes acceptance of the revised terms."
+          "body": "We may update these Terms & Conditions from time to time. Continued use of Musafir249 after changes are published constitutes acceptance of the revised terms."
         }
       }
     },
     "privacy": {
       "title": "Privacy Policy",
-      "intro": "Your privacy matters to us. This Privacy Policy explains what information Transit may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Your privacy matters to us. This Privacy Policy explains what information Musafir249 may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "informationCollect": {
           "title": "1. Information We Collect",

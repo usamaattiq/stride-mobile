@@ -1,14 +1,14 @@
-{
+﻿{
   "expo": {
-    "name": "Musafir",
-    "slug": "musafir",
+    "name": "Musafir249",
+    "slug": "musafir249",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash-logo.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.silveraxisltd.musafir"
+      "bundleIdentifier": "com.silveraxisltd.musafir249"
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
@@ -22,7 +22,7 @@
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ],
-      "package": "com.silveraxisltd.musafir"
+      "package": "com.silveraxisltd.musafir249"
     },
     "web": {
       "favicon": "./assets/favicon.png"
