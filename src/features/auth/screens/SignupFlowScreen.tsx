@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { authApi } from '@/services/api/authApi';
+import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -149,7 +150,11 @@ export function SignupFlowScreen(): React.ReactElement {
       await authApi.sendSignupOtp(toPhoneIdentity(draft.country, draft.phoneDigits));
       goToStep('otp');
     } catch (error) {
-      setSendOtpError(getErrorMessage(error, t('auth.signup.phone.sendFailed')));
+      setSendOtpError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.signup.phone.sendFailed')),
+      );
     } finally {
       setSendingOtp(false);
     }
@@ -161,7 +166,11 @@ export function SignupFlowScreen(): React.ReactElement {
       patchDraft({ otp: '' });
       setOtpResentVisible(true);
     } catch (error) {
-      setVerifyOtpError(getErrorMessage(error, t('auth.signup.otp.resendFailed')));
+      setVerifyOtpError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.signup.otp.resendFailed')),
+      );
     }
   };
 

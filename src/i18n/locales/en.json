@@ -21,6 +21,7 @@
       "searchPlaceholder": "Search country or code",
       "noResults": "No countries found"
     },
+    "otpLimitReached": "You have reached your limit for this number. Please wait 10 minutes and try again.",
     "signup": {
       "phone": {
         "title": "Enter Mobile Number",
