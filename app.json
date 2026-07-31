@@ -1,17 +1,20 @@
 {
   "expo": {
-    "name": "Musafir",
-    "slug": "musafir",
+    "name": "Musafir249",
+    "slug": "musafir249",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash-logo.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.silveraxisltd.musafir"
+      "bundleIdentifier": "com.silveraxisltd.musafir249",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "softwareKeyboardLayoutMode": "resize",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/splash-logo.png"
@@ -22,7 +25,7 @@
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ],
-      "package": "com.silveraxisltd.musafir"
+      "package": "com.silveraxisltd.musafir249"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -78,7 +81,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "07c75f6a-0e90-4ad2-aa8f-6cb842b123ff"
+        "projectId": "3e41e8f4-ab61-4839-8d3c-b568612d2666"
       }
     },
     "owner": "mycauses-organization"

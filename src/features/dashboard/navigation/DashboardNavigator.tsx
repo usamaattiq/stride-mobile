@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import type { NavigationProp } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { TripProvider, useTrips } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { CreateTripTabScreen } from '../screens/CreateTripTabScreen';
 import { TripCreationFlowScreen } from '../screens/TripCreationFlowScreen';
+import { TripPublishSuccessScreen } from '../screens/TripPublishSuccessScreen';
 import { VehicleDetailsScreen } from '../screens/VehicleDetailsScreen';
 import { VehiclePhotosScreen } from '../screens/VehiclePhotosScreen';
 import type { DashboardRootStackParamList } from './dashboardRootTypes';
@@ -121,7 +123,26 @@ function DashboardTabs(): React.ReactElement {
         />
       ) : null}
       <Tab.Screen name="MyOffers" component={MyOffersScreen} />
-      <Tab.Screen name="Settings" component={SettingsStackNavigator} />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsStackNavigator}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            // Always land on Settings home when the tab is pressed,
+            // even if a nested screen (e.g. General Information) is open.
+            const settingsRoute = navigation
+              .getState()
+              .routes.find((tabRoute) => tabRoute.name === 'Settings');
+            const nestedState = settingsRoute?.state;
+            if (nestedState != null && (nestedState.index ?? 0) > 0) {
+              navigation.dispatch({
+                ...StackActions.popToTop(),
+                target: nestedState.key,
+              });
+            }
+          },
+        })}
+      />
     </Tab.Navigator>
   );
 }
@@ -131,6 +152,7 @@ function DashboardRoot(): React.ReactElement {
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="MainTabs" component={DashboardTabs} />
       <RootStack.Screen name="TripCreation" component={TripCreationFlowScreen} />
+      <RootStack.Screen name="TripPublishSuccess" component={TripPublishSuccessScreen} />
       <RootStack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
       <RootStack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
       <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />

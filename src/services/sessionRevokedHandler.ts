@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+﻿import { Alert } from 'react-native';
 
 import { i18n as appI18n } from '@/i18n';
 import { authStore } from '@/store/authStore';
@@ -9,7 +9,7 @@ let handling = false;
 
 /**
  * Fires when the server reports SESSION_REVOKED (e.g. the user signed in on another
- * device — Musafir keeps a single active session per user). Multiple in-flight requests
+ * device — Musafir249 keeps a single active session per user). Multiple in-flight requests
  * can fail with this at once; the guard ensures only one sign-out + one alert happen.
  */
 export const sessionRevokedHandler = {

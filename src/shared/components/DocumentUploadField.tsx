@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -38,6 +38,11 @@ export function DocumentUploadField({
   aspect = DEFAULT_ASPECT,
 }: DocumentUploadFieldProps): React.ReactElement {
   const pickImage = async () => {
+    // If the document-number field was still focused, its keyboard stays up
+    // underneath the native picker and reopens on return, looking like the
+    // field "randomly" refocused itself right after picking an image.
+    Keyboard.dismiss();
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       return;

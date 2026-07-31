@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import type { TripCity } from '@/features/dashboard/types/trip.types';
@@ -25,7 +26,7 @@ export const CITY_RESULTS_MAX_HEIGHT = CITY_RESULT_ROW_HEIGHT * CITY_RESULTS_VIS
 type CitySearchFieldProps = {
   label: string;
   value: TripCity | null;
-  onChange: (city: TripCity) => void;
+  onChange: (city: TripCity | null) => void;
   placeholder: string;
   required?: boolean;
   onFocus?: () => void;
@@ -47,6 +48,7 @@ export function CitySearchField({
   const [showEmpty, setShowEmpty] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
   const skipSearchRef = React.useRef(false);
+  const inputRef = React.useRef<TextInput>(null);
 
   React.useEffect(() => {
     if (isFocused) {
@@ -54,6 +56,14 @@ export function CitySearchField({
     }
     setQuery(value?.label ?? '');
   }, [isFocused, value?.label]);
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [isFocused]);
 
   React.useEffect(() => {
     if (skipSearchRef.current) {
@@ -99,6 +109,21 @@ export function CitySearchField({
     onChange(selected);
   };
 
+  const handleEdit = () => {
+    skipSearchRef.current = false;
+    setQuery('');
+    setIsFocused(true);
+    onFocus?.();
+  };
+
+  const handleClear = () => {
+    skipSearchRef.current = false;
+    setQuery('');
+    setResults([]);
+    setShowEmpty(false);
+    onChange(null);
+  };
+
   return (
     <View style={styles.wrap}>
       <AppText weight="medium" style={styles.label}>
@@ -106,25 +131,46 @@ export function CitySearchField({
         {required ? <AppText style={styles.required}> *</AppText> : null}
       </AppText>
 
-      <View style={styles.inputWrap}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          onFocus={() => {
-            setIsFocused(true);
-            onFocus?.();
-          }}
-          onBlur={() => {
-            setIsFocused(false);
-            setResults([]);
-            setShowEmpty(false);
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={colors.text.tertiary}
-          style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
-        />
-        {loading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-      </View>
+      {value && !isFocused ? (
+        <Pressable
+          onPress={handleEdit}
+          style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="map-marker" size={14} color={colors.primary} />
+          <AppText style={styles.chipText} numberOfLines={1}>
+            {value.label}
+          </AppText>
+          <Pressable
+            onPress={handleClear}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+          >
+            <FontAwesome name="times-circle" size={16} color={colors.text.tertiary} />
+          </Pressable>
+        </Pressable>
+      ) : (
+        <View style={styles.inputWrap}>
+          <TextInput
+            ref={inputRef}
+            value={query}
+            onChangeText={setQuery}
+            onFocus={() => {
+              setIsFocused(true);
+              onFocus?.();
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              setResults([]);
+              setShowEmpty(false);
+            }}
+            placeholder={placeholder}
+            placeholderTextColor={colors.text.tertiary}
+            style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
+          />
+          {loading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+        </View>
+      )}
 
       {!ENV.googleMapsApiKey ? (
         <AppText style={styles.hint}>{t('trips.create.cityApiHint')}</AppText>
@@ -183,6 +229,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  chip: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    minHeight: 38,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.primaryDisabled,
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  chipPressed: {
+    backgroundColor: colors.primaryMuted,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    flexShrink: 1,
+    fontSize: 14,
+    color: colors.primary,
   },
   input: {
     flex: 1,

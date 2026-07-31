@@ -1,7 +1,15 @@
-import { ActivityIndicator, Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, iosArabicOpticalAlignStyle, radius, spacing, typography } from '@/theme';
 
 type ButtonVariant = 'primary' | 'secondary';
 
@@ -24,8 +32,11 @@ export function Button({
   accessibilityHint,
   style,
 }: ButtonProps) {
+  const { currentLanguage } = useLanguage();
   const isPrimary = variant === 'primary';
   const isDisabled = disabled || loading;
+  const iosArabicAlign =
+    Platform.OS === 'ios' && currentLanguage === 'ar' ? iosArabicOpticalAlignStyle : null;
 
   return (
     <Pressable
@@ -52,6 +63,7 @@ export function Button({
             styles.label,
             isPrimary ? styles.primaryLabel : styles.secondaryLabel,
             isDisabled && styles.disabledLabel,
+            iosArabicAlign,
           ]}
         >
           {label}

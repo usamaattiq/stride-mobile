@@ -4,11 +4,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
@@ -23,21 +25,30 @@ function formatTripWhen(trip: Trip, locale: string): string {
   if (Number.isNaN(date.getTime())) {
     return trip.departureAt;
   }
-  const day = date.toLocaleDateString(locale, {
+  const latinLocale = withLatinDigitsLocale(locale);
+  const day = date.toLocaleDateString(latinLocale, {
     day: 'numeric',
     month: 'short',
   });
-  const time = date.toLocaleTimeString(locale, {
+  const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',
   });
   return `${day} at ${time}`;
 }
 
-function isListingActive(trip: Trip): boolean {
-  const expiresAt =
-    new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
-  return expiresAt > Date.now();
+function getExpiresAt(trip: Trip): number {
+  return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
+}
+
+function formatCountdown(remainingMs: number, t: TFunction): string {
+  const totalMinutes = Math.max(1, Math.floor(remainingMs / 60_000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) {
+    return t('dashboard.listings.card.timerHours', { hours, minutes });
+  }
+  return t('dashboard.listings.card.timerMinutes', { minutes });
 }
 
 export type ListingCardProps = {
@@ -46,6 +57,8 @@ export type ListingCardProps = {
   onRemovePress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
+  /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
+  pending?: boolean;
 };
 
 export function ListingCard({
@@ -53,8 +66,15 @@ export function ListingCard({
   onPress,
   onRemovePress,
   showPhotoCount = false,
+  pending = false,
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = cityDisplayName(trip.arrivalCity.label);
@@ -74,7 +94,16 @@ export function ListingCard({
       : trip.vehicleMode === 'shared'
         ? t('trips.create.vehicleModeShared')
         : null;
-  const active = isListingActive(trip);
+  const remainingMs = getExpiresAt(trip) - now;
+  const active = remainingMs > 0;
+  const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  const badgeState = pending
+    ? 'pending'
+    : trip.isBooked
+      ? 'booked'
+      : active
+        ? 'active'
+        : 'ended';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -107,13 +136,67 @@ export function ListingCard({
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
+        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
         locations={[0, 0.55, 1]}
         start={{ x: 0.35, y: 0.15 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientWash}
         pointerEvents="none"
       />
+
+      <View style={styles.topRow}>
+        <View style={styles.topBadges}>
+          <View style={styles.topBadge}>
+            <FontAwesome name="list-ul" size={9} color={colors.primary} />
+            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+              {listingLabel}
+            </AppText>
+          </View>
+          <View style={styles.topBadge}>
+            <FontAwesome name="credit-card" size={9} color={colors.primary} />
+            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+              {paymentLabel}
+            </AppText>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.timerBadge,
+            badgeState === 'booked' && styles.timerBadgeBooked,
+            (badgeState === 'pending' || badgeState === 'ended') && styles.timerBadgeEnded,
+          ]}
+        >
+          <FontAwesome
+            name={badgeState === 'booked' ? 'check-circle' : 'clock-o'}
+            size={10}
+            color={
+              badgeState === 'active'
+                ? colors.accent.green.text
+                : badgeState === 'booked'
+                  ? colors.accent.blue.text
+                  : colors.text.secondary
+            }
+          />
+          <AppText
+            weight="semibold"
+            style={[
+              styles.timerText,
+              badgeState === 'booked' && styles.timerTextBooked,
+              (badgeState === 'pending' || badgeState === 'ended') && styles.timerTextEnded,
+            ]}
+            numberOfLines={1}
+          >
+            {badgeState === 'pending'
+              ? t('dashboard.listings.card.pending')
+              : badgeState === 'booked'
+                ? t('dashboard.listings.card.booked')
+                : badgeState === 'active'
+                  ? t('dashboard.listings.card.active')
+                  : t('dashboard.listings.card.ended')}
+          </AppText>
+        </View>
+      </View>
 
       <View style={styles.mainRow}>
         <Pressable
@@ -218,43 +301,16 @@ export function ListingCard({
         </View>
       </View>
 
-      <View style={styles.footer}>
-        <View style={styles.footerItem}>
-          <View style={styles.footerIcon}>
-            <FontAwesome name="list-ul" size={11} color={colors.primary} />
+      {!trip.isBooked && (pending || active) ? (
+        <View style={styles.bottomRow}>
+          <View style={styles.countdownBadge}>
+            <FontAwesome name="clock-o" size={10} color={colors.primary} />
+            <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+              {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+            </AppText>
           </View>
-          <AppText weight="bold" style={styles.footerPrimary} numberOfLines={1}>
-            {listingLabel}
-          </AppText>
         </View>
-
-        <View style={styles.footerDivider} />
-
-        <View style={styles.footerItem}>
-          <View style={styles.footerIcon}>
-            <FontAwesome name="credit-card" size={11} color={colors.primary} />
-          </View>
-          <AppText weight="semibold" style={styles.footerPlain} numberOfLines={1}>
-            {paymentLabel}
-          </AppText>
-        </View>
-
-        <View style={[styles.statusBadge, !active && styles.statusBadgeEnded]}>
-          <FontAwesome
-            name="clock-o"
-            size={10}
-            color={active ? colors.accent.green.text : colors.text.secondary}
-          />
-          <AppText
-            weight="semibold"
-            style={[styles.statusText, !active && styles.statusTextEnded]}
-          >
-            {active
-              ? t('dashboard.listings.card.active')
-              : t('dashboard.listings.card.ended')}
-          </AppText>
-        </View>
-      </View>
+      ) : null}
     </>
   );
 
@@ -265,10 +321,12 @@ export function ListingCard({
       accessibilityRole="button"
       accessibilityLabel={`${fromCity} to ${toCity}`}
     >
-      {content}
+      <View style={styles.itemInner}>{content}</View>
     </Pressable>
   ) : (
-    <View style={styles.item}>{content}</View>
+    <View style={styles.item}>
+      <View style={styles.itemInner}>{content}</View>
+    </View>
   );
 
   return (
@@ -286,33 +344,122 @@ export function ListingCard({
 const styles = StyleSheet.create({
   item: {
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
     shadowColor: '#B42318',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
+  itemInner: {
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+  },
   gradientWash: {
     position: 'absolute',
     top: 0,
     right: 0,
-    bottom: 32,
+    bottom: 0,
     width: '58%',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs,
+  },
+  topBadges: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minWidth: 0,
+  },
+  topBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
+  },
+  topBadgeText: {
+    flexShrink: 1,
+    fontSize: 11,
+    color: colors.primary,
+  },
+  timerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.green.soft,
+    flexShrink: 0,
+  },
+  timerBadgeEnded: {
+    backgroundColor: colors.background.subtle,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+  },
+  timerBadgeBooked: {
+    backgroundColor: colors.accent.blue.soft,
+  },
+  timerText: {
+    fontSize: 11,
+    color: colors.accent.green.text,
+  },
+  timerTextEnded: {
+    color: colors.text.secondary,
+  },
+  timerTextBooked: {
+    color: colors.accent.blue.text,
   },
   mainRow: {
     flexDirection: 'row',
+    // alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.xs + 2,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxs,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.sm,
     paddingBottom: spacing.xs,
   },
+  countdownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    shadowColor: '#000000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+  countdownText: {
+    fontSize: 11,
+    color: colors.primary,
+    
+  },
   thumbnail: {
-    width: 84,
-    height: 78,
+    width: 88,
+    height: 88,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
@@ -339,7 +486,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   photoBadgeText: {
-    fontSize: 9,
+    fontSize: 10,
     color: colors.white,
   },
   itemBody: {
@@ -361,7 +508,7 @@ const styles = StyleSheet.create({
   },
   routeCity: {
     flexShrink: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.text.primary,
   },
   removeButton: {
@@ -380,7 +527,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     flexShrink: 1,
-    fontSize: 11,
+    fontSize: 12,
     color: colors.text.secondary,
   },
   bodyDivider: {
@@ -403,75 +550,12 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   priceAmount: {
-    fontSize: 20,
-    lineHeight: 22,
+    fontSize: 22,
+    lineHeight: 24,
     color: colors.primary,
   },
   priceSuffix: {
-    fontSize: 11,
-    color: colors.text.secondary,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border.default,
-    backgroundColor: 'rgba(249, 250, 251, 0.72)',
-  },
-  footerItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 0,
-  },
-  footerDivider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: 'stretch',
-    backgroundColor: colors.border.default,
-    marginVertical: 2,
-  },
-  footerIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  footerPrimary: {
-    flexShrink: 1,
-    fontSize: 11,
-    color: colors.primary,
-  },
-  footerPlain: {
-    flexShrink: 1,
-    fontSize: 11,
-    color: colors.text.primary,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent.green.soft,
-    flexShrink: 0,
-  },
-  statusBadgeEnded: {
-    backgroundColor: colors.background.subtle,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-  },
-  statusText: {
-    fontSize: 10,
-    color: colors.accent.green.text,
-  },
-  statusTextEnded: {
+    fontSize: 12,
     color: colors.text.secondary,
   },
 });

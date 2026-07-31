@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
+﻿import * as SecureStore from 'expo-secure-store';
 
 const STORAGE_KEYS = {
-  accessToken: 'musafir.auth.accessToken',
-  deviceInstallId: 'musafir.device.installId',
-  cachedMpin: 'musafir.security.cachedMpin',
+  accessToken: 'musafir249.auth.accessToken',
+  deviceInstallId: 'musafir249.device.installId',
+  cachedMpin: 'musafir249.security.cachedMpin',
 } as const;
 
 async function getItem(key: string): Promise<string | null> {

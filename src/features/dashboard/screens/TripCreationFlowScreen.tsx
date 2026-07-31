@@ -17,10 +17,9 @@ import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/Trip
 import { useTrips } from '@/features/dashboard/context/TripContext';
 import { useVehicles } from '@/features/dashboard/context/VehicleContext';
 import type { DashboardRootStackParamList } from '@/features/dashboard/navigation/dashboardRootTypes';
-import { exitTripCreation, exitTripCreationToListings } from '@/features/dashboard/navigation/homeStackNavigation';
+import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
-import { AppDialog } from '@/shared/components/AppDialog';
 import { colors, spacing } from '@/theme';
 
 type TripCreationStep =
@@ -58,9 +57,9 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
-  const { vehicles, refreshVehicles, getVehicleById, beginAddVehicle } = useVehicles();
+  const { vehicles, isLoading: isLoadingVehicles, refreshVehicles, getVehicleById, beginAddVehicle } =
+    useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>('vehicle');
-  const [successVisible, setSuccessVisible] = React.useState(false);
   const [publishError, setPublishError] = React.useState<string | null>(null);
   const isLeavingRef = React.useRef(false);
   const didReturnFromVehicleRef = React.useRef(false);
@@ -70,7 +69,6 @@ export function TripCreationFlowScreen(): React.ReactElement {
       return;
     }
     setStep('vehicle');
-    setSuccessVisible(false);
     isLeavingRef.current = false;
   }, [route.params?.flowKey]);
 
@@ -150,17 +148,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
           setPublishError(t('trips.create.publishFailed'));
           return;
         }
-        setSuccessVisible(true);
+        isLeavingRef.current = true;
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'TripPublishSuccess' }],
+        });
       })
       .catch((error) => {
         setPublishError(getErrorMessage(error, t('trips.create.publishFailed')));
       });
-  };
-
-  const handleSuccessDismiss = () => {
-    setSuccessVisible(false);
-    isLeavingRef.current = true;
-    exitTripCreationToListings(navigation);
   };
 
   const handleAddVehicle = () => {
@@ -225,7 +221,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         showLegalFooter={false}
         showLanguageSwitcher={false}
         headerRight={
-          step === 'vehicle' ? (
+          step === 'vehicle' && !isLoadingVehicles ? (
             <Pressable
               onPress={handleAddVehicle}
               style={styles.addButton}
@@ -244,10 +240,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
         {step === 'vehicle' ? (
           <TripVehicleSelectStep
             vehicles={vehicles}
+            isLoading={isLoadingVehicles}
             selectedVehicleId={draft.vehicleId}
             onSelectVehicle={(vehicleId) => patchDraft({ vehicleId })}
             onContinue={goToNextStep}
-            onAddVehicle={handleAddVehicle}
           />
         ) : null}
 
@@ -282,17 +278,6 @@ export function TripCreationFlowScreen(): React.ReactElement {
           />
         ) : null}
       </AuthScaffold>
-
-      <AppDialog
-        visible={successVisible}
-        icon="check"
-        title={t('trips.create.successTitle')}
-        message={t('trips.create.successBody')}
-        confirmAction={{
-          label: t('common.ok'),
-          onPress: handleSuccessDismiss,
-        }}
-      />
     </>
   );
 }

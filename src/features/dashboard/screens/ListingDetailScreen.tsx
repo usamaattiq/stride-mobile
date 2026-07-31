@@ -30,6 +30,8 @@ import { colors, radius, spacing } from '@/theme';
 import { ListingCard } from '../components/ListingCard';
 import { formatTripDateTime } from '../components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
+import { TripOfferPanel } from '../components/trip/TripOfferPanel';
+import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useDashboardSession } from '../context/DashboardSessionContext';
@@ -62,6 +64,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+  const [responsesCount, setResponsesCount] = React.useState(0);
 
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
@@ -224,7 +227,10 @@ export function ListingDetailScreen(): React.ReactElement {
 
   const tabs: Array<{ id: DetailTab; label: string }> = [
     { id: 'overview', label: t('dashboard.listings.detail.tabs.overview') },
-    { id: 'responses', label: t('dashboard.listings.detail.tabs.responses', { count: 0 }) },
+    {
+      id: 'responses',
+      label: t('dashboard.listings.detail.tabs.responses', { count: responsesCount }),
+    },
   ];
 
   const openRemove = () => {
@@ -257,15 +263,22 @@ export function ListingDetailScreen(): React.ReactElement {
         <ListingCard trip={trip} showPhotoCount />
 
         {isPassenger ? (
-          <TripDetailsOverview
-            description={description}
-            fromCity={fromCity}
-            toCity={toCity}
-            departureWhen={formatTripDateTime(trip.departureAt, locale)}
-            arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
-            departurePoint={trip.departurePoint}
-            arrivalPoint={trip.arrivalPoint}
-          />
+          <>
+            <TripDetailsOverview
+              description={description}
+              fromCity={fromCity}
+              toCity={toCity}
+              departureWhen={formatTripDateTime(trip.departureAt, locale)}
+              arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+              departurePoint={trip.departurePoint}
+              arrivalPoint={trip.arrivalPoint}
+            />
+            <TripOfferPanel
+              tripId={trip.id}
+              vehicleMode={trip.vehicleMode}
+              vehicleTotalSeats={trip.vehicleTotalSeats}
+            />
+          </>
         ) : (
           <>
             <SegmentControl
@@ -305,14 +318,12 @@ export function ListingDetailScreen(): React.ReactElement {
                 </View>
 
                 <View style={[styles.page, { width: pageWidth }]}>
-                  <View style={styles.emptyTabCard}>
-                    <AppText weight="semibold" style={styles.emptyTabTitle}>
-                      {t('dashboard.listings.detail.comingSoonTitle')}
-                    </AppText>
-                    <AppText style={styles.emptyTabBody}>
-                      {t('dashboard.listings.detail.comingSoonBody')}
-                    </AppText>
-                  </View>
+                  <TripResponsesPanel
+                    tripId={trip.id}
+                    vehicleMode={trip.vehicleMode}
+                    vehicleTotalSeats={trip.vehicleTotalSeats}
+                    onCountChange={setResponsesCount}
+                  />
                 </View>
               </Animated.ScrollView>
             </View>
@@ -378,23 +389,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-  emptyTabCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    gap: spacing.xxs,
-    alignItems: 'center',
-  },
-  emptyTabTitle: {
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  emptyTabBody: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    textAlign: 'center',
   },
 });

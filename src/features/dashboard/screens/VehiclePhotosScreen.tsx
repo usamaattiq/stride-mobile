@@ -84,6 +84,7 @@ export function VehiclePhotosScreen(): React.ReactElement {
         title={t('vehicles.photos.title')}
         subtitle={t('vehicles.photos.subtitle')}
         showLegalFooter={false}
+        showLanguageSwitcher={false}
         stepCount={2}
         currentStep={2}
       >

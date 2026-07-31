@@ -18,6 +18,8 @@ export type DashboardSessionUser = {
   fullName: string;
   email: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   /** Display-only phone (not editable in General Information). */
   mobileNumber: string;
   role: AppRole;
@@ -73,6 +75,8 @@ const FALLBACK_USER: DashboardSessionUser = {
   fullName: '',
   email: '',
   address: '',
+  latitude: null,
+  longitude: null,
   mobileNumber: '',
   role: 'passenger',
   avatarUri: undefined,
@@ -97,6 +101,8 @@ function toDashboardSessionUser(profile: UserProfileDto | null): DashboardSessio
     fullName: profile.fullName,
     email: profile.email ?? '',
     address: profile.address ?? '',
+    latitude: profile.latitude,
+    longitude: profile.longitude,
     mobileNumber: profile.phoneE164,
     role: profile.role,
     avatarUri: profile.avatarViewUrl ?? profile.avatarUrl ?? undefined,

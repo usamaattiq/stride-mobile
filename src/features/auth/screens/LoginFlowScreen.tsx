@@ -158,9 +158,10 @@ export function LoginFlowScreen(): React.ReactElement {
       countryCode: country.code,
       countryCallingCode: country.callingCode,
     });
-    if (profile.biometricEnabled) {
-      await devicePrefs.setCachedMpin(usedMpin);
-    }
+    // Always cache the MPIN so enabling Face ID later in Settings can unlock
+    // biometric login on the very next sign-in (not only after a second login).
+    await devicePrefs.setCachedMpin(usedMpin);
+    await devicePrefs.setBiometricEnabled(profile.biometricEnabled);
 
     Keyboard.dismiss();
     isLeavingRef.current = true;
@@ -176,7 +177,11 @@ export function LoginFlowScreen(): React.ReactElement {
       setOtp('');
       goToStep('otp');
     } catch (error) {
-      setSendOtpError(getErrorMessage(error, t('auth.login.phone.sendOtpFailed')));
+      setSendOtpError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.login.phone.sendOtpFailed')),
+      );
     } finally {
       setSendingOtp(false);
     }
@@ -187,7 +192,11 @@ export function LoginFlowScreen(): React.ReactElement {
       await authApi.sendLoginOtp(toPhoneIdentity(country, phoneDigits), 'login');
       setOtp('');
     } catch (error) {
-      setVerifyOtpError(getErrorMessage(error, t('auth.login.otp.resendFailed')));
+      setVerifyOtpError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.login.otp.resendFailed')),
+      );
     }
   };
 
@@ -259,7 +268,11 @@ export function LoginFlowScreen(): React.ReactElement {
       setNewMpinConfirm('');
       goToStep('forgotOtp');
     } catch (error) {
-      setLoginError(getErrorMessage(error, t('auth.login.phone.sendOtpFailed')));
+      setLoginError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.login.phone.sendOtpFailed')),
+      );
     }
   };
 
@@ -268,7 +281,11 @@ export function LoginFlowScreen(): React.ReactElement {
       await authApi.sendLoginOtp(toPhoneIdentity(country, phoneDigits), 'mpin_reset');
       setForgotOtp('');
     } catch (error) {
-      setForgotOtpError(getErrorMessage(error, t('auth.login.otp.resendFailed')));
+      setForgotOtpError(
+        isApiErrorWithCode(error, 'RATE_LIMITED')
+          ? t('auth.otpLimitReached')
+          : getErrorMessage(error, t('auth.login.otp.resendFailed')),
+      );
     }
   };
 

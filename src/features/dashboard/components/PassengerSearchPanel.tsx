@@ -18,6 +18,7 @@ import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from './ListingCard';
@@ -44,7 +45,7 @@ function addDays(base: Date, days: number): Date {
 }
 
 function formatSearchDate(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(withLatinDigitsLocale(locale), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

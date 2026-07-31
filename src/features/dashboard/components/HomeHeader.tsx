@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { formatLatinNumber } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 type HomeHeaderProps = {
@@ -38,7 +39,7 @@ export function HomeHeader({
 }: HomeHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const creditsDisplay = credits.toLocaleString();
+  const creditsDisplay = formatLatinNumber(credits);
   const onBrand = variant === 'onBrand';
   const iconColor = onBrand ? colors.white : colors.text.primary;
   const helloColor = onBrand ? colors.white : colors.text.primary;

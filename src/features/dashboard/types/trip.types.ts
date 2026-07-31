@@ -68,6 +68,8 @@ export type Trip = {
   scheduledStartAt: string | null;
   description: string | null;
   publishedAt: string;
+  /** Whether the trip's full capacity has been confirmed/accepted. */
+  isBooked: boolean;
 };
 
 export function createEmptyTripDraft(): TripDraft {
@@ -179,5 +181,6 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
+    isBooked: false,
   };
 }
