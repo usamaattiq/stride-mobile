@@ -1,4 +1,5 @@
 import React from 'react';
+import { FontAwesome } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -96,6 +97,8 @@ export function TripOfferPanel({
   const priceNumber = Number(price);
   const priceValid = price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
   const canSubmit = seatsValid && priceValid && !submitting;
+  const effectiveSeats = isFullPrivate ? (vehicleTotalSeats ?? 1) : seatsNumber;
+  const totalPrice = priceValid && seatsValid ? priceNumber * effectiveSeats : null;
 
   const submitOffer = () => {
     if (!canSubmit) {
@@ -131,9 +134,12 @@ export function TripOfferPanel({
 
   return (
     <View style={styles.card}>
-      <AppText weight="bold" style={styles.title}>
-        {t('dashboard.listings.detail.offer.title')}
-      </AppText>
+      <View style={styles.titleRow}>
+        <FontAwesome name="tag" size={14} color={colors.primary} />
+        <AppText weight="bold" style={styles.title}>
+          {t('dashboard.listings.detail.offer.title')}
+        </AppText>
+      </View>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
@@ -150,6 +156,9 @@ export function TripOfferPanel({
             {activeOffer.price != null ? (
               <AppText weight="semibold" style={styles.price}>
                 {t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })}
+                <AppText style={styles.priceSuffix}>
+                  {t('dashboard.listings.pricePerSeatSuffix')}
+                </AppText>
               </AppText>
             ) : null}
           </View>
@@ -183,13 +192,33 @@ export function TripOfferPanel({
             />
           ) : null}
           <AuthTextField
-            label={t('dashboard.listings.detail.offer.priceLabel')}
+            label={t('dashboard.listings.detail.offer.pricePerSeatLabel')}
             value={price}
             onChangeText={setPrice}
             keyboardType="decimal-pad"
             placeholder={t('dashboard.listings.detail.offer.pricePlaceholder')}
             dense
           />
+          {totalPrice != null ? (
+            <View style={styles.totalBox}>
+              <AppText weight="semibold" style={styles.totalLabel}>
+                {t('dashboard.listings.detail.offer.totalLabel')}
+              </AppText>
+              <View style={styles.totalCalcRow}>
+                <AppText style={styles.totalCalc}>
+                  {t('dashboard.listings.detail.offer.totalCalc', {
+                    price: t('dashboard.listings.card.priceWithCurrency', { price: priceNumber }),
+                    seats: t('dashboard.listings.detail.responses.seats', {
+                      count: effectiveSeats,
+                    }),
+                  })}
+                </AppText>
+                <AppText weight="bold" style={styles.totalValue}>
+                  {t('dashboard.listings.card.priceWithCurrency', { price: totalPrice })}
+                </AppText>
+              </View>
+            </View>
+          ) : null}
           <Button
             label={t('dashboard.listings.detail.offer.submit')}
             onPress={submitOffer}
@@ -213,7 +242,7 @@ export function TripOfferPanel({
           onPress: () => setConfirmWithdraw(false),
         }}
         confirmAction={{
-          label: t('dashboard.listings.detail.offer.withdraw'),
+          label: t('dashboard.listings.detail.offer.withdrawConfirmAction'),
           onPress: withdrawOffer,
         }}
       />
@@ -234,6 +263,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     padding: spacing.sm,
     gap: spacing.sm,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   title: {
     fontSize: 15,
@@ -260,6 +294,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text.primary,
   },
+  priceSuffix: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
   badge: {
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
@@ -270,6 +308,32 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.sm,
+  },
+  totalBox: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+    gap: 2,
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  totalCalcRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  totalCalc: {
+    flexShrink: 1,
+    fontSize: 13,
+    color: colors.text.secondary,
+  },
+  totalValue: {
+    fontSize: 16,
+    color: colors.primary,
   },
   closedText: {
     fontSize: 13,

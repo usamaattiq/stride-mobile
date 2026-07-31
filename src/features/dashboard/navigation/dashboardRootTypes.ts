@@ -18,6 +18,7 @@ export type SearchResultsParams = {
 export type DashboardRootStackParamList = {
   MainTabs: undefined;
   TripCreation: TripCreationParams | undefined;
+  TripPublishSuccess: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
   ListingDetail: { tripId: string };

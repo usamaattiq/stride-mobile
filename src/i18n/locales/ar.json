@@ -287,6 +287,8 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "نشط",
         "ended": "منتهية",
+        "pending": "قيد الانتظار",
+        "notStarted": "لم تبدأ بعد",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",
         "photoCount": "{{current}}/{{total}}",
@@ -360,17 +362,20 @@
           }
         },
         "offer": {
-          "title": "عرضك",
+          "title": "قدّم عرضك",
           "loadFailed": "تعذر تحميل عروض هذه القائمة.",
           "submitFailed": "تعذر إرسال عرضك.",
           "withdrawFailed": "تعذر سحب عرضك.",
           "retry": "حاول مرة أخرى",
           "seatsLabel": "المقاعد",
           "seatsPlaceholder": "عدد المقاعد",
-          "priceLabel": "سعرك",
+          "pricePerSeatLabel": "السعر لكل مقعد",
           "pricePlaceholder": "أدخل السعر الذي تعرضه",
+          "totalLabel": "السعر الإجمالي",
+          "totalCalc": "{{price}} × {{seats}}",
           "submit": "إرسال العرض",
           "withdraw": "سحب العرض",
+          "withdrawConfirmAction": "سحب",
           "withdrawConfirmTitle": "سحب هذا العرض؟",
           "withdrawConfirmBody": "لن يرى السائق هذا العرض بعد الآن.",
           "closed": "لم تعد هذه القائمة تقبل العروض."
@@ -674,6 +679,7 @@
       "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
       "successTitle": "تم نشر الرحلة",
       "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
+      "showMyListings": "عرض قوائمي",
       "noVehiclesTitle": "أضف مركبة أولاً",
       "noVehiclesSubtitle": "تحتاج إلى مركبة واحدة على الأقل قبل إنشاء رحلة."
     }

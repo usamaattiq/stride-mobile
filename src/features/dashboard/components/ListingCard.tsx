@@ -55,6 +55,8 @@ export type ListingCardProps = {
   onRemovePress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
+  /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
+  pending?: boolean;
 };
 
 export function ListingCard({
@@ -62,6 +64,7 @@ export function ListingCard({
   onPress,
   onRemovePress,
   showPhotoCount = false,
+  pending = false,
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
@@ -148,18 +151,22 @@ export function ListingCard({
           </View>
         </View>
 
-        <View style={[styles.timerBadge, !active && styles.timerBadgeEnded]}>
+        <View style={[styles.timerBadge, (pending || !active) && styles.timerBadgeEnded]}>
           <FontAwesome
             name="clock-o"
             size={10}
-            color={active ? colors.accent.green.text : colors.text.secondary}
+            color={!pending && active ? colors.accent.green.text : colors.text.secondary}
           />
           <AppText
             weight="semibold"
-            style={[styles.timerText, !active && styles.timerTextEnded]}
+            style={[styles.timerText, (pending || !active) && styles.timerTextEnded]}
             numberOfLines={1}
           >
-            {active ? t('dashboard.listings.card.active') : t('dashboard.listings.card.ended')}
+            {pending
+              ? t('dashboard.listings.card.pending')
+              : active
+                ? t('dashboard.listings.card.active')
+                : t('dashboard.listings.card.ended')}
           </AppText>
         </View>
       </View>
@@ -267,12 +274,12 @@ export function ListingCard({
         </View>
       </View>
 
-      {active ? (
+      {pending || active ? (
         <View style={styles.bottomRow}>
           <View style={styles.countdownBadge}>
             <FontAwesome name="clock-o" size={10} color={colors.primary} />
             <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-              {timerLabel}
+              {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
             </AppText>
           </View>
         </View>

@@ -97,7 +97,7 @@ export function TripPreviewStep({
 
   return (
     <View style={styles.root}>
-      {trip ? <ListingCard trip={trip} /> : null}
+      {trip ? <ListingCard trip={trip} pending /> : null}
 
       <TripDetailsOverview
         description={description}

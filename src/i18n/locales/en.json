@@ -287,6 +287,8 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "Active",
         "ended": "Ended",
+        "pending": "Pending",
+        "notStarted": "Not started yet",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",
         "photoCount": "{{current}}/{{total}}",
@@ -360,17 +362,20 @@
           }
         },
         "offer": {
-          "title": "Your offer",
+          "title": "Place your offer",
           "loadFailed": "Couldn't load this listing's offers.",
           "submitFailed": "Couldn't send your offer.",
           "withdrawFailed": "Couldn't withdraw your offer.",
           "retry": "Try again",
           "seatsLabel": "Seats",
           "seatsPlaceholder": "Number of seats",
-          "priceLabel": "Your price",
+          "pricePerSeatLabel": "Price per seat",
           "pricePlaceholder": "Enter the price you're offering",
+          "totalLabel": "Total price",
+          "totalCalc": "{{price}} × {{seats}}",
           "submit": "Send offer",
           "withdraw": "Withdraw offer",
+          "withdrawConfirmAction": "Withdraw",
           "withdrawConfirmTitle": "Withdraw this offer?",
           "withdrawConfirmBody": "The driver will no longer see this offer.",
           "closed": "This listing is no longer accepting offers."
@@ -674,6 +679,7 @@
       "publishFailed": "Couldn't publish this trip. Please try again.",
       "successTitle": "Trip published",
       "successBody": "Your trip is live. You can manage it from My Listings.",
+      "showMyListings": "Show my listings",
       "noVehiclesTitle": "Add a vehicle first",
       "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }

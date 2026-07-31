@@ -19,6 +19,7 @@ import { TripProvider, useTrips } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { CreateTripTabScreen } from '../screens/CreateTripTabScreen';
 import { TripCreationFlowScreen } from '../screens/TripCreationFlowScreen';
+import { TripPublishSuccessScreen } from '../screens/TripPublishSuccessScreen';
 import { VehicleDetailsScreen } from '../screens/VehicleDetailsScreen';
 import { VehiclePhotosScreen } from '../screens/VehiclePhotosScreen';
 import type { DashboardRootStackParamList } from './dashboardRootTypes';
@@ -151,6 +152,7 @@ function DashboardRoot(): React.ReactElement {
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="MainTabs" component={DashboardTabs} />
       <RootStack.Screen name="TripCreation" component={TripCreationFlowScreen} />
+      <RootStack.Screen name="TripPublishSuccess" component={TripPublishSuccessScreen} />
       <RootStack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
       <RootStack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
       <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />
