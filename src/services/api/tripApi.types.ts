@@ -36,6 +36,7 @@ export type TripDto = {
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
+  isBooked?: boolean;
 };
 
 export type CreateTripPayload = {

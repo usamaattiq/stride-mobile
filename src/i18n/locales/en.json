@@ -288,6 +288,7 @@
         "active": "Active",
         "ended": "Ended",
         "pending": "Pending",
+        "booked": "Booked",
         "notStarted": "Not started yet",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",

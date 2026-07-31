@@ -288,6 +288,7 @@
         "active": "نشط",
         "ended": "منتهية",
         "pending": "قيد الانتظار",
+        "booked": "محجوز",
         "notStarted": "لم تبدأ بعد",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",

@@ -95,6 +95,13 @@ export function ListingCard({
   const remainingMs = getExpiresAt(trip) - now;
   const active = remainingMs > 0;
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  const badgeState = pending
+    ? 'pending'
+    : trip.isBooked
+      ? 'booked'
+      : active
+        ? 'active'
+        : 'ended';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -151,22 +158,40 @@ export function ListingCard({
           </View>
         </View>
 
-        <View style={[styles.timerBadge, (pending || !active) && styles.timerBadgeEnded]}>
+        <View
+          style={[
+            styles.timerBadge,
+            badgeState === 'booked' && styles.timerBadgeBooked,
+            (badgeState === 'pending' || badgeState === 'ended') && styles.timerBadgeEnded,
+          ]}
+        >
           <FontAwesome
-            name="clock-o"
+            name={badgeState === 'booked' ? 'check-circle' : 'clock-o'}
             size={10}
-            color={!pending && active ? colors.accent.green.text : colors.text.secondary}
+            color={
+              badgeState === 'active'
+                ? colors.accent.green.text
+                : badgeState === 'booked'
+                  ? colors.accent.blue.text
+                  : colors.text.secondary
+            }
           />
           <AppText
             weight="semibold"
-            style={[styles.timerText, (pending || !active) && styles.timerTextEnded]}
+            style={[
+              styles.timerText,
+              badgeState === 'booked' && styles.timerTextBooked,
+              (badgeState === 'pending' || badgeState === 'ended') && styles.timerTextEnded,
+            ]}
             numberOfLines={1}
           >
-            {pending
+            {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : active
-                ? t('dashboard.listings.card.active')
-                : t('dashboard.listings.card.ended')}
+              : badgeState === 'booked'
+                ? t('dashboard.listings.card.booked')
+                : badgeState === 'active'
+                  ? t('dashboard.listings.card.active')
+                  : t('dashboard.listings.card.ended')}
           </AppText>
         </View>
       </View>
@@ -274,7 +299,7 @@ export function ListingCard({
         </View>
       </View>
 
-      {pending || active ? (
+      {!trip.isBooked && (pending || active) ? (
         <View style={styles.bottomRow}>
           <View style={styles.countdownBadge}>
             <FontAwesome name="clock-o" size={10} color={colors.primary} />
@@ -382,12 +407,18 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
   },
+  timerBadgeBooked: {
+    backgroundColor: colors.accent.blue.soft,
+  },
   timerText: {
     fontSize: 11,
     color: colors.accent.green.text,
   },
   timerTextEnded: {
     color: colors.text.secondary,
+  },
+  timerTextBooked: {
+    color: colors.accent.blue.text,
   },
   mainRow: {
     flexDirection: 'row',

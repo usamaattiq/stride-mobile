@@ -31,6 +31,7 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     scheduledStartAt: dto.scheduledStartAt,
     description: dto.description ?? null,
     publishedAt: dto.publishedAt,
+    isBooked: dto.isBooked ?? false,
   };
 }
 
