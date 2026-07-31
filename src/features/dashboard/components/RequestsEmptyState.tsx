@@ -7,16 +7,27 @@ import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { colors, spacing } from '@/theme';
 
-export function RequestsEmptyState(): React.ReactElement {
+type RequestsEmptyStateProps = {
+  variant?: 'requests' | 'trips';
+};
+
+export function RequestsEmptyState({
+  variant = 'requests',
+}: RequestsEmptyStateProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+
+  const titleKey =
+    variant === 'trips' ? 'dashboard.home.tripsEmptyTitle' : 'dashboard.home.emptyTitle';
+  const subtitleKey =
+    variant === 'trips' ? 'dashboard.home.tripsEmptySubtitle' : 'dashboard.home.emptySubtitle';
 
   return (
     <View style={styles.root}>
       <FontAwesome5 name="route" size={32} color={colors.text.tertiary} />
       <AppText weight="semibold" style={styles.title}>
-        {t('dashboard.home.emptyTitle')}
+        {t(titleKey)}
       </AppText>
-      <AppText style={styles.subtitle}>{t('dashboard.home.emptySubtitle')}</AppText>
+      <AppText style={styles.subtitle}>{t(subtitleKey)}</AppText>
     </View>
   );
 }

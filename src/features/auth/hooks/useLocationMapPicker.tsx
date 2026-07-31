@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { ensureLocationPermission } from '@/services/locationPermission';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
@@ -42,10 +43,10 @@ type MapPin = {
   label?: string;
 };
 
-// Default map focus (Karachi) used when no coordinates are available yet.
+// Default map focus (Lahore) used when no coordinates are available yet.
 const DEFAULT_REGION: MapRegion = {
-  latitude: 24.8607,
-  longitude: 67.0011,
+  latitude: 31.5204,
+  longitude: 74.3587,
 };
 
 type UseLocationMapPicker = {
@@ -149,15 +150,8 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     try {
       setLocationLoading(true);
 
-      // Check-then-request avoids the Android permission hang.
-      const existing = await Location.getForegroundPermissionsAsync();
-      let status = existing.status;
-      if (status !== Location.PermissionStatus.GRANTED) {
-        const requested = await Location.requestForegroundPermissionsAsync();
-        status = requested.status;
-      }
-
-      if (status !== Location.PermissionStatus.GRANTED) {
+      const granted = await ensureLocationPermission();
+      if (!granted) {
         setInfoDialog({
           title: t('auth.signup.personal.locationPermissionTitle'),
           body: t('auth.signup.personal.locationPermissionBody'),
@@ -182,6 +176,94 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     }
   }, [t]);
 
+  const lastUserLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
+
+  const showUserLocationOnMap = useCallback((latitude: number, longitude: number) => {
+    lastUserLocationRef.current = { latitude, longitude };
+    mapWebViewRef.current?.injectJavaScript(
+      `window.__MUSAFIR_SHOW_USER_LOCATION && window.__MUSAFIR_SHOW_USER_LOCATION(${latitude}, ${longitude}); true;`,
+    );
+  }, []);
+
+  // Live blue-dot tracking while the picker sheet is open — separate from the
+  // fixed center pin, which represents the value being selected, not the device.
+  useEffect(() => {
+    if (!mapVisible) {
+      void locationWatchRef.current?.remove();
+      locationWatchRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const granted = await ensureLocationPermission();
+      if (!granted || cancelled) {
+        return;
+      }
+      const subscription = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Balanced, timeInterval: 5000, distanceInterval: 15 },
+        (position) => {
+          showUserLocationOnMap(position.coords.latitude, position.coords.longitude);
+        },
+      );
+      if (cancelled) {
+        void subscription.remove();
+        return;
+      }
+      locationWatchRef.current = subscription;
+    })();
+
+    return () => {
+      cancelled = true;
+      void locationWatchRef.current?.remove();
+      locationWatchRef.current = null;
+    };
+  }, [mapVisible, showUserLocationOnMap]);
+
+  const handleMapLoadEnd = useCallback(() => {
+    const last = lastUserLocationRef.current;
+    if (last) {
+      showUserLocationOnMap(last.latitude, last.longitude);
+    }
+  }, [showUserLocationOnMap]);
+
+  const recenterToMyLocation = useCallback(async () => {
+    try {
+      const granted = await ensureLocationPermission();
+      if (!granted) {
+        setInfoDialog({
+          title: t('auth.signup.personal.locationPermissionTitle'),
+          body: t('auth.signup.personal.locationPermissionBody'),
+        });
+        return;
+      }
+
+      // Reuse the live watch's last fix instead of racing a second, concurrent
+      // one-shot request against it — on Android, calling getCurrentPositionAsync
+      // while watchPositionAsync is already active on the same provider is
+      // flaky and can hang silently after the first call.
+      let coords = lastUserLocationRef.current;
+      if (!coords) {
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        coords = { latitude: current.coords.latitude, longitude: current.coords.longitude };
+      }
+
+      const { latitude, longitude } = coords;
+      const label = await resolveAddressLabel(latitude, longitude);
+      setMapPin({ latitude, longitude, label });
+      pinMapToLocation(latitude, longitude, label);
+    } catch {
+      setInfoDialog({
+        title: t('auth.signup.personal.locationErrorTitle'),
+        body: t('auth.signup.personal.locationErrorBody'),
+      });
+    }
+  }, [pinMapToLocation, t]);
+
   const handleConfirmMapSelection = useCallback(async () => {
     if (!mapPin) {
       setInfoDialog({
@@ -204,25 +286,35 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     closeMapPicker();
   }, [closeMapPicker, mapPin, t]);
 
-  const handleMapMessage = useCallback((event: WebViewMessageEvent) => {
-    try {
-      const payload = JSON.parse(event.nativeEvent.data) as {
-        latitude?: number;
-        longitude?: number;
-        address?: string;
-      };
-      if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
-        const address = payload.address?.trim();
-        setMapPin((current) => ({
-          latitude: payload.latitude as number,
-          longitude: payload.longitude as number,
-          label: address || current?.label,
-        }));
+  const handleMapMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      try {
+        const payload = JSON.parse(event.nativeEvent.data) as {
+          type?: string;
+          latitude?: number;
+          longitude?: number;
+          address?: string;
+        };
+
+        if (payload.type === 'recenter') {
+          void recenterToMyLocation();
+          return;
+        }
+
+        if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
+          const address = payload.address?.trim();
+          setMapPin((current) => ({
+            latitude: payload.latitude as number,
+            longitude: payload.longitude as number,
+            label: address || current?.label,
+          }));
+        }
+      } catch {
+        // no-op
       }
-    } catch {
-      // no-op
-    }
-  }, []);
+    },
+    [recenterToMyLocation],
+  );
 
   const handleSelectMapSearchResult = useCallback(
     (result: MapSearchResult) => {
@@ -275,73 +367,66 @@ export function useLocationMapPicker(): UseLocationMapPicker {
         sheetStyle={styles.mapSheet}
       >
         <View style={styles.sheetGrabber} />
+
         <View style={styles.mapHeader}>
-          <AppText weight="semibold" style={styles.mapHeaderTitle}>
+          <View style={styles.mapHeaderIconWrap}>
+            <FontAwesome name="map-marker" size={15} color={colors.primary} />
+          </View>
+          <AppText weight="bold" style={styles.mapHeaderTitle}>
             {t('auth.signup.personal.mapTitle')}
           </AppText>
-          <Pressable onPress={closeMapPicker} style={styles.mapCloseButton} accessibilityRole="button">
-            <AppText style={styles.mapCloseText}>{t('auth.signup.personal.mapClose')}</AppText>
-          </Pressable>
         </View>
 
-        <View style={styles.mapSearchRow}>
-          <View style={styles.mapSearchInputWrap}>
-            <FontAwesome name="search" size={14} color={colors.text.tertiary} />
-            <TextInput
-              value={mapSearchQuery}
-              onChangeText={setMapSearchQuery}
-              placeholder={t('auth.signup.personal.mapSearchPlaceholder')}
-              placeholderTextColor={colors.text.tertiary}
-              style={[styles.mapSearchInput, { fontFamily: searchFontFamily }]}
-              returnKeyType="search"
-              onSubmitEditing={() => {
-                void runMapSearch(mapSearchQuery);
-              }}
-            />
-          </View>
-          <Pressable
-            style={styles.mapSearchButton}
-            onPress={() => {
-              void runMapSearch(mapSearchQuery);
-            }}
-            disabled={mapSearchLoading || !mapSearchQuery.trim()}
-            accessibilityRole="button"
-          >
-            {mapSearchLoading ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <AppText weight="semibold" style={styles.mapSearchButtonText}>
-                {t('auth.signup.personal.mapSearchAction')}
-              </AppText>
-            )}
-          </Pressable>
-        </View>
+        <View style={styles.searchCard}>
+          <View style={styles.searchCardInner}>
+            <View style={styles.mapSearchInputWrap}>
+              <FontAwesome name="search" size={14} color={colors.text.tertiary} />
+              <TextInput
+                value={mapSearchQuery}
+                onChangeText={setMapSearchQuery}
+                placeholder={t('auth.signup.personal.mapSearchPlaceholder')}
+                placeholderTextColor={colors.text.tertiary}
+                style={[styles.mapSearchInput, { fontFamily: searchFontFamily }]}
+                returnKeyType="search"
+              />
+              {mapSearchLoading ? (
+                <ActivityIndicator size="small" color={colors.text.tertiary} />
+              ) : null}
+            </View>
 
-        {mapSearchResults.length > 0 ? (
-          <View style={styles.mapSearchResults}>
-            {mapSearchResults.map((result) => (
-              <Pressable
-                key={result.id}
-                style={styles.mapSearchResultRow}
-                onPress={() => handleSelectMapSearchResult(result)}
-                accessibilityRole="button"
-              >
-                <FontAwesome name="map-marker" size={14} color={colors.primary} />
-                <AppText style={styles.mapSearchResultText} numberOfLines={2}>
-                  {result.label}
+            {mapSearchResults.length > 0 ? (
+              <View style={styles.mapSearchResults}>
+                {mapSearchResults.map((result, index) => (
+                  <Pressable
+                    key={result.id}
+                    style={({ pressed }) => [
+                      styles.mapSearchResultRow,
+                      index === mapSearchResults.length - 1 && styles.mapSearchResultRowLast,
+                      pressed && styles.mapSearchResultRowPressed,
+                    ]}
+                    onPress={() => handleSelectMapSearchResult(result)}
+                    accessibilityRole="button"
+                  >
+                    <View style={styles.resultIconWrap}>
+                      <FontAwesome name="map-marker" size={12} color={colors.primary} />
+                    </View>
+                    <AppText style={styles.mapSearchResultText} numberOfLines={2}>
+                      {result.label}
+                    </AppText>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            {!mapSearchLoading && mapSearchShowEmpty ? (
+              <View style={styles.mapSearchResults}>
+                <AppText style={styles.mapSearchEmptyText}>
+                  {t('auth.signup.personal.mapNoResults')}
                 </AppText>
-              </Pressable>
-            ))}
+              </View>
+            ) : null}
           </View>
-        ) : null}
-
-        {!mapSearchLoading && mapSearchShowEmpty ? (
-          <View style={styles.mapSearchResults}>
-            <AppText style={styles.mapSearchEmptyText}>
-              {t('auth.signup.personal.mapNoResults')}
-            </AppText>
-          </View>
-        ) : null}
+        </View>
 
         {mapsApiKey ? (
           <WebView
@@ -350,6 +435,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
             originWhitelist={['*']}
             source={{ html: mapPickerHtml }}
             onMessage={handleMapMessage}
+            onLoadEnd={handleMapLoadEnd}
           />
         ) : (
           <View style={styles.mapFallback}>
@@ -406,44 +492,46 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   mapHeader: {
-    minHeight: 52,
+    minHeight: 40,
     paddingHorizontal: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.default,
+    gap: spacing.sm,
+  },
+  mapHeaderIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
   },
   mapHeaderTitle: {
     color: colors.text.primary,
-    fontSize: 15,
+    fontSize: 17,
   },
-  mapCloseButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
+  searchCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  mapCloseText: {
-    color: colors.primary,
-    fontSize: 13,
-  },
-  mapSearchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+  searchCardInner: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
   },
   mapSearchInputWrap: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
+    minHeight: 48,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
   },
   mapSearchInput: {
     flex: 1,
@@ -451,27 +539,9 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     paddingVertical: 0,
   },
-  mapSearchButton: {
-    minWidth: 72,
-    minHeight: 44,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  mapSearchButtonText: {
-    color: colors.white,
-    fontSize: 13,
-  },
   mapSearchResults: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
+    borderTopWidth: 1,
+    borderTopColor: colors.background.subtle,
   },
   mapSearchResultRow: {
     flexDirection: 'row',
@@ -481,6 +551,21 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.background.subtle,
+  },
+  mapSearchResultRowLast: {
+    borderBottomWidth: 0,
+  },
+  mapSearchResultRowPressed: {
+    backgroundColor: colors.background.subtle,
+  },
+  resultIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+    flexShrink: 0,
   },
   mapSearchResultText: {
     flex: 1,

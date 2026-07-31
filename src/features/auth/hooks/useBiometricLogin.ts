@@ -1,4 +1,5 @@
 import React from 'react';
+import { Keyboard } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useTranslation } from 'react-i18next';
 
@@ -21,7 +22,8 @@ export function useBiometricLogin(options: {
   const biometricEnabled = useDevicePrefsStore((state) => state.biometricEnabled);
   const cachedMpin = useDevicePrefsStore((state) => state.cachedMpin);
   const hasFiredRef = React.useRef(false);
-  const { onAutoSubmit } = options;
+  const onAutoSubmitRef = React.useRef(options.onAutoSubmit);
+  onAutoSubmitRef.current = options.onAutoSubmit;
 
   React.useEffect(() => {
     if (!options.enabled || hasFiredRef.current) {
@@ -32,16 +34,21 @@ export function useBiometricLogin(options: {
     }
 
     hasFiredRef.current = true;
+    const mpinToSubmit = cachedMpin;
 
     void (async () => {
+      // Avoid iOS Face ID failing when the MPIN keyboard is still presenting.
+      Keyboard.dismiss();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: t('auth.login.mpin.biometricPrompt'),
         cancelLabel: t('common.cancel'),
       });
 
       if (result.success) {
-        onAutoSubmit(cachedMpin);
+        onAutoSubmitRef.current(mpinToSubmit);
       }
     })();
-  }, [options.enabled, available, biometricEnabled, cachedMpin, onAutoSubmit, t]);
+  }, [options.enabled, available, biometricEnabled, cachedMpin, t]);
 }

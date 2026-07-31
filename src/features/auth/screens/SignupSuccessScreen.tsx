@@ -94,7 +94,12 @@ export function SignupSuccessScreen({
         pointerEvents="none"
       />
 
-      <AppTopBar left="none" showLanguageSwitcher includeSafeArea={false} />
+      <AppTopBar
+        left="none"
+        showLanguageSwitcher
+        includeSafeArea={false}
+        style={styles.topBar}
+      />
 
       <View style={styles.confettiLayer} pointerEvents="none">
         {CONFETTI.map((piece, index) => {
@@ -157,11 +162,11 @@ export function SignupSuccessScreen({
             <FontAwesome5 name="coins" size={46} color="#E8A13A" />
           </View>
         </Animated.View>
-      </View>
-
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Button label={t('auth.signup.success.dashboard')} onPress={onGoToDashboard} />
       </View>
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -170,6 +175,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  // Matches AuthScaffold's header inset (Signup/Login) so the language
+  // button sits at the same distance from the edge across auth screens.
+  topBar: {
+    paddingHorizontal: spacing.md,
   },
   bgGradient: {
     position: 'absolute',
@@ -251,8 +261,9 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   actions: {
+    alignSelf: 'stretch',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    marginTop: spacing.xxxl,
     gap: spacing.md,
   },
 });

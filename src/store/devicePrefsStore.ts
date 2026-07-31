@@ -53,13 +53,10 @@ export const useDevicePrefsStore = create<DevicePrefsState>((set, get) => ({
 
   setBiometricEnabled: async (enabled) => {
     await deviceStorage.setBiometricEnabled(enabled);
-    if (!enabled) {
-      // No reason to keep a credential cached with biometric off.
-      await secureStorage.clearCachedMpin();
-      set({ biometricEnabled: false, cachedMpin: null });
-      return;
-    }
-    set({ biometricEnabled: true });
+    // Keep any cached MPIN when toggling off — Face ID login only uses it while
+    // biometricEnabled is true, and clearing it here broke the first login after
+    // re-enabling Face ID from Settings (flag on, credential missing).
+    set({ biometricEnabled: enabled });
   },
 }));
 

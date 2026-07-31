@@ -25,11 +25,7 @@ export const NotificationsPanel = React.memo(
       <FlatList
         data={DEMO_NOTIFICATIONS}
         keyExtractor={notificationKeyExtractor}
-        ListHeaderComponent={
-          <AppText weight="bold" style={styles.title}>
-            {t('dashboard.notifications.title')}
-          </AppText>
-        }
+        ListHeaderComponent={null}
         ListEmptyComponent={
           <View style={styles.empty}>
             <AppText weight="semibold" style={styles.emptyTitle}>
@@ -97,12 +93,8 @@ const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.sm,
-  },
-  title: {
-    fontSize: 24,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
   },
   card: {
     flexDirection: 'row',

@@ -3,8 +3,8 @@ import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { AppText } from '@/shared/components/AppText';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
-import { colors, radius, spacing } from '@/theme';
-import { getFontFamily } from '@/theme/typography';
+import { toLatinDigits } from '@/shared/utils/latin-digits';
+import { colors, getInputFontFamily, isNumericKeyboardType, radius, spacing } from '@/theme';
 
 import { useKeyboardFocusScroll } from './AuthScaffold';
 
@@ -25,10 +25,24 @@ export function AuthTextField({
   error,
   style,
   onFocus,
+  onChangeText,
+  keyboardType,
+  value,
   ...rest
 }: AuthTextFieldProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const handleFocus = useKeyboardFocusScroll(onFocus);
+  const keepLatinDigits = isNumericKeyboardType(keyboardType);
+
+  const handleChangeText = React.useCallback(
+    (text: string) => {
+      onChangeText?.(keepLatinDigits ? toLatinDigits(text) : text);
+    },
+    [keepLatinDigits, onChangeText],
+  );
+
+  const displayValue =
+    keepLatinDigits && typeof value === 'string' ? toLatinDigits(value) : value;
 
   return (
     <View style={styles.wrap}>
@@ -47,14 +61,17 @@ export function AuthTextField({
       <TextInput
         placeholderTextColor={colors.text.tertiary}
         onFocus={handleFocus}
+        keyboardType={keyboardType}
+        {...rest}
+        value={displayValue}
+        onChangeText={handleChangeText}
         style={[
           styles.input,
           dense && styles.inputDense,
           error ? styles.inputError : null,
-          { fontFamily: getFontFamily(currentLanguage, 'regular') },
+          { fontFamily: getInputFontFamily(currentLanguage, keyboardType) },
           style,
         ]}
-        {...rest}
       />
       {error ? (
         <AppText style={styles.error}>{error}</AppText>

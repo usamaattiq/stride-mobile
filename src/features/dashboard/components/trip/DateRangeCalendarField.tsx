@@ -16,6 +16,7 @@ import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 type DateRangeCalendarFieldProps = {
@@ -29,14 +30,14 @@ type DateRangeCalendarFieldProps = {
 };
 
 function formatDay(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(withLatinDigitsLocale(locale), {
     day: 'numeric',
     month: 'short',
   });
 }
 
 function formatMonthTitle(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(withLatinDigitsLocale(locale), {
     month: 'long',
     year: 'numeric',
   });
@@ -148,7 +149,7 @@ export function DateRangeCalendarField({
     return Array.from({ length: 7 }, (_, index) => {
       const day = new Date(monday);
       day.setDate(monday.getDate() + index);
-      return day.toLocaleDateString(locale, { weekday: 'narrow' });
+      return day.toLocaleDateString(withLatinDigitsLocale(locale), { weekday: 'narrow' });
     });
   }, [locale]);
 

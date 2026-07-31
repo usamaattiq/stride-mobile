@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
 
 import type { SupportedLanguageCode } from '@/i18n/constants/languages';
 
@@ -47,6 +47,37 @@ export const getFontFamily = (
 
   return selected;
 };
+
+/** Numeric keyboards should keep Outfit metrics — Cairo skews digit vertical alignment. */
+export function isNumericKeyboardType(keyboardType?: string | null): boolean {
+  return (
+    keyboardType === 'number-pad' ||
+    keyboardType === 'phone-pad' ||
+    keyboardType === 'decimal-pad' ||
+    keyboardType === 'numeric'
+  );
+}
+
+/**
+ * Prefer English (Outfit) for digit fields so Arabic-Indic glyphs don't sit low while typing.
+ */
+export function getInputFontFamily(
+  language: SupportedLanguageCode,
+  keyboardType?: string | null,
+  weight: FontWeightToken = 'regular',
+): string {
+  if (isNumericKeyboardType(keyboardType)) {
+    return getFontFamily('en', weight);
+  }
+  return getFontFamily(language, weight);
+}
+
+/**
+ * Cairo's ascent/descent sits Arabic glyphs high in the line box on iOS.
+ * Apply on compact labels (buttons, chips) so text optically centers.
+ */
+export const iosArabicOpticalAlignStyle: TextStyle | null =
+  Platform.OS === 'ios' ? { paddingTop: 4 } : null;
 
 /** Style tokens — pair with AppText `weight` (do not set fontWeight here). */
 export const typography = {

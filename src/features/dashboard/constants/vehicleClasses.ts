@@ -11,7 +11,4 @@ export const VEHICLE_CLASS_OPTIONS: VehicleClassOption[] = [
   { id: 'bus', labelKey: 'vehicles.classes.bus' },
   { id: 'van', labelKey: 'vehicles.classes.van' },
   { id: 'coaster', labelKey: 'vehicles.classes.coaster' },
-  { id: 'hiace', labelKey: 'vehicles.classes.hiace' },
-  { id: 'minibus', labelKey: 'vehicles.classes.minibus' },
-  { id: 'pickup', labelKey: 'vehicles.classes.pickup' },
 ];

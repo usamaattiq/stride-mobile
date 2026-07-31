@@ -28,13 +28,13 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
-import {
-  formatDateRangeLabel,
-  formatTripDateTime,
-} from '../components/trip/dateRangeUtils';
+import { formatTripDateTime } from '../components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
+import { TripOfferPanel } from '../components/trip/TripOfferPanel';
+import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
@@ -49,6 +49,8 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
   const { getTripById, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
@@ -62,6 +64,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+  const [responsesCount, setResponsesCount] = React.useState(0);
 
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
@@ -224,7 +227,10 @@ export function ListingDetailScreen(): React.ReactElement {
 
   const tabs: Array<{ id: DetailTab; label: string }> = [
     { id: 'overview', label: t('dashboard.listings.detail.tabs.overview') },
-    { id: 'responses', label: t('dashboard.listings.detail.tabs.responses', { count: 0 }) },
+    {
+      id: 'responses',
+      label: t('dashboard.listings.detail.tabs.responses', { count: responsesCount }),
+    },
   ];
 
   const openRemove = () => {
@@ -240,73 +246,89 @@ export function ListingDetailScreen(): React.ReactElement {
       showLanguageSwitcher={false}
       compactHeader
       headerRight={
-        <Pressable
-          onPress={openRemove}
-          style={styles.headerRemoveButton}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.remove.a11y')}
-        >
-          <FontAwesome name="trash-o" size={16} color={colors.white} />
-        </Pressable>
+        user.role === 'driver' ? (
+          <Pressable
+            onPress={openRemove}
+            style={styles.headerRemoveButton}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('dashboard.listings.remove.a11y')}
+          >
+            <FontAwesome name="trash-o" size={16} color={colors.white} />
+          </Pressable>
+        ) : undefined
       }
     >
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        <SegmentControl
-          options={tabs}
-          value={tab}
-          onChange={selectTab}
-          animatedIndex={animatedTabIndex}
-        />
+        {isPassenger ? (
+          <>
+            <TripDetailsOverview
+              description={description}
+              fromCity={fromCity}
+              toCity={toCity}
+              departureWhen={formatTripDateTime(trip.departureAt, locale)}
+              arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+              departurePoint={trip.departurePoint}
+              arrivalPoint={trip.arrivalPoint}
+            />
+            <TripOfferPanel
+              tripId={trip.id}
+              vehicleMode={trip.vehicleMode}
+              vehicleTotalSeats={trip.vehicleTotalSeats}
+            />
+          </>
+        ) : (
+          <>
+            <SegmentControl
+              options={tabs}
+              value={tab}
+              onChange={selectTab}
+              animatedIndex={animatedTabIndex}
+            />
 
-        <View style={styles.pager} onLayout={onPagerLayout}>
-          <Animated.ScrollView
-            ref={pagerRef}
-            horizontal
-            pagingEnabled
-            bounces={false}
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled
-            keyboardShouldPersistTaps="handled"
-            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-              useNativeDriver: true,
-            })}
-            onScrollEndDrag={onPagerScrollEnd}
-            onMomentumScrollEnd={onPagerScrollEnd}
-            scrollEventThrottle={16}
-          >
-            <View style={[styles.page, { width: pageWidth }]}>
-              <TripDetailsOverview
-                description={description}
-                fromCity={fromCity}
-                toCity={toCity}
-                departureWindow={formatDateRangeLabel(
-                  trip.departureAt,
-                  trip.departureUntil,
-                  locale,
-                  '—',
-                )}
-                arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
-                departurePoint={trip.departurePoint}
-                arrivalPoint={trip.arrivalPoint}
-              />
-            </View>
+            <View style={styles.pager} onLayout={onPagerLayout}>
+              <Animated.ScrollView
+                ref={pagerRef}
+                horizontal
+                pagingEnabled
+                bounces={false}
+                decelerationRate="fast"
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                keyboardShouldPersistTaps="handled"
+                onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+                  useNativeDriver: true,
+                })}
+                onScrollEndDrag={onPagerScrollEnd}
+                onMomentumScrollEnd={onPagerScrollEnd}
+                scrollEventThrottle={16}
+              >
+                <View style={[styles.page, { width: pageWidth }]}>
+                  <TripDetailsOverview
+                    description={description}
+                    fromCity={fromCity}
+                    toCity={toCity}
+                    departureWhen={formatTripDateTime(trip.departureAt, locale)}
+                    arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+                    departurePoint={trip.departurePoint}
+                    arrivalPoint={trip.arrivalPoint}
+                  />
+                </View>
 
-            <View style={[styles.page, { width: pageWidth }]}>
-              <View style={styles.emptyTabCard}>
-                <AppText weight="semibold" style={styles.emptyTabTitle}>
-                  {t('dashboard.listings.detail.comingSoonTitle')}
-                </AppText>
-                <AppText style={styles.emptyTabBody}>
-                  {t('dashboard.listings.detail.comingSoonBody')}
-                </AppText>
-              </View>
+                <View style={[styles.page, { width: pageWidth }]}>
+                  <TripResponsesPanel
+                    tripId={trip.id}
+                    vehicleMode={trip.vehicleMode}
+                    vehicleTotalSeats={trip.vehicleTotalSeats}
+                    onCountChange={setResponsesCount}
+                  />
+                </View>
+              </Animated.ScrollView>
             </View>
-          </Animated.ScrollView>
-        </View>
+          </>
+        )}
       </View>
 
       <AppDialog
@@ -367,23 +389,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-  emptyTabCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    gap: spacing.xxs,
-    alignItems: 'center',
-  },
-  emptyTabTitle: {
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  emptyTabBody: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    textAlign: 'center',
   },
 });

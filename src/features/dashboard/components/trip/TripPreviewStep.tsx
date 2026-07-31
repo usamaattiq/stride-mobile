@@ -4,10 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
-import {
-  formatDateRangeLabel,
-  formatTripDateTime,
-} from '@/features/dashboard/components/trip/dateRangeUtils';
+import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '@/features/dashboard/components/trip/TripDetailsOverview';
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import {
@@ -16,9 +13,10 @@ import {
   type TripDraft,
 } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
-import { colors, radius, spacing } from '@/theme';
+import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
   | 'vehicle'
@@ -47,6 +45,10 @@ function enrichPreviewTrip(draft: TripDraft, vehicle: Vehicle | undefined): Trip
     vehicleTitle: vehicle?.title ?? base.vehicleTitle,
     vehiclePhotoUrl:
       vehicle?.photoDisplayUris?.[0] ?? vehicle?.photoUris[0] ?? base.vehiclePhotoUrl,
+    vehiclePhotoUrls:
+      vehicle?.photoDisplayUris?.length
+        ? vehicle.photoDisplayUris
+        : vehicle?.photoUris ?? base.vehiclePhotoUrls,
     vehiclePhotoCount: vehicle?.photoUris.length ?? base.vehiclePhotoCount,
     vehicleClass: vehicle?.vehicleClass ?? base.vehicleClass,
     vehicleTotalSeats: vehicle?.totalSeats ?? base.vehicleTotalSeats,
@@ -64,7 +66,10 @@ export function TripPreviewStep({
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const locale = i18n.language;
+  const iosArabicAlign =
+    currentLanguage === 'ar' ? iosArabicOpticalAlignStyle : null;
 
   const trip = enrichPreviewTrip(draft, vehicle);
   const fromCity = draft.departureCity
@@ -87,23 +92,22 @@ export function TripPreviewStep({
           mode: modeLabel ?? t('trips.create.notSpecified'),
         })
       : null);
-  const departureWindow =
-    draft.departureAt || draft.departureUntil
-      ? formatDateRangeLabel(draft.departureAt, draft.departureUntil, locale, '')
-      : undefined;
+  const departureWhen = draft.departureAt
+    ? formatTripDateTime(draft.departureAt, locale, '')
+    : undefined;
   const arrivalWhen = draft.arrivalAt
     ? formatTripDateTime(draft.arrivalAt, locale, '')
     : undefined;
 
   return (
     <View style={styles.root}>
-      {trip ? <ListingCard trip={trip} /> : null}
+      {trip ? <ListingCard trip={trip} pending /> : null}
 
       <TripDetailsOverview
         description={description}
         fromCity={fromCity}
         toCity={toCity}
-        departureWindow={departureWindow}
+        departureWhen={departureWhen}
         arrivalWhen={arrivalWhen}
         departurePoint={draft.departurePoint}
         arrivalPoint={draft.arrivalPoint}
@@ -128,7 +132,7 @@ export function TripPreviewStep({
         ) : (
           <>
             <FontAwesome name="paper-plane" size={14} color={colors.white} />
-            <AppText weight="bold" style={styles.publishButtonText}>
+            <AppText weight="bold" style={[styles.publishButtonText, iosArabicAlign]}>
               {t('trips.create.publish')}
             </AppText>
           </>

@@ -54,13 +54,19 @@ export function VehicleDetailsScreen(): React.ReactElement {
       title={t('vehicles.detailsTitle')}
       subtitle={t('vehicles.detailsSubtitle')}
       showLegalFooter={false}
+      showLanguageSwitcher={false}
       stepCount={2}
       currentStep={1}
     >
       <VehicleDetailsForm
         draft={draft}
         seatsError={seatsError}
-        onChange={patchDraft}
+        onChange={(partial) => {
+          if (partial.totalSeats != null) {
+            setSeatsError(undefined);
+          }
+          patchDraft(partial);
+        }}
         onSubmit={handleContinue}
         submitLabel={t('vehicles.continue')}
       />

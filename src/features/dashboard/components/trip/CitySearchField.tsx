@@ -2,10 +2,12 @@ import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import type { TripCity } from '@/features/dashboard/types/trip.types';
@@ -17,12 +19,17 @@ import { searchCities } from '@/shared/utils/city-search';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
+const CITY_RESULT_ROW_HEIGHT = 48;
+const CITY_RESULTS_VISIBLE_COUNT = 3;
+export const CITY_RESULTS_MAX_HEIGHT = CITY_RESULT_ROW_HEIGHT * CITY_RESULTS_VISIBLE_COUNT;
+
 type CitySearchFieldProps = {
   label: string;
   value: TripCity | null;
-  onChange: (city: TripCity) => void;
+  onChange: (city: TripCity | null) => void;
   placeholder: string;
   required?: boolean;
+  onFocus?: () => void;
 };
 
 export function CitySearchField({
@@ -31,6 +38,7 @@ export function CitySearchField({
   onChange,
   placeholder,
   required = false,
+  onFocus,
 }: CitySearchFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
@@ -38,11 +46,35 @@ export function CitySearchField({
   const [results, setResults] = React.useState<TripCity[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [showEmpty, setShowEmpty] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
   const skipSearchRef = React.useRef(false);
+  const inputRef = React.useRef<TextInput>(null);
+
+  React.useEffect(() => {
+    if (isFocused) {
+      return;
+    }
+    setQuery(value?.label ?? '');
+  }, [isFocused, value?.label]);
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [isFocused]);
 
   React.useEffect(() => {
     if (skipSearchRef.current) {
       skipSearchRef.current = false;
+      return;
+    }
+
+    if (!isFocused) {
+      setResults([]);
+      setShowEmpty(false);
+      setLoading(false);
       return;
     }
 
@@ -65,7 +97,7 @@ export function CitySearchField({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [isFocused, query]);
 
   const handleSelect = (city: TripCity) => {
     const selected = { ...city, label: cityDisplayName(city.label) };
@@ -73,7 +105,23 @@ export function CitySearchField({
     setQuery(selected.label);
     setResults([]);
     setShowEmpty(false);
+    setIsFocused(false);
     onChange(selected);
+  };
+
+  const handleEdit = () => {
+    skipSearchRef.current = false;
+    setQuery('');
+    setIsFocused(true);
+    onFocus?.();
+  };
+
+  const handleClear = () => {
+    skipSearchRef.current = false;
+    setQuery('');
+    setResults([]);
+    setShowEmpty(false);
+    onChange(null);
   };
 
   return (
@@ -83,16 +131,46 @@ export function CitySearchField({
         {required ? <AppText style={styles.required}> *</AppText> : null}
       </AppText>
 
-      <View style={styles.inputWrap}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={placeholder}
-          placeholderTextColor={colors.text.tertiary}
-          style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
-        />
-        {loading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-      </View>
+      {value && !isFocused ? (
+        <Pressable
+          onPress={handleEdit}
+          style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="map-marker" size={14} color={colors.primary} />
+          <AppText style={styles.chipText} numberOfLines={1}>
+            {value.label}
+          </AppText>
+          <Pressable
+            onPress={handleClear}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+          >
+            <FontAwesome name="times-circle" size={16} color={colors.text.tertiary} />
+          </Pressable>
+        </Pressable>
+      ) : (
+        <View style={styles.inputWrap}>
+          <TextInput
+            ref={inputRef}
+            value={query}
+            onChangeText={setQuery}
+            onFocus={() => {
+              setIsFocused(true);
+              onFocus?.();
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              setResults([]);
+              setShowEmpty(false);
+            }}
+            placeholder={placeholder}
+            placeholderTextColor={colors.text.tertiary}
+            style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
+          />
+          {loading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+        </View>
+      )}
 
       {!ENV.googleMapsApiKey ? (
         <AppText style={styles.hint}>{t('trips.create.cityApiHint')}</AppText>
@@ -100,18 +178,25 @@ export function CitySearchField({
 
       {results.length > 0 ? (
         <View style={styles.results}>
-          {results.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => handleSelect(item)}
-              style={styles.resultRow}
-              accessibilityRole="button"
-            >
-              <AppText style={styles.resultText} numberOfLines={2}>
-                {item.label}
-              </AppText>
-            </Pressable>
-          ))}
+          <ScrollView
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={results.length > CITY_RESULTS_VISIBLE_COUNT}
+            style={styles.resultsScroll}
+          >
+            {results.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => handleSelect(item)}
+                style={styles.resultRow}
+                accessibilityRole="button"
+              >
+                <AppText style={styles.resultText} numberOfLines={2}>
+                  {item.label}
+                </AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       ) : null}
 
@@ -145,6 +230,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  chip: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    minHeight: 38,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.primaryDisabled,
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  chipPressed: {
+    backgroundColor: colors.primaryMuted,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    flexShrink: 1,
+    fontSize: 14,
+    color: colors.primary,
+  },
   input: {
     flex: 1,
     fontSize: 15,
@@ -157,10 +264,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     overflow: 'hidden',
+    maxHeight: CITY_RESULTS_MAX_HEIGHT,
+    zIndex: 20,
+    elevation: 6,
+  },
+  resultsScroll: {
+    maxHeight: CITY_RESULTS_MAX_HEIGHT,
   },
   resultRow: {
+    minHeight: CITY_RESULT_ROW_HEIGHT,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.default,
   },

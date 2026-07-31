@@ -15,7 +15,8 @@ export type TripDto = {
   vehicleTitle: string | null;
   vehiclePhotoUrls: string[];
   vehiclePhotoViewUrl?: string | null;
-  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | 'hiace' | 'minibus' | 'pickup' | null;
+  vehiclePhotoViewUrls?: string[];
+  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
   vehicleTotalSeats: number | null;
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
@@ -35,6 +36,7 @@ export type TripDto = {
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
+  isBooked?: boolean;
 };
 
 export type CreateTripPayload = {
@@ -54,4 +56,25 @@ export type CreateTripPayload = {
   startMode: 'instant' | 'scheduled';
   scheduledStartAt?: string | null;
   description?: string | null;
+};
+
+export type PaginatedTripsDto = {
+  items: TripDto[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type BrowseTripsParams = {
+  q?: string;
+  listingType?: 'rfq' | 'auction';
+  paymentMethod?: 'cash' | 'online' | 'both';
+  departureCity?: string;
+  arrivalCity?: string;
+  vehicleMode?: 'shared' | 'fullPrivate';
+  vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
+  minSeats?: number;
+  page?: number;
+  limit?: number;
 };

@@ -91,7 +91,7 @@ export function VehicleListItem({
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
+        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
         locations={[0, 0.55, 1]}
         start={{ x: 0.35, y: 0.15 }}
         end={{ x: 1, y: 1 }}
@@ -190,11 +190,9 @@ export function VehicleListItem({
 }
 
 export function VehiclesEmptyState({
-  onAddPress,
   title,
   subtitle,
 }: {
-  onAddPress: () => void;
   title?: string;
   subtitle?: string;
 }): React.ReactElement {
@@ -209,7 +207,6 @@ export function VehiclesEmptyState({
       <AppText style={styles.emptySubtitle}>
         {subtitle ?? t('vehicles.emptySubtitle')}
       </AppText>
-      <Button label={t('vehicles.addVehicle')} onPress={onAddPress} style={styles.emptyButton} />
     </View>
   );
 }
@@ -266,8 +263,8 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   thumbnail: {
-    width: 64,
-    height: 72,
+    width: 84,
+    height: 78,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
@@ -376,9 +373,5 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: spacing.sm,
-  },
-  emptyButton: {
-    minWidth: 180,
   },
 });

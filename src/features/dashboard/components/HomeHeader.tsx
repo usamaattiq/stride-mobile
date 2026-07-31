@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { formatLatinNumber } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 type HomeHeaderProps = {
@@ -15,6 +16,8 @@ type HomeHeaderProps = {
   credits: number;
   notificationCount: number;
   hasUnreadMessages?: boolean;
+  /** `onBrand` = primary header so it blends with the passenger search form. */
+  variant?: 'default' | 'onBrand';
   onChatPress?: () => void;
   onNotificationsPress?: () => void;
   onCreditsPress?: () => void;
@@ -28,6 +31,7 @@ export function HomeHeader({
   credits,
   notificationCount,
   hasUnreadMessages = false,
+  variant = 'default',
   onChatPress,
   onNotificationsPress,
   onCreditsPress,
@@ -35,10 +39,20 @@ export function HomeHeader({
 }: HomeHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const creditsDisplay = credits.toLocaleString();
+  const creditsDisplay = formatLatinNumber(credits);
+  const onBrand = variant === 'onBrand';
+  const iconColor = onBrand ? colors.white : colors.text.primary;
+  const helloColor = onBrand ? colors.white : colors.text.primary;
+  const roleColor = onBrand ? colors.text.onBrandMuted : colors.text.secondary;
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.xs }]}>
+    <View
+      style={[
+        styles.root,
+        onBrand && styles.rootOnBrand,
+        { paddingTop: insets.top + spacing.xs },
+      ]}
+    >
       <View style={styles.profile}>
         <Pressable
           accessibilityRole="button"
@@ -50,18 +64,27 @@ export function HomeHeader({
           {avatarUri ? (
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatar, styles.avatarFallback]}>
-              <AppText weight="bold" style={styles.avatarInitial}>
+            <View
+              style={[
+                styles.avatar,
+                styles.avatarFallback,
+                onBrand && styles.avatarFallbackOnBrand,
+              ]}
+            >
+              <AppText
+                weight="bold"
+                style={[styles.avatarInitial, onBrand && styles.avatarInitialOnBrand]}
+              >
                 {firstName.charAt(0).toUpperCase()}
               </AppText>
             </View>
           )}
         </Pressable>
         <View style={styles.greeting}>
-          <AppText weight="bold" style={styles.hello} numberOfLines={1}>
+          <AppText weight="bold" style={[styles.hello, { color: helloColor }]} numberOfLines={1}>
             {t('dashboard.home.hello', { name: firstName })}
           </AppText>
-          <AppText style={styles.role} numberOfLines={1}>
+          <AppText style={[styles.role, { color: roleColor }]} numberOfLines={1}>
             {roleLabel}
           </AppText>
         </View>
@@ -75,8 +98,10 @@ export function HomeHeader({
           hitSlop={8}
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
         >
-          <Ionicons name="chatbubble-outline" size={20} color={colors.text.primary} />
-          {hasUnreadMessages ? <View style={styles.dot} /> : null}
+          <Ionicons name="chatbubble-outline" size={20} color={iconColor} />
+          {hasUnreadMessages ? (
+            <View style={[styles.dot, onBrand && styles.dotOnBrand]} />
+          ) : null}
         </Pressable>
 
         <Pressable
@@ -86,10 +111,13 @@ export function HomeHeader({
           hitSlop={8}
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
         >
-          <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+          <Ionicons name="notifications-outline" size={20} color={iconColor} />
           {notificationCount > 0 ? (
-            <View style={styles.badge}>
-              <AppText weight="bold" style={styles.badgeText}>
+            <View style={[styles.badge, onBrand && styles.badgeOnBrand]}>
+              <AppText
+                weight="bold"
+                style={[styles.badgeText, onBrand && styles.badgeTextOnBrand]}
+              >
                 {notificationCount > 9 ? '9+' : String(notificationCount)}
               </AppText>
             </View>
@@ -124,6 +152,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
     gap: spacing.xs,
   },
+  rootOnBrand: {
+    backgroundColor: colors.primary,
+  },
   profile: {
     flex: 1,
     flexDirection: 'row',
@@ -142,9 +173,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
   },
+  avatarFallbackOnBrand: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
   avatarInitial: {
     fontSize: 15,
     color: colors.primary,
+  },
+  avatarInitialOnBrand: {
+    color: colors.white,
   },
   greeting: {
     flex: 1,
@@ -153,11 +190,9 @@ const styles = StyleSheet.create({
   },
   hello: {
     fontSize: 15,
-    color: colors.text.primary,
   },
   role: {
     fontSize: 12,
-    color: colors.text.secondary,
   },
   actions: {
     flexDirection: 'row',
@@ -182,6 +217,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.white,
   },
+  dotOnBrand: {
+    backgroundColor: colors.white,
+    borderColor: colors.primary,
+  },
   badge: {
     position: 'absolute',
     top: 0,
@@ -194,10 +233,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  badgeOnBrand: {
+    backgroundColor: colors.white,
+  },
   badgeText: {
     fontSize: 9,
     color: colors.white,
     lineHeight: 11,
+  },
+  badgeTextOnBrand: {
+    color: colors.primary,
   },
   creditsPill: {
     flexDirection: 'row',

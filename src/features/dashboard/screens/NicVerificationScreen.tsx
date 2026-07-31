@@ -83,6 +83,7 @@ export function NicVerificationScreen(): React.ReactElement {
         title={t('nicVerification.title')}
         subtitle={t('nicVerification.subtitle')}
         showLegalFooter={false}
+        showLanguageSwitcher={false}
       >
         <AuthCard>
           <IdentityDocumentVerification

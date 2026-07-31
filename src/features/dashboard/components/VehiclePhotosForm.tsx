@@ -59,6 +59,15 @@ export function VehiclePhotosForm({
 
   const hasPhotos = photoUris.length > 0;
 
+  // Relying on `aspectRatio` for square sizing is unreliable when a tile ends
+  // up alone on the last flex-wrap row (e.g. an even photo count leaves the
+  // add tile solo) — its height can fail to compute correctly. Measuring the
+  // grid's actual width and setting explicit pixel width/height on every tile
+  // sidesteps that entirely.
+  const [gridWidth, setGridWidth] = React.useState(0);
+  const tileSize = gridWidth > 0 ? (gridWidth - GRID_GAP) / 2 : null;
+  const tileSizeStyle = tileSize ? { width: tileSize, height: tileSize } : null;
+
   return (
     <AuthCard>
       <View style={styles.form}>
@@ -67,36 +76,44 @@ export function VehiclePhotosForm({
           <AppText style={styles.required}> *</AppText>
         </AppText>
 
-        {hasPhotos ? (
-          <View style={styles.grid}>
-            {photoUris.map((uri, index) => (
-              <View key={`${uri}-${index}`} style={styles.gridItem}>
-                <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
-                <Pressable
-                  onPress={() => onRemovePhoto(index)}
-                  style={styles.removeBadge}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
-                >
-                  <FontAwesome name="times" size={10} color={colors.white} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <FontAwesome name="picture-o" size={28} color={colors.text.tertiary} />
-            <AppText style={styles.emptyHint}>{t('vehicles.photos.emptyHint')}</AppText>
-          </View>
-        )}
+        <View
+          style={styles.grid}
+          onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
+        >
+          {photoUris.map((uri, index) => (
+            <View key={`${uri}-${index}`} style={[styles.gridItem, tileSizeStyle]}>
+              <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
+              <Pressable
+                onPress={() => onRemovePhoto(index)}
+                style={styles.removeBadge}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
+              >
+                <FontAwesome name="times" size={10} color={colors.white} />
+              </Pressable>
+            </View>
+          ))}
 
-        <Button
-          label={t('vehicles.photos.addPictures')}
-          variant="secondary"
-          onPress={pickImages}
-          accessibilityHint={t('vehicles.photos.addPicturesHint')}
-        />
+          <Pressable
+            onPress={pickImages}
+            style={[
+              styles.gridItem,
+              styles.addTile,
+              hasPhotos ? tileSizeStyle : styles.addTileEmpty,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('vehicles.photos.addPictures')}
+            accessibilityHint={t('vehicles.photos.addPicturesHint')}
+          >
+            <View style={styles.addIconWrap}>
+              <FontAwesome name="plus" size={20} color={colors.primary} />
+            </View>
+            {!hasPhotos ? (
+              <AppText style={styles.addTileHint}>{t('vehicles.photos.addPictures')}</AppText>
+            ) : null}
+          </Pressable>
+        </View>
 
         <Button
           label={submitLabel}
@@ -150,21 +167,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(10, 10, 10, 0.65)',
   },
-  emptyState: {
-    minHeight: 120,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
+  addTile: {
     borderStyle: 'dashed',
-    backgroundColor: colors.background.subtle,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    padding: spacing.md,
   },
-  emptyHint: {
-    fontSize: 12,
+  addTileEmpty: {
+    width: '100%',
+    aspectRatio: undefined,
+    minHeight: 140,
+    gap: spacing.xs,
+  },
+  addIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+  },
+  addTileHint: {
+    fontSize: 13,
     color: colors.text.secondary,
-    textAlign: 'center',
   },
 });
