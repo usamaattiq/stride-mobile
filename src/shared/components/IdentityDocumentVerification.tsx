@@ -7,13 +7,11 @@ import {
   type KeyboardTypeOptions,
 } from 'react-native';
 
-import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { DocumentUploadField } from '@/shared/components/DocumentUploadField';
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
-import { colors, radius, spacing } from '@/theme';
-import { getFontFamily } from '@/theme/typography';
+import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 export type IdentityDocumentVerificationProps = {
   documentNumber: string;
@@ -62,7 +60,6 @@ export function IdentityDocumentVerification({
   loading = false,
   errorMessage = null,
 }: IdentityDocumentVerificationProps): React.ReactElement {
-  const { currentLanguage } = useLanguage();
   const accessoryId = React.useId();
   const showDoneBar = keyboardType !== 'default';
   const canSubmit =
@@ -87,7 +84,8 @@ export function IdentityDocumentVerification({
           inputAccessoryViewID={showDoneBar ? accessoryId : undefined}
           style={[
             styles.input,
-            { fontFamily: getFontFamily(currentLanguage, 'regular') },
+            // Document IDs are digit-heavy; Outfit keeps Latin numerals centered on iOS Arabic.
+            { fontFamily: getFontFamily('en', 'regular') },
           ]}
         />
         {showDoneBar ? (

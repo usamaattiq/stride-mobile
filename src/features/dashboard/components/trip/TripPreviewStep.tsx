@@ -13,9 +13,10 @@ import {
   type TripDraft,
 } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
-import { colors, radius, spacing } from '@/theme';
+import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
   | 'vehicle'
@@ -65,7 +66,10 @@ export function TripPreviewStep({
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const locale = i18n.language;
+  const iosArabicAlign =
+    currentLanguage === 'ar' ? iosArabicOpticalAlignStyle : null;
 
   const trip = enrichPreviewTrip(draft, vehicle);
   const fromCity = draft.departureCity
@@ -128,7 +132,7 @@ export function TripPreviewStep({
         ) : (
           <>
             <FontAwesome name="paper-plane" size={14} color={colors.white} />
-            <AppText weight="bold" style={styles.publishButtonText}>
+            <AppText weight="bold" style={[styles.publishButtonText, iosArabicAlign]}>
               {t('trips.create.publish')}
             </AppText>
           </>

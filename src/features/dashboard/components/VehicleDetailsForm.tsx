@@ -10,6 +10,7 @@ import { AppText } from '@/shared/components/AppText';
 import { BiometricToggleRow } from '@/shared/components/BiometricToggleRow';
 import { Button } from '@/shared/components/Button';
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
+import { onlyLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 import { VehicleClassPicker } from './VehicleClassPicker';
@@ -169,7 +170,7 @@ export function VehicleDetailsForm({
         <AuthTextField
           label={t('vehicles.fields.year')}
           value={draft.year}
-          onChangeText={(value) => onChange({ year: value.replace(/\D/g, '').slice(0, 4) })}
+          onChangeText={(value) => onChange({ year: onlyLatinDigits(value).slice(0, 4) })}
           placeholder={t('vehicles.fields.yearPlaceholder')}
           keyboardType="number-pad"
           inputAccessoryViewID={yearAccessoryId}

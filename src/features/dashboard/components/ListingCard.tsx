@@ -10,6 +10,7 @@ import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
@@ -24,11 +25,12 @@ function formatTripWhen(trip: Trip, locale: string): string {
   if (Number.isNaN(date.getTime())) {
     return trip.departureAt;
   }
-  const day = date.toLocaleDateString(locale, {
+  const latinLocale = withLatinDigitsLocale(locale);
+  const day = date.toLocaleDateString(latinLocale, {
     day: 'numeric',
     month: 'short',
   });
-  const time = date.toLocaleTimeString(locale, {
+  const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',
   });

@@ -10,6 +10,7 @@ import {
 
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
+import { onlyLatinDigits } from '@/shared/utils/latin-digits';
 
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
 
@@ -37,7 +38,7 @@ export function OtpInput({
   const accessoryId = React.useId();
   const [isFocused, setIsFocused] = React.useState(false);
   const handleKeyboardFocus = useKeyboardFocusScroll();
-  const digits = value.replace(/\D/g, '').slice(0, length);
+  const digits = onlyLatinDigits(value).slice(0, length);
   const digitFont = getFontFamily('en', 'regular');
 
   React.useEffect(() => {
@@ -46,7 +47,7 @@ export function OtpInput({
 
   const handleChangeText = React.useCallback(
     (text: string) => {
-      const next = text.replace(/\D/g, '').slice(0, length);
+      const next = onlyLatinDigits(text).slice(0, length);
       const prevLength = previousLengthRef.current;
       previousLengthRef.current = next.length;
       onChange(next);
@@ -159,11 +160,18 @@ const styles = StyleSheet.create({
   },
   overlayDigit: {
     fontSize: 22,
-    lineHeight: CELL_HEIGHT,
+    // No lineHeight here on purpose: matching it to CELL_HEIGHT to "center"
+    // the glyph relies on the font's line-box metrics, which iOS renders
+    // inconsistently for custom fonts (glyph sits high/off-center). Instead
+    // let the `cell` View's flexbox alignItems/justifyContent do the
+    // centering against the actual rendered glyph.
     color: colors.text.primary,
     textAlign: 'center',
+    // Digits are direction-neutral; pin LTR explicitly so an ambient RTL
+    // (Arabic) text context can't shift how the single-char run is centered.
+    writingDirection: 'ltr',
     ...Platform.select({
-      android: { includeFontPadding: false, textAlignVertical: 'center' },
+      android: { includeFontPadding: false },
       default: {},
     }),
   },
@@ -171,5 +179,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     opacity: 0.02,
     color: 'transparent',
+    writingDirection: 'ltr',
   },
 });

@@ -18,9 +18,9 @@ const androidTextStyle = isAndroid
     } satisfies object)
   : null;
 
-// Cairo's ascent/descent sits Arabic glyphs slightly high in the line box on iOS.
+// Compact chip needs a stronger nudge than shared button optical align.
 const iosArabicLabelStyle = {
-  paddingTop: 2,
+  paddingTop: 7,
 } as const;
 
 const glassRipple = isAndroid
