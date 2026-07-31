@@ -108,7 +108,8 @@ export function TripOfferPanel({
     setError(null);
     void rfqApi
       .submitOffer(tripId, {
-        seats: isFullPrivate ? (vehicleTotalSeats ?? 1) : seatsNumber,
+        // Full-private capacity is 1 whole-vehicle slot on the RFQ, not the seat count.
+        seats: isFullPrivate ? 1 : seatsNumber,
         price: priceNumber,
       })
       .then(() => load())
@@ -149,7 +150,11 @@ export function TripOfferPanel({
             {activeOffer.offeredQuantity != null ? (
               <AppText style={styles.meta}>
                 {t('dashboard.listings.detail.responses.seats', {
-                  count: Number(activeOffer.offeredQuantity),
+                  // Full-private offers hold offeredQuantity=1 (the whole-vehicle
+                  // capacity slot) — show the vehicle's real seat count instead.
+                  count: isFullPrivate
+                    ? (vehicleTotalSeats ?? 1)
+                    : Number(activeOffer.offeredQuantity),
                 })}
               </AppText>
             ) : null}
