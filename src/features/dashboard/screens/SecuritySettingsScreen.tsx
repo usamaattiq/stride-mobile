@@ -21,12 +21,13 @@ export function SecuritySettingsScreen(): React.ReactElement {
 
   const handleSaveMpin = async (currentMpin: string, newMpin: string): Promise<void> => {
     await authApi.changeMpin(currentMpin, newMpin);
-    // Keep the biometric-cached MPIN in sync so the next biometric login doesn't
+    // Keep any biometric-cached MPIN in sync so the next Face ID login doesn't
     // silently submit the now-stale value.
-    const devicePrefs = useDevicePrefsStore.getState();
-    if (devicePrefs.biometricEnabled) {
-      await devicePrefs.setCachedMpin(newMpin);
-    }
+    await useDevicePrefsStore.getState().setCachedMpin(newMpin);
+  };
+
+  const handleCacheMpinForBiometric = async (mpin: string): Promise<void> => {
+    await useDevicePrefsStore.getState().setCachedMpin(mpin);
   };
 
   return (
@@ -35,12 +36,14 @@ export function SecuritySettingsScreen(): React.ReactElement {
       title={t('securitySettings.title')}
       subtitle={t('securitySettings.subtitle')}
       showLegalFooter={false}
+      showLanguageSwitcher={false}
     >
       <SecuritySetupForm
         mode="manage"
         biometricEnabled={user.biometricEnabled}
         onChangeBiometric={setBiometricEnabled}
         onSaveMpin={handleSaveMpin}
+        onCacheMpinForBiometric={handleCacheMpinForBiometric}
       />
     </AuthScaffold>
   );

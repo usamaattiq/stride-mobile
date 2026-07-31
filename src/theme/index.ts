@@ -5,11 +5,21 @@ import {
   appFontAssets,
   fontFamilies,
   getFontFamily,
+  getInputFontFamily,
+  iosArabicOpticalAlignStyle,
+  isNumericKeyboardType,
   typography,
 } from './typography';
 
 export { colors, radius, spacing, typography };
-export { appFontAssets, fontFamilies, getFontFamily };
+export {
+  appFontAssets,
+  fontFamilies,
+  getFontFamily,
+  getInputFontFamily,
+  iosArabicOpticalAlignStyle,
+  isNumericKeyboardType,
+};
 export type { FontWeightToken, Typography } from './typography';
 
 export const theme = {

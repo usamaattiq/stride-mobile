@@ -1,3 +1,4 @@
+import type { TripCity, TripVehicleMode } from '../types/trip.types';
 import type { VehicleDetailsParams, VehiclePhotosParams } from './vehicleNavigation.types';
 
 export type TripCreationParams = {
@@ -6,10 +7,20 @@ export type TripCreationParams = {
   flowKey?: number;
 };
 
+export type SearchResultsParams = {
+  departureCity: TripCity;
+  arrivalCity: TripCity;
+  departureDateISO: string;
+  vehicleMode: TripVehicleMode;
+  passengerCount: number;
+};
+
 export type DashboardRootStackParamList = {
   MainTabs: undefined;
   TripCreation: TripCreationParams | undefined;
+  TripPublishSuccess: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
   ListingDetail: { tripId: string };
+  SearchResults: SearchResultsParams;
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,17 @@ type VehicleClassPickerProps = {
   label: string;
   placeholder: string;
   required?: boolean;
+};
+
+const CLASS_ICONS: Record<
+  VehicleClass,
+  React.ComponentProps<typeof FontAwesome5>['name']
+> = {
+  suv: 'car-side',
+  sedan: 'car',
+  bus: 'bus',
+  van: 'shuttle-van',
+  coaster: 'bus',
 };
 
 export function VehicleClassPicker({
@@ -48,8 +59,18 @@ export function VehicleClassPicker({
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <AppText style={[styles.value, !value && styles.placeholder]}>{selectedLabel}</AppText>
-        <FontAwesome name="chevron-down" size={10} color={colors.text.secondary} />
+        <View style={styles.fieldLeading}>
+          <View style={styles.iconWrap}>
+            <FontAwesome5
+              name={value ? CLASS_ICONS[value] : 'car'}
+              size={14}
+              color={colors.primary}
+              solid
+            />
+          </View>
+          <AppText style={[styles.value, !value && styles.placeholder]}>{selectedLabel}</AppText>
+        </View>
+        <FontAwesome5 name="chevron-down" size={10} color={colors.text.secondary} solid />
       </Pressable>
 
       <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.55}>
@@ -72,11 +93,21 @@ export function VehicleClassPicker({
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
               >
-                <AppText weight={selected ? 'semibold' : 'regular'} style={styles.optionLabel}>
-                  {t(option.labelKey)}
-                </AppText>
+                <View style={styles.optionLeading}>
+                  <View style={[styles.optionIcon, selected && styles.optionIconSelected]}>
+                    <FontAwesome5
+                      name={CLASS_ICONS[option.id]}
+                      size={15}
+                      color={selected ? colors.white : colors.primary}
+                      solid
+                    />
+                  </View>
+                  <AppText weight={selected ? 'semibold' : 'regular'} style={styles.optionLabel}>
+                    {t(option.labelKey)}
+                  </AppText>
+                </View>
                 {selected ? (
-                  <FontAwesome name="check" size={14} color={colors.primary} />
+                  <FontAwesome5 name="check" size={14} color={colors.primary} solid />
                 ) : null}
               </Pressable>
             );
@@ -105,11 +136,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.md - 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  fieldLeading: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
   },
   value: {
     flex: 1,
@@ -133,9 +179,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   option: {
-    minHeight: 48,
+    minHeight: 52,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -147,6 +193,24 @@ const styles = StyleSheet.create({
   optionSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
+  },
+  optionLeading: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  optionIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+  },
+  optionIconSelected: {
+    backgroundColor: colors.primary,
   },
   optionLabel: {
     fontSize: 15,

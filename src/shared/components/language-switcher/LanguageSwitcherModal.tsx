@@ -58,7 +58,13 @@ export function LanguageSwitcherModal({
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={styles.backdrop} testID="language-switcher-modal">
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.modalCard, { width: modalWidth }]}>

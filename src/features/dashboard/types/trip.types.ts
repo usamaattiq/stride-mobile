@@ -47,6 +47,7 @@ export type Trip = {
   vehicleId: string;
   vehicleTitle: string | null;
   vehiclePhotoUrl: string | null;
+  vehiclePhotoUrls: string[];
   vehiclePhotoCount: number;
   vehicleClass: VehicleClass | null;
   vehicleTotalSeats: number | null;
@@ -67,6 +68,8 @@ export type Trip = {
   scheduledStartAt: string | null;
   description: string | null;
   publishedAt: string;
+  /** Whether the trip's full capacity has been confirmed/accepted. */
+  isBooked: boolean;
 };
 
 export function createEmptyTripDraft(): TripDraft {
@@ -102,12 +105,13 @@ export function canPublishTripDraft(draft: TripDraft): boolean {
 }
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
+  const departureRequired = draft.vehicleMode === 'shared';
+
   if (
     !draft.vehicleId ||
     !draft.vehicleMode ||
     !draft.departureCity ||
-    !draft.departureAt ||
-    !draft.departureUntil ||
+    (departureRequired && !draft.departureAt) ||
     !draft.arrivalCity ||
     !draft.listingType ||
     !draft.paymentMethod ||
@@ -141,9 +145,12 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
       longitude: 0,
     } satisfies TripLocationPoint);
 
+  // Private-vehicle bookings can skip the departure date entirely — default to now.
+  const departureAt = draft.departureAt ?? new Date().toISOString();
+
   // When arrival isn't set, place it after the departure window so API validation passes.
   const departureWindowEndMs = new Date(
-    draft.departureUntil ?? draft.departureAt,
+    draft.departureUntil ?? departureAt,
   ).getTime();
   const arrivalAt =
     draft.arrivalAt ??
@@ -154,13 +161,14 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehicleId: draft.vehicleId,
     vehicleTitle: null,
     vehiclePhotoUrl: null,
+    vehiclePhotoUrls: [],
     vehiclePhotoCount: 0,
     vehicleClass: null,
     vehicleTotalSeats: null,
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
-    departureAt: draft.departureAt,
+    departureAt,
     departureUntil: draft.departureUntil,
     arrivalCity: draft.arrivalCity,
     arrivalPoint,
@@ -173,5 +181,6 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
+    isBooked: false,
   };
 }

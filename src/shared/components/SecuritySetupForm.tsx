@@ -15,6 +15,7 @@ import {
   biometricCopyMode,
   useDeviceBiometric,
 } from '@/shared/hooks/useDeviceBiometric';
+import { useDevicePrefsStore } from '@/store/devicePrefsStore';
 import { colors, spacing } from '@/theme';
 
 type SecuritySetupBaseProps = {
@@ -40,6 +41,11 @@ export type SecuritySetupFormProps = SecuritySetupBaseProps &
         /** Settings: change existing MPIN + biometric. */
         mode: 'manage';
         onSaveMpin: (currentMpin: string, newMpin: string) => Promise<void>;
+        /**
+         * Called when enabling biometric so the MPIN can be cached for the next
+         * Face ID login. Required when this device has no cached MPIN yet.
+         */
+        onCacheMpinForBiometric?: (mpin: string) => Promise<void>;
       }
   );
 
@@ -61,6 +67,9 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
   const [savingMpin, setSavingMpin] = React.useState(false);
   const [savedVisible, setSavedVisible] = React.useState(false);
   const [biometricSaveError, setBiometricSaveError] = React.useState<string | null>(null);
+  const [confirmingBiometricMpin, setConfirmingBiometricMpin] = React.useState(false);
+  const [biometricMpin, setBiometricMpin] = React.useState('');
+  const hasCachedMpin = useDevicePrefsStore((state) => state.cachedMpin !== null);
 
   const setupMismatch =
     props.mode === 'setup' &&
@@ -111,6 +120,29 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
     }
   };
 
+  const enableBiometric = async (mpinToCache?: string) => {
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: t(`biometric.${mode}.enablePrompt`),
+      cancelLabel: t('common.cancel'),
+      disableDeviceFallback: false,
+    });
+
+    if (!result.success) {
+      return;
+    }
+
+    try {
+      if (mpinToCache && props.mode === 'manage' && props.onCacheMpinForBiometric) {
+        await props.onCacheMpinForBiometric(mpinToCache);
+      }
+      await props.onChangeBiometric(true);
+      setConfirmingBiometricMpin(false);
+      setBiometricMpin('');
+    } catch (error) {
+      setBiometricSaveError(getErrorMessage(error, t(`biometric.${mode}.saveFailed`)));
+    }
+  };
+
   const toggleBiometric = async (enabled: boolean) => {
     if (!available) {
       setBiometricDialog(true);
@@ -126,19 +158,25 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
       return;
     }
 
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: t(`biometric.${mode}.enablePrompt`),
-      cancelLabel: t('common.cancel'),
-      disableDeviceFallback: false,
-    });
-
-    if (result.success) {
-      try {
-        await props.onChangeBiometric(true);
-      } catch (error) {
-        setBiometricSaveError(getErrorMessage(error, t(`biometric.${mode}.saveFailed`)));
-      }
+    // Settings: if this device has no cached MPIN yet, collect it before Face ID
+    // so the next login can unlock with biometrics on the first try.
+    if (props.mode === 'manage' && !hasCachedMpin) {
+      setConfirmingBiometricMpin(true);
+      setBiometricMpin('');
+      setBiometricSaveError(null);
+      return;
     }
+
+    await enableBiometric();
+  };
+
+  const handleConfirmBiometricMpin = async () => {
+    if (biometricMpin.length !== 4) {
+      setBiometricSaveError(t('securitySettings.mpin.currentRequired'));
+      return;
+    }
+    setBiometricSaveError(null);
+    await enableBiometric(biometricMpin);
   };
 
   return (
@@ -274,6 +312,41 @@ export function SecuritySetupForm(props: SecuritySetupFormProps): React.ReactEle
           }
           onToggle={(value) => void toggleBiometric(value)}
         />
+
+        {props.mode === 'manage' && confirmingBiometricMpin ? (
+          <View style={styles.form}>
+            <AppText weight="semibold" style={styles.sectionTitle}>
+              {t('securitySettings.biometric.confirmMpinTitle')}
+            </AppText>
+            <AppText style={styles.cardBody}>
+              {t('securitySettings.biometric.confirmMpinBody')}
+            </AppText>
+            <OtpInput
+              length={4}
+              value={biometricMpin}
+              onChange={setBiometricMpin}
+              secureTextEntry
+              autoFocus
+            />
+            <View style={styles.formActions}>
+              <Button
+                label={t('common.cancel')}
+                variant="secondary"
+                onPress={() => {
+                  setConfirmingBiometricMpin(false);
+                  setBiometricMpin('');
+                }}
+                style={styles.formButton}
+              />
+              <Button
+                label={t('securitySettings.biometric.confirmMpinCta')}
+                onPress={() => void handleConfirmBiometricMpin()}
+                disabled={biometricMpin.length !== 4}
+                style={styles.formButton}
+              />
+            </View>
+          </View>
+        ) : null}
 
         {props.mode === 'setup' ? (
           <Button

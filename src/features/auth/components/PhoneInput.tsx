@@ -14,6 +14,7 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { onlyLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
@@ -80,7 +81,7 @@ export function PhoneInput({
         accessibilityLabel={`Country ${country.code}`}
       >
         <AppText style={styles.flag}>{country.flag}</AppText>
-        <AppText weight="semibold" style={styles.dialCode}>
+        <AppText weight="semibold" style={[styles.dialCode, { fontFamily: getFontFamily('en', 'semibold') }]}>
           +{country.callingCode}
         </AppText>
         <FontAwesome name="chevron-down" size={10} color={colors.text.secondary} />
@@ -90,13 +91,13 @@ export function PhoneInput({
 
       <TextInput
         value={displayValue}
-        onChangeText={(text) => onChangeDigits(text.replace(/\D/g, '').slice(0, 10))}
+        onChangeText={(text) => onChangeDigits(onlyLatinDigits(text).slice(0, 10))}
         placeholder={placeholder}
         placeholderTextColor={colors.text.tertiary}
         keyboardType="phone-pad"
         onFocus={handleFocus}
         inputAccessoryViewID={accessoryId}
-        style={[styles.input, { fontFamily: getFontFamily(currentLanguage, 'regular') }]}
+        style={[styles.input, { fontFamily: getFontFamily('en', 'regular') }]}
       />
       <KeyboardDoneBar nativeID={accessoryId} disabled={value.length < 10} onDone={onDone} />
 

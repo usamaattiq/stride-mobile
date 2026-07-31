@@ -6,7 +6,6 @@ import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker';
 import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
-import { DateRangeCalendarField } from '@/features/dashboard/components/trip/DateRangeCalendarField';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
 import { TripPointField } from '@/features/dashboard/components/trip/TripPointField';
 import type { TripDraft } from '@/features/dashboard/types/trip.types';
@@ -22,12 +21,24 @@ type TripDetailsStepProps = {
 };
 
 function isDetailsComplete(draft: TripDraft): boolean {
+  const startDateRequired = draft.vehicleMode === 'shared';
   return Boolean(
     draft.departureCity &&
       draft.arrivalCity &&
-      draft.departureAt &&
-      draft.departureUntil,
+      (!startDateRequired || draft.departureAt),
   );
+}
+
+function getArrivalTimeError(draft: TripDraft, t: (key: string) => string): string | null {
+  if (!draft.departureAt || !draft.arrivalAt) {
+    return null;
+  }
+  const depMs = new Date(draft.departureAt).getTime();
+  const arrMs = new Date(draft.arrivalAt).getTime();
+  if (arrMs <= depMs) {
+    return t('trips.create.arrivalAfterDepartureError');
+  }
+  return null;
 }
 
 export function TripDetailsStep({
@@ -38,11 +49,16 @@ export function TripDetailsStep({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
 
+  const startDateRequired = draft.vehicleMode === 'shared';
+
   const departureWindowEnd = draft.departureUntil
     ? new Date(draft.departureUntil)
     : draft.departureAt
       ? new Date(draft.departureAt)
       : undefined;
+
+  const arrivalTimeError = getArrivalTimeError(draft, t);
+  const canContinue = isDetailsComplete(draft) && !arrivalTimeError;
 
   return (
     <>
@@ -64,37 +80,20 @@ export function TripDetailsStep({
                 onChange({ departurePoint: selection });
               }, draft.departurePoint)
             }
+            optional
           />
 
-          <AppText weight="medium" style={styles.rowLabel}>
-            {t('trips.create.departureDateTime')}
-            <AppText style={styles.required}> *</AppText>
-          </AppText>
-          <View style={styles.row}>
-            <View style={styles.rowItemWide}>
-              <DateRangeCalendarField
-                label={t('trips.create.departureDateWindow')}
-                startIso={draft.departureAt}
-                endIso={draft.departureUntil}
-                onChange={({ startIso, endIso }) =>
-                  onChange({ departureAt: startIso, departureUntil: endIso })
-                }
-                required
-                hideLabel
-              />
-            </View>
-
-            <View style={styles.rowItemNarrow}>
-              <DateTimePickerField
-                label={t('trips.create.departureTime')}
-                value={draft.departureAt}
-                onChange={(departureAt) => onChange({ departureAt, departureTimeSet: true })}
-                mode="time"
-                timeConfirmed={draft.departureTimeSet}
-                hideLabel
-              />
-            </View>
-          </View>
+          <DateTimePickerField
+            label={t('trips.create.departureDateTime')}
+            value={draft.departureAt}
+            onChange={(departureAt, part) =>
+              onChange(part === 'time' ? { departureAt, departureTimeSet: true } : { departureAt })
+            }
+            minimumDate={new Date()}
+            timeConfirmed={draft.departureTimeSet}
+            required={startDateRequired}
+            optional={!startDateRequired}
+          />
 
           <CitySearchField
             label={t('trips.create.arrivalCity')}
@@ -112,6 +111,7 @@ export function TripDetailsStep({
                 onChange({ arrivalPoint: selection });
               }, draft.arrivalPoint)
             }
+            optional
           />
 
           <DateTimePickerField
@@ -122,7 +122,11 @@ export function TripDetailsStep({
             }
             minimumDate={departureWindowEnd}
             timeConfirmed={draft.arrivalTimeSet}
+            optional
           />
+          {arrivalTimeError ? (
+            <AppText style={styles.fieldError}>{arrivalTimeError}</AppText>
+          ) : null}
 
           <AuthTextField
             label={t('trips.create.description')}
@@ -139,7 +143,7 @@ export function TripDetailsStep({
           <Button
             label={t('common.continue')}
             onPress={onContinue}
-            disabled={!isDetailsComplete(draft)}
+            disabled={!canContinue}
           />
         </View>
       </AuthCard>
@@ -152,26 +156,13 @@ const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
   },
-  rowLabel: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  required: {
-    fontSize: 13,
-    color: colors.primary,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  rowItemWide: {
-    flex: 6,
-  },
-  rowItemNarrow: {
-    flex: 4,
-  },
   textArea: {
     minHeight: 96,
     paddingTop: spacing.sm,
+  },
+  fieldError: {
+    fontSize: 12,
+    color: colors.primary,
+    marginTop: -spacing.xs,
   },
 });

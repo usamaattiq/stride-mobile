@@ -7,13 +7,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
-import { HomeFeedPanel } from '../components/HomeFeedPanel';
+import { DriverListingsPanel } from '../components/DriverListingsPanel';
 import { HomeHeader } from '../components/HomeHeader';
 import { MessagesPanel } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
+import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList, HomePanel, HomeStackParamList } from '../navigation/types';
 
@@ -32,13 +34,37 @@ export function HomeScreen(): React.ReactElement {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
 
+  const isPassenger = user.role === 'passenger';
+  const showPanelChrome = panel === 'messages' || panel === 'notifications';
+  /** Driver feed + messages/notifications share the curved white sheet under the red header. */
+  const showCurvedBody = showPanelChrome || (!isPassenger && panel === 'feed');
+
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
+  const goToSettings = React.useCallback(() => {
+    navigation
+      .getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>()
+      ?.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
+  }, [navigation]);
 
   const roleLabel =
     user.role === 'driver'
       ? t('profile.roles.driver')
       : t('profile.roles.passenger');
+
+  const panelTitle =
+    panel === 'messages'
+      ? t('dashboard.messages.title')
+      : panel === 'notifications'
+        ? t('dashboard.notifications.title')
+        : null;
+
+  const panelSubtitle =
+    panel === 'messages'
+      ? t('dashboard.messages.subtitle')
+      : panel === 'notifications'
+        ? t('dashboard.notifications.subtitle')
+        : null;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -73,7 +99,7 @@ export function HomeScreen(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <FocusAwareStatusBar style="dark" />
+      <FocusAwareStatusBar style="light" />
       <HomeHeader
         firstName={user.firstName}
         roleLabel={roleLabel}
@@ -81,12 +107,35 @@ export function HomeScreen(): React.ReactElement {
         credits={user.credits}
         notificationCount={user.notificationCount}
         hasUnreadMessages={user.hasUnreadMessages}
+        variant="onBrand"
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
+        onProfilePress={goToSettings}
       />
 
-      <View style={styles.body}>
-        {panel === 'feed' ? <HomeFeedPanel /> : null}
+      {showPanelChrome && panelTitle ? (
+        <View style={styles.panelHeader}>
+          <AppText weight="bold" style={styles.panelTitle} numberOfLines={1}>
+            {panelTitle}
+          </AppText>
+          {panelSubtitle ? (
+            <AppText style={styles.panelSubtitle} numberOfLines={2}>
+              {panelSubtitle}
+            </AppText>
+          ) : null}
+        </View>
+      ) : null}
+
+      <View
+        style={[
+          styles.body,
+          showCurvedBody && styles.bodyCurved,
+          showPanelChrome && styles.bodyCurvedOverlap,
+        ]}
+      >
+        {panel === 'feed' ? (
+          isPassenger ? <PassengerSearchPanel /> : <DriverListingsPanel />
+        ) : null}
         {panel === 'messages' ? <MessagesPanel /> : null}
         {panel === 'notifications' ? <NotificationsPanel /> : null}
       </View>
@@ -97,9 +146,35 @@ export function HomeScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background.canvas,
+    backgroundColor: colors.primary,
+  },
+  panelHeader: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxl,
+  },
+  panelTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors.white,
+  },
+  panelSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.text.onBrandMuted,
   },
   body: {
     flex: 1,
+    backgroundColor: colors.background.canvas,
+  },
+  bodyCurved: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  /** Only tuck under red title chrome (messages/notifications), not the profile header. */
+  bodyCurvedOverlap: {
+    marginTop: -18,
   },
 });

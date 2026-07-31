@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { useResolvedLocationPointLabel } from '@/shared/hooks/useResolvedLocationPointLabel';
 import { colors, radius, spacing } from '@/theme';
 
 type TripPointFieldProps = {
@@ -13,6 +14,7 @@ type TripPointFieldProps = {
   value: TripLocationPoint | null;
   onSelectOnMap: () => void;
   required?: boolean;
+  optional?: boolean;
 };
 
 export function TripPointField({
@@ -20,21 +22,24 @@ export function TripPointField({
   value,
   onSelectOnMap,
   required = false,
+  optional = false,
 }: TripPointFieldProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const resolvedLabel = useResolvedLocationPointLabel(value, '');
 
   return (
     <View style={styles.wrap}>
       <AppText weight="medium" style={styles.label}>
         {label}
         {required ? <AppText style={styles.required}> *</AppText> : null}
+        {optional ? <AppText style={styles.optional}> (optional)</AppText> : null}
       </AppText>
 
       {value ? (
         <View style={styles.valueBox}>
           <FontAwesome name="map-marker" size={14} color={colors.primary} />
           <AppText style={styles.valueText} numberOfLines={2}>
-            {value.label}
+            {resolvedLabel}
           </AppText>
         </View>
       ) : (
@@ -67,6 +72,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
   },
+  optional: {
+    fontSize: 12,
+    color: colors.text.tertiary,
+  },
   valueBox: {
     minHeight: 46,
     borderRadius: radius.md,
@@ -91,7 +100,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     minHeight: 42,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.primaryDisabled,
     backgroundColor: colors.primarySoft,

@@ -1,5 +1,7 @@
 /** Local calendar-day helpers (ignore time-of-day for range comparison). */
 
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
+
 export function startOfLocalDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -55,8 +57,9 @@ export function formatDateRangeLabel(
 ): string {
   const start = parseIsoDate(startIso ?? null);
   const end = parseIsoDate(endIso ?? null);
+  const latinLocale = withLatinDigitsLocale(locale);
   const formatDay = (date: Date) =>
-    date.toLocaleDateString(locale, {
+    date.toLocaleDateString(latinLocale, {
       day: 'numeric',
       month: 'short',
     });
@@ -68,4 +71,29 @@ export function formatDateRangeLabel(
     return formatDay(start);
   }
   return fallback;
+}
+
+export function formatTripDateTime(
+  iso: string | null | undefined,
+  locale: string,
+  fallback = '—',
+): string {
+  if (!iso) {
+    return fallback;
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+  const latinLocale = withLatinDigitsLocale(locale);
+  const day = date.toLocaleDateString(latinLocale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const time = date.toLocaleTimeString(latinLocale, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return `${day} at ${time}`;
 }

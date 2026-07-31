@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "stride",
+      "brandName": "musafir249",
       "title": "احجز رحلتك التالية في دقائق",
       "subtitle": "قارن الحافلات والمركبات والرحلات الخاصة عبر كل المسارات.",
       "signUp": "إنشاء حساب",
@@ -21,6 +21,7 @@
       "searchPlaceholder": "ابحث عن دولة أو رمز",
       "noResults": "لم يتم العثور على دول"
     },
+    "otpLimitReached": "لقد وصلت إلى الحد المسموح لهذا الرقم. يرجى الانتظار 10 دقائق ثم المحاولة مرة أخرى.",
     "signup": {
       "phone": {
         "title": "أدخل رقم الجوال",
@@ -31,7 +32,7 @@
       },
       "otp": {
         "title": "تحقق من رقمك",
-        "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}}",
+        "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى\n{{phone}}",
         "cta": "تأكيد الرمز",
         "resend": "إعادة إرسال الرمز",
         "resendIn": "إعادة إرسال الرمز خلال {{time}}",
@@ -105,8 +106,7 @@
         "creditsEarned": "لقد ربحت",
         "credits": "{{count}} نقطة",
         "creditsReason": "مقابل أول إعلان لك",
-        "dashboard": "الذهاب إلى لوحة التحكم",
-        "explore": "ابدأ الاستكشاف"
+        "dashboard": "الذهاب إلى لوحة التحكم"
       }
     },
     "login": {
@@ -118,7 +118,7 @@
       },
       "otp": {
         "title": "تحقق من رقمك",
-        "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}}",
+        "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى\n{{phone}}",
         "cta": "تأكيد الرمز",
         "resend": "إعادة إرسال الرمز",
         "resendIn": "إعادة إرسال الرمز خلال {{time}}",
@@ -140,7 +140,7 @@
       "forgotMpin": {
         "otp": {
           "title": "تحقق من هويتك",
-          "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى {{phone}} لإعادة تعيين رمز MPIN"
+          "subtitle": "أدخل الرمز المكون من 6 أرقام المرسل إلى\n{{phone}} لإعادة تعيين رمز MPIN"
         },
         "newMpin": {
           "title": "إنشاء رمز MPIN جديد",
@@ -165,6 +165,7 @@
     "tabs": {
       "Home": "الرئيسية",
       "MyListings": "قوائمي",
+      "Search": "بحث",
       "MyOffers": "عروضي",
       "Settings": "الإعدادات",
       "createTripA11y": "إنشاء رحلة"
@@ -177,6 +178,7 @@
       "credits": "رصيد",
       "chatA11y": "فتح المحادثات",
       "notificationsA11y": "فتح الإشعارات",
+      "profileA11y": "فتح الإعدادات",
       "creditsA11y": "{{count}} رصيد",
       "bannerTitle": "طلبات العودة المتاحة",
       "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
@@ -184,9 +186,10 @@
       "filter": "تصفية",
       "filterA11y": "فتح عوامل التصفية",
       "categoryAll": "كل الطلبات",
+      "categoryAllListings": "الكل",
       "categoryRfq": "RFQ",
       "categoryAuction": "مزاد",
-      "categoryFullVehicle": "مركبة كاملة",
+      "categoryPrivate": "خاص",
       "categoryShared": "مشترك",
       "badgeAuction": "مزاد",
       "badgeRfq": "RFQ",
@@ -197,10 +200,30 @@
       "adTitle": "نمِّ أعمالك في النقل",
       "adSubtitle": "أنشئ قوائم واحصل على المزيد من الحجوزات.",
       "emptyTitle": "لا توجد طلبات",
-      "emptySubtitle": "عندما ينشر الركاب طلبات عودة بالقرب منك، ستظهر هنا."
+      "emptySubtitle": "عندما ينشر الركاب طلبات عودة بالقرب منك، ستظهر هنا.",
+      "tripsBannerTitle": "الرحلات المتاحة",
+      "tripsBannerSubtitle": "تصفح قوائم السائقين وقدّم أفضل عرض أو مزايدة.",
+      "tripsEmptyTitle": "لا توجد رحلات",
+      "tripsEmptySubtitle": "عندما ينشر السائقون رحلات تطابق بحثك، ستظهر هنا.",
+      "pageOf": "صفحة {{page}} من {{total}}",
+      "previousPageA11y": "الصفحة السابقة",
+      "nextPageA11y": "الصفحة التالية",
+      "filterSheetTitle": "تصفية الرحلات",
+      "filterPaymentMethod": "طريقة الدفع",
+      "filterDepartureCity": "مدينة المغادرة",
+      "filterArrivalCity": "مدينة الوصول",
+      "filterVehicleMode": "مشترك أو خاص",
+      "filterSeats": "عدد المقاعد",
+      "filterSeatsCount": "{{count}} مقاعد",
+      "filterAny": "الكل",
+      "filterReset": "إعادة تعيين",
+      "filterApply": "تطبيق التصفية",
+      "listingsFilterEmptyTitle": "لا توجد نتائج",
+      "listingsFilterEmptySubtitle": "حاول تعديل أو مسح عوامل التصفية."
     },
     "messages": {
       "title": "الرسائل",
+      "subtitle": "محادثات حول الرحلات والحجوزات والقوائم.",
       "searchPlaceholder": "ابحث في الرسائل...",
       "filterAll": "كل الرسائل",
       "filterUnread": "غير مقروءة",
@@ -211,15 +234,52 @@
     },
     "notifications": {
       "title": "الإشعارات",
+      "subtitle": "تحديثات حول العروض والحجوزات والقوائم.",
       "emptyTitle": "لا توجد إشعارات",
       "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم."
+    },
+    "search": {
+      "shared": "مشتركة",
+      "private": "خاصة",
+      "departure": "المغادرة",
+      "arrival": "الوصول",
+      "swapCities": "تبديل المغادرة والوصول",
+      "today": "اليوم",
+      "tomorrow": "غداً",
+      "passengerCount": "راكب",
+      "passengerCountValue": "{{count}} ركاب",
+      "decreasePassengers": "تقليل عدد الركاب",
+      "increasePassengers": "زيادة عدد الركاب",
+      "suggestedDepartures": "المغادرات المقترحة",
+      "suggestedArrivals": "الوصولات المقترحة",
+      "back": "رجوع",
+      "searchAction": "بحث عن الرحلات",
+      "chooseDepartureFirst": "يرجى اختيار مدينة المغادرة أولاً",
+      "sameCityNotAllowed": "يجب أن تختلف مدينة الوصول عن المغادرة",
+      "chooseDeparture": "يرجى اختيار مدينة المغادرة",
+      "chooseArrival": "يرجى اختيار مدينة الوصول",
+      "searchHint": "حدد مسارك واضغط بحث للعثور على الرحلات.",
+      "featuredTrips": "رحلات مقترحة",
+      "featuredLoadError": "تعذر تحميل الرحلات الآن.",
+      "results": {
+        "title": "الرحلات",
+        "subtitle": "خريطة المسار والقوائم المطابقة",
+        "availableTrips": "الرحلات المتاحة",
+        "tripsFound": "الرحلات الموجودة ({{count}})",
+        "summary": "{{date}} · {{count}} ركاب",
+        "mapUnavailable": "خريطة المسار غير متاحة حالياً.",
+        "priceRange": "نطاق السعر",
+        "listingType": "نوع الإعلان",
+        "vehicleType": "نوع المركبة"
+      }
     },
     "listings": {
       "title": "قوائمي",
       "subtitle": "أدِر الرحلات والمسارات التي أضفتها.",
+      "searchTitle": "بحث",
+      "searchSubtitle": "ابحث عن رحلات نشرها السائقون واحجزها.",
       "emptyTitle": "لا توجد قوائم بعد",
       "emptySubtitle": "انشر رحلة وستظهر هنا.",
-      "passengerHint": "بدّل إلى وضع السائق لإنشاء وإدارة قوائم الرحلات.",
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",
@@ -228,7 +288,13 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "نشط",
         "ended": "منتهية",
-        "photoCount": "{{current}}/{{total}}"
+        "pending": "قيد الانتظار",
+        "booked": "محجوز",
+        "notStarted": "لم تبدأ بعد",
+        "timerHours": "متبقي {{hours}}س {{minutes}}د",
+        "timerMinutes": "متبقي {{minutes}}د",
+        "photoCount": "{{current}}/{{total}}",
+        "viewPhotos": "عرض الصور"
       },
       "detail": {
         "title": "تفاصيل القائمة",
@@ -256,7 +322,7 @@
         "share": "مشاركة القائمة",
         "edit": "تعديل القائمة",
         "editComingSoon": "تعديل القوائم سيكون متاحًا قريبًا.",
-        "shareMessage": "قائمة Stride: {{from}} → {{to}}. السعر {{price}} /مقعد.",
+        "shareMessage": "قائمة Musafir249: {{from}} → {{to}}. السعر {{price}} /مقعد.",
         "comingSoonTitle": "قريبًا",
         "comingSoonBody": "سيكون هذا القسم متاحًا في تحديث لاحق.",
         "manageHint": "أزل هذه القائمة إذا لم تعد بحاجة إليها.",
@@ -271,6 +337,50 @@
           "responses": "الردود ({{count}})",
           "activity": "النشاط",
           "manage": "إدارة"
+        },
+        "responses": {
+          "title": "الردود",
+          "capacity": "{{confirmed}} من {{total}} مقاعد مؤكدة",
+          "refresh": "تحديث",
+          "loadFailed": "تعذر تحميل الردود.",
+          "actionFailed": "تعذر إتمام هذا الإجراء.",
+          "retry": "حاول مرة أخرى",
+          "emptyTitle": "لا توجد ردود بعد",
+          "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
+          "offerLabel": "الرد رقم {{index}}",
+          "seats_one": "مقعد {{count}}",
+          "seats_other": "{{count}} مقاعد",
+          "accept": "قبول",
+          "reject": "رفض",
+          "rejectConfirmTitle": "رفض هذا العرض؟",
+          "rejectConfirmBody": "سيتم إعلام الراكب بأن عرضه قد رُفض.",
+          "offerStatus": {
+            "active": "قيد الانتظار",
+            "selected": "بانتظار التأكيد",
+            "confirmed": "مؤكد",
+            "withdrawn": "مسحوب",
+            "declined": "مرفوض",
+            "timed_out": "منتهي الصلاحية"
+          }
+        },
+        "offer": {
+          "title": "قدّم عرضك",
+          "loadFailed": "تعذر تحميل عروض هذه القائمة.",
+          "submitFailed": "تعذر إرسال عرضك.",
+          "withdrawFailed": "تعذر سحب عرضك.",
+          "retry": "حاول مرة أخرى",
+          "seatsLabel": "المقاعد",
+          "seatsPlaceholder": "عدد المقاعد",
+          "pricePerSeatLabel": "السعر لكل مقعد",
+          "pricePlaceholder": "أدخل السعر الذي تعرضه",
+          "totalLabel": "السعر الإجمالي",
+          "totalCalc": "{{price}} × {{seats}}",
+          "submit": "إرسال العرض",
+          "withdraw": "سحب العرض",
+          "withdrawConfirmAction": "سحب",
+          "withdrawConfirmTitle": "سحب هذا العرض؟",
+          "withdrawConfirmBody": "لن يرى السائق هذا العرض بعد الآن.",
+          "closed": "لم تعد هذه القائمة تقبل العروض."
         }
       },
       "remove": {
@@ -311,7 +421,7 @@
       },
       "becomeDriver": {
         "title": "كن سائقاً",
-        "subtitle": "قدّم رحلات واكسب مع Stride",
+        "subtitle": "قدّم رحلات واكسب مع Musafir249",
         "confirm": "هل تريد تحويل هذا الحساب إلى وضع السائق؟ يمكنك الرجوع في أي وقت من الإعدادات.",
         "confirmCta": "كن سائقاً"
       },
@@ -384,7 +494,10 @@
       "saveFailed": "تعذر تحديث رمز MPIN. حاول مرة أخرى."
     },
     "biometric": {
-      "sectionTitle": "الدخول البيومتري"
+      "sectionTitle": "الدخول البيومتري",
+      "confirmMpinTitle": "أكد رمز MPIN",
+      "confirmMpinBody": "أدخل رمز MPIN الحالي حتى يتمكن الدخول البيومتري من تسجيل دخولك في المرة القادمة.",
+      "confirmMpinCta": "متابعة"
     }
   },
   "biometric": {
@@ -416,13 +529,14 @@
     "listSubtitle": "أضف وأدر المركبات التي تقودها",
     "addVehicle": "إضافة مركبة",
     "emptyTitle": "لا توجد مركبات بعد",
-    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Stride.",
+    "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Musafir249.",
     "detailsTitle": "تفاصيل المركبة",
     "detailsSubtitle": "أخبرنا عن مركبتك",
     "continue": "متابعة",
     "classPlaceholder": "اختر فئة المركبة",
     "classPickerTitle": "اختر فئة المركبة",
     "seatsCount": "{{count}} مقاعد",
+    "selected": "محددة",
     "remove": {
       "title": "إزالة المركبة",
       "confirm": "هل أنت متأكد أنك تريد إزالة \"{{title}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -446,6 +560,8 @@
       "acOff": "بدون تكييف",
       "totalSeats": "إجمالي المقاعد",
       "totalSeatsPlaceholder": "أدخل عدد المقاعد",
+      "decreaseSeats": "تقليل المقاعد",
+      "increaseSeats": "زيادة المقاعد",
       "class": "فئة المركبة",
       "brand": "العلامة التجارية",
       "brandPlaceholder": "مثال: Toyota",
@@ -459,10 +575,7 @@
       "sedan": "سيدان",
       "bus": "حافلة",
       "van": "فان",
-      "coaster": "كوستر",
-      "hiace": "هايس",
-      "minibus": "ميني باص",
-      "pickup": "بيك أب"
+      "coaster": "كوستر"
     },
     "photos": {
       "title": "صور المركبة",
@@ -492,7 +605,7 @@
       "vehicleModeLabel": "عرض الرحلة",
       "vehicleModeShared": "مركبة مشتركة",
       "vehicleModeSharedHint": "يشارك الركاب المقاعد مع ركاب آخرين.",
-      "vehicleModeFullPrivate": "مركبة خاصة كاملة",
+      "vehicleModeFullPrivate": "مركبة خاصة",
       "vehicleModeFullPrivateHint": "يحجز راكب واحد المركبة بالكامل.",
       "detailsTitle": "تفاصيل الرحلة",
       "detailsSubtitle": "حدّد معلومات المغادرة والوصول",
@@ -508,6 +621,7 @@
       "arrivalCity": "مدينة الوصول",
       "arrivalPoint": "نقطة الوصول",
       "arrivalDateTime": "تاريخ ووقت الوصول",
+      "arrivalAfterDepartureError": "يجب أن يكون وقت الوصول بعد المغادرة",
       "description": "الوصف",
       "descriptionPlaceholder": "أضف ملاحظات للركاب (اختياري)",
       "cityPlaceholder": "ابحث عن مدينة",
@@ -567,6 +681,7 @@
       "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
       "successTitle": "تم نشر الرحلة",
       "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
+      "showMyListings": "عرض قوائمي",
       "noVehiclesTitle": "أضف مركبة أولاً",
       "noVehiclesSubtitle": "تحتاج إلى مركبة واحدة على الأقل قبل إنشاء رحلة."
     }
@@ -632,11 +747,11 @@
     },
     "terms": {
       "title": "الشروط والأحكام",
-      "intro": "مرحباً بك في Stride. توضح هذه الشروط والأحكام كيفية استخدام منصة الحجز لدينا. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
+      "intro": "مرحباً بك في Musafir249. توضح هذه الشروط والأحكام كيفية استخدام منصة الحجز لدينا. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
       "sections": {
         "acceptance": {
           "title": "1. قبول الشروط",
-          "body": "بإنشاء حساب أو استخدام أي جزء من Stride، فإنك توافق على هذه الشروط والأحكام. إذا كنت لا توافق، يجب عليك عدم استخدام المنصة."
+          "body": "بإنشاء حساب أو استخدام أي جزء من Musafir249، فإنك توافق على هذه الشروط والأحكام. إذا كنت لا توافق، يجب عليك عدم استخدام المنصة."
         },
         "eligibility": {
           "title": "2. الأهلية",
@@ -644,7 +759,7 @@
         },
         "platformUse": {
           "title": "3. استخدام المنصة",
-          "body": "تساعدك Stride على مقارنة وحجز الحافلات والمركبات والرحلات الخاصة. توافق على استخدام المنصة لأغراض مشروعة فقط وعدم إساءة استخدام الحجوزات أو المدفوعات."
+          "body": "تساعدك Musafir249 على مقارنة وحجز الحافلات والمركبات والرحلات الخاصة. توافق على استخدام المنصة لأغراض مشروعة فقط وعدم إساءة استخدام الحجوزات أو المدفوعات."
         },
         "accountsSecurity": {
           "title": "4. الحسابات والأمان",
@@ -656,17 +771,17 @@
         },
         "limitationLiability": {
           "title": "6. تحديد المسؤولية",
-          "body": "إلى أقصى حد يسمح به القانون، تُقدَّم Stride «كما هي». لسنا مسؤولين عن الخسائر غير المباشرة أو العرضية الناتجة عن استخدام المنصة أثناء سريان هذه السياسة التجريبية."
+          "body": "إلى أقصى حد يسمح به القانون، تُقدَّم Musafir249 «كما هي». لسنا مسؤولين عن الخسائر غير المباشرة أو العرضية الناتجة عن استخدام المنصة أثناء سريان هذه السياسة التجريبية."
         },
         "changesTerms": {
           "title": "7. تغييرات الشروط",
-          "body": "قد نحدّث هذه الشروط والأحكام من وقت لآخر. استمرار استخدام Stride بعد نشر التغييرات يُعد قبولاً للشروط المعدّلة."
+          "body": "قد نحدّث هذه الشروط والأحكام من وقت لآخر. استمرار استخدام Musafir249 بعد نشر التغييرات يُعد قبولاً للشروط المعدّلة."
         }
       }
     },
     "privacy": {
       "title": "سياسة الخصوصية",
-      "intro": "خصوصيتك تهمنا. توضح سياسة الخصوصية هذه المعلومات التي قد تجمعها Stride وكيف نستخدمها والخيارات المتاحة لك. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
+      "intro": "خصوصيتك تهمنا. توضح سياسة الخصوصية هذه المعلومات التي قد تجمعها Musafir249 وكيف نستخدمها والخيارات المتاحة لك. المحتوى أدناه نص تجريبي لأغراض العرض فقط.",
       "sections": {
         "informationCollect": {
           "title": "1. المعلومات التي نجمعها",

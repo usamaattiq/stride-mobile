@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
+﻿import * as SecureStore from 'expo-secure-store';
 
 const STORAGE_KEYS = {
-  accessToken: 'stride.auth.accessToken',
-  deviceInstallId: 'stride.device.installId',
-  cachedMpin: 'stride.security.cachedMpin',
+  accessToken: 'musafir249.auth.accessToken',
+  deviceInstallId: 'musafir249.device.installId',
+  cachedMpin: 'musafir249.security.cachedMpin',
 } as const;
 
 async function getItem(key: string): Promise<string | null> {

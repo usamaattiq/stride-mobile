@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 type DateTimePickerFieldProps = {
@@ -37,7 +38,7 @@ function parseIso(value: string | null): Date {
 }
 
 function formatDate(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(withLatinDigitsLocale(locale), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -45,7 +46,7 @@ function formatDate(date: Date, locale: string): string {
 }
 
 function formatTime(date: Date, locale: string): string {
-  return date.toLocaleTimeString(locale, {
+  return date.toLocaleTimeString(withLatinDigitsLocale(locale), {
     hour: 'numeric',
     minute: '2-digit',
   });

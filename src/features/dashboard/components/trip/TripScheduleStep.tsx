@@ -92,7 +92,7 @@ export function TripScheduleStep({
               >
                 {selected ? (
                   <View style={styles.checkBadge}>
-                    <FontAwesome name="check" size={10} color={colors.white} />
+                    <FontAwesome name="check" size={9} color={colors.white} />
                   </View>
                 ) : null}
 
@@ -120,20 +120,6 @@ export function TripScheduleStep({
             required
           />
         ) : null}
-
-        <View style={styles.infoBanner}>
-          <View style={styles.infoIcon}>
-            <FontAwesome name="info" size={12} color={colors.accent.blue.text} />
-          </View>
-          <View style={styles.infoCopy}>
-            <AppText weight="bold" style={styles.infoTitle}>
-              {t('trips.create.scheduleChangeLaterTitle')}
-            </AppText>
-            <AppText style={styles.infoBody}>
-              {t('trips.create.scheduleChangeLaterBody')}
-            </AppText>
-          </View>
-        </View>
 
         <Button
           label={`${t('common.continue')} →`}
@@ -199,9 +185,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -228,40 +214,6 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   optionDescription: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.text.secondary,
-  },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.accent.blue.soft,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  infoIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.accent.blue.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  infoCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  infoTitle: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  infoBody: {
     fontSize: 12,
     lineHeight: 16,
     color: colors.text.secondary,

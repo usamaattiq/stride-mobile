@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "stride",
+      "brandName": "musafir249",
       "title": "Book your next trip in minutes",
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
@@ -21,17 +21,18 @@
       "searchPlaceholder": "Search country or code",
       "noResults": "No countries found"
     },
+    "otpLimitReached": "You have reached your limit for this number. Please wait 10 minutes and try again.",
     "signup": {
       "phone": {
         "title": "Enter Mobile Number",
-        "subtitle": "We'll send tou a verification code",
+        "subtitle": "We'll send you a verification code",
         "placeholder": "300 1234567",
         "cta": "Send OTP",
         "sendFailed": "We couldn't send the verification code. Please try again."
       },
       "otp": {
         "title": "OTP Verification",
-        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "subtitle": "Enter the 6-digit code sent to\n{{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
@@ -105,8 +106,7 @@
         "creditsEarned": "You earned",
         "credits": "{{count}} Credits",
         "creditsReason": "for your first listing",
-        "dashboard": "Go to Dashboard",
-        "explore": "Start Exploring"
+        "dashboard": "Go to Dashboard"
       }
     },
     "login": {
@@ -118,7 +118,7 @@
       },
       "otp": {
         "title": "OTP Verification",
-        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "subtitle": "Enter the 6-digit code sent to\n{{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
@@ -140,7 +140,7 @@
       "forgotMpin": {
         "otp": {
           "title": "Verify it's you",
-          "subtitle": "Enter the 6-digit code sent to {{phone}} to reset your MPIN"
+          "subtitle": "Enter the 6-digit code sent to\n{{phone}} to reset your MPIN"
         },
         "newMpin": {
           "title": "Set a new MPIN",
@@ -165,6 +165,7 @@
     "tabs": {
       "Home": "Home",
       "MyListings": "My Listings",
+      "Search": "Search",
       "MyOffers": "My Offers",
       "Settings": "Settings",
       "createTripA11y": "Create trip"
@@ -177,6 +178,7 @@
       "credits": "Credits",
       "chatA11y": "Open chats",
       "notificationsA11y": "Open notifications",
+      "profileA11y": "Open settings",
       "creditsA11y": "{{count}} credits",
       "bannerTitle": "Available Reverse Requests",
       "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
@@ -184,9 +186,10 @@
       "filter": "Filter",
       "filterA11y": "Open filters",
       "categoryAll": "All Requests",
+      "categoryAllListings": "All",
       "categoryRfq": "RFQ",
       "categoryAuction": "Auction",
-      "categoryFullVehicle": "Full Vehicle",
+      "categoryPrivate": "Private",
       "categoryShared": "Shared",
       "badgeAuction": "AUCTION",
       "badgeRfq": "RFQ",
@@ -197,10 +200,30 @@
       "adTitle": "Grow Your Transport Business",
       "adSubtitle": "Create listings and get more bookings.",
       "emptyTitle": "No requests",
-      "emptySubtitle": "When passengers post reverse requests near you, they will show up here."
+      "emptySubtitle": "When passengers post reverse requests near you, they will show up here.",
+      "tripsBannerTitle": "Available Trips",
+      "tripsBannerSubtitle": "Browse driver listings and place your best offer or bid.",
+      "tripsEmptyTitle": "No trips available",
+      "tripsEmptySubtitle": "When drivers publish trips matching your search, they will show up here.",
+      "pageOf": "Page {{page}} of {{total}}",
+      "previousPageA11y": "Previous page",
+      "nextPageA11y": "Next page",
+      "filterSheetTitle": "Filter trips",
+      "filterPaymentMethod": "Payment method",
+      "filterDepartureCity": "Departure city",
+      "filterArrivalCity": "Arrival city",
+      "filterVehicleMode": "Shared or private",
+      "filterSeats": "Number of seats",
+      "filterSeatsCount": "{{count}} seats",
+      "filterAny": "Any",
+      "filterReset": "Reset",
+      "filterApply": "Apply filters",
+      "listingsFilterEmptyTitle": "No matches",
+      "listingsFilterEmptySubtitle": "Try adjusting or clearing your filters."
     },
     "messages": {
       "title": "Messages",
+      "subtitle": "Chats about trips, bookings, and listings.",
       "searchPlaceholder": "Search messages...",
       "filterAll": "All Messages",
       "filterUnread": "Unread",
@@ -211,15 +234,52 @@
     },
     "notifications": {
       "title": "Notifications",
+      "subtitle": "Updates about offers, bookings, and listings.",
       "emptyTitle": "No notifications",
       "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
+    },
+    "search": {
+      "shared": "Shared",
+      "private": "Private",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "swapCities": "Swap departure and arrival",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "passengerCount": "Passenger",
+      "passengerCountValue": "{{count}} passengers",
+      "decreasePassengers": "Decrease passengers",
+      "increasePassengers": "Increase passengers",
+      "suggestedDepartures": "Suggested Departures",
+      "suggestedArrivals": "Suggested Arrivals",
+      "back": "Back",
+      "searchAction": "Search trips",
+      "chooseDepartureFirst": "Please choose departure city first",
+      "sameCityNotAllowed": "Arrival city must be different from departure",
+      "chooseDeparture": "Please choose departure city",
+      "chooseArrival": "Please choose arrival city",
+      "searchHint": "Set your route and tap search to find trips.",
+      "featuredTrips": "Suggested trips",
+      "featuredLoadError": "Could not load trips right now.",
+      "results": {
+        "title": "Trips",
+        "subtitle": "Route map and matching listings",
+        "availableTrips": "Available Trips",
+        "tripsFound": "Trips found ({{count}})",
+        "summary": "{{date}} · {{count}} passengers",
+        "mapUnavailable": "Route map is unavailable right now.",
+        "priceRange": "Price range",
+        "listingType": "Listing type",
+        "vehicleType": "Vehicle type"
+      }
     },
     "listings": {
       "title": "My Listings",
       "subtitle": "Manage the rides and routes you have listed.",
+      "searchTitle": "Search",
+      "searchSubtitle": "Find and book trips posted by drivers near you.",
       "emptyTitle": "No listings yet",
       "emptySubtitle": "Publish a trip and it will show up here.",
-      "passengerHint": "Switch to driver mode to create and manage trip listings.",
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",
@@ -228,7 +288,13 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "Active",
         "ended": "Ended",
-        "photoCount": "{{current}}/{{total}}"
+        "pending": "Pending",
+        "booked": "Booked",
+        "notStarted": "Not started yet",
+        "timerHours": "{{hours}}h {{minutes}}m left",
+        "timerMinutes": "{{minutes}}m left",
+        "photoCount": "{{current}}/{{total}}",
+        "viewPhotos": "View photos"
       },
       "detail": {
         "title": "Listing details",
@@ -256,7 +322,7 @@
         "share": "Share Listing",
         "edit": "Edit Listing",
         "editComingSoon": "Editing listings will be available soon.",
-        "shareMessage": "Stride listing: {{from}} → {{to}}. Price {{price}} /seat.",
+        "shareMessage": "Musafir249 listing: {{from}} → {{to}}. Price {{price}} /seat.",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available in a future update.",
         "manageHint": "Remove this listing if it is no longer needed.",
@@ -271,6 +337,50 @@
           "responses": "Responses ({{count}})",
           "activity": "Activity",
           "manage": "Manage"
+        },
+        "responses": {
+          "title": "Responses",
+          "capacity": "{{confirmed}} of {{total}} seats confirmed",
+          "refresh": "Refresh",
+          "loadFailed": "Couldn't load responses.",
+          "actionFailed": "Couldn't complete that action.",
+          "retry": "Try again",
+          "emptyTitle": "No responses yet",
+          "emptyBody": "Passenger offers for this trip will show up here.",
+          "offerLabel": "Response #{{index}}",
+          "seats_one": "{{count}} seat",
+          "seats_other": "{{count}} seats",
+          "accept": "Accept",
+          "reject": "Reject",
+          "rejectConfirmTitle": "Reject this offer?",
+          "rejectConfirmBody": "The passenger will be notified that their offer was declined.",
+          "offerStatus": {
+            "active": "Pending",
+            "selected": "Awaiting confirmation",
+            "confirmed": "Confirmed",
+            "withdrawn": "Withdrawn",
+            "declined": "Declined",
+            "timed_out": "Expired"
+          }
+        },
+        "offer": {
+          "title": "Place your offer",
+          "loadFailed": "Couldn't load this listing's offers.",
+          "submitFailed": "Couldn't send your offer.",
+          "withdrawFailed": "Couldn't withdraw your offer.",
+          "retry": "Try again",
+          "seatsLabel": "Seats",
+          "seatsPlaceholder": "Number of seats",
+          "pricePerSeatLabel": "Price per seat",
+          "pricePlaceholder": "Enter the price you're offering",
+          "totalLabel": "Total price",
+          "totalCalc": "{{price}} × {{seats}}",
+          "submit": "Send offer",
+          "withdraw": "Withdraw offer",
+          "withdrawConfirmAction": "Withdraw",
+          "withdrawConfirmTitle": "Withdraw this offer?",
+          "withdrawConfirmBody": "The driver will no longer see this offer.",
+          "closed": "This listing is no longer accepting offers."
         }
       },
       "remove": {
@@ -311,7 +421,7 @@
       },
       "becomeDriver": {
         "title": "Become a driver",
-        "subtitle": "Offer rides and earn with Stride",
+        "subtitle": "Offer rides and earn with Musafir249",
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
@@ -384,7 +494,10 @@
       "saveFailed": "We couldn't update your MPIN. Please try again."
     },
     "biometric": {
-      "sectionTitle": "Biometric login"
+      "sectionTitle": "Biometric login",
+      "confirmMpinTitle": "Confirm your MPIN",
+      "confirmMpinBody": "Enter your current MPIN so biometric login can sign you in next time.",
+      "confirmMpinCta": "Continue"
     }
   },
   "biometric": {
@@ -416,13 +529,14 @@
     "listSubtitle": "Add and manage the vehicles you drive",
     "addVehicle": "Add vehicle",
     "emptyTitle": "No vehicles yet",
-    "emptySubtitle": "Add your first vehicle to start offering rides on Stride.",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Musafir249.",
     "detailsTitle": "Vehicle details",
     "detailsSubtitle": "Tell us about your vehicle",
     "continue": "Continue",
     "classPlaceholder": "Select vehicle class",
     "classPickerTitle": "Select vehicle class",
     "seatsCount": "{{count}} seats",
+    "selected": "Selected",
     "remove": {
       "title": "Remove vehicle",
       "confirm": "Are you sure you want to remove \"{{title}}\"? This cannot be undone.",
@@ -446,6 +560,8 @@
       "acOff": "Non-AC",
       "totalSeats": "Total seats",
       "totalSeatsPlaceholder": "Enter number of seats",
+      "decreaseSeats": "Decrease seats",
+      "increaseSeats": "Increase seats",
       "class": "Vehicle class",
       "brand": "Brand",
       "brandPlaceholder": "e.g. Toyota",
@@ -459,10 +575,7 @@
       "sedan": "Sedan",
       "bus": "Bus",
       "van": "Van",
-      "coaster": "Coaster",
-      "hiace": "Hiace",
-      "minibus": "Minibus",
-      "pickup": "Pickup"
+      "coaster": "Coaster"
     },
     "photos": {
       "title": "Vehicle photos",
@@ -492,7 +605,7 @@
       "vehicleModeLabel": "Trip offering",
       "vehicleModeShared": "Shared vehicle",
       "vehicleModeSharedHint": "Passengers share seats with other riders.",
-      "vehicleModeFullPrivate": "Full private vehicle",
+      "vehicleModeFullPrivate": "Private vehicle",
       "vehicleModeFullPrivateHint": "One passenger books the entire vehicle.",
       "detailsTitle": "Trip details",
       "detailsSubtitle": "Set departure and arrival information",
@@ -508,6 +621,7 @@
       "arrivalCity": "Arrival city",
       "arrivalPoint": "Arrival point",
       "arrivalDateTime": "Arrival date & time",
+      "arrivalAfterDepartureError": "Arrival must be after departure",
       "description": "Description",
       "descriptionPlaceholder": "Add notes for passengers (optional)",
       "cityPlaceholder": "Search city",
@@ -567,6 +681,7 @@
       "publishFailed": "Couldn't publish this trip. Please try again.",
       "successTitle": "Trip published",
       "successBody": "Your trip is live. You can manage it from My Listings.",
+      "showMyListings": "Show my listings",
       "noVehiclesTitle": "Add a vehicle first",
       "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }
@@ -632,11 +747,11 @@
     },
     "terms": {
       "title": "Terms & Conditions",
-      "intro": "Welcome to Stride. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Welcome to Musafir249. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "acceptance": {
           "title": "1. Acceptance of Terms",
-          "body": "By creating an account or using any part of Stride, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
+          "body": "By creating an account or using any part of Musafir249, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
         },
         "eligibility": {
           "title": "2. Eligibility",
@@ -644,7 +759,7 @@
         },
         "platformUse": {
           "title": "3. Platform Use",
-          "body": "Stride helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
+          "body": "Musafir249 helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
         },
         "accountsSecurity": {
           "title": "4. Accounts and Security",
@@ -656,17 +771,17 @@
         },
         "limitationLiability": {
           "title": "6. Limitation of Liability",
-          "body": "To the fullest extent permitted by law, Stride is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
+          "body": "To the fullest extent permitted by law, Musafir249 is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
         },
         "changesTerms": {
           "title": "7. Changes to These Terms",
-          "body": "We may update these Terms & Conditions from time to time. Continued use of Stride after changes are published constitutes acceptance of the revised terms."
+          "body": "We may update these Terms & Conditions from time to time. Continued use of Musafir249 after changes are published constitutes acceptance of the revised terms."
         }
       }
     },
     "privacy": {
       "title": "Privacy Policy",
-      "intro": "Your privacy matters to us. This Privacy Policy explains what information Stride may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Your privacy matters to us. This Privacy Policy explains what information Musafir249 may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "informationCollect": {
           "title": "1. Information We Collect",

@@ -121,11 +121,12 @@ const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
   listHeader: {
     gap: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
   },
   separator: {
     height: spacing.sm,
