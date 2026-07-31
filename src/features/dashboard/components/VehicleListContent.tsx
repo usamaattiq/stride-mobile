@@ -91,7 +91,7 @@ export function VehicleListItem({
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
+        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
         locations={[0, 0.55, 1]}
         start={{ x: 0.35, y: 0.15 }}
         end={{ x: 1, y: 1 }}
