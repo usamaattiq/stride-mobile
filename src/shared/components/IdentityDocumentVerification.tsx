@@ -33,8 +33,6 @@ export type IdentityDocumentVerificationProps = {
   onSubmit: () => void;
   onSkip?: () => void;
   keyboardType?: KeyboardTypeOptions;
-  /** Minimum trimmed length for the document number. Defaults to 5. */
-  minDocumentNumberLength?: number;
   loading?: boolean;
   errorMessage?: string | null;
 };
@@ -61,7 +59,6 @@ export function IdentityDocumentVerification({
   onSubmit,
   onSkip,
   keyboardType = 'default',
-  minDocumentNumberLength = 5,
   loading = false,
   errorMessage = null,
 }: IdentityDocumentVerificationProps): React.ReactElement {
@@ -70,7 +67,7 @@ export function IdentityDocumentVerification({
   const showDoneBar = keyboardType !== 'default';
   const canSubmit =
     !loading &&
-    documentNumber.trim().length >= minDocumentNumberLength &&
+    documentNumber.trim().length > 0 &&
     Boolean(frontUri) &&
     Boolean(backUri);
 

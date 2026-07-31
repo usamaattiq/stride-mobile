@@ -2,12 +2,14 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
 import type { LanguageSwitcherTriggerProps } from './types/language-switcher.types';
 
 const isAndroid = Platform.OS === 'android';
+const isIos = Platform.OS === 'ios';
 
 const androidTextStyle = isAndroid
   ? ({
@@ -15,6 +17,11 @@ const androidTextStyle = isAndroid
       textAlignVertical: 'center' as const,
     } satisfies object)
   : null;
+
+// Cairo's ascent/descent sits Arabic glyphs slightly high in the line box on iOS.
+const iosArabicLabelStyle = {
+  paddingTop: 2,
+} as const;
 
 const glassRipple = isAndroid
   ? ({ color: 'rgba(255,255,255,0.2)', borderless: false, foreground: true } satisfies object)
@@ -29,7 +36,9 @@ export function LanguageSwitcherTrigger({
   onPress,
   variant,
 }: LanguageSwitcherTriggerProps): React.ReactElement {
+  const { currentLanguage } = useLanguage();
   const isGlass = variant === 'glass';
+  const iosArabicAlign = isIos && currentLanguage === 'ar' ? iosArabicLabelStyle : null;
 
   return (
     <Pressable
@@ -47,7 +56,11 @@ export function LanguageSwitcherTrigger({
       </View>
       <AppText
         weight="medium"
-        style={[isGlass ? styles.glassLabel : styles.label, androidTextStyle]}
+        style={[
+          isGlass ? styles.glassLabel : styles.label,
+          androidTextStyle,
+          iosArabicAlign,
+        ]}
         numberOfLines={1}
       >
         {language.label}

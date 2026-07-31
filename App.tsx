@@ -11,7 +11,6 @@ import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
 import { isSessionRevokedError } from './src/services/api/apiError';
-import { ensureLocationPermission } from './src/services/locationPermission';
 import { authStore } from './src/store/authStore';
 import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
@@ -57,13 +56,6 @@ export default function App() {
       console.warn('[fonts] Failed to load custom fonts', fontError);
     }
   }, [fontError]);
-
-  // Ask for location access up front so it's already granted by the time any
-  // map/picker screen needs it, instead of only prompting lazily on first use.
-  // Fire-and-forget: never blocks app readiness, and no-ops if already decided.
-  useEffect(() => {
-    void ensureLocationPermission();
-  }, []);
 
   // Cold-start session bootstrap: a stored token is treated as sufficient proof of
   // identity — a valid token skips straight to the dashboard, no MPIN/biometric
