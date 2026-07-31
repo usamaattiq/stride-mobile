@@ -32,7 +32,7 @@
       },
       "otp": {
         "title": "OTP Verification",
-        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "subtitle": "Enter the 6-digit code sent to\n{{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
@@ -118,7 +118,7 @@
       },
       "otp": {
         "title": "OTP Verification",
-        "subtitle": "Enter the 6-digit code sent to {{phone}}",
+        "subtitle": "Enter the 6-digit code sent to\n{{phone}}",
         "cta": "Verify OTP",
         "resend": "Resend code",
         "resendIn": "Resend code in {{time}}",
@@ -140,7 +140,7 @@
       "forgotMpin": {
         "otp": {
           "title": "Verify it's you",
-          "subtitle": "Enter the 6-digit code sent to {{phone}} to reset your MPIN"
+          "subtitle": "Enter the 6-digit code sent to\n{{phone}} to reset your MPIN"
         },
         "newMpin": {
           "title": "Set a new MPIN",
