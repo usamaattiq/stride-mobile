@@ -318,7 +318,12 @@ export function ListingDetailScreen(): React.ReactElement {
                 </View>
 
                 <View style={[styles.page, { width: pageWidth }]}>
-                  <TripResponsesPanel tripId={trip.id} onCountChange={setResponsesCount} />
+                  <TripResponsesPanel
+                    tripId={trip.id}
+                    vehicleMode={trip.vehicleMode}
+                    vehicleTotalSeats={trip.vehicleTotalSeats}
+                    onCountChange={setResponsesCount}
+                  />
                 </View>
               </Animated.ScrollView>
             </View>

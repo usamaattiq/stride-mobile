@@ -12,8 +12,12 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
+import type { TripVehicleMode } from '../../types/trip.types';
+
 export type TripResponsesPanelProps = {
   tripId: string;
+  vehicleMode: TripVehicleMode;
+  vehicleTotalSeats: number | null;
   onCountChange?: (count: number) => void;
 };
 
@@ -39,9 +43,12 @@ function OfferBadge({ status, label }: { status: RfqOfferStatus; label: string }
 
 export function TripResponsesPanel({
   tripId,
+  vehicleMode,
+  vehicleTotalSeats,
   onCountChange,
 }: TripResponsesPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const isFullPrivate = vehicleMode === 'fullPrivate';
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -147,7 +154,11 @@ export function TripResponsesPanel({
                   {offer.offeredQuantity != null ? (
                     <AppText style={styles.offerMeta}>
                       {t('dashboard.listings.detail.responses.seats', {
-                        count: Number(offer.offeredQuantity),
+                        // Full-private offers hold offeredQuantity=1 (the whole-vehicle
+                        // capacity slot) — show the vehicle's real seat count instead.
+                        count: isFullPrivate
+                          ? (vehicleTotalSeats ?? 1)
+                          : Number(offer.offeredQuantity),
                       })}
                     </AppText>
                   ) : null}
