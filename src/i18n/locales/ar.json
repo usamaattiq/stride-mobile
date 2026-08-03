@@ -166,8 +166,9 @@
       "Home": "الرئيسية",
       "MyListings": "قوائمي",
       "Search": "بحث",
-      "MyOffers": "عروضي",
+      "Vehicle": "المركبة",
       "Settings": "الإعدادات",
+      "CreateTrip": "إضافة رحلة",
       "createTripA11y": "إنشاء رحلة"
     },
     "home": {
@@ -278,8 +279,15 @@
       "subtitle": "أدِر الرحلات والمسارات التي أضفتها.",
       "searchTitle": "بحث",
       "searchSubtitle": "ابحث عن رحلات نشرها السائقون واحجزها.",
+      "searchPlaceholder": "ابحث عن مدينة أو مسار أو مركبة...",
       "emptyTitle": "لا توجد قوائم بعد",
       "emptySubtitle": "انشر رحلة وستظهر هنا.",
+      "statusFilter": {
+        "all": "الكل",
+        "live": "مباشر",
+        "past": "سابق",
+        "completed": "مكتمل"
+      },
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",
@@ -357,8 +365,12 @@
           "emptyTitle": "لا توجد ردود بعد",
           "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
           "offerLabel": "الرد رقم {{index}}",
-          "seats_one": "مقعد {{count}}",
-          "seats_other": "{{count}} مقاعد",
+          "seats_zero": "لا مقاعد",
+          "seats_one": "مقعد واحد",
+          "seats_two": "مقعدان",
+          "seats_few": "{{count}} مقاعد",
+          "seats_many": "{{count}} مقعداً",
+          "seats_other": "{{count}} مقعد",
           "accept": "قبول",
           "reject": "رفض",
           "rejectConfirmTitle": "رفض هذا العرض؟",
@@ -400,10 +412,6 @@
         "failed": "تعذر إزالة هذه القائمة. يرجى المحاولة مرة أخرى."
       }
     },
-    "offers": {
-      "title": "عروضي",
-      "subtitle": "تتبّع العروض التي أرسلتها واستلمتها."
-    },
     "settings": {
       "title": "الإعدادات",
       "subtitle": "الحساب واللغة وتفضيلات التطبيق."
@@ -427,6 +435,10 @@
       "generalInfo": {
         "title": "المعلومات العامة",
         "subtitle": "الاسم ورقم الهاتف وتفاصيل الملف"
+      },
+      "nicVerification": {
+        "title": "التحقق من الهوية",
+        "subtitle": "ارفع وأدر مستندات الهوية الوطنية"
       },
       "becomeDriver": {
         "title": "كن سائقاً",
@@ -536,11 +548,34 @@
     "homeBannerCta": "إدارة المركبات",
     "listTitle": "مركباتي",
     "listSubtitle": "أضف وأدر المركبات التي تقودها",
+    "addVehicleTitle": "إضافة مركبة",
     "addVehicle": "إضافة مركبة",
+    "searchPlaceholder": "ابحث بالعنوان أو اللوحة أو العلامة...",
     "emptyTitle": "لا توجد مركبات بعد",
     "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Musafir249.",
+    "filter": {
+      "title": "تصفية المركبات",
+      "acAny": "الكل",
+      "emptyTitle": "لا توجد نتائج",
+      "emptySubtitle": "جرّب بحثاً مختلفاً أو امسح عوامل التصفية."
+    },
     "detailsTitle": "تفاصيل المركبة",
     "detailsSubtitle": "أخبرنا عن مركبتك",
+    "view": {
+      "title": "تفاصيل المركبة",
+      "edit": "تعديل",
+      "editA11y": "تعديل المركبة",
+      "notFound": "تعذر العثور على هذه المركبة.",
+      "notProvided": "غير متوفر",
+      "noPhotos": "لا توجد صور",
+      "photoA11y": "الصورة {{number}} من {{total}}",
+      "sections": {
+        "overview": "نظرة عامة",
+        "specs": "المواصفات",
+        "description": "الوصف",
+        "photos": "الصور ({{count}})"
+      }
+    },
     "continue": "متابعة",
     "classPlaceholder": "اختر فئة المركبة",
     "classPickerTitle": "اختر فئة المركبة",
@@ -588,16 +623,29 @@
     },
     "photos": {
       "title": "صور المركبة",
-      "subtitle": "أضف صوراً واضحة لمركبتك",
+      "subtitle": "أضف حتى 6 صور واضحة لمركبتك",
       "gridLabel": "صور المركبة",
+      "countHint": "{{count}} من {{max}} صور",
       "emptyHint": "لا توجد صور بعد. اضغط إضافة صور للاختيار من المعرض.",
       "addPictures": "إضافة صور",
-      "addPicturesHint": "اختر صورة واحدة أو أكثر من المعرض",
+      "addPicturesHint": "اختر حتى 6 صور من المعرض",
       "removePhotoA11y": "إزالة الصورة {{number}}",
       "cta": "حفظ المركبة"
     },
     "errors": {
-      "seatsRequired": "إجمالي المقاعد مطلوب"
+      "titleRequired": "العنوان مطلوب",
+      "titleTooLong": "يجب ألا يتجاوز العنوان 120 حرفاً",
+      "descriptionRequired": "الوصف مطلوب",
+      "descriptionTooLong": "يجب ألا يتجاوز الوصف 1000 حرف",
+      "plateRequired": "رقم اللوحة مطلوب",
+      "plateTooLong": "يجب ألا يتجاوز رقم اللوحة 32 حرفاً",
+      "seatsRequired": "إجمالي المقاعد مطلوب",
+      "seatsInvalid": "أدخل عدداً بين 1 و 60 مقعداً",
+      "classRequired": "فئة المركبة مطلوبة",
+      "brandTooLong": "يجب ألا تتجاوز العلامة التجارية 80 حرفاً",
+      "modelTooLong": "يجب ألا يتجاوز الموديل 80 حرفاً",
+      "yearInvalid": "أدخل سنة صحيحة بين 1900 و 2100",
+      "photosRequired": "أضف صورة واحدة على الأقل للمركبة"
     }
   },
   "trips": {
@@ -726,9 +774,12 @@
     "uploadHint": "اضغط للرفع والقص",
     "changeHint": "اضغط للتغيير",
     "cta": "إرسال والتحقق",
+    "saveCta": "حفظ التغييرات",
     "submitFailed": "تعذر إكمال التحقق من الهوية. يرجى المحاولة مرة أخرى.",
     "successTitle": "تم التحقق من الهوية",
     "successBody": "تم حفظ مستندات الهوية.",
+    "savedTitle": "تم تحديث الهوية",
+    "savedBody": "تم حفظ مستندات الهوية بنجاح.",
     "successBodyContinueLicense": "تم حفظ الهوية. بعد ذلك ارفع رخصة القيادة.",
     "continueLicenseCta": "متابعة"
   },

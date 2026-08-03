@@ -166,8 +166,9 @@
       "Home": "Home",
       "MyListings": "My Listings",
       "Search": "Search",
-      "MyOffers": "My Offers",
+      "Vehicle": "Vehicle",
       "Settings": "Settings",
+      "CreateTrip": "Add trip",
       "createTripA11y": "Create trip"
     },
     "home": {
@@ -278,8 +279,15 @@
       "subtitle": "Manage the rides and routes you have listed.",
       "searchTitle": "Search",
       "searchSubtitle": "Find and book trips posted by drivers near you.",
+      "searchPlaceholder": "Search city, route or vehicle...",
       "emptyTitle": "No listings yet",
       "emptySubtitle": "Publish a trip and it will show up here.",
+      "statusFilter": {
+        "all": "All",
+        "live": "Live",
+        "past": "Past",
+        "completed": "Completed"
+      },
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",
@@ -357,7 +365,11 @@
           "emptyTitle": "No responses yet",
           "emptyBody": "Passenger offers for this trip will show up here.",
           "offerLabel": "Response #{{index}}",
+          "seats_zero": "{{count}} seats",
           "seats_one": "{{count}} seat",
+          "seats_two": "{{count}} seats",
+          "seats_few": "{{count}} seats",
+          "seats_many": "{{count}} seats",
           "seats_other": "{{count}} seats",
           "accept": "Accept",
           "reject": "Reject",
@@ -400,10 +412,6 @@
         "failed": "Couldn't remove this listing. Please try again."
       }
     },
-    "offers": {
-      "title": "My Offers",
-      "subtitle": "Track offers you have sent and received."
-    },
     "settings": {
       "title": "Settings",
       "subtitle": "Account, language, and app preferences."
@@ -427,6 +435,10 @@
       "generalInfo": {
         "title": "General information",
         "subtitle": "Name, phone, and profile details"
+      },
+      "nicVerification": {
+        "title": "NIC verification",
+        "subtitle": "Upload and manage your NIC documents"
       },
       "becomeDriver": {
         "title": "Become a driver",
@@ -536,11 +548,34 @@
     "homeBannerCta": "Manage vehicles",
     "listTitle": "My vehicles",
     "listSubtitle": "Add and manage the vehicles you drive",
+    "addVehicleTitle": "Add a vehicle",
     "addVehicle": "Add vehicle",
+    "searchPlaceholder": "Search by title, plate, brand...",
     "emptyTitle": "No vehicles yet",
     "emptySubtitle": "Add your first vehicle to start offering rides on Musafir249.",
+    "filter": {
+      "title": "Filter vehicles",
+      "acAny": "Any",
+      "emptyTitle": "No matches",
+      "emptySubtitle": "Try a different search or clear your filters."
+    },
     "detailsTitle": "Vehicle details",
     "detailsSubtitle": "Tell us about your vehicle",
+    "view": {
+      "title": "Vehicle details",
+      "edit": "Edit",
+      "editA11y": "Edit vehicle",
+      "notFound": "This vehicle could not be found.",
+      "notProvided": "Not provided",
+      "noPhotos": "No photos added",
+      "photoA11y": "Photo {{number}} of {{total}}",
+      "sections": {
+        "overview": "Overview",
+        "specs": "Specifications",
+        "description": "Description",
+        "photos": "Photos ({{count}})"
+      }
+    },
     "continue": "Continue",
     "classPlaceholder": "Select vehicle class",
     "classPickerTitle": "Select vehicle class",
@@ -588,16 +623,29 @@
     },
     "photos": {
       "title": "Vehicle photos",
-      "subtitle": "Add clear photos of your vehicle",
+      "subtitle": "Add up to 6 clear photos of your vehicle",
       "gridLabel": "Vehicle photos",
+      "countHint": "{{count}} of {{max}} photos",
       "emptyHint": "No photos yet. Tap Add pictures to select from your gallery.",
       "addPictures": "Add pictures",
-      "addPicturesHint": "Select one or more photos from your gallery",
+      "addPicturesHint": "Select up to 6 photos from your gallery",
       "removePhotoA11y": "Remove photo {{number}}",
       "cta": "Save vehicle"
     },
     "errors": {
-      "seatsRequired": "Total seats is required"
+      "titleRequired": "Title is required",
+      "titleTooLong": "Title must be 120 characters or fewer",
+      "descriptionRequired": "Description is required",
+      "descriptionTooLong": "Description must be 1000 characters or fewer",
+      "plateRequired": "Plate number is required",
+      "plateTooLong": "Plate number must be 32 characters or fewer",
+      "seatsRequired": "Total seats is required",
+      "seatsInvalid": "Enter between 1 and 60 seats",
+      "classRequired": "Vehicle class is required",
+      "brandTooLong": "Brand must be 80 characters or fewer",
+      "modelTooLong": "Model must be 80 characters or fewer",
+      "yearInvalid": "Enter a valid year between 1900 and 2100",
+      "photosRequired": "Add at least one vehicle photo"
     }
   },
   "trips": {
@@ -726,9 +774,12 @@
     "uploadHint": "Tap to upload & crop",
     "changeHint": "Tap to change",
     "cta": "Submit & verify",
+    "saveCta": "Save changes",
     "submitFailed": "Couldn't complete NIC verification. Please try again.",
     "successTitle": "NIC verified",
     "successBody": "Your identity documents were saved.",
+    "savedTitle": "NIC updated",
+    "savedBody": "Your NIC documents were saved successfully.",
     "successBodyContinueLicense": "NIC saved. Next, upload your driving license.",
     "continueLicenseCta": "Continue"
   },

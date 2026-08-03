@@ -1,7 +1,13 @@
 import React from 'react';
 import {
+  Animated,
+  Dimensions,
   FlatList,
   InteractionManager,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -20,17 +26,29 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
+import { DashboardSearchBar } from '../components/DashboardSearchBar';
 import { HomeHeader } from '../components/HomeHeader';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
+import { ListingStatusChips } from '../components/ListingStatusChips';
+import { ListingsEmptyState } from '../components/ListingsEmptyState';
 import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
+import { SegmentControl } from '../components/SegmentControl';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { DashboardTabParamList } from '../navigation/types';
-import type { Trip } from '../types/trip.types';
+import type { Trip, TripListingType } from '../types/trip.types';
+import {
+  matchesListingQuery,
+  matchesListingStatus,
+  matchesListingType,
+  type ListingStatusFilter,
+} from '../utils/listingFilters';
 
 const SKELETON_COUNT = 4;
+const LISTING_TYPES: TripListingType[] = ['rfq', 'auction'];
+const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
 export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -41,16 +59,30 @@ export function MyListingsScreen(): React.ReactElement {
   const { user } = useDashboardSession();
   const { trips, loadError, refreshTrips, removeTrip } = useTrips();
 
+  const [listingType, setListingType] = React.useState<TripListingType>('rfq');
+  const [statusFilter, setStatusFilter] = React.useState<ListingStatusFilter>('all');
+  const [query, setQuery] = React.useState('');
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
   /** True from tab focus until the deferred fetch finishes — keeps the screen light. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(user.role === 'driver');
+  const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
+  const pagerRef = React.useRef<ScrollView>(null);
+  const scrollX = React.useRef(new Animated.Value(0)).current;
 
   const roleLabel =
     user.role === 'driver'
       ? t('profile.roles.driver')
       : t('profile.roles.passenger');
+
+  const typeOptions = React.useMemo(
+    () => [
+      { id: 'rfq' as const, label: t('dashboard.home.categoryRfq') },
+      { id: 'auction' as const, label: t('dashboard.home.categoryAuction') },
+    ],
+    [t],
+  );
 
   const goToSettings = React.useCallback(() => {
     tabNavigation.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
@@ -86,6 +118,79 @@ export function MyListingsScreen(): React.ReactElement {
       };
     }, [refreshTrips, user.role]),
   );
+
+  const selectListingType = React.useCallback(
+    (next: TripListingType, animated = true) => {
+      setListingType(next);
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = LISTING_TYPES.indexOf(next);
+      pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+      if (!animated) {
+        scrollX.setValue(index * pageWidth);
+      }
+    },
+    [pageWidth, scrollX],
+  );
+
+  const animatedTypeIndex = React.useMemo(() => {
+    if (pageWidth <= 0) {
+      return undefined;
+    }
+    return scrollX.interpolate({
+      inputRange: [0, pageWidth],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+  }, [pageWidth, scrollX]);
+
+  const syncTypeFromOffset = React.useCallback(
+    (offsetX: number) => {
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = Math.round(offsetX / pageWidth);
+      const nextType = LISTING_TYPES[Math.min(Math.max(index, 0), LISTING_TYPES.length - 1)];
+      setListingType((current) => (current === nextType ? current : nextType));
+    },
+    [pageWidth],
+  );
+
+  const onPagerScrollEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      syncTypeFromOffset(event.nativeEvent.contentOffset.x);
+    },
+    [syncTypeFromOffset],
+  );
+
+  const onPagerLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const width = event.nativeEvent.layout.width;
+      if (width <= 0 || width === pageWidth) {
+        return;
+      }
+      setPageWidth(width);
+      const index = LISTING_TYPES.indexOf(listingType);
+      scrollX.setValue(index * width);
+      requestAnimationFrame(() => {
+        pagerRef.current?.scrollTo({ x: index * width, animated: false });
+      });
+    },
+    [listingType, pageWidth, scrollX],
+  );
+
+  const tripsByType = React.useMemo(() => {
+    const applySharedFilters = (trip: Trip) =>
+      matchesListingStatus(trip, statusFilter) && matchesListingQuery(trip, query);
+
+    return {
+      rfq: trips.filter((trip) => matchesListingType(trip, 'rfq') && applySharedFilters(trip)),
+      auction: trips.filter(
+        (trip) => matchesListingType(trip, 'auction') && applySharedFilters(trip),
+      ),
+    };
+  }, [trips, statusFilter, query]);
 
   const handleConfirmRemove = () => {
     if (!tripToRemove || removing) {
@@ -143,49 +248,73 @@ export function MyListingsScreen(): React.ReactElement {
     );
   }
 
-  const listBody = isScreenLoading ? (
-    <View style={styles.skeletonList}>
-      {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-        <ListingCardSkeleton key={`listing-skeleton-${index}`} />
-      ))}
-    </View>
-  ) : loadError && trips.length === 0 ? (
-    <View style={styles.centered}>
-      <AppText style={styles.errorText}>{loadError}</AppText>
-      <Button
-        label={t('dashboard.listings.retry')}
-        onPress={() => {
-          setIsScreenLoading(true);
-          void refreshTrips()
-            .catch(() => undefined)
-            .finally(() => setIsScreenLoading(false));
-        }}
+  const filtersHeader = (
+    <View style={styles.filters}>
+      <ListingStatusChips active={statusFilter} onChange={setStatusFilter} />
+      <DashboardSearchBar
+        value={query}
+        onChangeText={setQuery}
+        placeholder={t('dashboard.listings.searchPlaceholder')}
       />
     </View>
-  ) : trips.length === 0 ? (
-    <View style={styles.centered}>
-      <AppText weight="semibold" style={styles.emptyTitle}>
-        {t('dashboard.listings.emptyTitle')}
-      </AppText>
-      <AppText style={styles.emptySubtitle}>
-        {t('dashboard.listings.emptySubtitle')}
-      </AppText>
-    </View>
-  ) : (
-    <FlatList
-      data={trips}
-      keyExtractor={(item) => item.id}
-      renderItem={renderTrip}
-      contentContainerStyle={styles.listContent}
-      ItemSeparatorComponent={ListSeparator}
-      showsVerticalScrollIndicator={false}
-      initialNumToRender={4}
-      maxToRenderPerBatch={4}
-      windowSize={5}
-      removeClippedSubviews
-      updateCellsBatchingPeriod={50}
-    />
   );
+
+  const renderTypePage = (type: TripListingType, width: number) => {
+    const pageTrips = tripsByType[type];
+    let pageBody: React.ReactElement;
+
+    if (isScreenLoading) {
+      pageBody = (
+        <View style={styles.skeletonList}>
+          {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+            <ListingCardSkeleton key={`listing-skeleton-${type}-${index}`} />
+          ))}
+        </View>
+      );
+    } else if (loadError && trips.length === 0) {
+      pageBody = (
+        <View style={styles.centered}>
+          <AppText style={styles.errorText}>{loadError}</AppText>
+          <Button
+            label={t('dashboard.listings.retry')}
+            onPress={() => {
+              setIsScreenLoading(true);
+              void refreshTrips()
+                .catch(() => undefined)
+                .finally(() => setIsScreenLoading(false));
+            }}
+          />
+        </View>
+      );
+    } else if (trips.length === 0) {
+      pageBody = <ListingsEmptyState variant="none" />;
+    } else if (pageTrips.length === 0) {
+      pageBody = <ListingsEmptyState variant="filtered" />;
+    } else {
+      pageBody = (
+        <FlatList
+          data={pageTrips}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTrip}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={ListSeparator}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          removeClippedSubviews
+          updateCellsBatchingPeriod={50}
+          keyboardShouldPersistTaps="handled"
+        />
+      );
+    }
+
+    return (
+      <View key={type} style={[styles.page, { width }]}>
+        {pageBody}
+      </View>
+    );
+  };
 
   return (
     <AuthScaffold
@@ -196,8 +325,37 @@ export function MyListingsScreen(): React.ReactElement {
       compactHeader
       scrollable={false}
       contentWrapStyle={styles.contentWrap}
+      headerExtra={
+        <SegmentControl
+          variant="onBrand"
+          options={typeOptions}
+          value={listingType}
+          onChange={selectListingType}
+          animatedIndex={animatedTypeIndex}
+        />
+      }
     >
-      {listBody}
+      {filtersHeader}
+      <View style={styles.pager} onLayout={onPagerLayout}>
+        <Animated.ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+            useNativeDriver: true,
+          })}
+          onScrollEndDrag={onPagerScrollEnd}
+          onMomentumScrollEnd={onPagerScrollEnd}
+          scrollEventThrottle={16}
+        >
+          {LISTING_TYPES.map((type) => renderTypePage(type, pageWidth))}
+        </Animated.ScrollView>
+      </View>
 
       <AppDialog
         visible={tripToRemove !== null}
@@ -246,6 +404,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: 0,
   },
+  filters: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  pager: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  page: {
+    flex: 1,
+  },
   listContent: {
     flexGrow: 1,
     paddingBottom: spacing.huge + spacing.md,
@@ -258,19 +427,11 @@ const styles = StyleSheet.create({
     height: spacing.sm,
   },
   centered: {
+    flexGrow: 1,
     gap: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    color: colors.text.primary,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    textAlign: 'center',
   },
   errorText: {
     fontSize: 13,

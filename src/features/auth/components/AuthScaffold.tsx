@@ -62,6 +62,8 @@ type AuthScaffoldProps = {
   showLanguageSwitcher?: boolean;
   /** Optional control rendered on the right of the header top bar. */
   headerRight?: React.ReactNode;
+  /** Optional content rendered in the red header below the title/subtitle. */
+  headerExtra?: React.ReactNode;
   /**
    * Content-sized red header (matches Settings height) instead of the tall auth percentage height.
    */
@@ -94,6 +96,7 @@ export function AuthScaffold({
   showLegalFooter = true,
   showLanguageSwitcher = true,
   headerRight,
+  headerExtra,
   compactHeader = false,
   centerTitleInTopBar = false,
   stepCount,
@@ -239,6 +242,8 @@ export function AuthScaffold({
               <SignupStepIndicator total={stepCount} current={currentStep} onBrand />
             </View>
           ) : null}
+
+          {headerExtra ? <View style={styles.headerExtra}>{headerExtra}</View> : null}
         </View>
 
         <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact, cardWrapStyle]}>
@@ -315,6 +320,9 @@ const styles = StyleSheet.create({
   },
   stepSlot: {
     marginHorizontal: spacing.xxl,
+  },
+  headerExtra: {
+    marginTop: spacing.sm,
   },
   backButton: {
     width: 34,

@@ -17,9 +17,16 @@ export type DocumentUploadFieldProps = {
   required?: boolean;
   /** Smaller label to match tighter forms. */
   dense?: boolean;
+  /**
+   * Square tile for multi-column grids (e.g. NIC front/back in a 2-col row).
+   * Box fills the parent width with aspectRatio 1.
+   */
+  tile?: boolean;
   hint?: string;
   /** Label shown over the preview once an image is selected. */
   changeHint?: string;
+  /** Accessibility label for the clear/remove control. */
+  removeAccessibilityLabel?: string;
   /** Enable the native crop step after selecting an image. Defaults to true. */
   allowsEditing?: boolean;
   /** Crop aspect ratio (Android honors this; iOS uses its own crop UI). */
@@ -32,8 +39,10 @@ export function DocumentUploadField({
   onChange,
   required = false,
   dense = false,
+  tile = false,
   hint = 'Tap to upload image',
   changeHint = 'Tap to change',
+  removeAccessibilityLabel = 'Remove',
   allowsEditing = true,
   aspect = DEFAULT_ASPECT,
 }: DocumentUploadFieldProps): React.ReactElement {
@@ -61,39 +70,74 @@ export function DocumentUploadField({
   };
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, tile && styles.wrapTile]}>
       <AppText
-        weight={dense ? 'bold' : 'medium'}
-        style={[styles.label, dense && styles.labelDense]}
+        weight={dense || tile ? 'bold' : 'medium'}
+        style={[styles.label, dense && styles.labelDense, tile && styles.labelTile]}
+        numberOfLines={tile ? 1 : undefined}
       >
         {label}
         {required ? (
-          <AppText style={[styles.required, dense && styles.requiredDense]}> *</AppText>
+          <AppText
+            style={[
+              styles.required,
+              dense && styles.requiredDense,
+              tile && styles.requiredTile,
+            ]}
+          >
+            {' '}
+            *
+          </AppText>
         ) : null}
       </AppText>
-      <Pressable
-        onPress={pickImage}
-        style={styles.box}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
-        {uri ? (
-          <>
-            <Image source={{ uri }} style={styles.preview} contentFit="cover" />
-            <View style={styles.editBadge}>
-              <FontAwesome name="crop" size={12} color={colors.white} />
-              <AppText weight="medium" style={styles.editBadgeText}>
-                {changeHint}
+      <View style={[styles.box, tile && styles.boxTile]}>
+        <Pressable
+          onPress={pickImage}
+          style={styles.boxPress}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
+          {uri ? (
+            <>
+              <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+              <View style={[styles.editBadge, tile && styles.editBadgeTile]}>
+                <FontAwesome name="crop" size={tile ? 10 : 12} color={colors.white} />
+                {tile ? null : (
+                  <AppText weight="medium" style={styles.editBadgeText}>
+                    {changeHint}
+                  </AppText>
+                )}
+              </View>
+            </>
+          ) : (
+            <View style={[styles.empty, tile && styles.emptyTile]}>
+              <FontAwesome
+                name="cloud-upload"
+                size={tile ? 18 : 22}
+                color={colors.primary}
+              />
+              <AppText
+                style={[styles.hint, tile && styles.hintTile]}
+                numberOfLines={tile ? 2 : undefined}
+              >
+                {hint}
               </AppText>
             </View>
-          </>
-        ) : (
-          <View style={styles.empty}>
-            <FontAwesome name="cloud-upload" size={22} color={colors.primary} />
-            <AppText style={styles.hint}>{hint}</AppText>
-          </View>
-        )}
-      </Pressable>
+          )}
+        </Pressable>
+
+        {uri ? (
+          <Pressable
+            onPress={() => onChange(null)}
+            style={[styles.removeBadge, tile && styles.removeBadgeTile]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={removeAccessibilityLabel}
+          >
+            <FontAwesome name="times" size={tile ? 10 : 12} color={colors.white} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -102,6 +146,9 @@ const styles = StyleSheet.create({
   wrap: {
     gap: spacing.xs,
   },
+  wrapTile: {
+    width: '100%',
+  },
   label: {
     fontSize: 13,
     color: colors.text.primary,
@@ -109,12 +156,18 @@ const styles = StyleSheet.create({
   labelDense: {
     fontSize: 14,
   },
+  labelTile: {
+    fontSize: 12,
+  },
   required: {
     fontSize: 13,
     color: colors.primary,
   },
   requiredDense: {
     fontSize: 14,
+  },
+  requiredTile: {
+    fontSize: 12,
   },
   box: {
     height: 120,
@@ -124,6 +177,14 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: colors.background.subtle,
     overflow: 'hidden',
+  },
+  boxTile: {
+    height: undefined,
+    width: '100%',
+    aspectRatio: 1,
+  },
+  boxPress: {
+    ...StyleSheet.absoluteFillObject,
   },
   preview: {
     ...StyleSheet.absoluteFillObject,
@@ -140,9 +201,32 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: 'rgba(10, 10, 10, 0.6)',
   },
+  editBadgeTile: {
+    right: spacing.xxs,
+    bottom: spacing.xxs,
+    paddingHorizontal: spacing.xxs,
+    paddingVertical: spacing.xxs,
+  },
   editBadgeText: {
     fontSize: 11,
     color: colors.white,
+  },
+  removeBadge: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(10, 10, 10, 0.65)',
+  },
+  removeBadgeTile: {
+    top: spacing.xxs,
+    right: spacing.xxs,
+    width: 22,
+    height: 22,
   },
   empty: {
     flex: 1,
@@ -151,9 +235,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.md,
   },
+  emptyTile: {
+    gap: spacing.xxs,
+    padding: spacing.xs,
+  },
   hint: {
     fontSize: 12,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  hintTile: {
+    fontSize: 10,
   },
 });

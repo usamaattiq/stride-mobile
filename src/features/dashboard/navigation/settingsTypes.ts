@@ -1,8 +1,6 @@
-import type { VehicleRouteParamList } from './vehicleNavigation.types';
-
 export type DriverVerificationPurpose = 'become' | 'complete';
 
-export type SettingsStackParamList = VehicleRouteParamList & {
+export type SettingsStackParamList = {
   SettingsHome: undefined;
   SecuritySettings: undefined;
   DriverVerification: { purpose?: DriverVerificationPurpose } | undefined;

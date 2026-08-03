@@ -79,7 +79,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     // Refresh vehicle list so the newly added vehicle is available in state.
     void refreshVehicles().catch(() => undefined).finally(() => {
       patchDraft({ vehicleId: selectVehicleId });
-      setStep('vehicle');
+      setStep('vehicleMode');
       navigation.setParams({ selectVehicleId: undefined });
     });
   }, [navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
@@ -228,8 +228,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
             vehicles={vehicles}
             isLoading={isLoadingVehicles}
             selectedVehicleId={draft.vehicleId}
-            onSelectVehicle={(vehicleId) => patchDraft({ vehicleId })}
-            onContinue={goToNextStep}
+            onSelectVehicle={(vehicleId) => {
+              patchDraft({ vehicleId });
+              goToNextStep();
+            }}
             onAddVehicle={handleAddVehicle}
           />
         ) : null}

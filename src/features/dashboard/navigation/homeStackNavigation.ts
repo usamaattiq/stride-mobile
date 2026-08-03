@@ -26,11 +26,26 @@ export function completeVehicleFlow(
 ): void {
   const origin = options?.stackOrigin ?? 'trip';
 
-  if (origin === 'settings') {
+  if (origin === 'vehicles') {
+    if (returnTo === 'VehicleView' && options?.selectVehicleId) {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            { name: 'VehicleList' },
+            {
+              name: 'VehicleView',
+              params: { vehicleId: options.selectVehicleId },
+            },
+          ],
+        }),
+      );
+      return;
+    }
     navigation.dispatch(
       CommonActions.reset({
-        index: 1,
-        routes: [{ name: 'SettingsHome' }, { name: 'VehicleList' }],
+        index: 0,
+        routes: [{ name: 'VehicleList' }],
       }),
     );
     return;
@@ -56,8 +71,13 @@ export function completeVehicleFlow(
 
   navigation.dispatch(
     CommonActions.reset({
-      index: 1,
-      routes: [{ name: 'MainTabs' }, { name: 'VehicleList' }],
+      index: 0,
+      routes: [
+        {
+          name: 'MainTabs',
+          params: { screen: 'Vehicle', params: { screen: 'VehicleList' } },
+        },
+      ],
     }),
   );
 }

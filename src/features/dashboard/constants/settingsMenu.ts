@@ -9,9 +9,9 @@ export type SettingsMenuAction =
   | 'privacy'
   | 'security'
   | 'general-info'
+  | 'nic-verification'
   | 'become-driver'
   | 'switch-driver'
-  | 'manage-vehicles'
   | 'switch-passenger';
 
 export type SettingsMenuItem = {
@@ -61,6 +61,13 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         action: 'general-info',
       },
       {
+        id: 'nic-verification',
+        titleKey: 'profile.account.nicVerification.title',
+        subtitleKey: 'profile.account.nicVerification.subtitle',
+        icon: 'id-card',
+        action: 'nic-verification',
+      },
+      {
         id: 'become-driver',
         titleKey: 'profile.account.becomeDriver.title',
         subtitleKey: 'profile.account.becomeDriver.subtitle',
@@ -84,14 +91,6 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         subtitleKey: 'profile.account.switchPassenger.subtitle',
         icon: 'user',
         action: 'switch-passenger',
-        roles: ['driver'],
-      },
-      {
-        id: 'manage-vehicles',
-        titleKey: 'profile.account.manageVehicles.title',
-        subtitleKey: 'profile.account.manageVehicles.subtitle',
-        icon: 'car',
-        action: 'manage-vehicles',
         roles: ['driver'],
       },
       {

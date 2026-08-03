@@ -16,7 +16,6 @@ import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { RequestCategoryChips } from './RequestCategoryChips';
 import { RequestSearchRow } from './RequestSearchRow';
-import { ReverseRequestsBanner } from './ReverseRequestsBanner';
 import { TripFilterSheet } from './TripFilterSheet';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
@@ -136,7 +135,6 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
 
   const listHeader = (
     <View style={styles.headerStack}>
-      <ReverseRequestsBanner />
       <RequestSearchRow
         query={query}
         onChangeQuery={setQuery}

@@ -196,8 +196,23 @@ type AddVehicleButtonProps = {
 
 export function AddVehicleButton({ onPress, label }: AddVehicleButtonProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const resolvedLabel = label ?? t('vehicles.addVehicle');
 
-  return <Button label={label ?? t('vehicles.addVehicle')} onPress={onPress} />;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={resolvedLabel}
+      onPress={onPress}
+      style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}
+    >
+      <View style={styles.addButtonIcon}>
+        <FontAwesome name="plus" size={14} color={colors.white} />
+      </View>
+      <AppText weight="bold" style={styles.addButtonLabel}>
+        {resolvedLabel}
+      </AppText>
+    </Pressable>
+  );
 }
 
 export function VehiclesEmptyState({
@@ -384,5 +399,31 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  addButton: {
+    minHeight: 52,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  addButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
+  addButtonIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonLabel: {
+    fontSize: 15,
+    color: colors.white,
   },
 });

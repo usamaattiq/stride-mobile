@@ -11,6 +11,8 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
+import { MAX_VEHICLE_PHOTOS } from '../types/vehicle.types';
+
 type VehiclePhotosFormProps = {
   photoUris: string[];
   onAddPhotos: (uris: string[]) => void;
@@ -22,6 +24,7 @@ type VehiclePhotosFormProps = {
 };
 
 const GRID_GAP = spacing.sm;
+const COLUMNS = 3;
 
 export function VehiclePhotosForm({
   photoUris,
@@ -33,8 +36,19 @@ export function VehiclePhotosForm({
   loading = false,
 }: VehiclePhotosFormProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
+
+  const remainingSlots = Math.max(0, MAX_VEHICLE_PHOTOS - photoUris.length);
+  const canAddMore = remainingSlots > 0;
+  const hasPhotos = photoUris.length > 0;
+  const photosError =
+    submitAttempted && !hasPhotos ? t('vehicles.errors.photosRequired') : undefined;
 
   const pickImages = async () => {
+    if (!canAddMore) {
+      return;
+    }
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       return;
@@ -43,6 +57,7 @@ export function VehiclePhotosForm({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
       allowsEditing: false,
       quality: 0.85,
     });
@@ -50,14 +65,26 @@ export function VehiclePhotosForm({
     if (!result.canceled && result.assets.length > 0) {
       const uris = result.assets
         .map((asset) => asset.uri)
-        .filter((uri): uri is string => Boolean(uri));
+        .filter((uri): uri is string => Boolean(uri))
+        .slice(0, remainingSlots);
       if (uris.length > 0) {
+        setSubmitAttempted(false);
         onAddPhotos(uris);
       }
     }
   };
 
-  const hasPhotos = photoUris.length > 0;
+  const handleRemovePhoto = (index: number) => {
+    onRemovePhoto(index);
+  };
+
+  const handleSubmit = () => {
+    setSubmitAttempted(true);
+    if (!hasPhotos || submitDisabled || loading) {
+      return;
+    }
+    onSubmit();
+  };
 
   // Relying on `aspectRatio` for square sizing is unreliable when a tile ends
   // up alone on the last flex-wrap row (e.g. an even photo count leaves the
@@ -65,7 +92,8 @@ export function VehiclePhotosForm({
   // grid's actual width and setting explicit pixel width/height on every tile
   // sidesteps that entirely.
   const [gridWidth, setGridWidth] = React.useState(0);
-  const tileSize = gridWidth > 0 ? (gridWidth - GRID_GAP) / 2 : null;
+  const tileSize =
+    gridWidth > 0 ? (gridWidth - GRID_GAP * (COLUMNS - 1)) / COLUMNS : null;
   const tileSizeStyle = tileSize ? { width: tileSize, height: tileSize } : null;
 
   return (
@@ -74,6 +102,12 @@ export function VehiclePhotosForm({
         <AppText weight="medium" style={styles.label}>
           {t('vehicles.photos.gridLabel')}
           <AppText style={styles.required}> *</AppText>
+        </AppText>
+        <AppText style={styles.countHint}>
+          {t('vehicles.photos.countHint', {
+            count: photoUris.length,
+            max: MAX_VEHICLE_PHOTOS,
+          })}
         </AppText>
 
         <View
@@ -84,7 +118,7 @@ export function VehiclePhotosForm({
             <View key={`${uri}-${index}`} style={[styles.gridItem, tileSizeStyle]}>
               <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
               <Pressable
-                onPress={() => onRemovePhoto(index)}
+                onPress={() => handleRemovePhoto(index)}
                 style={styles.removeBadge}
                 hitSlop={8}
                 accessibilityRole="button"
@@ -95,30 +129,34 @@ export function VehiclePhotosForm({
             </View>
           ))}
 
-          <Pressable
-            onPress={pickImages}
-            style={[
-              styles.gridItem,
-              styles.addTile,
-              hasPhotos ? tileSizeStyle : styles.addTileEmpty,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('vehicles.photos.addPictures')}
-            accessibilityHint={t('vehicles.photos.addPicturesHint')}
-          >
-            <View style={styles.addIconWrap}>
-              <FontAwesome name="plus" size={20} color={colors.primary} />
-            </View>
-            {!hasPhotos ? (
-              <AppText style={styles.addTileHint}>{t('vehicles.photos.addPictures')}</AppText>
-            ) : null}
-          </Pressable>
+          {canAddMore ? (
+            <Pressable
+              onPress={() => void pickImages()}
+              style={[
+                styles.gridItem,
+                styles.addTile,
+                photosError && !hasPhotos ? styles.addTileError : null,
+                hasPhotos ? tileSizeStyle : styles.addTileEmpty,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('vehicles.photos.addPictures')}
+              accessibilityHint={t('vehicles.photos.addPicturesHint')}
+            >
+              <View style={styles.addIconWrap}>
+                <FontAwesome name="plus" size={16} color={colors.primary} />
+              </View>
+              {!hasPhotos ? (
+                <AppText style={styles.addTileHint}>{t('vehicles.photos.addPictures')}</AppText>
+              ) : null}
+            </Pressable>
+          ) : null}
         </View>
+        {photosError ? <AppText style={styles.error}>{photosError}</AppText> : null}
 
         <Button
           label={submitLabel}
-          onPress={onSubmit}
-          disabled={submitDisabled || !hasPhotos}
+          onPress={handleSubmit}
+          disabled={submitDisabled}
           loading={loading}
         />
       </View>
@@ -138,13 +176,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
   },
+  countHint: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: -spacing.xxs,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: GRID_GAP,
   },
   gridItem: {
-    width: '47.5%',
+    width: '31%',
     aspectRatio: 1,
     borderRadius: radius.md,
     overflow: 'hidden',
@@ -158,10 +201,10 @@ const styles = StyleSheet.create({
   },
   removeBadge: {
     position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    width: 28,
-    height: 28,
+    top: spacing.xxs,
+    right: spacing.xxs,
+    width: 24,
+    height: 24,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -172,15 +215,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addTileError: {
+    borderColor: colors.primary,
+  },
   addTileEmpty: {
     width: '100%',
     aspectRatio: undefined,
-    minHeight: 140,
+    minHeight: 120,
     gap: spacing.xs,
   },
   addIconWrap: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,5 +235,9 @@ const styles = StyleSheet.create({
   addTileHint: {
     fontSize: 13,
     color: colors.text.secondary,
+  },
+  error: {
+    fontSize: 12,
+    color: colors.primary,
   },
 });

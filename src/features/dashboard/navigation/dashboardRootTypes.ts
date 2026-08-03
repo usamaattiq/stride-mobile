@@ -1,4 +1,7 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 import type { TripCity, TripVehicleMode } from '../types/trip.types';
+import type { DashboardTabParamList } from './types';
 import type { VehicleDetailsParams, VehiclePhotosParams } from './vehicleNavigation.types';
 
 export type TripCreationParams = {
@@ -16,7 +19,7 @@ export type SearchResultsParams = {
 };
 
 export type DashboardRootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<DashboardTabParamList> | undefined;
   TripCreation: TripCreationParams | undefined;
   TripPublishSuccess: undefined;
   VehicleDetails: VehicleDetailsParams;

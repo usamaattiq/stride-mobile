@@ -35,9 +35,12 @@ export type IdentityDocumentVerificationProps = {
   errorMessage?: string | null;
 };
 
+const GRID_GAP = spacing.sm;
+
 /**
  * Shared NIC / driving-license form body (number + front/back images).
  * Embed inside AuthScaffold + AuthCard — same shell as personal verification.
+ * Front/back tiles share one full-width row (2 equal columns).
  */
 export function IdentityDocumentVerification({
   documentNumber,
@@ -89,24 +92,32 @@ export function IdentityDocumentVerification({
         ) : null}
       </View>
 
-      <DocumentUploadField
-        label={frontLabel}
-        required
-        dense
-        uri={frontUri}
-        onChange={onChangeFront}
-        hint={uploadHint}
-        changeHint={changeHint}
-      />
-      <DocumentUploadField
-        label={backLabel}
-        required
-        dense
-        uri={backUri}
-        onChange={onChangeBack}
-        hint={uploadHint}
-        changeHint={changeHint}
-      />
+      <View style={styles.imagesRow}>
+        <View style={styles.tileCol}>
+          <DocumentUploadField
+            label={frontLabel}
+            required
+            dense
+            tile
+            uri={frontUri}
+            onChange={onChangeFront}
+            hint={uploadHint}
+            changeHint={changeHint}
+          />
+        </View>
+        <View style={styles.tileCol}>
+          <DocumentUploadField
+            label={backLabel}
+            required
+            dense
+            tile
+            uri={backUri}
+            onChange={onChangeBack}
+            hint={uploadHint}
+            changeHint={changeHint}
+          />
+        </View>
+      </View>
 
       {errorMessage ? (
         <AppText style={styles.errorText}>{errorMessage}</AppText>
@@ -164,6 +175,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     fontSize: 13,
     color: colors.text.primary,
+  },
+  imagesRow: {
+    flexDirection: 'row',
+    gap: GRID_GAP,
+  },
+  tileCol: {
+    flex: 1,
+    minWidth: 0,
   },
   skip: {
     alignItems: 'center',

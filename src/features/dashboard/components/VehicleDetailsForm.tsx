@@ -14,14 +14,18 @@ import { onlyLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 import { VehicleClassPicker } from './VehicleClassPicker';
-import { isVehicleDraftComplete, type VehicleDraft } from '../types/vehicle.types';
+import type { VehicleDraft } from '../types/vehicle.types';
+import {
+  getVehicleFieldErrorKey,
+  isVehicleDetailsValid,
+  type VehicleDetailsField,
+} from '../utils/vehicleValidation';
 
 const MIN_SEATS = 1;
 const MAX_SEATS = 60;
 
 type VehicleDetailsFormProps = {
   draft: VehicleDraft;
-  seatsError?: string;
   onChange: (partial: Partial<VehicleDraft>) => void;
   onSubmit: () => void;
   submitLabel: string;
@@ -35,7 +39,6 @@ function parseSeatCount(value: string): number {
 
 export function VehicleDetailsForm({
   draft,
-  seatsError,
   onChange,
   onSubmit,
   submitLabel,
@@ -43,11 +46,36 @@ export function VehicleDetailsForm({
 }: VehicleDetailsFormProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const yearAccessoryId = React.useId();
-  const canContinue = isVehicleDraftComplete(draft);
   const seatCount = parseSeatCount(draft.totalSeats);
 
+  const [touched, setTouched] = React.useState<Partial<Record<VehicleDetailsField, boolean>>>(
+    {},
+  );
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
+
+  const markTouched = React.useCallback((field: VehicleDetailsField) => {
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+  }, []);
+
+  const fieldError = (field: VehicleDetailsField): string | undefined => {
+    if (!touched[field] && !submitAttempted) {
+      return undefined;
+    }
+    const key = getVehicleFieldErrorKey(field, draft);
+    return key ? t(key) : undefined;
+  };
+
   const setSeatCount = (next: number) => {
+    markTouched('totalSeats');
     onChange({ totalSeats: String(Math.max(MIN_SEATS, Math.min(MAX_SEATS, next))) });
+  };
+
+  const handleSubmit = () => {
+    setSubmitAttempted(true);
+    if (!isVehicleDetailsValid(draft) || submitDisabled) {
+      return;
+    }
+    onSubmit();
   };
 
   return (
@@ -58,7 +86,9 @@ export function VehicleDetailsForm({
           required
           value={draft.title}
           onChangeText={(value) => onChange({ title: value })}
+          onBlur={() => markTouched('title')}
           placeholder={t('vehicles.fields.titlePlaceholder')}
+          error={fieldError('title')}
         />
 
         <AuthTextField
@@ -66,10 +96,12 @@ export function VehicleDetailsForm({
           required
           value={draft.description}
           onChangeText={(value) => onChange({ description: value })}
+          onBlur={() => markTouched('description')}
           placeholder={t('vehicles.fields.descriptionPlaceholder')}
           multiline
           textAlignVertical="top"
           style={styles.textArea}
+          error={fieldError('description')}
         />
 
         <AuthTextField
@@ -77,8 +109,10 @@ export function VehicleDetailsForm({
           required
           value={draft.plateNumber}
           onChangeText={(value) => onChange({ plateNumber: value })}
+          onBlur={() => markTouched('plateNumber')}
           placeholder={t('vehicles.fields.plateNumberPlaceholder')}
           autoCapitalize="characters"
+          error={fieldError('plateNumber')}
         />
 
         <BiometricToggleRow
@@ -96,7 +130,12 @@ export function VehicleDetailsForm({
             {t('vehicles.fields.totalSeats')}
             <AppText style={styles.required}> *</AppText>
           </AppText>
-          <View style={[styles.seatsRow, seatsError ? styles.seatsRowError : null]}>
+          <View
+            style={[
+              styles.seatsRow,
+              fieldError('totalSeats') ? styles.seatsRowError : null,
+            ]}
+          >
             <AppText weight="semibold" style={styles.seatsCaption} numberOfLines={1}>
               {t('vehicles.seatsCount', { count: seatCount })}
             </AppText>
@@ -142,46 +181,59 @@ export function VehicleDetailsForm({
               </Pressable>
             </View>
           </View>
-          {seatsError ? <AppText style={styles.seatsError}>{seatsError}</AppText> : null}
+          {fieldError('totalSeats') ? (
+            <AppText style={styles.seatsError}>{fieldError('totalSeats')}</AppText>
+          ) : null}
         </View>
 
         <VehicleClassPicker
           label={t('vehicles.fields.class')}
           placeholder={t('vehicles.classPlaceholder')}
           value={draft.vehicleClass}
-          onChange={(vehicleClass) => onChange({ vehicleClass })}
+          onChange={(vehicleClass) => {
+            markTouched('vehicleClass');
+            onChange({ vehicleClass });
+          }}
+          onBlur={() => markTouched('vehicleClass')}
           required
+          error={fieldError('vehicleClass')}
         />
 
         <AuthTextField
           label={t('vehicles.fields.brand')}
           value={draft.brand}
           onChangeText={(value) => onChange({ brand: value })}
+          onBlur={() => markTouched('brand')}
           placeholder={t('vehicles.fields.brandPlaceholder')}
+          error={fieldError('brand')}
         />
 
         <AuthTextField
           label={t('vehicles.fields.model')}
           value={draft.model}
           onChangeText={(value) => onChange({ model: value })}
+          onBlur={() => markTouched('model')}
           placeholder={t('vehicles.fields.modelPlaceholder')}
+          error={fieldError('model')}
         />
 
         <AuthTextField
           label={t('vehicles.fields.year')}
           value={draft.year}
           onChangeText={(value) => onChange({ year: onlyLatinDigits(value).slice(0, 4) })}
+          onBlur={() => markTouched('year')}
           placeholder={t('vehicles.fields.yearPlaceholder')}
           keyboardType="number-pad"
           inputAccessoryViewID={yearAccessoryId}
+          error={fieldError('year')}
         />
         <KeyboardDoneBar
           nativeID={yearAccessoryId}
-          disabled={!canContinue}
-          onDone={onSubmit}
+          disabled={submitDisabled}
+          onDone={handleSubmit}
         />
 
-        <Button label={submitLabel} onPress={onSubmit} disabled={submitDisabled || !canContinue} />
+        <Button label={submitLabel} onPress={handleSubmit} disabled={submitDisabled} />
       </View>
     </AuthCard>
   );
