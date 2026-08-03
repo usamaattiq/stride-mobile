@@ -36,8 +36,9 @@ export function HomeScreen(): React.ReactElement {
 
   const isPassenger = user.role === 'passenger';
   const showPanelChrome = panel === 'messages' || panel === 'notifications';
-  /** Driver feed + messages/notifications share the curved white sheet under the red header. */
-  const showCurvedBody = showPanelChrome || (!isPassenger && panel === 'feed');
+  /** Messages/notifications use the curved white sheet under the red title chrome. */
+  const showCurvedBody = showPanelChrome;
+  const showDriverFeed = !isPassenger && panel === 'feed';
 
   const showMessages = React.useCallback(() => setPanel('messages'), []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
@@ -131,6 +132,7 @@ export function HomeScreen(): React.ReactElement {
           styles.body,
           showCurvedBody && styles.bodyCurved,
           showPanelChrome && styles.bodyCurvedOverlap,
+          showDriverFeed && styles.bodyTransparent,
         ]}
       >
         {panel === 'feed' ? (
@@ -167,6 +169,9 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     backgroundColor: colors.background.canvas,
+  },
+  bodyTransparent: {
+    backgroundColor: 'transparent',
   },
   bodyCurved: {
     borderTopLeftRadius: 20,
