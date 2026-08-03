@@ -43,7 +43,7 @@ export function useKeyboardFocusScroll(
 // not used, see app.json) so the header keeps a fixed height regardless.
 const SCREEN_HEIGHT = Dimensions.get('screen').height;
 const HEADER_HEIGHT_WITH_STEPPER = SCREEN_HEIGHT * 0.24;
-const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.19;
+const HEADER_HEIGHT_NO_STEPPER = SCREEN_HEIGHT * 0.20;
 
 type AuthScaffoldProps = {
   /** Omit on tab roots where there is nowhere to go back. */
