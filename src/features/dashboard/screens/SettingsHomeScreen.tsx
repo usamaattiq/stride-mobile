@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -19,6 +19,7 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { LanguageSwitcherModal } from '@/shared/components/language-switcher/LanguageSwitcherModal';
 import { getLanguageOptions } from '@/shared/components/language-switcher/options';
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
+import { complianceDocUrl } from '@/shared/config/compliance';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -176,12 +177,26 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'language':
         setLanguageModalVisible(true);
         break;
-      case 'terms':
-        legal.openTerms();
+      case 'terms': {
+        const locale = currentLanguage === 'ar' ? 'ar' : 'en';
+        const url = complianceDocUrl('terms-and-conditions', locale);
+        if (url) {
+          void Linking.openURL(url).catch(() => legal.openTerms());
+        } else {
+          legal.openTerms();
+        }
         break;
-      case 'privacy':
-        legal.openPrivacy();
+      }
+      case 'privacy': {
+        const locale = currentLanguage === 'ar' ? 'ar' : 'en';
+        const url = complianceDocUrl('privacy-policy', locale);
+        if (url) {
+          void Linking.openURL(url).catch(() => legal.openPrivacy());
+        } else {
+          legal.openPrivacy();
+        }
         break;
+      }
       case 'security':
         navigation.navigate('SecuritySettings');
         break;
