@@ -4,7 +4,6 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -222,6 +221,7 @@ export function SettingsHomeScreen(): React.ReactElement {
         isIdentityComplete={isIdentityComplete}
         topInset={insets.top}
         onVerifyPress={handleVerifyPress}
+        onLogoutPress={() => setDialog('logout')}
       />
 
       <View style={styles.body}>
@@ -254,17 +254,6 @@ export function SettingsHomeScreen(): React.ReactElement {
           </View>
 
           <View style={styles.footer}>
-            <Pressable
-              style={styles.logoutRow}
-              accessibilityRole="button"
-              accessibilityLabel={t('profile.logout.title')}
-              onPress={() => setDialog('logout')}
-            >
-              <FontAwesome name="sign-out" size={16} color="#DC2626" />
-              <AppText weight="bold" style={styles.logoutLabel}>
-                {t('profile.logout.title')}
-              </AppText>
-            </Pressable>
             <AppText style={styles.versionLabel}>
               {t('profile.versionLabel')} {APP_VERSION}
             </AppText>
@@ -359,18 +348,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    gap: spacing.xxs,
     marginTop: 'auto',
-  },
-  logoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  logoutLabel: {
-    fontSize: 17,
-    color: '#DC2626',
   },
   versionLabel: {
     fontSize: 12,
