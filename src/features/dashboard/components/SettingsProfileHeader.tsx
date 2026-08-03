@@ -15,6 +15,7 @@ type SettingsProfileHeaderProps = {
   isIdentityComplete: boolean;
   topInset: number;
   onVerifyPress?: () => void;
+  onLogoutPress?: () => void;
 };
 
 function roleLabelKey(role: AppRole): string {
@@ -26,6 +27,7 @@ export function SettingsProfileHeader({
   isIdentityComplete,
   topInset,
   onVerifyPress,
+  onLogoutPress,
 }: SettingsProfileHeaderProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -50,12 +52,12 @@ export function SettingsProfileHeader({
               {user.fullName}
             </AppText>
             {isIdentityComplete ? (
-              <FontAwesome
-                name="check-circle"
-                size={16}
-                color={colors.white}
+              <View
+                style={styles.verifiedBadge}
                 accessibilityLabel={t('profile.verification.verified')}
-              />
+              >
+                <FontAwesome name="check" size={8} color={colors.white} />
+              </View>
             ) : null}
           </View>
           <AppText style={styles.role}>{t(roleLabelKey(user.role))}</AppText>
@@ -79,6 +81,18 @@ export function SettingsProfileHeader({
             </Pressable>
           ) : null}
         </View>
+
+        {onLogoutPress ? (
+          <Pressable
+            onPress={onLogoutPress}
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.logout.title')}
+          >
+            <FontAwesome name="sign-out" size={20} color={colors.white} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -124,6 +138,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  verifiedBadge: {
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+    backgroundColor: '#0095F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   name: {
     flexShrink: 1,
     fontSize: 20,
@@ -149,5 +171,15 @@ const styles = StyleSheet.create({
   unverifiedLabel: {
     fontSize: 12,
     color: colors.primary,
+  },
+  logoutButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

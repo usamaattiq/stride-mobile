@@ -1,3 +1,5 @@
+import type { RfqStatusValue } from '@/services/api/rfqApi.types';
+
 import type { VehicleClass } from './vehicle.types';
 
 export type TripVehicleMode = 'shared' | 'fullPrivate';
@@ -68,8 +70,8 @@ export type Trip = {
   scheduledStartAt: string | null;
   description: string | null;
   publishedAt: string;
-  /** Whether the trip's full capacity has been confirmed/accepted. */
-  isBooked: boolean;
+  /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
+  rfqStatus: RfqStatusValue | null;
 };
 
 export function createEmptyTripDraft(): TripDraft {
@@ -181,6 +183,6 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
-    isBooked: false,
+    rfqStatus: null,
   };
 }

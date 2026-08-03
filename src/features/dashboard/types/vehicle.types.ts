@@ -1,5 +1,7 @@
 export type VehicleClass = 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
 
+export const MAX_VEHICLE_PHOTOS = 6;
+
 export type Vehicle = {
   id: string;
   title: string;
@@ -63,14 +65,31 @@ export function vehicleToDraft(vehicle: Vehicle): VehicleDraft {
 }
 
 export function isVehicleDraftComplete(draft: VehicleDraft): boolean {
+  // Keep completeness aligned with inline field validation (including optional year format).
   const seats = Number.parseInt(draft.totalSeats.trim(), 10);
+  const year = draft.year.trim();
+  const yearOk =
+    year.length === 0 ||
+    (/^\d{4}$/.test(year) &&
+      (() => {
+        const parsed = Number.parseInt(year, 10);
+        return parsed >= 1900 && parsed <= 2100;
+      })());
+
   return (
     draft.title.trim().length > 0 &&
+    draft.title.trim().length <= 120 &&
     draft.description.trim().length > 0 &&
+    draft.description.trim().length <= 1000 &&
     draft.plateNumber.trim().length > 0 &&
+    draft.plateNumber.trim().length <= 32 &&
     draft.vehicleClass !== null &&
     Number.isFinite(seats) &&
-    seats > 0
+    seats >= 1 &&
+    seats <= 60 &&
+    draft.brand.trim().length <= 80 &&
+    draft.model.trim().length <= 80 &&
+    yearOk
   );
 }
 

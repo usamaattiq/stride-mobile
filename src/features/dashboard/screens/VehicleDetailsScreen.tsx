@@ -11,7 +11,7 @@ import { VehicleDetailsForm } from '../components/VehicleDetailsForm';
 import { useVehicles } from '../context/VehicleContext';
 import type { VehicleRouteParamList } from '../navigation/vehicleNavigation.types';
 import { resolveVehicleStackOrigin } from '../navigation/vehicleNavigation.utils';
-import { isVehicleDraftComplete } from '../types/vehicle.types';
+import { isVehicleDetailsValid } from '../utils/vehicleValidation';
 
 export function VehicleDetailsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -19,7 +19,6 @@ export function VehicleDetailsScreen(): React.ReactElement {
     useNavigation<NativeStackNavigationProp<VehicleRouteParamList, 'VehicleDetails'>>();
   const route = useRoute<RouteProp<VehicleRouteParamList, 'VehicleDetails'>>();
   const { draft, patchDraft, beginAddVehicle, beginEditVehicle } = useVehicles();
-  const [seatsError, setSeatsError] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     if (route.params.mode === 'add') {
@@ -32,19 +31,14 @@ export function VehicleDetailsScreen(): React.ReactElement {
   }, []);
 
   const handleContinue = () => {
-    const seats = Number.parseInt(draft.totalSeats.trim(), 10);
-    if (!Number.isFinite(seats) || seats <= 0) {
-      setSeatsError(t('vehicles.errors.seatsRequired'));
+    if (!isVehicleDetailsValid(draft)) {
       return;
     }
-    if (!isVehicleDraftComplete(draft)) {
-      return;
-    }
-    setSeatsError(undefined);
     const stackOrigin = route.params.stackOrigin ?? resolveVehicleStackOrigin(navigation);
     navigation.navigate('VehiclePhotos', {
       returnTo: route.params.returnTo ?? 'VehicleList',
       stackOrigin,
+      vehicleId: route.params.vehicleId,
     });
   };
 
@@ -60,13 +54,7 @@ export function VehicleDetailsScreen(): React.ReactElement {
     >
       <VehicleDetailsForm
         draft={draft}
-        seatsError={seatsError}
-        onChange={(partial) => {
-          if (partial.totalSeats != null) {
-            setSeatsError(undefined);
-          }
-          patchDraft(partial);
-        }}
+        onChange={patchDraft}
         onSubmit={handleContinue}
         submitLabel={t('vehicles.continue')}
       />

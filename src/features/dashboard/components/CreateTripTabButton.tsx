@@ -5,11 +5,16 @@ import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
-import { colors, radius } from '@/theme';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { AppText } from '@/shared/components/AppText';
+import { colors, radius, spacing } from '@/theme';
+import { getFontFamily } from '@/theme/typography';
 
 export function CreateTripTabButton(props: BottomTabBarButtonProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const { style, accessibilityState, ref: _ref, ...rest } = props;
+  const label = t('dashboard.tabs.CreateTrip');
 
   return (
     <Pressable
@@ -22,17 +27,25 @@ export function CreateTripTabButton(props: BottomTabBarButtonProps): React.React
       <View style={styles.button}>
         <FontAwesome name="plus" size={22} color={colors.white} />
       </View>
+      <AppText
+        weight="medium"
+        style={[styles.label, { fontFamily: getFontFamily(currentLanguage, 'medium') }]}
+        numberOfLines={1}
+      >
+        {label}
+      </AppText>
     </Pressable>
   );
 }
 
-const FAB_SIZE = 66;
+const FAB_SIZE = 56;
 
 const styles = StyleSheet.create({
   wrap: {
-    top: -25,
-    justifyContent: 'center',
+    top: -18,
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 0,
   },
   button: {
     width: FAB_SIZE,
@@ -48,5 +61,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 10,
+  },
+  label: {
+    marginTop: spacing.xxs,
+    fontSize: 11,
+    lineHeight: 14,
+    color: colors.text.tertiary,
+    textAlign: 'center',
   },
 });

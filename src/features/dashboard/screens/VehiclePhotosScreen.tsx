@@ -21,7 +21,7 @@ import type {
   VehicleRouteParamList,
   VehicleStackOrigin,
 } from '../navigation/vehicleNavigation.types';
-import type { Vehicle } from '../types/vehicle.types';
+import { MAX_VEHICLE_PHOTOS, type Vehicle } from '../types/vehicle.types';
 
 function navigateAfterVehicleSave(
   navigation: NativeStackNavigationProp<VehicleRouteParamList, 'VehiclePhotos'>,
@@ -50,7 +50,13 @@ export function VehiclePhotosScreen(): React.ReactElement {
 
   const handleAddPhotos = (uris: string[]) => {
     setSaveError(null);
-    patchDraft({ photoUris: [...draft.photoUris, ...uris] });
+    const remaining = Math.max(0, MAX_VEHICLE_PHOTOS - draft.photoUris.length);
+    if (remaining === 0) {
+      return;
+    }
+    patchDraft({
+      photoUris: [...draft.photoUris, ...uris.slice(0, remaining)],
+    });
   };
 
   const handleRemovePhoto = (index: number) => {

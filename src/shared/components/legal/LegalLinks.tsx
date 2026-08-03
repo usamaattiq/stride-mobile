@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Linking,
   StyleSheet,
   View,
   type StyleProp,
@@ -11,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { complianceDocUrl } from '@/shared/config/compliance';
 import {
   useLegalDocumentSheets,
   type LegalDocumentSheetControl,
@@ -26,27 +24,7 @@ type LegalLinksProps = {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-async function openComplianceOrSheet(
-  slug: 'terms-and-conditions' | 'privacy-policy',
-  locale: 'en' | 'ar',
-  openSheet: () => void,
-): Promise<void> {
-  const url = complianceDocUrl(slug, locale);
-  if (!url) {
-    openSheet();
-    return;
-  }
-  try {
-    await Linking.openURL(url);
-  } catch {
-    openSheet();
-  }
-}
-
-/**
- * Terms & Conditions | Privacy Policy — opens hosted stride-compliance when
- * `EXPO_PUBLIC_COMPLIANCE_BASE_URL` is set; otherwise falls back to bottom sheets.
- */
+/** Terms & Conditions | Privacy Policy — always opens the in-app bottom sheet. */
 export function LegalLinks({
   legalControl,
   onTermsPress,
@@ -54,8 +32,7 @@ export function LegalLinks({
   containerStyle,
 }: LegalLinksProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const { isRTL, currentLanguage } = useLanguage();
-  const locale = currentLanguage === 'ar' ? 'ar' : 'en';
+  const { isRTL } = useLanguage();
   const internalLegal = useLegalDocumentSheets();
   const { openTerms, openPrivacy, legalSheets } = legalControl ?? internalLegal;
 
@@ -64,7 +41,7 @@ export function LegalLinks({
       onTermsPress();
       return;
     }
-    void openComplianceOrSheet('terms-and-conditions', locale, openTerms);
+    openTerms();
   };
 
   const handlePrivacy = (): void => {
@@ -72,7 +49,7 @@ export function LegalLinks({
       onPrivacyPress();
       return;
     }
-    void openComplianceOrSheet('privacy-policy', locale, openPrivacy);
+    openPrivacy();
   };
 
   return (

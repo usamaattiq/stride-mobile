@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import type { NavigationProp } from '@react-navigation/native';
-import { StackActions } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute, StackActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,8 +28,11 @@ import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
-import { MyOffersScreen } from '../screens/MyOffersScreen';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
+import {
+  shouldHideVehicleTabBar,
+  VehicleStackNavigator,
+} from './VehicleStackNavigator';
 import type { DashboardTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<DashboardTabParamList>();
@@ -40,7 +43,7 @@ type TabIconName = React.ComponentProps<typeof FontAwesome>['name'];
 const TAB_ICONS: Record<Exclude<keyof DashboardTabParamList, 'CreateTrip'>, TabIconName> = {
   Home: 'home',
   MyListings: 'list-alt',
-  MyOffers: 'tags',
+  Vehicle: 'car',
   Settings: 'cog',
 };
 
@@ -66,6 +69,7 @@ function DashboardTabs(): React.ReactElement {
 
   const safeBottomInset = insets.bottom;
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
+  const defaultTabBarStyle = [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }];
 
   return (
     <Tab.Navigator
@@ -87,7 +91,7 @@ function DashboardTabs(): React.ReactElement {
         ],
         tabBarIconStyle: styles.tabIcon,
         tabBarItemStyle: styles.tabItem,
-        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }],
+        tabBarStyle: defaultTabBarStyle,
         tabBarIcon: ({ color }) => {
           if (route.name === 'CreateTrip') {
             return null;
@@ -122,10 +126,43 @@ function DashboardTabs(): React.ReactElement {
           }}
         />
       ) : null}
-      <Tab.Screen name="MyOffers" component={MyOffersScreen} />
+      {isDriver ? (
+        <Tab.Screen
+          name="Vehicle"
+          component={VehicleStackNavigator}
+          options={({ route }) => ({
+            tabBarStyle: shouldHideVehicleTabBar(route)
+              ? { display: 'none' }
+              : defaultTabBarStyle,
+          })}
+          listeners={({ navigation }) => ({
+            tabPress: () => {
+              const vehicleRoute = navigation
+                .getState()
+                .routes.find((tabRoute) => tabRoute.name === 'Vehicle');
+              const nestedState = vehicleRoute?.state;
+              if (nestedState != null && (nestedState.index ?? 0) > 0) {
+                navigation.dispatch({
+                  ...StackActions.popToTop(),
+                  target: nestedState.key,
+                });
+              }
+            },
+          })}
+        />
+      ) : null}
       <Tab.Screen
         name="Settings"
         component={SettingsStackNavigator}
+        options={({ route }) => {
+          const focusedRoute = getFocusedRouteNameFromRoute(route) ?? 'SettingsHome';
+          const isSettingsHome = focusedRoute === 'SettingsHome';
+          return {
+            tabBarStyle: isSettingsHome
+              ? defaultTabBarStyle
+              : { display: 'none' },
+          };
+        }}
         listeners={({ navigation }) => ({
           tabPress: () => {
             // Always land on Settings home when the tab is pressed,

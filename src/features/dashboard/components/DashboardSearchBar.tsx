@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 import { useLanguage } from '@/i18n/hooks/useLanguage';
@@ -10,17 +10,19 @@ type DashboardSearchBarProps = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function DashboardSearchBar({
   value,
   onChangeText,
   placeholder,
+  style,
 }: DashboardSearchBarProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, style]}>
       <FontAwesome name="search" size={14} color={colors.text.tertiary} />
       <TextInput
         value={value}

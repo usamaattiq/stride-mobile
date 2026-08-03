@@ -17,6 +17,8 @@ type VehicleClassPickerProps = {
   label: string;
   placeholder: string;
   required?: boolean;
+  error?: string;
+  onBlur?: () => void;
 };
 
 const CLASS_ICONS: Record<
@@ -36,6 +38,8 @@ export function VehicleClassPicker({
   label,
   placeholder,
   required = false,
+  error,
+  onBlur,
 }: VehicleClassPickerProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [pickerVisible, setPickerVisible] = React.useState(false);
@@ -44,7 +48,10 @@ export function VehicleClassPicker({
     ? t(VEHICLE_CLASS_OPTIONS.find((item) => item.id === value)?.labelKey ?? 'vehicles.classPlaceholder')
     : placeholder;
 
-  const closePicker = () => setPickerVisible(false);
+  const closePicker = () => {
+    setPickerVisible(false);
+    onBlur?.();
+  };
 
   return (
     <View style={styles.wrap}>
@@ -55,7 +62,7 @@ export function VehicleClassPicker({
 
       <Pressable
         onPress={() => setPickerVisible(true)}
-        style={styles.field}
+        style={[styles.field, error ? styles.fieldError : null]}
         accessibilityRole="button"
         accessibilityLabel={label}
       >
@@ -72,6 +79,7 @@ export function VehicleClassPicker({
         </View>
         <FontAwesome5 name="chevron-down" size={10} color={colors.text.secondary} solid />
       </Pressable>
+      {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
       <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.55}>
         <View style={styles.sheetHandle} />
@@ -141,6 +149,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  fieldError: {
+    borderColor: colors.primary,
+  },
+  error: {
+    fontSize: 12,
+    color: colors.primary,
   },
   fieldLeading: {
     flex: 1,

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import type { RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
@@ -36,6 +37,17 @@ function formatTripWhen(trip: Trip, locale: string): string {
   });
   return `${day} at ${time}`;
 }
+
+const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
+  draft: 'muted',
+  scheduled: 'muted',
+  live: 'green',
+  awaiting_confirmation: 'blue',
+  completed: 'blue',
+  closed: 'muted',
+  expired: 'muted',
+  cancelled: 'muted',
+};
 
 function getExpiresAt(trip: Trip): number {
   return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
@@ -99,11 +111,18 @@ export function ListingCard({
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
   const badgeState = pending
     ? 'pending'
-    : trip.isBooked
-      ? 'booked'
+    : trip.rfqStatus
+      ? 'rfqStatus'
       : active
         ? 'active'
         : 'ended';
+  const badgeTone = pending
+    ? 'muted'
+    : trip.rfqStatus
+      ? RFQ_STATUS_TONE[trip.rfqStatus]
+      : active
+        ? 'green'
+        : 'muted';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -163,17 +182,17 @@ export function ListingCard({
         <View
           style={[
             styles.timerBadge,
-            badgeState === 'booked' && styles.timerBadgeBooked,
-            (badgeState === 'pending' || badgeState === 'ended') && styles.timerBadgeEnded,
+            badgeTone === 'blue' && styles.timerBadgeBlue,
+            badgeTone === 'muted' && styles.timerBadgeEnded,
           ]}
         >
           <FontAwesome
-            name={badgeState === 'booked' ? 'check-circle' : 'clock-o'}
+            name={badgeTone === 'blue' ? 'check-circle' : 'clock-o'}
             size={10}
             color={
-              badgeState === 'active'
+              badgeTone === 'green'
                 ? colors.accent.green.text
-                : badgeState === 'booked'
+                : badgeTone === 'blue'
                   ? colors.accent.blue.text
                   : colors.text.secondary
             }
@@ -182,15 +201,15 @@ export function ListingCard({
             weight="semibold"
             style={[
               styles.timerText,
-              badgeState === 'booked' && styles.timerTextBooked,
-              (badgeState === 'pending' || badgeState === 'ended') && styles.timerTextEnded,
+              badgeTone === 'blue' && styles.timerTextBlue,
+              badgeTone === 'muted' && styles.timerTextEnded,
             ]}
             numberOfLines={1}
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'booked'
-                ? t('dashboard.listings.card.booked')
+              : badgeState === 'rfqStatus'
+                ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
                 : badgeState === 'active'
                   ? t('dashboard.listings.card.active')
                   : t('dashboard.listings.card.ended')}
@@ -301,7 +320,7 @@ export function ListingCard({
         </View>
       </View>
 
-      {!trip.isBooked && (pending || active) ? (
+      {!trip.rfqStatus && (pending || active) ? (
         <View style={styles.bottomRow}>
           <View style={styles.countdownBadge}>
             <FontAwesome name="clock-o" size={10} color={colors.primary} />
@@ -409,7 +428,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
   },
-  timerBadgeBooked: {
+  timerBadgeBlue: {
     backgroundColor: colors.accent.blue.soft,
   },
   timerText: {
@@ -419,7 +438,7 @@ const styles = StyleSheet.create({
   timerTextEnded: {
     color: colors.text.secondary,
   },
-  timerTextBooked: {
+  timerTextBlue: {
     color: colors.accent.blue.text,
   },
   mainRow: {

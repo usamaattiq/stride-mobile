@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   StyleSheet,
   View,
@@ -12,19 +13,27 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
-import { getErrorMessage } from '@/services/api/errorMessage';
-import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
+import { DashboardSearchBar } from '../components/DashboardSearchBar';
+import { VehicleFilterSheet } from '../components/VehicleFilterSheet';
 import {
+  AddVehicleButton,
   VehicleListItem,
   VehiclesEmptyState,
 } from '../components/VehicleListContent';
 import { useVehicles } from '../context/VehicleContext';
 import { resolveVehicleStackOrigin } from '../navigation/vehicleNavigation.utils';
 import type { VehicleRouteParamList } from '../navigation/vehicleNavigation.types';
+import {
+  countActiveVehicleBrowseFilters,
+  EMPTY_VEHICLE_BROWSE_FILTERS,
+  matchesVehicleFilters,
+  matchesVehicleSearch,
+  type VehicleBrowseFilters,
+} from '../types/vehicleBrowse.types';
 import type { Vehicle } from '../types/vehicle.types';
 
 export function VehicleListScreen(): React.ReactElement {
@@ -34,21 +43,29 @@ export function VehicleListScreen(): React.ReactElement {
   const {
     vehicles,
     isLoading,
-    isSaving,
     loadError,
     beginAddVehicle,
-    beginEditVehicle,
-    removeVehicle,
     refreshVehicles,
   } = useVehicles();
-  const [vehicleToRemove, setVehicleToRemove] = React.useState<Vehicle | null>(null);
-  const [removeError, setRemoveError] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [filters, setFilters] = React.useState<VehicleBrowseFilters>(EMPTY_VEHICLE_BROWSE_FILTERS);
+  const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const stackOrigin = resolveVehicleStackOrigin(navigation);
+  const filterCount = countActiveVehicleBrowseFilters(filters);
 
   useFocusEffect(
     React.useCallback(() => {
       void refreshVehicles().catch(() => undefined);
     }, [refreshVehicles]),
+  );
+
+  const filteredVehicles = React.useMemo(
+    () =>
+      vehicles.filter(
+        (vehicle) =>
+          matchesVehicleSearch(vehicle, searchQuery) && matchesVehicleFilters(vehicle, filters),
+      ),
+    [filters, searchQuery, vehicles],
   );
 
   const openAddFlow = React.useCallback(() => {
@@ -60,129 +77,179 @@ export function VehicleListScreen(): React.ReactElement {
     });
   }, [beginAddVehicle, navigation, stackOrigin]);
 
-  const openEditFlow = React.useCallback(
+  const openVehicleView = React.useCallback(
     (vehicle: Vehicle) => {
-      if (beginEditVehicle(vehicle.id)) {
-        navigation.navigate('VehicleDetails', {
-          mode: 'edit',
-          vehicleId: vehicle.id,
-          returnTo: 'VehicleList',
-          stackOrigin,
-        });
-      }
+      navigation.navigate('VehicleView', { vehicleId: vehicle.id });
     },
-    [beginEditVehicle, navigation, stackOrigin],
+    [navigation],
   );
 
-  const handleConfirmRemove = React.useCallback(() => {
-    if (!vehicleToRemove || isSaving) {
-      return;
-    }
+  const listHeader = (
+    <View style={styles.toolbar}>
+      <AddVehicleButton onPress={openAddFlow} />
+      <View style={styles.searchRow}>
+        <View style={styles.searchWrap}>
+          <DashboardSearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={t('vehicles.searchPlaceholder')}
+            style={styles.searchBar}
+          />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.home.filterA11y')}
+          onPress={() => setFilterSheetVisible(true)}
+          style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}
+        >
+          <FontAwesome name="sliders" size={15} color={colors.text.primary} />
+          {filterCount > 0 ? (
+            <View style={styles.filterBadge}>
+              <AppText weight="bold" style={styles.filterBadgeText}>
+                {String(filterCount)}
+              </AppText>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+    </View>
+  );
 
-    setRemoveError(null);
-    void removeVehicle(vehicleToRemove.id)
-      .then(() => {
-        setVehicleToRemove(null);
-      })
-      .catch((error) => {
-        setRemoveError(getErrorMessage(error, t('vehicles.remove.failed')));
-      });
-  }, [isSaving, removeVehicle, t, vehicleToRemove]);
+  const showInitialLoading = isLoading && vehicles.length === 0;
+  const showInitialError = Boolean(loadError) && vehicles.length === 0;
+
+  let listBody: React.ReactNode;
+  if (showInitialLoading) {
+    listBody = (
+      <View style={styles.centered}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  } else if (showInitialError) {
+    listBody = (
+      <View style={styles.centered}>
+        <AppText style={styles.errorText}>{loadError}</AppText>
+        <Button
+          label={t('vehicles.retry')}
+          onPress={() => {
+            void refreshVehicles().catch(() => undefined);
+          }}
+        />
+      </View>
+    );
+  } else {
+    listBody = (
+      <FlatList
+        data={filteredVehicles}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <VehicleListItem
+            vehicle={item}
+            onPress={() => openVehicleView(item)}
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <VehiclesEmptyState
+            title={
+              vehicles.length === 0
+                ? t('vehicles.emptyTitle')
+                : t('vehicles.filter.emptyTitle')
+            }
+            subtitle={
+              vehicles.length === 0
+                ? t('vehicles.emptySubtitle')
+                : t('vehicles.filter.emptySubtitle')
+            }
+          />
+        }
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
+    );
+  }
 
   return (
     <AuthScaffold
-      onBack={() => navigation.goBack()}
       title={t('vehicles.listTitle')}
       subtitle={t('vehicles.listSubtitle')}
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
-      headerRight={
-        isLoading && vehicles.length === 0 ? undefined : (
-          <Pressable
-            onPress={openAddFlow}
-            style={styles.addButton}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t('vehicles.addVehicle')}
-          >
-            <FontAwesome name="plus" size={16} color={colors.white} />
-          </Pressable>
-        )
-      }
+      scrollable={false}
+      contentWrapStyle={styles.contentWrap}
     >
-      {isLoading && vehicles.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : loadError && vehicles.length === 0 ? (
-        <View style={styles.centered}>
-          <AppText style={styles.errorText}>{loadError}</AppText>
-          <Button
-            label={t('vehicles.retry')}
-            onPress={() => {
-              void refreshVehicles().catch(() => undefined);
-            }}
-          />
-        </View>
-      ) : vehicles.length === 0 ? (
-        <VehiclesEmptyState />
-      ) : (
-        <View style={styles.content}>
-          {vehicles.map((vehicle) => (
-            <VehicleListItem
-              key={vehicle.id}
-              vehicle={vehicle}
-              onPress={() => openEditFlow(vehicle)}
-              onRemovePress={() => {
-                setRemoveError(null);
-                setVehicleToRemove(vehicle);
-              }}
-            />
-          ))}
-        </View>
-      )}
+      {listHeader}
+      {listBody}
 
-      <AppDialog
-        visible={vehicleToRemove !== null}
-        icon="trash"
-        title={t('vehicles.remove.title')}
-        message={
-          removeError ??
-          (vehicleToRemove
-            ? t('vehicles.remove.confirm', { title: vehicleToRemove.title })
-            : undefined)
-        }
-        cancelAction={{
-          label: t('common.cancel'),
-          onPress: () => {
-            if (isSaving) {
-              return;
-            }
-            setVehicleToRemove(null);
-            setRemoveError(null);
-          },
-        }}
-        confirmAction={{
-          label: t('vehicles.remove.confirmAction'),
-          onPress: handleConfirmRemove,
-        }}
+      <VehicleFilterSheet
+        visible={filterSheetVisible}
+        filters={filters}
+        onClose={() => setFilterSheetVisible(false)}
+        onApply={setFilters}
       />
     </AuthScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  addButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
+  contentWrap: {
+    flex: 1,
+    paddingTop: spacing.sm,
+  },
+  toolbar: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  searchWrap: {
+    flex: 1,
+  },
+  searchBar: {
+    minHeight: 44,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  content: {
-    gap: spacing.sm,
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    color: colors.white,
+    lineHeight: 11,
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.xl,
+  },
+  separator: {
+    height: spacing.sm,
   },
   centered: {
     gap: spacing.md,
@@ -193,5 +260,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });
