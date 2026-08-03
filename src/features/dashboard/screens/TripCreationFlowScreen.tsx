@@ -1,6 +1,5 @@
 import React from 'react';
-import { BackHandler, Keyboard, Pressable, StyleSheet } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -20,7 +19,7 @@ import type { DashboardRootStackParamList } from '@/features/dashboard/navigatio
 import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 type TripCreationStep =
   | 'vehicle'
@@ -220,19 +219,6 @@ export function TripCreationFlowScreen(): React.ReactElement {
         subtitle={header.subtitle}
         showLegalFooter={false}
         showLanguageSwitcher={false}
-        headerRight={
-          step === 'vehicle' && !isLoadingVehicles ? (
-            <Pressable
-              onPress={handleAddVehicle}
-              style={styles.addButton}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={t('vehicles.addVehicle')}
-            >
-              <FontAwesome name="plus" size={16} color={colors.white} />
-            </Pressable>
-          ) : undefined
-        }
         stepCount={TOTAL_STEPS}
         currentStep={STEP_PROGRESS[step]}
         scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
@@ -244,6 +230,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
             selectedVehicleId={draft.vehicleId}
             onSelectVehicle={(vehicleId) => patchDraft({ vehicleId })}
             onContinue={goToNextStep}
+            onAddVehicle={handleAddVehicle}
           />
         ) : null}
 
@@ -281,14 +268,3 @@ export function TripCreationFlowScreen(): React.ReactElement {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  addButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-});

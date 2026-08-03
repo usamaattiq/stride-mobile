@@ -1,3 +1,5 @@
+import type { RfqStatusValue } from './rfqApi.types';
+
 export type TripCityDto = {
   id: string;
   label: string;
@@ -36,7 +38,8 @@ export type TripDto = {
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
-  isBooked?: boolean;
+  /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
+  rfqStatus?: RfqStatusValue | null;
 };
 
 export type CreateTripPayload = {

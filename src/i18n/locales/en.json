@@ -289,7 +289,16 @@
         "active": "Active",
         "ended": "Ended",
         "pending": "Pending",
-        "booked": "Booked",
+        "status": {
+          "draft": "Draft",
+          "scheduled": "Scheduled",
+          "live": "Live",
+          "awaiting_confirmation": "Awaiting confirmation",
+          "completed": "Completed",
+          "closed": "Closed",
+          "expired": "Expired",
+          "cancelled": "Cancelled"
+        },
         "notStarted": "Not started yet",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",

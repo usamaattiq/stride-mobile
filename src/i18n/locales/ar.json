@@ -289,7 +289,16 @@
         "active": "نشط",
         "ended": "منتهية",
         "pending": "قيد الانتظار",
-        "booked": "محجوز",
+        "status": {
+          "draft": "مسودة",
+          "scheduled": "مجدول",
+          "live": "مباشر",
+          "awaiting_confirmation": "بانتظار التأكيد",
+          "completed": "مكتمل",
+          "closed": "مغلق",
+          "expired": "منتهي الصلاحية",
+          "cancelled": "ملغى"
+        },
         "notStarted": "لم تبدأ بعد",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",

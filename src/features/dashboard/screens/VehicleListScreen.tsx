@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +13,7 @@ import { Button } from '@/shared/components/Button';
 import { colors, spacing } from '@/theme';
 
 import {
+  AddVehicleButton,
   VehicleListItem,
   VehiclesEmptyState,
 } from '../components/VehicleListContent';
@@ -97,19 +92,6 @@ export function VehicleListScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
-      headerRight={
-        isLoading && vehicles.length === 0 ? undefined : (
-          <Pressable
-            onPress={openAddFlow}
-            style={styles.addButton}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t('vehicles.addVehicle')}
-          >
-            <FontAwesome name="plus" size={16} color={colors.white} />
-          </Pressable>
-        )
-      }
     >
       {isLoading && vehicles.length === 0 ? (
         <View style={styles.centered}>
@@ -125,21 +107,24 @@ export function VehicleListScreen(): React.ReactElement {
             }}
           />
         </View>
-      ) : vehicles.length === 0 ? (
-        <VehiclesEmptyState />
       ) : (
         <View style={styles.content}>
-          {vehicles.map((vehicle) => (
-            <VehicleListItem
-              key={vehicle.id}
-              vehicle={vehicle}
-              onPress={() => openEditFlow(vehicle)}
-              onRemovePress={() => {
-                setRemoveError(null);
-                setVehicleToRemove(vehicle);
-              }}
-            />
-          ))}
+          {vehicles.length === 0 ? (
+            <VehiclesEmptyState />
+          ) : (
+            vehicles.map((vehicle) => (
+              <VehicleListItem
+                key={vehicle.id}
+                vehicle={vehicle}
+                onPress={() => openEditFlow(vehicle)}
+                onRemovePress={() => {
+                  setRemoveError(null);
+                  setVehicleToRemove(vehicle);
+                }}
+              />
+            ))
+          )}
+          <AddVehicleButton onPress={openAddFlow} />
         </View>
       )}
 
@@ -173,14 +158,6 @@ export function VehicleListScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  addButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
   content: {
     gap: spacing.sm,
   },

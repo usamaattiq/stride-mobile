@@ -189,6 +189,17 @@ export function VehicleListItem({
   );
 }
 
+type AddVehicleButtonProps = {
+  onPress: () => void;
+  label?: string;
+};
+
+export function AddVehicleButton({ onPress, label }: AddVehicleButtonProps): React.ReactElement {
+  const { t } = useTranslation(undefined, { i18n: appI18n });
+
+  return <Button label={label ?? t('vehicles.addVehicle')} onPress={onPress} />;
+}
+
 export function VehiclesEmptyState({
   title,
   subtitle,
