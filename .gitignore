@@ -6,6 +6,10 @@ node_modules/
 .expo/
 google-service-account.json
 *.p8
+*.jks
+*.keystore
+credentials.json
+android/keystores/
 dist/
 build/
 npm-debug.log*
