@@ -62,11 +62,7 @@ export function IdentityDocumentVerification({
 }: IdentityDocumentVerificationProps): React.ReactElement {
   const accessoryId = React.useId();
   const showDoneBar = keyboardType !== 'default';
-  const canSubmit =
-    !loading &&
-    documentNumber.trim().length > 0 &&
-    Boolean(frontUri) &&
-    Boolean(backUri);
+  const canSubmit = !loading && Boolean(frontUri) && Boolean(backUri);
 
   return (
     <View style={styles.fields}>
