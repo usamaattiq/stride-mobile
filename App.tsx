@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { Alert, Image, StyleSheet, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { I18nextProvider } from 'react-i18next';
@@ -16,6 +16,8 @@ import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
 import { appFontAssets, colors } from './src/theme';
 
+const SPLASH_LOGO = require('./assets/splash-logo.png');
+
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Already hidden on some Expo Go reloads.
 });
@@ -24,6 +26,19 @@ SplashScreen.setOptions({
   duration: 500,
   fade: true,
 });
+
+function AppSplash() {
+  return (
+    <View style={styles.splash}>
+      <Image
+        source={SPLASH_LOGO}
+        style={styles.splashLogo}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
+    </View>
+  );
+}
 
 export default function App() {
   const [isI18nReady, setIsI18nReady] = useState(false);
@@ -114,18 +129,7 @@ export default function App() {
   }, [appReady]);
 
   if (!appReady || !initialRouteName) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.white,
-        }}
-      >
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
+    return <AppSplash />;
   }
 
   return (
@@ -140,3 +144,16 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  splashLogo: {
+    width: 280,
+    height: 280,
+  },
+});
