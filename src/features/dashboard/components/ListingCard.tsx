@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { i18n as appI18n } from '@/i18n';
-import type { RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
@@ -48,6 +48,15 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
   closed: 'muted',
   expired: 'muted',
   cancelled: 'muted',
+};
+
+const OFFER_STATUS_TONE: Record<RfqOfferStatus, 'green' | 'blue' | 'muted'> = {
+  active: 'green',
+  selected: 'blue',
+  confirmed: 'blue',
+  withdrawn: 'muted',
+  declined: 'muted',
+  timed_out: 'muted',
 };
 
 function getExpiresAt(trip: Trip): number {
@@ -145,18 +154,22 @@ export function ListingCard({
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
   const badgeState = pending
     ? 'pending'
-    : trip.rfqStatus
-      ? 'rfqStatus'
-      : active
-        ? 'active'
-        : 'ended';
+    : trip.myOfferStatus
+      ? 'myOfferStatus'
+      : trip.rfqStatus
+        ? 'rfqStatus'
+        : active
+          ? 'active'
+          : 'ended';
   const badgeTone = pending
     ? 'muted'
-    : trip.rfqStatus
-      ? RFQ_STATUS_TONE[trip.rfqStatus]
-      : active
-        ? 'green'
-        : 'muted';
+    : trip.myOfferStatus
+      ? OFFER_STATUS_TONE[trip.myOfferStatus]
+      : trip.rfqStatus
+        ? RFQ_STATUS_TONE[trip.rfqStatus]
+        : active
+          ? 'green'
+          : 'muted';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -164,9 +177,11 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const price = trip.vehicleId != null ? trip.startingPrice?.trim() || null : null;
+  const offerPrice = trip.myOfferPrice?.trim() || null;
+  const price =
+    offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
   const isPassengerRequest = trip.vehicleId == null;
-  const showCountdown = !trip.rfqStatus && (pending || active);
+  const showCountdown = !trip.rfqStatus && !trip.myOfferStatus && (pending || active);
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -244,11 +259,13 @@ export function ListingCard({
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'rfqStatus'
-                ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
-                : badgeState === 'active'
-                  ? t('dashboard.listings.card.active')
-                  : t('dashboard.listings.card.ended')}
+              : badgeState === 'myOfferStatus'
+                ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
+                : badgeState === 'rfqStatus'
+                  ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                  : badgeState === 'active'
+                    ? t('dashboard.listings.card.active')
+                    : t('dashboard.listings.card.ended')}
           </AppText>
         </View>
       </View>

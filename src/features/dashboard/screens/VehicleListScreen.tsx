@@ -51,6 +51,8 @@ export function VehicleListScreen(): React.ReactElement {
   const [filters, setFilters] = React.useState<VehicleBrowseFilters>(EMPTY_VEHICLE_BROWSE_FILTERS);
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const stackOrigin = resolveVehicleStackOrigin(navigation);
+  const parentNavigation = navigation.getParent();
+  const canLeaveStack = parentNavigation?.canGoBack() ?? false;
   const filterCount = countActiveVehicleBrowseFilters(filters);
 
   useFocusEffect(
@@ -174,6 +176,7 @@ export function VehicleListScreen(): React.ReactElement {
     <AuthScaffold
       title={t('vehicles.listTitle')}
       subtitle={t('vehicles.listSubtitle')}
+      onBack={canLeaveStack ? () => parentNavigation?.goBack() : undefined}
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader

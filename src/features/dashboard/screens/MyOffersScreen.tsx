@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, spacing } from '@/theme';
@@ -19,29 +20,36 @@ import { DashboardSearchBar } from '../components/DashboardSearchBar';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { ListingsEmptyState } from '../components/ListingsEmptyState';
-import { useTrips } from '../context/TripContext';
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
-import {
-  getListingStatusBucket,
-  matchesListingQuery,
-} from '../utils/listingFilters';
+import { matchesListingQuery } from '../utils/listingFilters';
+import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 const SKELETON_COUNT = 4;
 
-function isHistoryTrip(trip: Trip, now = Date.now()): boolean {
-  const bucket = getListingStatusBucket(trip, now);
-  return bucket === 'past' || bucket === 'completed';
-}
-
-export function HistoryScreen(): React.ReactElement {
+export function MyOffersScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const { trips, loadError, refreshTrips } = useTrips();
+  const isPassenger = user.role === 'passenger';
 
+  const [offers, setOffers] = React.useState<Trip[]>([]);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
+
+  const refreshOffers = React.useCallback(async () => {
+    setLoadError(null);
+    try {
+      const list = await tripApi.listMyOffers();
+      setOffers(list.map(mapTripDtoToTrip));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : t('dashboard.offers.loadFailed'));
+      throw error;
+    }
+  }, [t]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -49,7 +57,7 @@ export function HistoryScreen(): React.ReactElement {
       setIsScreenLoading(true);
 
       const task = InteractionManager.runAfterInteractions(() => {
-        void refreshTrips()
+        void refreshOffers()
           .catch(() => undefined)
           .finally(() => {
             if (!cancelled) {
@@ -62,20 +70,13 @@ export function HistoryScreen(): React.ReactElement {
         cancelled = true;
         task.cancel();
       };
-    }, [refreshTrips]),
+    }, [refreshOffers]),
   );
 
-  const historyTrips = React.useMemo(() => {
-    const now = Date.now();
-    return trips.filter(
-      (trip) => isHistoryTrip(trip, now) && matchesListingQuery(trip, query),
-    );
-  }, [trips, query]);
-
-  const historySourceCount = React.useMemo(() => {
-    const now = Date.now();
-    return trips.filter((trip) => isHistoryTrip(trip, now)).length;
-  }, [trips]);
+  const filteredOffers = React.useMemo(
+    () => offers.filter((trip) => matchesListingQuery(trip, query)),
+    [offers, query],
+  );
 
   const renderTrip = React.useCallback(
     ({ item }: { item: Trip }) => (
@@ -93,11 +94,11 @@ export function HistoryScreen(): React.ReactElement {
     body = (
       <View style={styles.skeletonList}>
         {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-          <ListingCardSkeleton key={`history-skeleton-${index}`} />
+          <ListingCardSkeleton key={`offers-skeleton-${index}`} />
         ))}
       </View>
     );
-  } else if (loadError && trips.length === 0) {
+  } else if (loadError && offers.length === 0) {
     body = (
       <View style={styles.centered}>
         <AppText style={styles.errorText}>{loadError}</AppText>
@@ -105,28 +106,32 @@ export function HistoryScreen(): React.ReactElement {
           label={t('dashboard.listings.retry')}
           onPress={() => {
             setIsScreenLoading(true);
-            void refreshTrips()
+            void refreshOffers()
               .catch(() => undefined)
               .finally(() => setIsScreenLoading(false));
           }}
         />
       </View>
     );
-  } else if (historySourceCount === 0) {
+  } else if (offers.length === 0) {
     body = (
       <ListingsEmptyState
         variant="none"
-        title={t('dashboard.history.emptyTitle')}
-        subtitle={t('dashboard.history.emptySubtitle')}
-        icon="history"
+        title={t('dashboard.offers.emptyTitle')}
+        subtitle={t(
+          isPassenger
+            ? 'dashboard.offers.emptySubtitlePassenger'
+            : 'dashboard.offers.emptySubtitleDriver',
+        )}
+        icon="tag"
       />
     );
-  } else if (historyTrips.length === 0) {
+  } else if (filteredOffers.length === 0) {
     body = <ListingsEmptyState variant="filtered" />;
   } else {
     body = (
       <FlatList
-        data={historyTrips}
+        data={filteredOffers}
         keyExtractor={(item) => item.id}
         renderItem={renderTrip}
         contentContainerStyle={styles.listContent}
@@ -139,8 +144,12 @@ export function HistoryScreen(): React.ReactElement {
 
   return (
     <AuthScaffold
-      title={t('dashboard.history.title')}
-      subtitle={t('dashboard.history.subtitle')}
+      title={t('dashboard.offers.title')}
+      subtitle={t(
+        isPassenger
+          ? 'dashboard.offers.subtitlePassenger'
+          : 'dashboard.offers.subtitleDriver',
+      )}
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader

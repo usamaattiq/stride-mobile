@@ -166,6 +166,7 @@
       "Home": "Home",
       "MyListings": "My Listings",
       "Search": "Search",
+      "MyOffers": "My Offers",
       "Vehicle": "Vehicle",
       "History": "History",
       "Settings": "Settings",
@@ -173,6 +174,17 @@
       "CreateRequest": "Create request",
       "createTripA11y": "Create trip",
       "createRequestA11y": "Create request"
+    },
+    "offers": {
+      "title": "My Offers",
+      "subtitle": "Trips and requests you've offered on.",
+      "subtitlePassenger": "Driver trips you've offered on.",
+      "subtitleDriver": "Passenger requests you've offered on.",
+      "emptyTitle": "No offers yet",
+      "emptySubtitle": "When you send an offer, it will show up here.",
+      "emptySubtitlePassenger": "Offers you place on driver trips will show up here.",
+      "emptySubtitleDriver": "Offers you place on passenger requests will show up here.",
+      "loadFailed": "Couldn't load your offers. Please try again."
     },
     "history": {
       "title": "History",

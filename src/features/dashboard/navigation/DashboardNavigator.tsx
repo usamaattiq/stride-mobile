@@ -14,7 +14,6 @@ import { colors } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
 import { CreateTripTabButton } from '../components/CreateTripTabButton';
-import { useDashboardSession } from '../context/DashboardSessionContext';
 import { TripProvider, useTrips } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { CreateTripTabScreen } from '../screens/CreateTripTabScreen';
@@ -26,14 +25,11 @@ import type { DashboardRootStackParamList } from './dashboardRootTypes';
 import { openTripCreationFlow } from './homeStackNavigation';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
-import { HistoryScreen } from '../screens/HistoryScreen';
+import { MyOffersScreen } from '../screens/MyOffersScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
-import {
-  shouldHideVehicleTabBar,
-  VehicleStackNavigator,
-} from './VehicleStackNavigator';
+import { VehicleStackNavigator } from './VehicleStackNavigator';
 import type { DashboardTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<DashboardTabParamList>();
@@ -44,8 +40,7 @@ type TabIconName = React.ComponentProps<typeof FontAwesome>['name'];
 const TAB_ICONS: Record<Exclude<keyof DashboardTabParamList, 'CreateTrip'>, TabIconName> = {
   Home: 'home',
   MyListings: 'list-alt',
-  Vehicle: 'car',
-  History: 'history',
+  MyOffers: 'tag',
   Settings: 'cog',
 };
 
@@ -65,9 +60,7 @@ function DashboardTabs(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { user } = useDashboardSession();
   const { beginCreateTrip } = useTrips();
-  const isDriver = user.role === 'driver';
 
   const safeBottomInset = insets.bottom;
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + DRIVER_TAB_BAR_EXTRA;
@@ -122,33 +115,7 @@ function DashboardTabs(): React.ReactElement {
           tabBarButton: (props) => <CreateTripTabButton {...props} />,
         }}
       />
-      {isDriver ? (
-        <Tab.Screen
-          name="Vehicle"
-          component={VehicleStackNavigator}
-          options={({ route }) => ({
-            tabBarStyle: shouldHideVehicleTabBar(route)
-              ? { display: 'none' }
-              : defaultTabBarStyle,
-          })}
-          listeners={({ navigation }) => ({
-            tabPress: () => {
-              const vehicleRoute = navigation
-                .getState()
-                .routes.find((tabRoute) => tabRoute.name === 'Vehicle');
-              const nestedState = vehicleRoute?.state;
-              if (nestedState != null && (nestedState.index ?? 0) > 0) {
-                navigation.dispatch({
-                  ...StackActions.popToTop(),
-                  target: nestedState.key,
-                });
-              }
-            },
-          })}
-        />
-      ) : (
-        <Tab.Screen name="History" component={HistoryScreen} />
-      )}
+      <Tab.Screen name="MyOffers" component={MyOffersScreen} />
       <Tab.Screen
         name="Settings"
         component={SettingsStackNavigator}
@@ -188,6 +155,7 @@ function DashboardRoot(): React.ReactElement {
       <RootStack.Screen name="MainTabs" component={DashboardTabs} />
       <RootStack.Screen name="TripCreation" component={TripCreationFlowScreen} />
       <RootStack.Screen name="TripPublishSuccess" component={TripPublishSuccessScreen} />
+      <RootStack.Screen name="ManageVehicles" component={VehicleStackNavigator} />
       <RootStack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
       <RootStack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
       <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />

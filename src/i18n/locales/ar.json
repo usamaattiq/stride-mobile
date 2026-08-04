@@ -166,6 +166,7 @@
       "Home": "الرئيسية",
       "MyListings": "قوائمي",
       "Search": "بحث",
+      "MyOffers": "عروضي",
       "Vehicle": "المركبة",
       "History": "السجل",
       "Settings": "الإعدادات",
@@ -173,6 +174,17 @@
       "CreateRequest": "إنشاء طلب",
       "createTripA11y": "إنشاء رحلة",
       "createRequestA11y": "إنشاء طلب"
+    },
+    "offers": {
+      "title": "عروضي",
+      "subtitle": "الرحلات والطلبات التي قدّمت عليها عرضاً.",
+      "subtitlePassenger": "رحلات السائقين التي قدّمت عليها عرضاً.",
+      "subtitleDriver": "طلبات الركاب التي قدّمت عليها عرضاً.",
+      "emptyTitle": "لا توجد عروض بعد",
+      "emptySubtitle": "عند إرسال عرض سيظهر هنا.",
+      "emptySubtitlePassenger": "العروض التي تقدّمها على رحلات السائقين ستظهر هنا.",
+      "emptySubtitleDriver": "العروض التي تقدّمها على طلبات الركاب ستظهر هنا.",
+      "loadFailed": "تعذّر تحميل عروضك. يرجى المحاولة مرة أخرى."
     },
     "history": {
       "title": "السجل",

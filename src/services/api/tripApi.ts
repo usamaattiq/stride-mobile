@@ -43,6 +43,9 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
 export const tripApi = {
   list: (): Promise<TripDto[]> => apiRequest({ method: 'GET', url: '/trips' }),
 
+  /** Trips the viewer has offered on (My Offers tab). */
+  listMyOffers: (): Promise<TripDto[]> => apiRequest({ method: 'GET', url: '/trips/offers' }),
+
   browse: (params: BrowseTripsParams = {}): Promise<PaginatedTripsDto> =>
     apiRequest({ method: 'GET', url: `/trips/browse${buildBrowseQuery(params)}` }),
 

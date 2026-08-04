@@ -93,13 +93,8 @@ export function completeVehicleFlow(
 
   navigation.dispatch(
     CommonActions.reset({
-      index: 0,
-      routes: [
-        {
-          name: 'MainTabs',
-          params: { screen: 'Vehicle', params: { screen: 'VehicleList' } },
-        },
-      ],
+      index: 1,
+      routes: [{ name: 'MainTabs' }, { name: 'ManageVehicles' }],
     }),
   );
 }

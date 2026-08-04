@@ -1,4 +1,4 @@
-import type { RfqStatusValue } from './rfqApi.types';
+import type { RfqOfferStatus, RfqStatusValue } from './rfqApi.types';
 
 export type TripCityDto = {
   id: string;
@@ -40,6 +40,10 @@ export type TripDto = {
   updatedAt: string;
   /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
   rfqStatus?: RfqStatusValue | null;
+  /** Viewer's latest offer status when listed via My Offers. */
+  myOfferStatus?: RfqOfferStatus | null;
+  /** Viewer's latest offer price when listed via My Offers. */
+  myOfferPrice?: string | null;
 };
 
 export type CreateTripPayload = {

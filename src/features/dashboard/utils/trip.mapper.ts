@@ -32,6 +32,8 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     description: dto.description ?? null,
     publishedAt: dto.publishedAt,
     rfqStatus: dto.rfqStatus ?? null,
+    myOfferStatus: dto.myOfferStatus ?? null,
+    myOfferPrice: dto.myOfferPrice ?? null,
   };
 }
 

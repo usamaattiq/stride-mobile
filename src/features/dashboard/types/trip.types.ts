@@ -1,4 +1,4 @@
-import type { RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { VehicleClass } from './vehicle.types';
 
@@ -76,6 +76,10 @@ export type Trip = {
   publishedAt: string;
   /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
   rfqStatus: RfqStatusValue | null;
+  /** Viewer's latest offer status when shown on My Offers. */
+  myOfferStatus: RfqOfferStatus | null;
+  /** Viewer's latest offer price when shown on My Offers. */
+  myOfferPrice: string | null;
 };
 
 export function createEmptyTripDraft(): TripDraft {
@@ -200,5 +204,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
     rfqStatus: null,
+    myOfferStatus: null,
+    myOfferPrice: null,
   };
 }

@@ -31,6 +31,7 @@ import {
   type SettingsMenuItem,
 } from '../constants/settingsMenu';
 import { useDashboardSession } from '../context/DashboardSessionContext';
+import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
@@ -57,7 +58,10 @@ export function SettingsHomeScreen(): React.ReactElement {
   } = useDashboardSession();
   const { resetDraft } = useSignupDraftStore();
   const navigation = useNavigation<SettingsNav>();
-  const rootNavigation = navigation.getParent()?.getParent() as
+  const dashboardRootNavigation = navigation.getParent()?.getParent() as
+    | NativeStackNavigationProp<DashboardRootStackParamList>
+    | undefined;
+  const authRootNavigation = dashboardRootNavigation?.getParent() as
     | NativeStackNavigationProp<AuthStackParamList>
     | undefined;
 
@@ -117,7 +121,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     useProfileStore.getState().clearProfile();
     resetDraft();
     resetSession();
-    rootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
   };
 
   const closeRoleDialog = () => {
@@ -200,6 +204,9 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'switch-passenger':
         setSwitchRoleError(null);
         setDialog('passenger');
+        break;
+      case 'manage-vehicles':
+        dashboardRootNavigation?.navigate('ManageVehicles');
         break;
       default:
         break;
