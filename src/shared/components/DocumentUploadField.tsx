@@ -7,9 +7,6 @@ import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
-// ID-1 card ratio (≈1.585) rounded to a clean value for the crop UI.
-const DEFAULT_ASPECT: [number, number] = [16, 10];
-
 export type DocumentUploadFieldProps = {
   label: string;
   uri?: string | null;
@@ -27,10 +24,6 @@ export type DocumentUploadFieldProps = {
   changeHint?: string;
   /** Accessibility label for the clear/remove control. */
   removeAccessibilityLabel?: string;
-  /** Enable the native crop step after selecting an image. Defaults to true. */
-  allowsEditing?: boolean;
-  /** Crop aspect ratio (Android honors this; iOS uses its own crop UI). */
-  aspect?: [number, number];
 };
 
 export function DocumentUploadField({
@@ -43,8 +36,6 @@ export function DocumentUploadField({
   hint = 'Tap to upload image',
   changeHint = 'Tap to change',
   removeAccessibilityLabel = 'Remove',
-  allowsEditing = true,
-  aspect = DEFAULT_ASPECT,
 }: DocumentUploadFieldProps): React.ReactElement {
   const pickImage = async () => {
     // If the document-number field was still focused, its keyboard stays up
@@ -59,8 +50,7 @@ export function DocumentUploadField({
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing,
-      aspect,
+      allowsEditing: false,
       quality: 0.85,
     });
 
@@ -101,7 +91,7 @@ export function DocumentUploadField({
             <>
               <Image source={{ uri }} style={styles.preview} contentFit="cover" />
               <View style={[styles.editBadge, tile && styles.editBadgeTile]}>
-                <FontAwesome name="crop" size={tile ? 10 : 12} color={colors.white} />
+                <FontAwesome name="pencil" size={tile ? 10 : 12} color={colors.white} />
                 {tile ? null : (
                   <AppText weight="medium" style={styles.editBadgeText}>
                     {changeHint}
