@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -14,7 +14,8 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
-import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { VEHICLE_CLASS_ICONS, VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 
@@ -61,6 +62,39 @@ function formatCountdown(remainingMs: number, t: TFunction): string {
     return t('dashboard.listings.card.timerHours', { hours, minutes });
   }
   return t('dashboard.listings.card.timerMinutes', { minutes });
+}
+
+function RequestThumbnail({
+  vehicleClass,
+  seatsCount,
+}: {
+  vehicleClass: VehicleClass | null;
+  seatsCount: number | null;
+}): React.ReactElement {
+  const iconName = vehicleClass ? VEHICLE_CLASS_ICONS[vehicleClass] : 'car';
+
+  return (
+    <LinearGradient
+      colors={['#FFF8F7', '#FEE4E2', '#F9C6C0']}
+      locations={[0, 0.55, 1]}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.95, y: 1 }}
+      style={styles.requestThumb}
+    >
+      <View style={styles.requestThumbIconWell}>
+        <FontAwesome5 name={iconName} size={24} color={colors.primary} solid />
+      </View>
+
+      {seatsCount != null ? (
+        <View style={styles.requestThumbSeats}>
+          <FontAwesome name="user" size={7} color={colors.white} />
+          <AppText weight="semibold" style={styles.requestThumbSeatsText}>
+            {seatsCount}
+          </AppText>
+        </View>
+      ) : null}
+    </LinearGradient>
+  );
 }
 
 export type ListingCardProps = {
@@ -131,6 +165,7 @@ export function ListingCard({
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
   const price = trip.vehicleId != null ? trip.startingPrice?.trim() || null : null;
+  const isPassengerRequest = trip.vehicleId == null;
   const showCountdown = !trip.rfqStatus && (pending || active);
   const listingLabel =
     trip.listingType === 'auction'
@@ -231,6 +266,11 @@ export function ListingCard({
               source={{ uri: trip.vehiclePhotoUrl }}
               style={styles.thumbnailImage}
               contentFit="cover"
+            />
+          ) : isPassengerRequest ? (
+            <RequestThumbnail
+              vehicleClass={trip.vehicleClass}
+              seatsCount={trip.vehicleTotalSeats}
             />
           ) : (
             <View style={styles.thumbnailFallback}>
@@ -464,7 +504,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxs,
+    paddingBottom: spacing.sm,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -508,6 +548,41 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  requestThumb: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  requestThumbIconWell: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    shadowColor: '#7F1D1D',
+    shadowOpacity: 0.16,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  requestThumbSeats: {
+    position: 'absolute',
+    right: 4,
+    bottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  requestThumbSeatsText: {
+    fontSize: 10,
+    color: colors.white,
   },
   photoBadge: {
     position: 'absolute',

@@ -12,3 +12,14 @@ export const VEHICLE_CLASS_OPTIONS: VehicleClassOption[] = [
   { id: 'van', labelKey: 'vehicles.classes.van' },
   { id: 'coaster', labelKey: 'vehicles.classes.coaster' },
 ];
+
+export const VEHICLE_CLASS_ICONS: Record<
+  VehicleClass,
+  'car-side' | 'car' | 'bus' | 'shuttle-van'
+> = {
+  suv: 'car-side',
+  sedan: 'car',
+  bus: 'bus',
+  van: 'shuttle-van',
+  coaster: 'bus',
+};
