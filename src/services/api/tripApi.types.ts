@@ -57,6 +57,8 @@ export type CreateTripPayload = {
   listingType: 'rfq' | 'auction';
   /** Required for driver listings; omitted for passenger requests. */
   startingPrice?: string;
+  /** Required for passenger requests when vehicleId is omitted. */
+  seats?: number;
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
   startMode: 'instant' | 'scheduled';

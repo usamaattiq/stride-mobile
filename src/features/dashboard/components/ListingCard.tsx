@@ -131,6 +131,7 @@ export function ListingCard({
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
   const price = trip.vehicleId != null ? trip.startingPrice?.trim() || null : null;
+  const showCountdown = !trip.rfqStatus && (pending || active);
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -296,12 +297,26 @@ export function ListingCard({
                   </AppText>
                 </View>
               ) : null}
-              {classLabel || seatsLabel ? (
-                <View style={styles.metaRow}>
-                  <FontAwesome name="car" size={11} color={colors.primary} />
-                  <AppText style={styles.metaText} numberOfLines={1}>
-                    {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
-                  </AppText>
+              {classLabel || seatsLabel || (!price && showCountdown) ? (
+                <View style={styles.vehicleTypeRow}>
+                  {classLabel || seatsLabel ? (
+                    <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
+                      <FontAwesome name="car" size={11} color={colors.primary} />
+                      <AppText style={styles.metaText} numberOfLines={1}>
+                        {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
+                      </AppText>
+                    </View>
+                  ) : (
+                    <View style={styles.vehicleTypeMeta} />
+                  )}
+                  {!price && showCountdown ? (
+                    <View style={styles.inlineCountdownBadge}>
+                      <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                      <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                        {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                      </AppText>
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -311,16 +326,18 @@ export function ListingCard({
                 <AppText weight="bold" style={styles.priceAmount}>
                   {price}
                 </AppText>
-                <AppText style={styles.priceSuffix}>
-                  {t('dashboard.listings.pricePerSeatSuffix')}
-                </AppText>
+                {trip.vehicleMode === 'shared' ? (
+                  <AppText style={styles.priceSuffix}>
+                    {t('dashboard.listings.pricePerSeatSuffix')}
+                  </AppText>
+                ) : null}
               </View>
             ) : null}
           </View>
         </View>
       </View>
 
-      {!trip.rfqStatus && (pending || active) ? (
+      {price && showCountdown ? (
         <View style={styles.bottomRow}>
           <View style={styles.countdownBadge}>
             <FontAwesome name="clock-o" size={10} color={colors.primary} />
@@ -564,9 +581,37 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 3,
   },
+  vehicleTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  vehicleTypeMeta: {
+    flex: 1,
+    minWidth: 0,
+  },
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
+  },
+  inlineCountdownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 0,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    shadowColor: '#000000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   priceAmount: {
     fontSize: 22,

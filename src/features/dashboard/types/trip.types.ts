@@ -38,6 +38,8 @@ export type TripDraft = {
   arrivalTimeSet: boolean;
   listingType: TripListingType | null;
   startingPrice: string;
+  /** Passenger requests: number of seats needed (string for text input). */
+  seats: string;
   paymentMethod: TripPaymentMethod | null;
   durationHours: number;
   startMode: TripStartMode | null;
@@ -92,6 +94,7 @@ export function createEmptyTripDraft(): TripDraft {
     arrivalTimeSet: false,
     listingType: null,
     startingPrice: '',
+    seats: '',
     paymentMethod: null,
     durationHours: 6,
     startMode: null,
@@ -137,6 +140,13 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     return null;
   }
 
+  const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
+  const seatsValid =
+    Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
+  if (hasVehicleClass && !hasVehicle && !seatsValid) {
+    return null;
+  }
+
   const departurePoint =
     draft.departurePoint ??
     ({
@@ -172,7 +182,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoUrls: [],
     vehiclePhotoCount: 0,
     vehicleClass: draft.vehicleClass,
-    vehicleTotalSeats: null,
+    vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,

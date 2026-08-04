@@ -98,7 +98,12 @@ export function TripOfferPanel({
   const priceValid = price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
   const canSubmit = seatsValid && priceValid && !submitting;
   const effectiveSeats = isFullPrivate ? (vehicleTotalSeats ?? 1) : seatsNumber;
-  const totalPrice = priceValid && seatsValid ? priceNumber * effectiveSeats : null;
+  const totalPrice =
+    priceValid && seatsValid
+      ? isFullPrivate
+        ? priceNumber
+        : priceNumber * effectiveSeats
+      : null;
 
   const submitOffer = () => {
     if (!canSubmit) {
@@ -161,9 +166,11 @@ export function TripOfferPanel({
             {activeOffer.price != null ? (
               <AppText weight="semibold" style={styles.price}>
                 {t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })}
-                <AppText style={styles.priceSuffix}>
-                  {t('dashboard.listings.pricePerSeatSuffix')}
-                </AppText>
+                {!isFullPrivate ? (
+                  <AppText style={styles.priceSuffix}>
+                    {t('dashboard.listings.pricePerSeatSuffix')}
+                  </AppText>
+                ) : null}
               </AppText>
             ) : null}
           </View>
@@ -197,14 +204,18 @@ export function TripOfferPanel({
             />
           ) : null}
           <AuthTextField
-            label={t('dashboard.listings.detail.offer.pricePerSeatLabel')}
+            label={t(
+              isFullPrivate
+                ? 'dashboard.listings.detail.offer.priceFullVehicleLabel'
+                : 'dashboard.listings.detail.offer.pricePerSeatLabel',
+            )}
             value={price}
             onChangeText={setPrice}
             keyboardType="decimal-pad"
             placeholder={t('dashboard.listings.detail.offer.pricePlaceholder')}
             dense
           />
-          {totalPrice != null ? (
+          {totalPrice != null && !isFullPrivate ? (
             <View style={styles.totalBox}>
               <AppText weight="semibold" style={styles.totalLabel}>
                 {t('dashboard.listings.detail.offer.totalLabel')}

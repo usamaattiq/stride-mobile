@@ -83,11 +83,15 @@ function SelectCard({
   );
 }
 
-function isListingComplete(draft: TripDraft, requirePrice: boolean): boolean {
+function isListingComplete(draft: TripDraft, requirePrice: boolean, requireSeats: boolean): boolean {
+  const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
+  const seatsValid =
+    Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
   return Boolean(
     draft.listingType &&
       draft.paymentMethod &&
-      (!requirePrice || draft.startingPrice.trim().length > 0),
+      (!requirePrice || draft.startingPrice.trim().length > 0) &&
+      (!requireSeats || seatsValid),
   );
 }
 
@@ -176,15 +180,33 @@ export function TripRfqAuctionStep({
 
         {!isPassenger ? (
           <AuthTextField
-            label={t('trips.create.startingPrice')}
+            label={t(
+              draft.vehicleMode === 'fullPrivate'
+                ? 'trips.create.startingPriceFullVehicle'
+                : 'trips.create.startingPrice',
+            )}
             required
             value={draft.startingPrice}
             onChangeText={(startingPrice) => onChange({ startingPrice })}
-            placeholder={t('trips.create.startingPricePlaceholder')}
+            placeholder={t(
+              draft.vehicleMode === 'fullPrivate'
+                ? 'trips.create.startingPriceFullVehiclePlaceholder'
+                : 'trips.create.startingPricePlaceholder',
+            )}
             keyboardType="decimal-pad"
             dense
           />
-        ) : null}
+        ) : (
+          <AuthTextField
+            label={t('trips.create.seats')}
+            required
+            value={draft.seats}
+            onChangeText={(seats) => onChange({ seats })}
+            placeholder={t('trips.create.seatsPlaceholder')}
+            keyboardType="number-pad"
+            dense
+          />
+        )}
 
         <View style={styles.section}>
           <AppText weight="medium" style={styles.sectionLabel}>
@@ -216,7 +238,7 @@ export function TripRfqAuctionStep({
         <Button
           label={t('common.continue')}
           onPress={onContinue}
-          disabled={!isListingComplete(draft, !isPassenger)}
+          disabled={!isListingComplete(draft, !isPassenger, isPassenger)}
         />
       </View>
     </AuthCard>
