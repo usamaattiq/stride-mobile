@@ -167,9 +167,34 @@
       "MyListings": "My Listings",
       "Search": "Search",
       "Vehicle": "Vehicle",
+      "History": "History",
       "Settings": "Settings",
       "CreateTrip": "Add trip",
-      "createTripA11y": "Create trip"
+      "CreateRequest": "Create request",
+      "createTripA11y": "Create trip",
+      "createRequestA11y": "Create request"
+    },
+    "history": {
+      "title": "History",
+      "subtitle": "Past and completed requests.",
+      "emptyTitle": "No history yet",
+      "emptySubtitle": "Past and completed requests will show up here."
+    },
+    "passenger": {
+      "title": "My activity",
+      "subtitle": "Your requests and offers in one place.",
+      "tabs": {
+        "myListings": "My Listing",
+        "offers": "Offers"
+      },
+      "myListings": {
+        "emptyTitle": "No requests yet",
+        "emptySubtitle": "Create a request and it will show up here."
+      },
+      "offers": {
+        "emptyTitle": "No offers yet",
+        "emptySubtitle": "Offers you place on driver trips will show up here."
+      }
     },
     "home": {
       "title": "Home",
@@ -183,6 +208,9 @@
       "creditsA11y": "{{count}} credits",
       "bannerTitle": "Available Reverse Requests",
       "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
+      "requestsEmptyTitle": "No requests yet",
+      "requestsEmptySubtitle": "When passengers post requests near you, they will show up here.",
+      "requestsLoadFailed": "Couldn't load passenger requests.",
       "requestSearchPlaceholder": "Search city, route or location...",
       "filter": "Filter",
       "filterA11y": "Open filters",
@@ -657,6 +685,9 @@
       "flowTitle": "Create trip",
       "vehicleTitle": "Select vehicle",
       "vehicleSubtitle": "Choose the vehicle for this trip",
+      "vehicleClassTitle": "Select vehicle type",
+      "vehicleClassSubtitle": "Choose the type of vehicle you need",
+      "vehicleClassLabel": "Vehicle type",
       "vehicleModeTitle": "Vehicle type",
       "vehicleModeSubtitle": "Offer shared seats or the full vehicle",
       "vehicleModeLabel": "Trip offering",
@@ -722,6 +753,8 @@
       "scheduledStart": "Start date & time",
       "previewTitle": "Preview trip",
       "previewSubtitle": "Review everything before publishing",
+      "previewRequestTitle": "Preview request",
+      "previewRequestSubtitle": "Review everything before publishing",
       "previewTrip": "Trip",
       "previewVehicle": "Vehicle",
       "previewListing": "Listing",
@@ -734,9 +767,12 @@
       "editTrip": "Edit trip",
       "notSpecified": "Not specified",
       "publish": "Publish trip",
+      "publishRequest": "Publish request",
       "publishIncomplete": "Complete the required fields before publishing.",
       "publishFailed": "Couldn't publish this trip. Please try again.",
+      "publishRequestFailed": "Couldn't publish this request. Please try again.",
       "successTitle": "Trip published",
+      "successRequestTitle": "Request published",
       "successBody": "Your trip is live. You can manage it from My Listings.",
       "showMyListings": "Show my listings",
       "noVehiclesTitle": "Add a vehicle first",

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { DurationSlider } from '@/features/dashboard/components/trip/DurationSlider';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type {
   TripDraft,
   TripListingType,
@@ -82,11 +83,11 @@ function SelectCard({
   );
 }
 
-function isListingComplete(draft: TripDraft): boolean {
+function isListingComplete(draft: TripDraft, requirePrice: boolean): boolean {
   return Boolean(
     draft.listingType &&
       draft.paymentMethod &&
-      draft.startingPrice.trim().length > 0,
+      (!requirePrice || draft.startingPrice.trim().length > 0),
   );
 }
 
@@ -96,6 +97,8 @@ export function TripRfqAuctionStep({
   onContinue,
 }: TripRfqAuctionStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
 
   const listingOptions: Array<{
     id: TripListingType;
@@ -171,15 +174,17 @@ export function TripRfqAuctionStep({
           </View>
         </View>
 
-        <AuthTextField
-          label={t('trips.create.startingPrice')}
-          required
-          value={draft.startingPrice}
-          onChangeText={(startingPrice) => onChange({ startingPrice })}
-          placeholder={t('trips.create.startingPricePlaceholder')}
-          keyboardType="decimal-pad"
-          dense
-        />
+        {!isPassenger ? (
+          <AuthTextField
+            label={t('trips.create.startingPrice')}
+            required
+            value={draft.startingPrice}
+            onChangeText={(startingPrice) => onChange({ startingPrice })}
+            placeholder={t('trips.create.startingPricePlaceholder')}
+            keyboardType="decimal-pad"
+            dense
+          />
+        ) : null}
 
         <View style={styles.section}>
           <AppText weight="medium" style={styles.sectionLabel}>
@@ -211,7 +216,7 @@ export function TripRfqAuctionStep({
         <Button
           label={t('common.continue')}
           onPress={onContinue}
-          disabled={!isListingComplete(draft)}
+          disabled={!isListingComplete(draft, !isPassenger)}
         />
       </View>
     </AuthCard>

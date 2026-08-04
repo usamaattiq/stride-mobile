@@ -9,6 +9,7 @@ export type DashboardTabParamList = {
   MyListings: undefined;
   CreateTrip: undefined;
   Vehicle: NavigatorScreenParams<VehicleRouteParamList>;
+  History: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
 };
 

@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -22,22 +21,17 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
 import { DashboardSearchBar } from '../components/DashboardSearchBar';
-import { HomeHeader } from '../components/HomeHeader';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { ListingStatusChips } from '../components/ListingStatusChips';
 import { ListingsEmptyState } from '../components/ListingsEmptyState';
-import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { SegmentControl } from '../components/SegmentControl';
-import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { DashboardTabParamList } from '../navigation/types';
 import type { Trip, TripListingType } from '../types/trip.types';
 import {
   matchesListingQuery,
@@ -54,9 +48,6 @@ export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const tabNavigation =
-    useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'MyListings'>>();
-  const { user } = useDashboardSession();
   const { trips, loadError, refreshTrips, removeTrip } = useTrips();
 
   const [listingType, setListingType] = React.useState<TripListingType>('rfq');
@@ -66,15 +57,10 @@ export function MyListingsScreen(): React.ReactElement {
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
   /** True from tab focus until the deferred fetch finishes — keeps the screen light. */
-  const [isScreenLoading, setIsScreenLoading] = React.useState(user.role === 'driver');
+  const [isScreenLoading, setIsScreenLoading] = React.useState(true);
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
-
-  const roleLabel =
-    user.role === 'driver'
-      ? t('profile.roles.driver')
-      : t('profile.roles.passenger');
 
   const typeOptions = React.useMemo(
     () => [
@@ -84,21 +70,8 @@ export function MyListingsScreen(): React.ReactElement {
     [t],
   );
 
-  const goToSettings = React.useCallback(() => {
-    tabNavigation.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
-  }, [tabNavigation]);
-
-  const goToHome = React.useCallback(() => {
-    tabNavigation.navigate({ name: 'Home', params: { screen: 'HomeMain' } });
-  }, [tabNavigation]);
-
   useFocusEffect(
     React.useCallback(() => {
-      if (user.role !== 'driver') {
-        setIsScreenLoading(false);
-        return;
-      }
-
       let cancelled = false;
       setIsScreenLoading(true);
 
@@ -116,7 +89,7 @@ export function MyListingsScreen(): React.ReactElement {
         cancelled = true;
         task.cancel();
       };
-    }, [refreshTrips, user.role]),
+    }, [refreshTrips]),
   );
 
   const selectListingType = React.useCallback(
@@ -226,27 +199,6 @@ export function MyListingsScreen(): React.ReactElement {
     ),
     [navigation],
   );
-
-  if (user.role !== 'driver') {
-    return (
-      <View style={styles.searchRoot}>
-        <FocusAwareStatusBar style="light" />
-        <HomeHeader
-          firstName={user.firstName}
-          roleLabel={roleLabel}
-          avatarUri={user.avatarUri}
-          credits={user.credits}
-          notificationCount={user.notificationCount}
-          hasUnreadMessages={user.hasUnreadMessages}
-          variant="onBrand"
-          onChatPress={goToHome}
-          onNotificationsPress={goToHome}
-          onProfilePress={goToSettings}
-        />
-        <PassengerSearchPanel />
-      </View>
-    );
-  }
 
   const filtersHeader = (
     <View style={styles.filters}>
@@ -394,10 +346,6 @@ function ListSeparator(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  searchRoot: {
-    flex: 1,
-    backgroundColor: colors.primary,
-  },
   contentWrap: {
     flex: 1,
     paddingTop: spacing.md,

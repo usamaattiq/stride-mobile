@@ -9,29 +9,35 @@ import { colors, spacing } from '@/theme';
 
 type ListingsEmptyStateProps = {
   variant?: 'none' | 'filtered';
+  title?: string;
+  subtitle?: string;
+  icon?: React.ComponentProps<typeof FontAwesome5>['name'];
 };
 
 export function ListingsEmptyState({
   variant = 'none',
+  title: titleOverride,
+  subtitle: subtitleOverride,
+  icon,
 }: ListingsEmptyStateProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
   const title =
-    variant === 'filtered'
+    titleOverride ??
+    (variant === 'filtered'
       ? t('dashboard.home.listingsFilterEmptyTitle')
-      : t('dashboard.listings.emptyTitle');
+      : t('dashboard.listings.emptyTitle'));
   const subtitle =
-    variant === 'filtered'
+    subtitleOverride ??
+    (variant === 'filtered'
       ? t('dashboard.home.listingsFilterEmptySubtitle')
-      : t('dashboard.listings.emptySubtitle');
+      : t('dashboard.listings.emptySubtitle'));
+  const iconName =
+    icon ?? (variant === 'filtered' ? 'search' : 'clipboard-list');
 
   return (
     <View style={styles.root}>
-      <FontAwesome5
-        name={variant === 'filtered' ? 'search' : 'clipboard-list'}
-        size={36}
-        color={colors.text.tertiary}
-      />
+      <FontAwesome5 name={iconName} size={36} color={colors.text.tertiary} />
       <AppText weight="semibold" style={styles.title}>
         {title}
       </AppText>

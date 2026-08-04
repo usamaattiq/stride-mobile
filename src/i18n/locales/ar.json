@@ -167,9 +167,34 @@
       "MyListings": "قوائمي",
       "Search": "بحث",
       "Vehicle": "المركبة",
+      "History": "السجل",
       "Settings": "الإعدادات",
       "CreateTrip": "إضافة رحلة",
-      "createTripA11y": "إنشاء رحلة"
+      "CreateRequest": "إنشاء طلب",
+      "createTripA11y": "إنشاء رحلة",
+      "createRequestA11y": "إنشاء طلب"
+    },
+    "history": {
+      "title": "السجل",
+      "subtitle": "الطلبات السابقة والمكتملة.",
+      "emptyTitle": "لا يوجد سجل بعد",
+      "emptySubtitle": "ستظهر الطلبات السابقة والمكتملة هنا."
+    },
+    "passenger": {
+      "title": "نشاطي",
+      "subtitle": "طلباتك وعروضك في مكان واحد.",
+      "tabs": {
+        "myListings": "قائمتي",
+        "offers": "العروض"
+      },
+      "myListings": {
+        "emptyTitle": "لا توجد طلبات بعد",
+        "emptySubtitle": "أنشئ طلباً وسيظهر هنا."
+      },
+      "offers": {
+        "emptyTitle": "لا توجد عروض بعد",
+        "emptySubtitle": "العروض التي تقدّمها على رحلات السائقين ستظهر هنا."
+      }
     },
     "home": {
       "title": "الرئيسية",
@@ -183,6 +208,9 @@
       "creditsA11y": "{{count}} رصيد",
       "bannerTitle": "طلبات العودة المتاحة",
       "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
+      "requestsEmptyTitle": "لا توجد طلبات بعد",
+      "requestsEmptySubtitle": "عندما ينشر الركاب طلبات بالقرب منك، ستظهر هنا.",
+      "requestsLoadFailed": "تعذر تحميل طلبات الركاب.",
       "requestSearchPlaceholder": "ابحث عن مدينة أو مسار أو موقع...",
       "filter": "تصفية",
       "filterA11y": "فتح عوامل التصفية",
@@ -657,6 +685,9 @@
       "flowTitle": "إنشاء رحلة",
       "vehicleTitle": "اختر المركبة",
       "vehicleSubtitle": "اختر المركبة لهذه الرحلة",
+      "vehicleClassTitle": "اختر نوع المركبة",
+      "vehicleClassSubtitle": "اختر نوع المركبة التي تحتاجها",
+      "vehicleClassLabel": "نوع المركبة",
       "vehicleModeTitle": "نوع المركبة",
       "vehicleModeSubtitle": "قدّم مقاعد مشتركة أو المركبة كاملة",
       "vehicleModeLabel": "عرض الرحلة",
@@ -722,6 +753,8 @@
       "scheduledStart": "تاريخ ووقت البدء",
       "previewTitle": "معاينة الرحلة",
       "previewSubtitle": "راجع كل شيء قبل النشر",
+      "previewRequestTitle": "معاينة الطلب",
+      "previewRequestSubtitle": "راجع كل شيء قبل النشر",
       "previewTrip": "الرحلة",
       "previewVehicle": "المركبة",
       "previewListing": "الإدراج",
@@ -734,9 +767,12 @@
       "editTrip": "تعديل الرحلة",
       "notSpecified": "غير محدد",
       "publish": "نشر الرحلة",
+      "publishRequest": "نشر الطلب",
       "publishIncomplete": "أكمل الحقول المطلوبة قبل النشر.",
       "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
+      "publishRequestFailed": "تعذر نشر هذا الطلب. يرجى المحاولة مرة أخرى.",
       "successTitle": "تم نشر الرحلة",
+      "successRequestTitle": "تم نشر الطلب",
       "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
       "showMyListings": "عرض قوائمي",
       "noVehiclesTitle": "أضف مركبة أولاً",

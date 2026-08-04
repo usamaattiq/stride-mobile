@@ -130,7 +130,7 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const price = trip.startingPrice?.trim() || null;
+  const price = trip.vehicleId != null ? trip.startingPrice?.trim() || null : null;
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')

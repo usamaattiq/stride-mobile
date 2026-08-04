@@ -26,6 +26,7 @@ import type { DashboardRootStackParamList } from './dashboardRootTypes';
 import { openTripCreationFlow } from './homeStackNavigation';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { MyListingsScreen } from '../screens/MyListingsScreen';
+import { HistoryScreen } from '../screens/HistoryScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { SearchResultsScreen } from '../screens/SearchResultsScreen';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
@@ -44,6 +45,7 @@ const TAB_ICONS: Record<Exclude<keyof DashboardTabParamList, 'CreateTrip'>, TabI
   Home: 'home',
   MyListings: 'list-alt',
   Vehicle: 'car',
+  History: 'history',
   Settings: 'cog',
 };
 
@@ -68,7 +70,7 @@ function DashboardTabs(): React.ReactElement {
   const isDriver = user.role === 'driver';
 
   const safeBottomInset = insets.bottom;
-  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + (isDriver ? DRIVER_TAB_BAR_EXTRA : 0);
+  const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + DRIVER_TAB_BAR_EXTRA;
   const defaultTabBarStyle = [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }];
 
   return (
@@ -82,9 +84,7 @@ function DashboardTabs(): React.ReactElement {
         tabBarLabel:
           route.name === 'CreateTrip'
             ? undefined
-            : route.name === 'MyListings' && !isDriver
-              ? t('dashboard.tabs.Search')
-              : t(`dashboard.tabs.${route.name}`),
+            : t(`dashboard.tabs.${route.name}`),
         tabBarLabelStyle: [
           styles.tabLabel,
           { fontFamily: getFontFamily(currentLanguage, 'medium') },
@@ -97,35 +97,31 @@ function DashboardTabs(): React.ReactElement {
             return null;
           }
           const iconName =
-            route.name === 'MyListings' && !isDriver
-              ? 'search'
-              : TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
+            TAB_ICONS[route.name as Exclude<keyof DashboardTabParamList, 'CreateTrip'>];
           return <FontAwesome name={iconName} size={22} color={color} />;
         },
       })}
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="MyListings" component={MyListingsScreen} />
-      {isDriver ? (
-        <Tab.Screen
-          name="CreateTrip"
-          component={CreateTripTabScreen}
-          listeners={({ navigation }) => ({
-            tabPress: (event) => {
-              event.preventDefault();
-              const rootNavigation =
-                navigation.getParent<NavigationProp<DashboardRootStackParamList>>();
-              if (rootNavigation) {
-                openTripCreation(rootNavigation, beginCreateTrip);
-              }
-            },
-          })}
-          options={{
-            tabBarLabel: () => null,
-            tabBarButton: (props) => <CreateTripTabButton {...props} />,
-          }}
-        />
-      ) : null}
+      <Tab.Screen
+        name="CreateTrip"
+        component={CreateTripTabScreen}
+        listeners={({ navigation }) => ({
+          tabPress: (event) => {
+            event.preventDefault();
+            const rootNavigation =
+              navigation.getParent<NavigationProp<DashboardRootStackParamList>>();
+            if (rootNavigation) {
+              openTripCreation(rootNavigation, beginCreateTrip);
+            }
+          },
+        })}
+        options={{
+          tabBarLabel: () => null,
+          tabBarButton: (props) => <CreateTripTabButton {...props} />,
+        }}
+      />
       {isDriver ? (
         <Tab.Screen
           name="Vehicle"
@@ -150,7 +146,9 @@ function DashboardTabs(): React.ReactElement {
             },
           })}
         />
-      ) : null}
+      ) : (
+        <Tab.Screen name="History" component={HistoryScreen} />
+      )}
       <Tab.Screen
         name="Settings"
         component={SettingsStackNavigator}

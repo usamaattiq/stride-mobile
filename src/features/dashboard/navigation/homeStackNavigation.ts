@@ -112,15 +112,18 @@ export function exitTripCreation(rootNavigation: TripRootNavigation): void {
   }
 }
 
-/** After publish — land on My Listings so the new trip is visible. */
-export function exitTripCreationToListings(rootNavigation: TripRootNavigation): void {
+/** After publish — land on My Listings (drivers) or Home (passengers). */
+export function exitTripCreationToListings(
+  rootNavigation: TripRootNavigation,
+  options?: { screen?: 'MyListings' | 'Home' },
+): void {
   rootNavigation.dispatch(
     CommonActions.reset({
       index: 0,
       routes: [
         {
           name: 'MainTabs',
-          params: { screen: 'MyListings' },
+          params: { screen: options?.screen ?? 'MyListings' },
         },
       ],
     }),

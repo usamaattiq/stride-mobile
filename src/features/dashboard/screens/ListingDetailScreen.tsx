@@ -34,7 +34,6 @@ import { TripOfferPanel } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
-import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
@@ -49,8 +48,6 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
-  const { user } = useDashboardSession();
-  const isPassenger = user.role === 'passenger';
   const { getTripById, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
@@ -65,6 +62,9 @@ export function ListingDetailScreen(): React.ReactElement {
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
   const [responsesCount, setResponsesCount] = React.useState(0);
+
+  /** Owned listings come from the user's My Listings cache; discovery items do not. */
+  const isOwnListing = Boolean(getTripById(route.params.tripId));
 
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
@@ -246,7 +246,7 @@ export function ListingDetailScreen(): React.ReactElement {
       showLanguageSwitcher={false}
       compactHeader
       headerRight={
-        user.role === 'driver' ? (
+        isOwnListing ? (
           <Pressable
             onPress={openRemove}
             style={styles.headerRemoveButton}
@@ -262,7 +262,7 @@ export function ListingDetailScreen(): React.ReactElement {
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        {isPassenger ? (
+        {!isOwnListing ? (
           <>
             <TripDetailsOverview
               description={description}

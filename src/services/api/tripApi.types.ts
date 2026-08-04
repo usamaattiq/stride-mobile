@@ -13,7 +13,7 @@ export type TripLocationPointDto = {
 
 export type TripDto = {
   id: string;
-  vehicleId: string;
+  vehicleId: string | null;
   vehicleTitle: string | null;
   vehiclePhotoUrls: string[];
   vehiclePhotoViewUrl?: string | null;
@@ -43,7 +43,9 @@ export type TripDto = {
 };
 
 export type CreateTripPayload = {
-  vehicleId: string;
+  vehicleId?: string;
+  /** Required for passenger requests when vehicleId is omitted. */
+  vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
   departurePoint: TripLocationPointDto;
@@ -53,7 +55,8 @@ export type CreateTripPayload = {
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
   listingType: 'rfq' | 'auction';
-  startingPrice: string;
+  /** Required for driver listings; omitted for passenger requests. */
+  startingPrice?: string;
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
   startMode: 'instant' | 'scheduled';
@@ -71,6 +74,8 @@ export type PaginatedTripsDto = {
 
 export type BrowseTripsParams = {
   q?: string;
+  /** `trips` = driver vehicle listings; `requests` = passenger reverse requests. */
+  kind?: 'trips' | 'requests';
   listingType?: 'rfq' | 'auction';
   paymentMethod?: 'cash' | 'online' | 'both';
   departureCity?: string;

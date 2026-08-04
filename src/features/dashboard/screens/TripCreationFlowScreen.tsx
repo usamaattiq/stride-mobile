@@ -11,8 +11,10 @@ import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetail
 import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
 import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
 import { TripScheduleStep } from '@/features/dashboard/components/trip/TripScheduleStep';
+import { TripVehicleClassStep } from '@/features/dashboard/components/trip/TripVehicleClassStep';
 import { TripVehicleModeStep } from '@/features/dashboard/components/trip/TripVehicleModeStep';
 import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/TripVehicleSelectStep';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import { useTrips } from '@/features/dashboard/context/TripContext';
 import { useVehicles } from '@/features/dashboard/context/VehicleContext';
 import type { DashboardRootStackParamList } from '@/features/dashboard/navigation/dashboardRootTypes';
@@ -55,6 +57,8 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
   const { vehicles, isLoading: isLoadingVehicles, refreshVehicles, getVehicleById, beginAddVehicle } =
     useVehicles();
@@ -73,16 +77,16 @@ export function TripCreationFlowScreen(): React.ReactElement {
 
   React.useEffect(() => {
     const selectVehicleId = route.params?.selectVehicleId;
-    if (!selectVehicleId) {
+    if (!selectVehicleId || isPassenger) {
       return;
     }
     // Refresh vehicle list so the newly added vehicle is available in state.
     void refreshVehicles().catch(() => undefined).finally(() => {
-      patchDraft({ vehicleId: selectVehicleId });
+      patchDraft({ vehicleId: selectVehicleId, vehicleClass: null });
       setStep('vehicleMode');
       navigation.setParams({ selectVehicleId: undefined });
     });
-  }, [navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
+  }, [isPassenger, navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -144,7 +148,9 @@ export function TripCreationFlowScreen(): React.ReactElement {
     void publishDraft()
       .then((trip) => {
         if (!trip) {
-          setPublishError(t('trips.create.publishFailed'));
+          setPublishError(
+            t(isPassenger ? 'trips.create.publishRequestFailed' : 'trips.create.publishFailed'),
+          );
           return;
         }
         isLeavingRef.current = true;
@@ -154,7 +160,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
         });
       })
       .catch((error) => {
-        setPublishError(getErrorMessage(error, t('trips.create.publishFailed')));
+        setPublishError(
+          getErrorMessage(
+            error,
+            t(isPassenger ? 'trips.create.publishRequestFailed' : 'trips.create.publishFailed'),
+          ),
+        );
       });
   };
 
@@ -171,10 +182,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const header = React.useMemo(() => {
     switch (step) {
       case 'vehicle':
-        return {
-          title: t('trips.create.vehicleTitle'),
-          subtitle: t('trips.create.vehicleSubtitle'),
-        };
+        return isPassenger
+          ? {
+              title: t('trips.create.vehicleClassTitle'),
+              subtitle: t('trips.create.vehicleClassSubtitle'),
+            }
+          : {
+              title: t('trips.create.vehicleTitle'),
+              subtitle: t('trips.create.vehicleSubtitle'),
+            };
       case 'vehicleMode':
         return {
           title: t('trips.create.vehicleModeTitle'),
@@ -196,14 +212,19 @@ export function TripCreationFlowScreen(): React.ReactElement {
           subtitle: t('trips.create.scheduleSubtitle'),
         };
       case 'preview':
-        return {
-          title: t('trips.create.previewTitle'),
-          subtitle: t('trips.create.previewSubtitle'),
-        };
+        return isPassenger
+          ? {
+              title: t('trips.create.previewRequestTitle'),
+              subtitle: t('trips.create.previewRequestSubtitle'),
+            }
+          : {
+              title: t('trips.create.previewTitle'),
+              subtitle: t('trips.create.previewSubtitle'),
+            };
       default:
         return { title: t('trips.create.flowTitle'), subtitle: undefined };
     }
-  }, [step, t]);
+  }, [isPassenger, step, t]);
 
   const selectedVehicle = draft.vehicleId ? getVehicleById(draft.vehicleId) : undefined;
 
@@ -224,16 +245,26 @@ export function TripCreationFlowScreen(): React.ReactElement {
         scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
         {step === 'vehicle' ? (
-          <TripVehicleSelectStep
-            vehicles={vehicles}
-            isLoading={isLoadingVehicles}
-            selectedVehicleId={draft.vehicleId}
-            onSelectVehicle={(vehicleId) => {
-              patchDraft({ vehicleId });
-              goToNextStep();
-            }}
-            onAddVehicle={handleAddVehicle}
-          />
+          isPassenger ? (
+            <TripVehicleClassStep
+              value={draft.vehicleClass}
+              onChange={(vehicleClass) => {
+                patchDraft({ vehicleClass, vehicleId: null });
+              }}
+              onContinue={goToNextStep}
+            />
+          ) : (
+            <TripVehicleSelectStep
+              vehicles={vehicles}
+              isLoading={isLoadingVehicles}
+              selectedVehicleId={draft.vehicleId}
+              onSelectVehicle={(vehicleId) => {
+                patchDraft({ vehicleId, vehicleClass: null });
+                goToNextStep();
+              }}
+              onAddVehicle={handleAddVehicle}
+            />
+          )
         ) : null}
 
         {step === 'vehicleMode' ? (

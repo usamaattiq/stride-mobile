@@ -42,7 +42,10 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
   }
 
   return {
-    vehicleId: preview.vehicleId,
+    ...(preview.vehicleId ? { vehicleId: preview.vehicleId } : {}),
+    ...(preview.vehicleClass && !preview.vehicleId
+      ? { vehicleClass: preview.vehicleClass }
+      : {}),
     vehicleMode: preview.vehicleMode,
     departureCity: preview.departureCity,
     departurePoint: preview.departurePoint,
@@ -52,7 +55,7 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
     arrivalPoint: preview.arrivalPoint,
     arrivalAt: preview.arrivalAt,
     listingType: preview.listingType,
-    startingPrice: preview.startingPrice!,
+    ...(preview.startingPrice ? { startingPrice: preview.startingPrice } : {}),
     paymentMethod: preview.paymentMethod,
     durationHours: preview.durationHours,
     startMode: preview.startMode,

@@ -6,6 +6,9 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
   if (params.q?.trim()) {
     search.set('q', params.q.trim());
   }
+  if (params.kind) {
+    search.set('kind', params.kind);
+  }
   if (params.listingType) {
     search.set('listingType', params.listingType);
   }

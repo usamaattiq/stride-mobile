@@ -20,6 +20,8 @@ export type TripLocationPoint = {
 
 export type TripDraft = {
   vehicleId: string | null;
+  /** Passenger requests pick a class instead of a concrete vehicle. */
+  vehicleClass: VehicleClass | null;
   vehicleMode: TripVehicleMode | null;
   departureCity: TripCity | null;
   departurePoint: TripLocationPoint | null;
@@ -46,7 +48,7 @@ export type TripDraft = {
 
 export type Trip = {
   id: string;
-  vehicleId: string;
+  vehicleId: string | null;
   vehicleTitle: string | null;
   vehiclePhotoUrl: string | null;
   vehiclePhotoUrls: string[];
@@ -77,6 +79,7 @@ export type Trip = {
 export function createEmptyTripDraft(): TripDraft {
   return {
     vehicleId: null,
+    vehicleClass: null,
     vehicleMode: null,
     departureCity: null,
     departurePoint: null,
@@ -108,9 +111,11 @@ export function canPublishTripDraft(draft: TripDraft): boolean {
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   const departureRequired = draft.vehicleMode === 'shared';
+  const hasVehicle = Boolean(draft.vehicleId);
+  const hasVehicleClass = Boolean(draft.vehicleClass);
 
   if (
-    !draft.vehicleId ||
+    (!hasVehicle && !hasVehicleClass) ||
     !draft.vehicleMode ||
     !draft.departureCity ||
     (departureRequired && !draft.departureAt) ||
@@ -127,7 +132,8 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   }
 
   const trimmedPrice = draft.startingPrice.trim();
-  if (!trimmedPrice) {
+  // Passenger requests (vehicle class only) do not set a price per seat.
+  if (hasVehicle && !trimmedPrice) {
     return null;
   }
 
@@ -165,7 +171,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoUrl: null,
     vehiclePhotoUrls: [],
     vehiclePhotoCount: 0,
-    vehicleClass: null,
+    vehicleClass: draft.vehicleClass,
     vehicleTotalSeats: null,
     vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
@@ -176,7 +182,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     arrivalPoint,
     arrivalAt,
     listingType: draft.listingType,
-    startingPrice: trimmedPrice,
+    startingPrice: trimmedPrice || null,
     paymentMethod: draft.paymentMethod,
     durationHours: draft.durationHours,
     startMode: draft.startMode,
