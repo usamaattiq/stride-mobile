@@ -144,8 +144,9 @@ export function TripResponsesPanel({
             return (
               <View key={offer.id} style={styles.offerCard}>
                 <View style={styles.offerHeaderRow}>
-                  <AppText weight="semibold" style={styles.offerTitle}>
-                    {t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
+                  <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
+                    {offer.responderName?.trim() ||
+                      t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
                   </AppText>
                   <OfferBadge status={offer.status} label={statusLabel(offer.status)} />
                 </View>
@@ -281,6 +282,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   offerTitle: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 13,
     color: colors.text.primary,
   },

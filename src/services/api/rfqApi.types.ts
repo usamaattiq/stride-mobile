@@ -21,6 +21,8 @@ export type RfqStatusValue =
 export type RfqOfferSummary = {
   id: string;
   responderId: string;
+  /** Privacy-masked display name (first 3 chars + *****). Owner snapshots only. */
+  responderName?: string | null;
   status: RfqOfferStatus;
   capacityMode: RfqCapacityMode;
   offeredQuantity: string | null;
