@@ -13,6 +13,7 @@ import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
 import type { TripVehicleMode } from '../../types/trip.types';
+import { OfferVehicleSummaryCard } from './TripOfferPanel';
 
 export type TripResponsesPanelProps = {
   tripId: string;
@@ -178,7 +179,7 @@ export function TripResponsesPanel({
                         // Full-private offers hold offeredQuantity=1 (the whole-vehicle
                         // capacity slot) — show the vehicle's real seat count instead.
                         count: isFullPrivate
-                          ? (vehicleTotalSeats ?? 1)
+                          ? (offer.vehicle?.totalSeats ?? vehicleTotalSeats ?? 1)
                           : Number(offer.offeredQuantity),
                       })}
                     </AppText>
@@ -189,6 +190,8 @@ export function TripResponsesPanel({
                     </AppText>
                   ) : null}
                 </View>
+
+                {offer.vehicle ? <OfferVehicleSummaryCard vehicle={offer.vehicle} /> : null}
 
                 {canDecide ? (
                   <View style={styles.offerActions}>

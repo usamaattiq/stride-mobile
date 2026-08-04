@@ -18,6 +18,18 @@ export type RfqStatusValue =
   | 'expired'
   | 'cancelled';
 
+export type RfqOfferVehicleSummary = {
+  id: string;
+  title: string;
+  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
+  totalSeats: number;
+  plateNumber: string;
+  brand: string | null;
+  model: string | null;
+  photoUrl: string | null;
+  photoViewUrl?: string | null;
+};
+
 export type RfqOfferSummary = {
   id: string;
   responderId: string;
@@ -28,6 +40,8 @@ export type RfqOfferSummary = {
   offeredQuantity: string | null;
   price: string | null;
   confirmationDeadlineAt: string | null;
+  /** Driver vehicle attached when offering on a passenger request. */
+  vehicle?: RfqOfferVehicleSummary | null;
 };
 
 export type RfqOwnerActions = {
@@ -90,9 +104,12 @@ export type RfqOfferResponse = {
   offeredQuantity: string | null;
   price: string | null;
   confirmationDeadlineAt: string | null;
+  vehicle?: RfqOfferVehicleSummary | null;
 };
 
 export type SubmitOfferPayload = {
   seats: number;
   price?: number;
+  /** Required when offering on a passenger request. */
+  vehicleId?: string;
 };

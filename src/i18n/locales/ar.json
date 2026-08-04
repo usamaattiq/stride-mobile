@@ -418,6 +418,10 @@
           "submitFailed": "تعذر إرسال عرضك.",
           "withdrawFailed": "تعذر سحب عرضك.",
           "retry": "حاول مرة أخرى",
+          "vehicleLabel": "مركبتك",
+          "selectVehicle": "اختر مركبة",
+          "selectVehicleTitle": "اختر مركبة",
+          "changeVehicle": "تغيير المركبة",
           "seatsLabel": "المقاعد",
           "seatsPlaceholder": "عدد المقاعد",
           "pricePerSeatLabel": "السعر لكل مقعد",
@@ -429,7 +433,7 @@
           "withdraw": "سحب العرض",
           "withdrawConfirmAction": "سحب",
           "withdrawConfirmTitle": "سحب هذا العرض؟",
-          "withdrawConfirmBody": "لن يرى السائق هذا العرض بعد الآن.",
+          "withdrawConfirmBody": "لن يرى الراكب هذا العرض بعد الآن.",
           "closed": "لم تعد هذه القائمة تقبل العروض."
         }
       },

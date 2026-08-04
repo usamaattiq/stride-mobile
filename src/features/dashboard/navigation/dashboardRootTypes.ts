@@ -24,6 +24,6 @@ export type DashboardRootStackParamList = {
   TripPublishSuccess: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
-  ListingDetail: { tripId: string };
+  ListingDetail: { tripId: string; selectVehicleId?: string };
   SearchResults: SearchResultsParams;
 };

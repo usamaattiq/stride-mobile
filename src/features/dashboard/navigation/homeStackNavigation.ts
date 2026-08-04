@@ -14,6 +14,7 @@ type TripRootNavigation = NavigationProp<DashboardRootStackParamList>;
 type CompleteVehicleFlowOptions = {
   selectVehicleId?: string;
   stackOrigin?: VehicleStackOrigin;
+  listingTripId?: string;
 };
 
 /**
@@ -62,6 +63,27 @@ export function completeVehicleFlow(
             params: options?.selectVehicleId
               ? { selectVehicleId: options.selectVehicleId }
               : undefined,
+          },
+        ],
+      }),
+    );
+    return;
+  }
+
+  if (returnTo === 'ListingDetail' && options?.listingTripId) {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          { name: 'MainTabs' },
+          {
+            name: 'ListingDetail',
+            params: {
+              tripId: options.listingTripId,
+              ...(options.selectVehicleId
+                ? { selectVehicleId: options.selectVehicleId }
+                : {}),
+            },
           },
         ],
       }),

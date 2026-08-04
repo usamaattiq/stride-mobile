@@ -418,6 +418,10 @@
           "submitFailed": "Couldn't send your offer.",
           "withdrawFailed": "Couldn't withdraw your offer.",
           "retry": "Try again",
+          "vehicleLabel": "Your vehicle",
+          "selectVehicle": "Select vehicle",
+          "selectVehicleTitle": "Select vehicle",
+          "changeVehicle": "Change vehicle",
           "seatsLabel": "Seats",
           "seatsPlaceholder": "Number of seats",
           "pricePerSeatLabel": "Price per seat",
@@ -429,7 +433,7 @@
           "withdraw": "Withdraw offer",
           "withdrawConfirmAction": "Withdraw",
           "withdrawConfirmTitle": "Withdraw this offer?",
-          "withdrawConfirmBody": "The driver will no longer see this offer.",
+          "withdrawConfirmBody": "The passenger will no longer see this offer.",
           "closed": "This listing is no longer accepting offers."
         }
       },

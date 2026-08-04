@@ -80,6 +80,8 @@ type AuthScaffoldProps = {
    * field (e.g. city search results) so they aren't left hidden under the keyboard.
    */
   scrollBottomOffset?: number;
+  /** Extra scroll padding while the keyboard is open (keyboard-controller). */
+  extraKeyboardSpace?: number;
 };
 
 export function AuthScaffold({
@@ -102,6 +104,7 @@ export function AuthScaffold({
   stepCount,
   currentStep,
   scrollBottomOffset,
+  extraKeyboardSpace,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -126,7 +129,8 @@ export function AuthScaffold({
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
-      bottomOffset={scrollBottomOffset}
+      bottomOffset={scrollBottomOffset ?? spacing.md}
+      extraKeyboardSpace={extraKeyboardSpace}
     >
       {children}
     </KeyboardAwareScrollView>

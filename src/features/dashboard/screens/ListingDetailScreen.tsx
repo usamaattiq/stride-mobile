@@ -16,6 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { useResizeMode } from 'react-native-keyboard-controller';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
@@ -65,6 +66,9 @@ export function ListingDetailScreen(): React.ReactElement {
 
   /** Owned listings come from the user's My Listings cache; discovery items do not. */
   const isOwnListing = Boolean(getTripById(route.params.tripId));
+  // Offer form needs adjustResize so the price field can scroll above the keyboard
+  // (app default is Android pan, which leaves the focused field covered).
+  useResizeMode();
 
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
@@ -245,6 +249,9 @@ export function ListingDetailScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
+      // Clearance above the keyboard for the focused price field + submit button.
+      // Only affects keyboard-open scroll — no permanent empty gap at the bottom.
+      scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
       headerRight={
         isOwnListing ? (
           <Pressable
@@ -277,6 +284,8 @@ export function ListingDetailScreen(): React.ReactElement {
               tripId={trip.id}
               vehicleMode={trip.vehicleMode}
               vehicleTotalSeats={trip.vehicleTotalSeats}
+              requiresVehicle={trip.vehicleId == null}
+              initialVehicleId={route.params.selectVehicleId ?? null}
             />
           </>
         ) : (

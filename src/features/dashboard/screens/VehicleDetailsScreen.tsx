@@ -39,6 +39,7 @@ export function VehicleDetailsScreen(): React.ReactElement {
       returnTo: route.params.returnTo ?? 'VehicleList',
       stackOrigin,
       vehicleId: route.params.vehicleId,
+      listingTripId: route.params.listingTripId,
     });
   };
 
