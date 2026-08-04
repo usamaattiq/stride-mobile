@@ -41,6 +41,20 @@ function OfferBadge({ status, label }: { status: RfqOfferStatus; label: string }
   );
 }
 
+/** Offers arrive newest-first; keep only the latest response per passenger. */
+function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
+  const seen = new Set<string>();
+  const latest: RfqOfferSummary[] = [];
+  for (const offer of offers) {
+    if (seen.has(offer.responderId)) {
+      continue;
+    }
+    seen.add(offer.responderId);
+    latest.push(offer);
+  }
+  return latest;
+}
+
 export function TripResponsesPanel({
   tripId,
   vehicleMode,
@@ -62,8 +76,9 @@ export function TripResponsesPanel({
       .getSnapshot(tripId)
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
-        setSnapshot(ownerSnapshot);
-        onCountChange?.(ownerSnapshot.offers.length);
+        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        setSnapshot({ ...ownerSnapshot, offers });
+        onCountChange?.(offers.length);
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed'))))
       .finally(() => setLoading(false));
@@ -80,7 +95,12 @@ export function TripResponsesPanel({
     setActingOfferId(offerId);
     const request = action === 'accept' ? rfqApi.acceptOffer : rfqApi.rejectOffer;
     void request(tripId, offerId)
-      .then((result) => setSnapshot(result as RfqOwnerSnapshot))
+      .then((result) => {
+        const ownerSnapshot = result as RfqOwnerSnapshot;
+        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        setSnapshot({ ...ownerSnapshot, offers });
+        onCountChange?.(offers.length);
+      })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {
         setActingOfferId(null);
