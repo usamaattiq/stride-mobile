@@ -1,10 +1,11 @@
+import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { Trip, TripListingType } from '../types/trip.types';
 
 export type ListingStatusFilter = 'all' | 'live' | 'past' | 'completed';
 
-const LIVE_STATUSES: ReadonlySet<RfqStatusValue> = new Set([
+const LIVE_RFQ_STATUSES: ReadonlySet<RfqStatusValue> = new Set([
   'live',
   'awaiting-confirmation',
   'offer-submitted',
@@ -12,7 +13,22 @@ const LIVE_STATUSES: ReadonlySet<RfqStatusValue> = new Set([
   'confirmed',
 ]);
 
-const PAST_STATUSES: ReadonlySet<RfqStatusValue> = new Set(['closed', 'expired']);
+const PAST_RFQ_STATUSES: ReadonlySet<RfqStatusValue> = new Set(['closed', 'expired']);
+
+const LIVE_AUCTION_STATUSES: ReadonlySet<AuctionStatusValue> = new Set([
+  'coming-soon',
+  'live',
+  'awaiting-confirmation',
+  'awaiting-action',
+  'awaiting-your-confirmation',
+]);
+
+const PAST_AUCTION_STATUSES: ReadonlySet<AuctionStatusValue> = new Set([
+  'closed',
+  'expired',
+  'declined',
+  'timed-out',
+]);
 
 function getExpiresAt(trip: Trip): number {
   return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
@@ -20,16 +36,22 @@ function getExpiresAt(trip: Trip): number {
 
 /** Maps a trip into the Live / Past / Completed buckets used by My Listings filters. */
 export function getListingStatusBucket(trip: Trip, now = Date.now()): Exclude<ListingStatusFilter, 'all'> {
-  if (trip.rfqStatus === 'completed') {
+  if (trip.auctionStatus === 'completed' || trip.rfqStatus === 'completed') {
     return 'completed';
   }
-  if (trip.rfqStatus && PAST_STATUSES.has(trip.rfqStatus)) {
+  if (trip.auctionStatus && PAST_AUCTION_STATUSES.has(trip.auctionStatus)) {
     return 'past';
   }
-  if (trip.rfqStatus && LIVE_STATUSES.has(trip.rfqStatus)) {
+  if (trip.rfqStatus && PAST_RFQ_STATUSES.has(trip.rfqStatus)) {
+    return 'past';
+  }
+  if (trip.auctionStatus && LIVE_AUCTION_STATUSES.has(trip.auctionStatus)) {
     return 'live';
   }
-  // Auctions (or trips without RFQ status) fall back to the publish window.
+  if (trip.rfqStatus && LIVE_RFQ_STATUSES.has(trip.rfqStatus)) {
+    return 'live';
+  }
+  // Fallback to the publish window when status isn't enriched yet.
   return getExpiresAt(trip) > now ? 'live' : 'past';
 }
 

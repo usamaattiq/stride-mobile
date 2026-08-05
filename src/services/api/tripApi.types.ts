@@ -1,3 +1,4 @@
+import type { AuctionParticipantStatus, AuctionStatusValue } from './auctionApi.types';
 import type { RfqOfferStatus, RfqStatusValue } from './rfqApi.types';
 
 export type TripCityDto = {
@@ -40,10 +41,19 @@ export type TripDto = {
   updatedAt: string;
   /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
   rfqStatus?: RfqStatusValue | null;
+  /** Auction display status from AMS. Only populated for the owner's auction listings. */
+  auctionStatus?: AuctionStatusValue | null;
+  /** AMS status_label — render as-is. */
+  auctionStatusLabel?: string | null;
+  auctionStatusVariant?: 'muted' | 'accent' | 'warning' | 'success' | null;
+  auctionRemainingSeconds?: number | null;
   /** Viewer's latest offer status when listed via My Offers. */
   myOfferStatus?: RfqOfferStatus | null;
   /** Viewer's latest offer price when listed via My Offers. */
   myOfferPrice?: string | null;
+  /** Viewer's auction bid status when listed via My Offers. */
+  myBidStatus?: AuctionParticipantStatus | null;
+  myBidAmount?: number | null;
   /** Listing owner contact once a confirmed offer unlocks exchange. */
   counterpartyName?: string | null;
   counterpartyPhone?: string | null;

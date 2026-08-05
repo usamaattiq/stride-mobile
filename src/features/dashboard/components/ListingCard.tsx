@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
@@ -50,6 +51,29 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   completed: 'blue',
   closed: 'muted',
   expired: 'muted',
+};
+
+const AUCTION_STATUS_TONE: Record<AuctionStatusValue, StatusBadgeTone> = {
+  'coming-soon': 'blue',
+  live: 'green',
+  'awaiting-confirmation': 'blue',
+  'awaiting-action': 'amber',
+  'awaiting-your-confirmation': 'blue',
+  declined: 'muted',
+  'timed-out': 'muted',
+  completed: 'blue',
+  closed: 'muted',
+  expired: 'muted',
+};
+
+const AUCTION_VARIANT_TONE: Record<
+  'muted' | 'accent' | 'warning' | 'success',
+  StatusBadgeTone
+> = {
+  muted: 'muted',
+  accent: 'green',
+  warning: 'amber',
+  success: 'blue',
 };
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
@@ -144,24 +168,32 @@ export function ListingCard({
   const remainingMs = getExpiresAt(trip) - now;
   const active = remainingMs > 0;
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  // Auctions: use AMS display status/label as-is (never remap participant_status → "Bid active").
+  const useAuctionTag = trip.listingType === 'auction' && Boolean(trip.auctionStatus);
   const badgeState = pending
     ? 'pending'
-    : trip.myOfferStatus
-      ? 'myOfferStatus'
-      : trip.rfqStatus
-        ? 'rfqStatus'
-        : active
-          ? 'active'
-          : 'ended';
+    : useAuctionTag
+      ? 'auctionStatus'
+      : trip.myOfferStatus
+        ? 'myOfferStatus'
+        : trip.rfqStatus
+          ? 'rfqStatus'
+          : active
+            ? 'active'
+            : 'ended';
   const badgeTone = pending
     ? 'muted'
-    : trip.myOfferStatus
-      ? OFFER_STATUS_TONE[trip.myOfferStatus]
-      : trip.rfqStatus
-        ? RFQ_STATUS_TONE[trip.rfqStatus]
-        : active
-          ? 'green'
-          : 'muted';
+    : useAuctionTag && trip.auctionStatus
+      ? trip.auctionStatusVariant
+        ? AUCTION_VARIANT_TONE[trip.auctionStatusVariant]
+        : AUCTION_STATUS_TONE[trip.auctionStatus]
+      : trip.myOfferStatus
+        ? OFFER_STATUS_TONE[trip.myOfferStatus]
+        : trip.rfqStatus
+          ? RFQ_STATUS_TONE[trip.rfqStatus]
+          : active
+            ? 'green'
+            : 'muted';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -169,11 +201,18 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const offerPrice = trip.myOfferPrice?.trim() || null;
+  const offerPrice =
+    trip.myBidAmount != null
+      ? String(trip.myBidAmount)
+      : trip.myOfferPrice?.trim() || null;
   const price =
     offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
   const isPassengerRequest = trip.vehicleId == null;
-  const showCountdown = !trip.rfqStatus && !trip.myOfferStatus && (pending || active);
+  const showCountdown =
+    !trip.rfqStatus &&
+    !trip.auctionStatus &&
+    !trip.myOfferStatus &&
+    (pending || active);
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -255,13 +294,16 @@ export function ListingCard({
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'myOfferStatus'
-                ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
-                : badgeState === 'rfqStatus'
-                  ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
-                  : badgeState === 'active'
-                    ? t('dashboard.listings.card.active')
-                    : t('dashboard.listings.card.ended')}
+              : badgeState === 'auctionStatus'
+                ? trip.auctionStatusLabel?.trim() ||
+                  t(`dashboard.listings.card.auctionStatus.${trip.auctionStatus}`)
+                : badgeState === 'myOfferStatus'
+                  ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
+                  : badgeState === 'rfqStatus'
+                    ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                    : badgeState === 'active'
+                      ? t('dashboard.listings.card.active')
+                      : t('dashboard.listings.card.ended')}
           </AppText>
         </View>
       </View>
