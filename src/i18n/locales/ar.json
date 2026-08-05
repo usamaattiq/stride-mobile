@@ -427,8 +427,18 @@
             "lapsed": "منتهٍ"
           }
         },
+        "contact": {
+          "fallbackName": "جهة اتصال الرحلة",
+          "whatsappHint": "الدردشة عبر واتساب",
+          "whatsappA11y": "فتح دردشة واتساب مع {{phone}}",
+          "messageAsPassenger": "مرحباً، أنا الراكب في رحلتنا المؤكدة على Musafir249.",
+          "messageAsDriver": "مرحباً، أنا السائق في رحلتنا المؤكدة على Musafir249.",
+          "passengerContact": "جهة اتصال الراكب",
+          "driverContact": "جهة اتصال السائق"
+        },
         "offer": {
           "title": "قدّم عرضك",
+          "titleConfirmed": "عرضك",
           "loadFailed": "تعذر تحميل عروض هذه القائمة.",
           "submitFailed": "تعذر إرسال عرضك.",
           "withdrawFailed": "تعذر سحب عرضك.",

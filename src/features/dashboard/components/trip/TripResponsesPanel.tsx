@@ -14,6 +14,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import type { TripVehicleMode } from '../../types/trip.types';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripResponsesPanelProps = {
   tripId: string;
@@ -71,6 +72,14 @@ export function TripResponsesPanel({
   const rejectConfirmBody = isPassengerRequest
     ? t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyDriver')
     : t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyPassenger');
+  // Owner messaging the responder: passenger request → owner is passenger; else driver.
+  const whatsappMessage = isPassengerRequest
+    ? t('dashboard.listings.detail.contact.messageAsPassenger')
+    : t('dashboard.listings.detail.contact.messageAsDriver');
+  // Responder on a passenger request is a driver; on a driver trip is a passenger.
+  const responderContactTitle = isPassengerRequest
+    ? t('dashboard.listings.detail.contact.driverContact')
+    : t('dashboard.listings.detail.contact.passengerContact');
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -177,10 +186,12 @@ export function TripResponsesPanel({
             return (
               <View key={offer.id} style={styles.offerCard}>
                 <View style={styles.offerHeaderRow}>
-                  <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
-                    {offer.responderName?.trim() ||
-                      t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
-                  </AppText>
+                  <View style={styles.offerIdentity}>
+                    <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
+                      {offer.responderName?.trim() ||
+                        t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
+                    </AppText>
+                  </View>
                   <OfferBadge status={offer.status} label={statusLabel(offer.status)} />
                 </View>
 
@@ -204,6 +215,16 @@ export function TripResponsesPanel({
                 </View>
 
                 {offer.vehicle ? <OfferVehicleSummaryCard vehicle={offer.vehicle} /> : null}
+
+                {offer.status === 'confirmed' && offer.responderPhone ? (
+                  <WhatsAppContactCard
+                    title={responderContactTitle}
+                    icon={isPassengerRequest ? 'car' : 'user'}
+                    name={offer.responderName?.trim() || null}
+                    phone={offer.responderPhone}
+                    message={whatsappMessage}
+                  />
+                ) : null}
 
                 {canDecide ? (
                   <View style={styles.offerActions}>
@@ -317,10 +338,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   offerTitle: {
-    flex: 1,
-    minWidth: 0,
+    flexShrink: 1,
     fontSize: 13,
     color: colors.text.primary,
+  },
+  offerIdentity: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   badge: {
     borderRadius: radius.full,

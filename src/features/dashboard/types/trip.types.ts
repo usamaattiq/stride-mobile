@@ -80,6 +80,9 @@ export type Trip = {
   myOfferStatus: RfqOfferStatus | null;
   /** Viewer's latest offer price when shown on My Offers. */
   myOfferPrice: string | null;
+  /** Listing owner contact once confirmed (My Offers). */
+  counterpartyName: string | null;
+  counterpartyPhone: string | null;
 };
 
 export function createEmptyTripDraft(): TripDraft {
@@ -206,5 +209,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     rfqStatus: null,
     myOfferStatus: null,
     myOfferPrice: null,
+    counterpartyName: null,
+    counterpartyPhone: null,
   };
 }

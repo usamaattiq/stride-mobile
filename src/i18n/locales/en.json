@@ -427,8 +427,18 @@
             "lapsed": "Lapsed"
           }
         },
+        "contact": {
+          "fallbackName": "Trip contact",
+          "whatsappHint": "Chat on WhatsApp",
+          "whatsappA11y": "Open WhatsApp chat with {{phone}}",
+          "messageAsPassenger": "Hi, I'm the passenger for our confirmed Musafir249 trip.",
+          "messageAsDriver": "Hi, I'm the driver for our confirmed Musafir249 trip.",
+          "passengerContact": "Passenger contact",
+          "driverContact": "Driver contact"
+        },
         "offer": {
           "title": "Place your offer",
+          "titleConfirmed": "Your offer",
           "loadFailed": "Couldn't load this listing's offers.",
           "submitFailed": "Couldn't send your offer.",
           "withdrawFailed": "Couldn't withdraw your offer.",

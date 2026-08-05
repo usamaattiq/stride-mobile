@@ -44,6 +44,9 @@ export type TripDto = {
   myOfferStatus?: RfqOfferStatus | null;
   /** Viewer's latest offer price when listed via My Offers. */
   myOfferPrice?: string | null;
+  /** Listing owner contact once a confirmed offer unlocks exchange. */
+  counterpartyName?: string | null;
+  counterpartyPhone?: string | null;
 };
 
 export type CreateTripPayload = {

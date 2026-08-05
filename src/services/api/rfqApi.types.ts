@@ -40,8 +40,10 @@ export type RfqOfferVehicleSummary = {
 export type RfqOfferSummary = {
   id: string;
   responderId: string;
-  /** Privacy-masked display name (first 3 chars + *****). Owner snapshots only. */
+  /** Masked until contact exchange; full name while exchange is allowed. */
   responderName?: string | null;
+  /** Phone only while contact exchange is allowed. */
+  responderPhone?: string | null;
   status: RfqOfferStatus;
   capacityMode: RfqCapacityMode;
   offeredQuantity: string | null;
@@ -97,6 +99,8 @@ export type RfqResponderSnapshot = RfqSnapshotBase & {
   externalRef: string | null;
   myOffers: RfqOfferSummary[];
   actions: RfqResponderActions;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
 };
 
 export type RfqPublicSnapshot = RfqSnapshotBase & {

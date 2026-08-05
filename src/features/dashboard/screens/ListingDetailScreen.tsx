@@ -174,6 +174,8 @@ export function ListingDetailScreen(): React.ReactElement {
       rfqStatus: Trip['rfqStatus'];
       myOfferStatus: Trip['myOfferStatus'];
       myOfferPrice: Trip['myOfferPrice'];
+      counterpartyName: Trip['counterpartyName'];
+      counterpartyPhone: Trip['counterpartyPhone'];
     }) => {
       setTrip((current) =>
         current
@@ -182,6 +184,8 @@ export function ListingDetailScreen(): React.ReactElement {
               rfqStatus: update.rfqStatus,
               myOfferStatus: update.myOfferStatus,
               myOfferPrice: update.myOfferPrice,
+              counterpartyName: update.counterpartyName,
+              counterpartyPhone: update.counterpartyPhone,
             }
           : current,
       );

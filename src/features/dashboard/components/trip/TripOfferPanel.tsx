@@ -33,6 +33,7 @@ import type { DashboardRootStackParamList } from '../../navigation/dashboardRoot
 import type { TripVehicleMode } from '../../types/trip.types';
 import type { Vehicle } from '../../types/vehicle.types';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
+import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripOfferPanelProps = {
   tripId: string;
@@ -47,6 +48,8 @@ export type TripOfferPanelProps = {
     rfqStatus: RfqResponderSnapshot['status'];
     myOfferStatus: RfqOfferStatus | null;
     myOfferPrice: string | null;
+    counterpartyName: string | null;
+    counterpartyPhone: string | null;
   }) => void;
 };
 
@@ -66,6 +69,8 @@ function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {
     rfqStatus: snapshot.status,
     myOfferStatus: latest?.status ?? null,
     myOfferPrice: latest?.price ?? null,
+    counterpartyName: snapshot.ownerName ?? null,
+    counterpartyPhone: snapshot.ownerPhone ?? null,
   };
 }
 
@@ -222,6 +227,18 @@ export function TripOfferPanel({
 
   const activeOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
   const hasActionableOffer = activeOffer != null && !TERMINAL_STATUSES.includes(activeOffer.status);
+  const isConfirmedOffer = activeOffer?.status === 'confirmed';
+  // Offering on a passenger request → viewer is the driver; otherwise passenger.
+  const whatsappMessage = requiresVehicle
+    ? t('dashboard.listings.detail.contact.messageAsDriver')
+    : t('dashboard.listings.detail.contact.messageAsPassenger');
+  // Trip creator contact: passenger request → passenger owner; driver listing → driver owner.
+  const creatorContactTitle = requiresVehicle
+    ? t('dashboard.listings.detail.contact.passengerContact')
+    : t('dashboard.listings.detail.contact.driverContact');
+  const panelTitle = isConfirmedOffer
+    ? t('dashboard.listings.detail.offer.titleConfirmed')
+    : t('dashboard.listings.detail.offer.title');
 
   const seatsNumber = Number(seats);
   const maxSeats = vehicleTotalSeats ?? 50;
@@ -317,164 +334,176 @@ export function TripOfferPanel({
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.titleRow}>
-        <FontAwesome name="tag" size={14} color={colors.primary} />
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.detail.offer.title')}
-        </AppText>
-      </View>
+    <View style={styles.root}>
+      <View style={styles.card}>
+        <View style={styles.titleRow}>
+          <FontAwesome name="tag" size={14} color={colors.primary} />
+          <AppText weight="bold" style={styles.title}>
+            {panelTitle}
+          </AppText>
+        </View>
 
-      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-      {hasActionableOffer && activeOffer ? (
-        <View style={styles.statusBlock}>
-          {activeOffer.vehicle ? <OfferVehicleSummaryCard vehicle={activeOffer.vehicle} /> : null}
-          <View style={styles.statusRow}>
-            <View style={styles.statusCopy}>
-              {activeOffer.offeredQuantity != null ? (
-                <AppText style={styles.meta}>
-                  {t('dashboard.listings.detail.responses.seats', {
-                    // Full-private offers hold offeredQuantity=1 (the whole-vehicle
-                    // capacity slot) — show the vehicle's real seat count instead.
-                    count: isFullPrivate
-                      ? (activeOffer.vehicle?.totalSeats ?? vehicleTotalSeats ?? 1)
-                      : Number(activeOffer.offeredQuantity),
-                  })}
-                </AppText>
-              ) : null}
-              {activeOffer.price != null ? (
-                <AppText weight="semibold" style={styles.price}>
-                  {t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })}
-                  {!isFullPrivate ? (
-                    <AppText style={styles.priceSuffix}>
-                      {t('dashboard.listings.pricePerSeatSuffix')}
-                    </AppText>
-                  ) : null}
-                </AppText>
-              ) : null}
+        {hasActionableOffer && activeOffer ? (
+          <View style={styles.statusBlock}>
+            {activeOffer.vehicle ? <OfferVehicleSummaryCard vehicle={activeOffer.vehicle} /> : null}
+            <View style={styles.statusRow}>
+              <View style={styles.statusCopy}>
+                {activeOffer.offeredQuantity != null ? (
+                  <AppText style={styles.meta}>
+                    {t('dashboard.listings.detail.responses.seats', {
+                      // Full-private offers hold offeredQuantity=1 (the whole-vehicle
+                      // capacity slot) — show the vehicle's real seat count instead.
+                      count: isFullPrivate
+                        ? (activeOffer.vehicle?.totalSeats ?? vehicleTotalSeats ?? 1)
+                        : Number(activeOffer.offeredQuantity),
+                    })}
+                  </AppText>
+                ) : null}
+                {activeOffer.price != null ? (
+                  <AppText weight="semibold" style={styles.price}>
+                    {t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })}
+                    {!isFullPrivate ? (
+                      <AppText style={styles.priceSuffix}>
+                        {t('dashboard.listings.pricePerSeatSuffix')}
+                      </AppText>
+                    ) : null}
+                  </AppText>
+                ) : null}
+              </View>
+              <OfferStatusBadge
+                status={activeOffer.status}
+                label={t(`dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`)}
+              />
             </View>
-            <OfferStatusBadge
-              status={activeOffer.status}
-              label={t(`dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`)}
-            />
           </View>
-        </View>
-      ) : null}
+        ) : null}
 
-      {hasActionableOffer && activeOffer?.status === 'active' && snapshot.actions.canWithdraw ? (
-        <Button
-          label={t('dashboard.listings.detail.offer.withdraw')}
-          variant="secondary"
-          onPress={() => setConfirmWithdraw(true)}
-          loading={withdrawing}
-          disabled={withdrawing}
-        />
-      ) : null}
+        {hasActionableOffer && activeOffer?.status === 'active' && snapshot.actions.canWithdraw ? (
+          <Button
+            label={t('dashboard.listings.detail.offer.withdraw')}
+            variant="secondary"
+            onPress={() => setConfirmWithdraw(true)}
+            loading={withdrawing}
+            disabled={withdrawing}
+          />
+        ) : null}
 
-      {hasActionableOffer &&
-      activeOffer?.status === 'selected' &&
-      (snapshot.actions.canConfirm || snapshot.actions.canDecline) ? (
-        <View style={styles.confirmActions}>
-          {snapshot.actions.canDecline ? (
-            <Button
-              label={t('dashboard.listings.detail.offer.decline')}
-              variant="secondary"
-              onPress={() => setConfirmDecline(true)}
-              disabled={confirming}
-              style={styles.confirmActionButton}
-            />
-          ) : null}
-          {snapshot.actions.canConfirm ? (
-            <Button
-              label={t('dashboard.listings.detail.offer.confirm')}
-              onPress={confirmOffer}
-              loading={confirming}
-              disabled={confirming}
-              style={styles.confirmActionButton}
-            />
-          ) : null}
-        </View>
-      ) : null}
+        {hasActionableOffer &&
+        activeOffer?.status === 'selected' &&
+        (snapshot.actions.canConfirm || snapshot.actions.canDecline) ? (
+          <View style={styles.confirmActions}>
+            {snapshot.actions.canDecline ? (
+              <Button
+                label={t('dashboard.listings.detail.offer.decline')}
+                variant="secondary"
+                onPress={() => setConfirmDecline(true)}
+                disabled={confirming}
+                style={styles.confirmActionButton}
+              />
+            ) : null}
+            {snapshot.actions.canConfirm ? (
+              <Button
+                label={t('dashboard.listings.detail.offer.confirm')}
+                onPress={confirmOffer}
+                loading={confirming}
+                disabled={confirming}
+                style={styles.confirmActionButton}
+              />
+            ) : null}
+          </View>
+        ) : null}
 
-      {!hasActionableOffer && snapshot.actions.canSubmitOffer ? (
-        <View style={styles.form}>
-          {requiresVehicle ? (
-            <View style={styles.vehiclePicker}>
-              <AppText weight="semibold" style={styles.vehiclePickerLabel}>
-                {t('dashboard.listings.detail.offer.vehicleLabel')}
-              </AppText>
-              {selectedVehicle ? (
-                <View style={styles.selectedVehicleBlock}>
-                  <OfferVehicleSummaryCard vehicle={selectedVehicle} />
+        {!hasActionableOffer && snapshot.actions.canSubmitOffer ? (
+          <View style={styles.form}>
+            {requiresVehicle ? (
+              <View style={styles.vehiclePicker}>
+                <AppText weight="semibold" style={styles.vehiclePickerLabel}>
+                  {t('dashboard.listings.detail.offer.vehicleLabel')}
+                </AppText>
+                {selectedVehicle ? (
+                  <View style={styles.selectedVehicleBlock}>
+                    <OfferVehicleSummaryCard vehicle={selectedVehicle} />
+                    <Button
+                      label={t('dashboard.listings.detail.offer.changeVehicle')}
+                      variant="secondary"
+                      onPress={() => setVehiclePickerOpen(true)}
+                    />
+                  </View>
+                ) : (
                   <Button
-                    label={t('dashboard.listings.detail.offer.changeVehicle')}
+                    label={t('dashboard.listings.detail.offer.selectVehicle')}
                     variant="secondary"
                     onPress={() => setVehiclePickerOpen(true)}
                   />
-                </View>
-              ) : (
-                <Button
-                  label={t('dashboard.listings.detail.offer.selectVehicle')}
-                  variant="secondary"
-                  onPress={() => setVehiclePickerOpen(true)}
-                />
-              )}
-            </View>
-          ) : null}
-          {!isFullPrivate ? (
+                )}
+              </View>
+            ) : null}
+            {!isFullPrivate ? (
+              <AuthTextField
+                label={t('dashboard.listings.detail.offer.seatsLabel')}
+                value={seats}
+                onChangeText={setSeats}
+                keyboardType="number-pad"
+                placeholder={t('dashboard.listings.detail.offer.seatsPlaceholder')}
+                dense
+              />
+            ) : null}
             <AuthTextField
-              label={t('dashboard.listings.detail.offer.seatsLabel')}
-              value={seats}
-              onChangeText={setSeats}
-              keyboardType="number-pad"
-              placeholder={t('dashboard.listings.detail.offer.seatsPlaceholder')}
+              label={t(
+                isFullPrivate
+                  ? 'dashboard.listings.detail.offer.priceFullVehicleLabel'
+                  : 'dashboard.listings.detail.offer.pricePerSeatLabel',
+              )}
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="decimal-pad"
+              placeholder={t('dashboard.listings.detail.offer.pricePlaceholder')}
               dense
             />
-          ) : null}
-          <AuthTextField
-            label={t(
-              isFullPrivate
-                ? 'dashboard.listings.detail.offer.priceFullVehicleLabel'
-                : 'dashboard.listings.detail.offer.pricePerSeatLabel',
-            )}
-            value={price}
-            onChangeText={setPrice}
-            keyboardType="decimal-pad"
-            placeholder={t('dashboard.listings.detail.offer.pricePlaceholder')}
-            dense
-          />
-          {totalPrice != null && !isFullPrivate ? (
-            <View style={styles.totalBox}>
-              <AppText weight="semibold" style={styles.totalLabel}>
-                {t('dashboard.listings.detail.offer.totalLabel')}
-              </AppText>
-              <View style={styles.totalCalcRow}>
-                <AppText style={styles.totalCalc}>
-                  {t('dashboard.listings.detail.offer.totalCalc', {
-                    price: t('dashboard.listings.card.priceWithCurrency', { price: priceNumber }),
-                    seats: t('dashboard.listings.detail.responses.seats', {
-                      count: effectiveSeats,
-                    }),
-                  })}
+            {totalPrice != null && !isFullPrivate ? (
+              <View style={styles.totalBox}>
+                <AppText weight="semibold" style={styles.totalLabel}>
+                  {t('dashboard.listings.detail.offer.totalLabel')}
                 </AppText>
-                <AppText weight="bold" style={styles.totalValue}>
-                  {t('dashboard.listings.card.priceWithCurrency', { price: totalPrice })}
-                </AppText>
+                <View style={styles.totalCalcRow}>
+                  <AppText style={styles.totalCalc}>
+                    {t('dashboard.listings.detail.offer.totalCalc', {
+                      price: t('dashboard.listings.card.priceWithCurrency', { price: priceNumber }),
+                      seats: t('dashboard.listings.detail.responses.seats', {
+                        count: effectiveSeats,
+                      }),
+                    })}
+                  </AppText>
+                  <AppText weight="bold" style={styles.totalValue}>
+                    {t('dashboard.listings.card.priceWithCurrency', { price: totalPrice })}
+                  </AppText>
+                </View>
               </View>
-            </View>
-          ) : null}
-          <Button
-            label={t('dashboard.listings.detail.offer.submit')}
-            onPress={submitOffer}
-            loading={submitting}
-            disabled={!canSubmit}
-          />
-        </View>
-      ) : null}
+            ) : null}
+            <Button
+              label={t('dashboard.listings.detail.offer.submit')}
+              onPress={submitOffer}
+              loading={submitting}
+              disabled={!canSubmit}
+            />
+          </View>
+        ) : null}
 
-      {!hasActionableOffer && !snapshot.actions.canSubmitOffer ? (
-        <AppText style={styles.closedText}>{t('dashboard.listings.detail.offer.closed')}</AppText>
+        {!hasActionableOffer && !snapshot.actions.canSubmitOffer ? (
+          <AppText style={styles.closedText}>{t('dashboard.listings.detail.offer.closed')}</AppText>
+        ) : null}
+      </View>
+
+      {isConfirmedOffer && snapshot.ownerPhone ? (
+        <WhatsAppContactCard
+          title={creatorContactTitle}
+          icon={requiresVehicle ? 'user' : 'car'}
+          name={snapshot.ownerName ?? null}
+          phone={snapshot.ownerPhone}
+          message={whatsappMessage}
+        />
       ) : null}
 
       <AppBottomSheet
@@ -553,6 +582,9 @@ export function TripOfferPanel({
 }
 
 const styles = StyleSheet.create({
+  root: {
+    gap: spacing.sm,
+  },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
