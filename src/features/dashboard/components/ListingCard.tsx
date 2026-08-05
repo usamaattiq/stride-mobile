@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.xs,
   },
   topBadges: {
@@ -518,14 +518,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     // alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingBottom: spacing.xs,
   },
   countdownBadge: {
