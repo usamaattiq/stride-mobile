@@ -405,6 +405,7 @@
           "emptyTitle": "No responses yet",
           "emptyBody": "Passenger offers for this trip will show up here.",
           "offerLabel": "Response #{{index}}",
+          "viewVehicleA11y": "View vehicle details for {{title}}",
           "seats_zero": "{{count}} seats",
           "seats_one": "{{count}} seat",
           "seats_two": "{{count}} seats",

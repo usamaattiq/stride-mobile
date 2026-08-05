@@ -35,6 +35,11 @@ export type RfqOfferVehicleSummary = {
   model: string | null;
   photoUrl: string | null;
   photoViewUrl?: string | null;
+  description?: string;
+  hasAc?: boolean;
+  year?: number | null;
+  photoUrls?: string[];
+  photoDisplayUris?: string[];
 };
 
 export type RfqOfferSummary = {

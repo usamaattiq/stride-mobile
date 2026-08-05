@@ -405,6 +405,7 @@
           "emptyTitle": "لا توجد ردود بعد",
           "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
           "offerLabel": "الرد رقم {{index}}",
+          "viewVehicleA11y": "عرض تفاصيل المركبة {{title}}",
           "seats_zero": "لا مقاعد",
           "seats_one": "مقعد واحد",
           "seats_two": "مقعدان",

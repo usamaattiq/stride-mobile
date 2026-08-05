@@ -33,6 +33,7 @@ import type { DashboardRootStackParamList } from '../../navigation/dashboardRoot
 import type { TripVehicleMode } from '../../types/trip.types';
 import type { Vehicle } from '../../types/vehicle.types';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
+import { OfferVehicleDetailSheet, type OfferVehicleDetailSource } from './OfferVehicleDetailSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripOfferPanelProps = {
@@ -90,8 +91,10 @@ function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: st
 
 export function OfferVehicleSummaryCard({
   vehicle,
+  onPress,
 }: {
   vehicle: RfqOfferVehicleSummary | Vehicle;
+  onPress?: () => void;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isOfferVehicle = 'photoUrl' in vehicle;
@@ -103,8 +106,8 @@ export function OfferVehicleSummaryCard({
     .filter(Boolean)
     .join(' · ');
 
-  return (
-    <View style={styles.vehicleSummary}>
+  const content = (
+    <>
       <View style={styles.vehicleThumb}>
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.vehicleThumbImage} contentFit="cover" />
@@ -127,8 +130,28 @@ export function OfferVehicleSummaryCard({
           </AppText>
         ) : null}
       </View>
-    </View>
+      {onPress ? (
+        <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
+      ) : null}
+    </>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.vehicleSummary, pressed && styles.vehicleSummaryPressed]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={t('dashboard.listings.detail.responses.viewVehicleA11y', {
+          title: vehicle.title,
+        })}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={styles.vehicleSummary}>{content}</View>;
 }
 
 export function TripOfferPanel({
@@ -159,6 +182,7 @@ export function TripOfferPanel({
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
   const [confirmDecline, setConfirmDecline] = React.useState(false);
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
+  const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
 
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -347,7 +371,16 @@ export function TripOfferPanel({
 
         {hasActionableOffer && activeOffer ? (
           <View style={styles.statusBlock}>
-            {activeOffer.vehicle ? <OfferVehicleSummaryCard vehicle={activeOffer.vehicle} /> : null}
+            {activeOffer.vehicle ? (
+              <OfferVehicleSummaryCard
+                vehicle={activeOffer.vehicle}
+                onPress={() => {
+                  if (activeOffer.vehicle) {
+                    setVehicleDetail(activeOffer.vehicle);
+                  }
+                }}
+              />
+            ) : null}
             <View style={styles.statusRow}>
               <View style={styles.statusCopy}>
                 {activeOffer.offeredQuantity != null ? (
@@ -424,7 +457,10 @@ export function TripOfferPanel({
                 </AppText>
                 {selectedVehicle ? (
                   <View style={styles.selectedVehicleBlock}>
-                    <OfferVehicleSummaryCard vehicle={selectedVehicle} />
+                    <OfferVehicleSummaryCard
+                      vehicle={selectedVehicle}
+                      onPress={() => setVehicleDetail(selectedVehicle)}
+                    />
                     <Button
                       label={t('dashboard.listings.detail.offer.changeVehicle')}
                       variant="secondary"
@@ -539,6 +575,12 @@ export function TripOfferPanel({
           />
         </ScrollView>
       </AppBottomSheet>
+
+      <OfferVehicleDetailSheet
+        visible={vehicleDetail != null}
+        vehicle={vehicleDetail}
+        onClose={() => setVehicleDetail(null)}
+      />
 
       <AppDialog
         visible={confirmWithdraw}
@@ -689,6 +731,9 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.md,
     backgroundColor: colors.background.subtle,
+  },
+  vehicleSummaryPressed: {
+    backgroundColor: colors.primarySoft,
   },
   vehicleThumb: {
     width: 52,

@@ -6,13 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { rfqApi } from '@/services/api/rfqApi';
-import type { RfqOfferStatus, RfqOfferSummary, RfqOwnerSnapshot } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqOfferSummary, RfqOfferVehicleSummary, RfqOwnerSnapshot } from '@/services/api/rfqApi.types';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
 import type { TripVehicleMode } from '../../types/trip.types';
+import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
@@ -85,6 +86,7 @@ export function TripResponsesPanel({
   const [error, setError] = React.useState<string | null>(null);
   const [actingOfferId, setActingOfferId] = React.useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = React.useState<RfqOfferSummary | null>(null);
+  const [vehicleDetail, setVehicleDetail] = React.useState<RfqOfferVehicleSummary | null>(null);
 
   const load = React.useCallback(() => {
     setLoading(true);
@@ -214,7 +216,16 @@ export function TripResponsesPanel({
                   ) : null}
                 </View>
 
-                {offer.vehicle ? <OfferVehicleSummaryCard vehicle={offer.vehicle} /> : null}
+                {offer.vehicle ? (
+                  <OfferVehicleSummaryCard
+                    vehicle={offer.vehicle}
+                    onPress={() => {
+                      if (offer.vehicle) {
+                        setVehicleDetail(offer.vehicle);
+                      }
+                    }}
+                  />
+                ) : null}
 
                 {offer.status === 'confirmed' && offer.responderPhone ? (
                   <WhatsAppContactCard
@@ -249,6 +260,12 @@ export function TripResponsesPanel({
           })}
         </View>
       )}
+
+      <OfferVehicleDetailSheet
+        visible={vehicleDetail != null}
+        vehicle={vehicleDetail}
+        onClose={() => setVehicleDetail(null)}
+      />
 
       <AppDialog
         visible={rejectTarget != null}
