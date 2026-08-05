@@ -1,3 +1,4 @@
+import type { AuctionParticipantStatus, AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { VehicleClass } from './vehicle.types';
@@ -76,10 +77,19 @@ export type Trip = {
   publishedAt: string;
   /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
   rfqStatus: RfqStatusValue | null;
+  /** Auction display status from AMS. */
+  auctionStatus: AuctionStatusValue | null;
+  /** AMS status_label — render as-is. */
+  auctionStatusLabel: string | null;
+  auctionStatusVariant: 'muted' | 'accent' | 'warning' | 'success' | null;
+  auctionRemainingSeconds: number | null;
   /** Viewer's latest offer status when shown on My Offers. */
   myOfferStatus: RfqOfferStatus | null;
   /** Viewer's latest offer price when shown on My Offers. */
   myOfferPrice: string | null;
+  /** Viewer's auction bid status when shown on My Offers. */
+  myBidStatus: AuctionParticipantStatus | null;
+  myBidAmount: number | null;
   /** Listing owner contact once confirmed (My Offers). */
   counterpartyName: string | null;
   counterpartyPhone: string | null;
@@ -207,8 +217,14 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
     rfqStatus: null,
+    auctionStatus: null,
+    auctionStatusLabel: null,
+    auctionStatusVariant: null,
+    auctionRemainingSeconds: null,
     myOfferStatus: null,
     myOfferPrice: null,
+    myBidStatus: null,
+    myBidAmount: null,
     counterpartyName: null,
     counterpartyPhone: null,
   };

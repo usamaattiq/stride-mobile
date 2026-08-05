@@ -31,6 +31,8 @@ import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
 import { formatTripDateTime } from '../components/trip/dateRangeUtils';
+import { TripAuctionBidsPanel } from '../components/trip/TripAuctionBidsPanel';
+import { TripBidPanel } from '../components/trip/TripBidPanel';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
 import { TripOfferPanel } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
@@ -205,6 +207,34 @@ export function ListingDetailScreen(): React.ReactElement {
     [],
   );
 
+  const handleBidChange = React.useCallback(
+    (update: {
+      auctionStatus: Trip['auctionStatus'];
+      auctionStatusLabel: Trip['auctionStatusLabel'];
+      auctionStatusVariant: Trip['auctionStatusVariant'];
+      myBidStatus: Trip['myBidStatus'];
+      myBidAmount: Trip['myBidAmount'];
+      counterpartyName: Trip['counterpartyName'];
+      counterpartyPhone: Trip['counterpartyPhone'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              auctionStatus: update.auctionStatus,
+              auctionStatusLabel: update.auctionStatusLabel,
+              auctionStatusVariant: update.auctionStatusVariant,
+              myBidStatus: update.myBidStatus,
+              myBidAmount: update.myBidAmount,
+              counterpartyName: update.counterpartyName,
+              counterpartyPhone: update.counterpartyPhone,
+            }
+          : current,
+      );
+    },
+    [],
+  );
+
   if (loading) {
     return (
       <AuthScaffold
@@ -317,14 +347,22 @@ export function ListingDetailScreen(): React.ReactElement {
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
-            <TripOfferPanel
-              tripId={trip.id}
-              vehicleMode={trip.vehicleMode}
-              vehicleTotalSeats={trip.vehicleTotalSeats}
-              requiresVehicle={trip.vehicleId == null}
-              initialVehicleId={route.params.selectVehicleId ?? null}
-              onOfferChange={handleOfferChange}
-            />
+            {trip.listingType === 'auction' ? (
+              <TripBidPanel
+                tripId={trip.id}
+                isPassengerRequest={trip.vehicleId == null}
+                onBidChange={handleBidChange}
+              />
+            ) : (
+              <TripOfferPanel
+                tripId={trip.id}
+                vehicleMode={trip.vehicleMode}
+                vehicleTotalSeats={trip.vehicleTotalSeats}
+                requiresVehicle={trip.vehicleId == null}
+                initialVehicleId={route.params.selectVehicleId ?? null}
+                onOfferChange={handleOfferChange}
+              />
+            )}
           </>
         ) : (
           <>
@@ -365,13 +403,21 @@ export function ListingDetailScreen(): React.ReactElement {
                 </View>
 
                 <View style={[styles.page, { width: pageWidth }]}>
-                  <TripResponsesPanel
-                    tripId={trip.id}
-                    vehicleMode={trip.vehicleMode}
-                    vehicleTotalSeats={trip.vehicleTotalSeats}
-                    isPassengerRequest={trip.vehicleId == null}
-                    onCountChange={setResponsesCount}
-                  />
+                  {trip.listingType === 'auction' ? (
+                    <TripAuctionBidsPanel
+                      tripId={trip.id}
+                      isPassengerRequest={trip.vehicleId == null}
+                      onCountChange={setResponsesCount}
+                    />
+                  ) : (
+                    <TripResponsesPanel
+                      tripId={trip.id}
+                      vehicleMode={trip.vehicleMode}
+                      vehicleTotalSeats={trip.vehicleTotalSeats}
+                      isPassengerRequest={trip.vehicleId == null}
+                      onCountChange={setResponsesCount}
+                    />
+                  )}
                 </View>
               </Animated.ScrollView>
             </View>
