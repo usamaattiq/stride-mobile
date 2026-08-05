@@ -5,6 +5,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -18,6 +19,7 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
@@ -123,6 +125,8 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
       setIsScreenLoading(false);
     }
   }, [t]);
+
+  const { refreshControlProps } = usePullToRefresh(loadRequests);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -278,6 +282,7 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
+        refreshControl={<RefreshControl {...refreshControlProps} />}
       >
         {pageBody}
       </ScrollView>

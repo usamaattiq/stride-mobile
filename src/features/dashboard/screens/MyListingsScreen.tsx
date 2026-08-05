@@ -7,6 +7,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -21,6 +22,7 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
@@ -49,6 +51,7 @@ export function MyListingsScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
   const { trips, loadError, refreshTrips, removeTrip } = useTrips();
+  const { refreshControlProps } = usePullToRefresh(refreshTrips);
 
   const [listingType, setListingType] = React.useState<TripListingType>('rfq');
   const [statusFilter, setStatusFilter] = React.useState<ListingStatusFilter>('all');
@@ -225,7 +228,11 @@ export function MyListingsScreen(): React.ReactElement {
       );
     } else if (loadError && trips.length === 0) {
       pageBody = (
-        <View style={styles.centered}>
+        <ScrollView
+          contentContainerStyle={styles.centered}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
           <AppText style={styles.errorText}>{loadError}</AppText>
           <Button
             label={t('dashboard.listings.retry')}
@@ -236,12 +243,28 @@ export function MyListingsScreen(): React.ReactElement {
                 .finally(() => setIsScreenLoading(false));
             }}
           />
-        </View>
+        </ScrollView>
       );
     } else if (trips.length === 0) {
-      pageBody = <ListingsEmptyState variant="none" />;
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState variant="none" />
+        </ScrollView>
+      );
     } else if (pageTrips.length === 0) {
-      pageBody = <ListingsEmptyState variant="filtered" />;
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState variant="filtered" />
+        </ScrollView>
+      );
     } else {
       pageBody = (
         <FlatList
@@ -257,6 +280,7 @@ export function MyListingsScreen(): React.ReactElement {
           removeClippedSubviews
           updateCellsBatchingPeriod={50}
           keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl {...refreshControlProps} />}
         />
       );
     }

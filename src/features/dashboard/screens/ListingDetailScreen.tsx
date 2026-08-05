@@ -25,6 +25,7 @@ import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
@@ -148,6 +149,17 @@ export function ListingDetailScreen(): React.ReactElement {
       })
       .finally(() => setLoading(false));
   }, [cached, route.params.tripId, t]);
+
+  const reloadTrip = React.useCallback(async () => {
+    setLoadError(null);
+    const dto = await tripApi.getById(route.params.tripId);
+    setTrip(mapTripDtoToTrip(dto));
+    if (isOwnListing) {
+      await refreshTrips().catch(() => undefined);
+    }
+  }, [isOwnListing, refreshTrips, route.params.tripId]);
+
+  const { refreshControlProps } = usePullToRefresh(reloadTrip);
 
   const handleRemove = () => {
     if (!trip || removing) {
@@ -276,6 +288,7 @@ export function ListingDetailScreen(): React.ReactElement {
       // Clearance above the keyboard for the focused price field + submit button.
       // Only affects keyboard-open scroll — no permanent empty gap at the bottom.
       scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
+      refreshControlProps={refreshControlProps}
       headerRight={
         isOwnListing ? (
           <Pressable

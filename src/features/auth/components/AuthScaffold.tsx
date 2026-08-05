@@ -4,9 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   Dimensions,
   Pressable,
+  RefreshControl,
   StyleSheet,
   View,
   type FocusEvent,
+  type RefreshControlProps,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -82,6 +84,8 @@ type AuthScaffoldProps = {
   scrollBottomOffset?: number;
   /** Extra scroll padding while the keyboard is open (keyboard-controller). */
   extraKeyboardSpace?: number;
+  /** Optional pull-to-refresh props for the scrollable body. */
+  refreshControlProps?: RefreshControlProps;
 };
 
 export function AuthScaffold({
@@ -105,6 +109,7 @@ export function AuthScaffold({
   currentStep,
   scrollBottomOffset,
   extraKeyboardSpace,
+  refreshControlProps,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -131,6 +136,9 @@ export function AuthScaffold({
       nestedScrollEnabled
       bottomOffset={scrollBottomOffset ?? spacing.md}
       extraKeyboardSpace={extraKeyboardSpace}
+      refreshControl={
+        refreshControlProps ? <RefreshControl {...refreshControlProps} /> : undefined
+      }
     >
       {children}
     </KeyboardAwareScrollView>

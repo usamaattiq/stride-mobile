@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   View,
 } from 'react-native';
@@ -12,6 +13,7 @@ import { spacing, colors } from '@/theme';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 
 import { FeedPaginationBar } from './FeedPaginationBar';
 import { ListingCard } from './ListingCard';
@@ -88,6 +90,8 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
     }, [loadTrips]),
   );
 
+  const { refreshControlProps } = usePullToRefresh(loadTrips);
+
   React.useEffect(() => {
     setPage(1);
   }, [debouncedQuery, category, filters]);
@@ -162,6 +166,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
         removeClippedSubviews
         initialNumToRender={PAGE_SIZE}
         windowSize={7}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
       />
 
       <TripFilterSheet

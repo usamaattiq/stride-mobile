@@ -2,6 +2,8 @@ import React from 'react';
 import {
   FlatList,
   InteractionManager,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -14,6 +16,7 @@ import { i18n as appI18n } from '@/i18n';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, spacing } from '@/theme';
 
 import { DashboardSearchBar } from '../components/DashboardSearchBar';
@@ -50,6 +53,8 @@ export function MyOffersScreen(): React.ReactElement {
       throw error;
     }
   }, [t]);
+
+  const { refreshControlProps } = usePullToRefresh(refreshOffers);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -100,7 +105,11 @@ export function MyOffersScreen(): React.ReactElement {
     );
   } else if (loadError && offers.length === 0) {
     body = (
-      <View style={styles.centered}>
+      <ScrollView
+        contentContainerStyle={styles.centered}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
+        showsVerticalScrollIndicator={false}
+      >
         <AppText style={styles.errorText}>{loadError}</AppText>
         <Button
           label={t('dashboard.listings.retry')}
@@ -111,23 +120,37 @@ export function MyOffersScreen(): React.ReactElement {
               .finally(() => setIsScreenLoading(false));
           }}
         />
-      </View>
+      </ScrollView>
     );
   } else if (offers.length === 0) {
     body = (
-      <ListingsEmptyState
-        variant="none"
-        title={t('dashboard.offers.emptyTitle')}
-        subtitle={t(
-          isPassenger
-            ? 'dashboard.offers.emptySubtitlePassenger'
-            : 'dashboard.offers.emptySubtitleDriver',
-        )}
-        icon="tag"
-      />
+      <ScrollView
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
+        showsVerticalScrollIndicator={false}
+      >
+        <ListingsEmptyState
+          variant="none"
+          title={t('dashboard.offers.emptyTitle')}
+          subtitle={t(
+            isPassenger
+              ? 'dashboard.offers.emptySubtitlePassenger'
+              : 'dashboard.offers.emptySubtitleDriver',
+          )}
+          icon="tag"
+        />
+      </ScrollView>
     );
   } else if (filteredOffers.length === 0) {
-    body = <ListingsEmptyState variant="filtered" />;
+    body = (
+      <ScrollView
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
+        showsVerticalScrollIndicator={false}
+      >
+        <ListingsEmptyState variant="filtered" />
+      </ScrollView>
+    );
   } else {
     body = (
       <FlatList
@@ -138,6 +161,7 @@ export function MyOffersScreen(): React.ReactElement {
         ItemSeparatorComponent={ListSeparator}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl {...refreshControlProps} />}
       />
     );
   }

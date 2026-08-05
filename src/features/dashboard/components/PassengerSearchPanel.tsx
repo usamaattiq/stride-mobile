@@ -3,6 +3,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -18,6 +19,7 @@ import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
@@ -116,6 +118,8 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
       void loadFeaturedTrips();
     }, [loadFeaturedTrips]),
   );
+
+  const { refreshControlProps } = usePullToRefresh(loadFeaturedTrips);
 
   const vehicleModeOptions = React.useMemo(
     () => [
@@ -396,6 +400,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
           <ScrollView
             contentContainerStyle={styles.featuredScrollContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl {...refreshControlProps} />}
           >
             <AppText weight="bold" style={styles.featuredTitle}>
               {t('dashboard.search.featuredTrips')}
@@ -409,12 +414,16 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.featuredEmpty}>
+          <ScrollView
+            contentContainerStyle={styles.featuredEmpty}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl {...refreshControlProps} />}
+          >
             {featuredError ? (
               <AppText style={styles.featuredError}>{featuredError}</AppText>
             ) : null}
             <AppText style={styles.searchHint}>{t('dashboard.search.searchHint')}</AppText>
-          </View>
+          </ScrollView>
         )}
       </View>
 
@@ -632,7 +641,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxs,
   },
   featuredEmpty: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,

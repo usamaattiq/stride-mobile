@@ -2,6 +2,7 @@ import React from 'react';
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   View,
 } from 'react-native';
@@ -17,6 +18,7 @@ import { tripApi } from '@/services/api/tripApi';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
@@ -135,6 +137,8 @@ export function SearchResultsScreen(): React.ReactElement {
     void loadTrips();
   }, [loadTrips]);
 
+  const { refreshControlProps } = usePullToRefresh(loadTrips);
+
   const skeletonList = (
     <View style={styles.cardPad}>
       {SKELETON_KEYS.map((key) => (
@@ -211,6 +215,7 @@ export function SearchResultsScreen(): React.ReactElement {
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              refreshControl={<RefreshControl {...refreshControlProps} />}
             />
           </>
         ) : (
