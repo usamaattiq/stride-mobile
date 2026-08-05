@@ -13,11 +13,14 @@ import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import { matchesVehicleSearch } from '@/features/dashboard/types/vehicleBrowse.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
 type TripVehicleSelectStepProps = {
   vehicles: Vehicle[];
   isLoading: boolean;
+  loadError?: string | null;
+  onRetry?: () => void;
   selectedVehicleId: string | null;
   onSelectVehicle: (vehicleId: string) => void;
   onAddVehicle: () => void;
@@ -26,6 +29,8 @@ type TripVehicleSelectStepProps = {
 export function TripVehicleSelectStep({
   vehicles,
   isLoading,
+  loadError = null,
+  onRetry,
   selectedVehicleId,
   onSelectVehicle,
   onAddVehicle,
@@ -47,6 +52,23 @@ export function TripVehicleSelectStep({
   }
 
   if (vehicles.length === 0) {
+    if (loadError) {
+      return (
+        <View style={styles.form}>
+          <View style={styles.centered}>
+            <AppText style={styles.errorText}>{loadError}</AppText>
+            {onRetry ? (
+              <Button
+                label={t('dashboard.listings.detail.responses.retry')}
+                onPress={onRetry}
+                loading={isLoading}
+              />
+            ) : null}
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.form}>
         <VehiclesEmptyState
@@ -145,6 +167,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.xl,
+    gap: spacing.sm,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.primary,
+    textAlign: 'center',
   },
   filterEmpty: {
     alignItems: 'center',

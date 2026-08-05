@@ -725,7 +725,7 @@
       "vehicleClassTitle": "Select vehicle type",
       "vehicleClassSubtitle": "Choose the type of vehicle you need",
       "vehicleClassLabel": "Vehicle type",
-      "vehicleModeTitle": "Vehicle type",
+      "vehicleModeTitle": "Trip offering",
       "vehicleModeSubtitle": "Offer shared seats or the full vehicle",
       "vehicleModeLabel": "Trip offering",
       "vehicleModeShared": "Shared vehicle",
