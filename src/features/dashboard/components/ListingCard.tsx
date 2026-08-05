@@ -39,10 +39,12 @@ function formatTripWhen(trip: Trip, locale: string): string {
   return `${day} at ${time}`;
 }
 
-const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
+type StatusBadgeTone = 'green' | 'blue' | 'amber' | 'muted';
+
+const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   live: 'green',
   'awaiting-confirmation': 'blue',
-  'offer-submitted': 'green',
+  'offer-submitted': 'amber',
   'awaiting-your-confirmation': 'blue',
   confirmed: 'blue',
   completed: 'blue',
@@ -50,8 +52,8 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
   expired: 'muted',
 };
 
-const OFFER_STATUS_TONE: Record<RfqOfferStatus, 'green' | 'blue' | 'muted'> = {
-  active: 'green',
+const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
+  active: 'amber',
   selected: 'blue',
   confirmed: 'blue',
   withdrawn: 'muted',
@@ -224,6 +226,7 @@ export function ListingCard({
           style={[
             styles.timerBadge,
             badgeTone === 'blue' && styles.timerBadgeBlue,
+            badgeTone === 'amber' && styles.timerBadgeAmber,
             badgeTone === 'muted' && styles.timerBadgeEnded,
           ]}
         >
@@ -235,7 +238,9 @@ export function ListingCard({
                 ? colors.accent.green.text
                 : badgeTone === 'blue'
                   ? colors.accent.blue.text
-                  : colors.text.secondary
+                  : badgeTone === 'amber'
+                    ? colors.accent.amber.text
+                    : colors.text.secondary
             }
           />
           <AppText
@@ -243,6 +248,7 @@ export function ListingCard({
             style={[
               styles.timerText,
               badgeTone === 'blue' && styles.timerTextBlue,
+              badgeTone === 'amber' && styles.timerTextAmber,
               badgeTone === 'muted' && styles.timerTextEnded,
             ]}
             numberOfLines={1}
@@ -492,6 +498,9 @@ const styles = StyleSheet.create({
   timerBadgeBlue: {
     backgroundColor: colors.accent.blue.soft,
   },
+  timerBadgeAmber: {
+    backgroundColor: colors.accent.amber.soft,
+  },
   timerText: {
     fontSize: 11,
     color: colors.accent.green.text,
@@ -501,6 +510,9 @@ const styles = StyleSheet.create({
   },
   timerTextBlue: {
     color: colors.accent.blue.text,
+  },
+  timerTextAmber: {
+    color: colors.accent.amber.text,
   },
   mainRow: {
     flexDirection: 'row',

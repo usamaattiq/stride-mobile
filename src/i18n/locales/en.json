@@ -419,7 +419,7 @@
           "rejectConfirmBodyNotifyPassenger": "The passenger will be notified that their offer was declined.",
           "rejectConfirmBodyNotifyDriver": "The driver will be notified that their offer was declined.",
           "offerStatus": {
-            "active": "Pending",
+            "active": "Offer submitted",
             "selected": "Awaiting confirmation",
             "confirmed": "Confirmed",
             "withdrawn": "Withdrawn",

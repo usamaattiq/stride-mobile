@@ -77,9 +77,22 @@ function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {
 
 function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
   const isConfirmed = status === 'confirmed';
+  const isOfferSubmitted = status === 'active';
   const isTerminal = TERMINAL_STATUSES.includes(status);
-  const bg = isConfirmed ? colors.accent.green.soft : isTerminal ? colors.background.subtle : colors.primarySoft;
-  const text = isConfirmed ? colors.accent.green.text : isTerminal ? colors.text.tertiary : colors.primary;
+  const bg = isConfirmed
+    ? colors.accent.green.soft
+    : isOfferSubmitted
+      ? colors.accent.amber.soft
+      : isTerminal
+        ? colors.background.subtle
+        : colors.primarySoft;
+  const text = isConfirmed
+    ? colors.accent.green.text
+    : isOfferSubmitted
+      ? colors.accent.amber.text
+      : isTerminal
+        ? colors.text.tertiary
+        : colors.primary;
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
       <AppText weight="semibold" style={[styles.badgeText, { color: text }]}>

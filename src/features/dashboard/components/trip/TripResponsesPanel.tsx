@@ -27,7 +27,7 @@ export type TripResponsesPanelProps = {
 };
 
 const BADGE_STYLE_BY_STATUS: Record<RfqOfferStatus, { bg: string; text: string }> = {
-  active: { bg: colors.primarySoft, text: colors.primary },
+  active: { bg: colors.accent.amber.soft, text: colors.accent.amber.text },
   selected: { bg: colors.primarySoft, text: colors.primary },
   confirmed: { bg: colors.accent.green.soft, text: colors.accent.green.text },
   withdrawn: { bg: colors.background.subtle, text: colors.text.tertiary },

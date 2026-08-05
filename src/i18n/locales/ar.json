@@ -419,7 +419,7 @@
           "rejectConfirmBodyNotifyPassenger": "سيتم إعلام الراكب بأن عرضه قد رُفض.",
           "rejectConfirmBodyNotifyDriver": "سيتم إعلام السائق بأن عرضه قد رُفض.",
           "offerStatus": {
-            "active": "قيد الانتظار",
+            "active": "تم تقديم العرض",
             "selected": "بانتظار التأكيد",
             "confirmed": "مؤكد",
             "withdrawn": "مسحوب",
