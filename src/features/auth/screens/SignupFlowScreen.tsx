@@ -9,6 +9,7 @@ import { authApi } from '@/services/api/authApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
+import { registerForPushNotificationsAsync } from '@/services/push/pushToken';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
@@ -210,6 +211,7 @@ export function SignupFlowScreen(): React.ReactElement {
       // Always cache so Face ID can be enabled later from Settings without
       // requiring a second manual login first.
       await devicePrefs.setCachedMpin(draft.mpin);
+      void registerForPushNotificationsAsync();
 
       Keyboard.dismiss();
       isLeavingRef.current = true;

@@ -46,10 +46,12 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "package": "com.silveraxisltd.musafir249",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -109,7 +111,14 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/splash-logo.png",
+          "color": "#B42318"
+        }
+      ]
     ],
     "extra": {
       "eas": {

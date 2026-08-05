@@ -11,6 +11,7 @@ import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
 import { isSessionRevokedError } from './src/services/api/apiError';
+import { registerForPushNotificationsAsync } from './src/services/push/pushToken';
 import { authStore } from './src/store/authStore';
 import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
@@ -96,6 +97,7 @@ export default function App() {
       try {
         const profile = await authApi.getMe();
         profileStore.setProfile(profile);
+        void registerForPushNotificationsAsync();
         if (mounted) {
           setInitialRouteName('Dashboard');
         }
