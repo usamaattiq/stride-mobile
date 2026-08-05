@@ -15,7 +15,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { rfqApi } from '@/services/api/rfqApi';
-import type { RfqOfferStatus, RfqOfferVehicleSummary, RfqResponderSnapshot } from '@/services/api/rfqApi.types';
+import type {
+  RfqOfferStatus,
+  RfqOfferVehicleSummary,
+  RfqResponderSnapshot,
+  RfqSnapshot,
+} from '@/services/api/rfqApi.types';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -37,9 +42,32 @@ export type TripOfferPanelProps = {
   requiresVehicle?: boolean;
   /** Pre-select this vehicle after returning from the add-vehicle flow. */
   initialVehicleId?: string | null;
+  /** Keep the parent listing card in sync after submit / confirm / decline / withdraw. */
+  onOfferChange?: (update: {
+    rfqStatus: RfqResponderSnapshot['status'];
+    myOfferStatus: RfqOfferStatus | null;
+    myOfferPrice: string | null;
+  }) => void;
 };
 
 const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
+
+function latestOfferFromSnapshot(snapshot: RfqResponderSnapshot) {
+  return (
+    snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ??
+    snapshot.myOffers[0] ??
+    null
+  );
+}
+
+function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {
+  const latest = latestOfferFromSnapshot(snapshot);
+  return {
+    rfqStatus: snapshot.status,
+    myOfferStatus: latest?.status ?? null,
+    myOfferPrice: latest?.price ?? null,
+  };
+}
 
 function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
   const isConfirmed = status === 'confirmed';
@@ -104,6 +132,7 @@ export function TripOfferPanel({
   vehicleTotalSeats,
   requiresVehicle = false,
   initialVehicleId = null,
+  onOfferChange,
 }: TripOfferPanelProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
@@ -131,15 +160,24 @@ export function TripOfferPanel({
     [vehicles, selectedVehicleId],
   );
 
+  const applySnapshot = React.useCallback(
+    (result: RfqSnapshot) => {
+      const next = result as RfqResponderSnapshot;
+      setSnapshot(next);
+      onOfferChange?.(offerUpdateFromSnapshot(next));
+    },
+    [onOfferChange],
+  );
+
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
     void rfqApi
       .getSnapshot(tripId)
-      .then((result) => setSnapshot(result as RfqResponderSnapshot))
+      .then((result) => applySnapshot(result))
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.loadFailed'))))
       .finally(() => setLoading(false));
-  }, [tripId, t]);
+  }, [applySnapshot, tripId, t]);
 
   React.useEffect(() => {
     load();
@@ -182,10 +220,7 @@ export function TripOfferPanel({
     ) : null;
   }
 
-  const activeOffer =
-    snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ??
-    snapshot.myOffers[snapshot.myOffers.length - 1] ??
-    null;
+  const activeOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
   const hasActionableOffer = activeOffer != null && !TERMINAL_STATUSES.includes(activeOffer.status);
 
   const seatsNumber = Number(seats);
@@ -229,7 +264,7 @@ export function TripOfferPanel({
     setError(null);
     void rfqApi
       .withdrawOffer(tripId, activeOffer.id)
-      .then(() => load())
+      .then((result) => applySnapshot(result))
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.withdrawFailed'))))
       .finally(() => {
         setWithdrawing(false);
@@ -245,7 +280,7 @@ export function TripOfferPanel({
     setError(null);
     void rfqApi
       .confirmOffer(tripId, activeOffer.id)
-      .then(() => load())
+      .then((result) => applySnapshot(result))
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => setConfirming(false));
   };
@@ -258,7 +293,7 @@ export function TripOfferPanel({
     setError(null);
     void rfqApi
       .declineOffer(tripId, activeOffer.id)
-      .then(() => load())
+      .then((result) => applySnapshot(result))
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {
         setConfirming(false);

@@ -169,6 +169,16 @@ export function LoginFlowScreen(): React.ReactElement {
     navigation.replace('Dashboard');
   };
 
+  const handlePhoneDigitsChange = (digits: string) => {
+    setSendOtpError(null);
+    setPhoneDigits(digits);
+  };
+
+  const handleCountryChange = (next: typeof country) => {
+    setSendOtpError(null);
+    setCountry(next);
+  };
+
   const handleSendOtp = async () => {
     setSendOtpError(null);
     setSendingOtp(true);
@@ -368,8 +378,8 @@ export function LoginFlowScreen(): React.ReactElement {
         <LoginPhoneScreen
           country={country}
           phoneDigits={phoneDigits}
-          onChangeCountry={setCountry}
-          onChangePhone={setPhoneDigits}
+          onChangeCountry={handleCountryChange}
+          onChangePhone={handlePhoneDigitsChange}
           onContinue={() => void handleSendOtp()}
           loading={sendingOtp}
           errorMessage={sendOtpError}

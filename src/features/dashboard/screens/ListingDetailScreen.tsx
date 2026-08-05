@@ -169,6 +169,26 @@ export function ListingDetailScreen(): React.ReactElement {
 
   const goBack = () => navigation.goBack();
 
+  const handleOfferChange = React.useCallback(
+    (update: {
+      rfqStatus: Trip['rfqStatus'];
+      myOfferStatus: Trip['myOfferStatus'];
+      myOfferPrice: Trip['myOfferPrice'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              rfqStatus: update.rfqStatus,
+              myOfferStatus: update.myOfferStatus,
+              myOfferPrice: update.myOfferPrice,
+            }
+          : current,
+      );
+    },
+    [],
+  );
+
   if (loading) {
     return (
       <AuthScaffold
@@ -286,6 +306,7 @@ export function ListingDetailScreen(): React.ReactElement {
               vehicleTotalSeats={trip.vehicleTotalSeats}
               requiresVehicle={trip.vehicleId == null}
               initialVehicleId={route.params.selectVehicleId ?? null}
+              onOfferChange={handleOfferChange}
             />
           </>
         ) : (

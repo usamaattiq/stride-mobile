@@ -235,8 +235,14 @@ export function SignupFlowScreen(): React.ReactElement {
           <SignupPhoneScreen
             country={draft.country}
             phoneDigits={draft.phoneDigits}
-            onChangeCountry={(country) => patchDraft({ country })}
-            onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
+            onChangeCountry={(country) => {
+              setSendOtpError(null);
+              patchDraft({ country });
+            }}
+            onChangePhone={(phoneDigits) => {
+              setSendOtpError(null);
+              patchDraft({ phoneDigits });
+            }}
             onContinue={() => void handleSendOtp()}
             loading={sendingOtp}
             errorMessage={sendOtpError}
