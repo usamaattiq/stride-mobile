@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { ensureLocationPermission } from '@/services/locationPermission';
+import { readDeviceCoordinates } from '@/services/readDeviceCoordinates';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
@@ -159,10 +160,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
         return null;
       }
 
-      const current = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const { latitude, longitude } = current.coords;
+      const { latitude, longitude } = await readDeviceCoordinates();
       const label = await resolveAddressLabel(latitude, longitude);
       return { label, latitude, longitude };
     } catch {
@@ -246,10 +244,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       // flaky and can hang silently after the first call.
       let coords = lastUserLocationRef.current;
       if (!coords) {
-        const current = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        coords = { latitude: current.coords.latitude, longitude: current.coords.longitude };
+        coords = await readDeviceCoordinates();
       }
 
       const { latitude, longitude } = coords;
