@@ -40,14 +40,14 @@ function formatTripWhen(trip: Trip, locale: string): string {
 }
 
 const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
-  draft: 'muted',
-  scheduled: 'muted',
   live: 'green',
-  awaiting_confirmation: 'blue',
+  'awaiting-confirmation': 'blue',
+  'offer-submitted': 'green',
+  'awaiting-your-confirmation': 'blue',
+  confirmed: 'blue',
   completed: 'blue',
   closed: 'muted',
   expired: 'muted',
-  cancelled: 'muted',
 };
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, 'green' | 'blue' | 'muted'> = {
@@ -57,6 +57,7 @@ const OFFER_STATUS_TONE: Record<RfqOfferStatus, 'green' | 'blue' | 'muted'> = {
   withdrawn: 'muted',
   declined: 'muted',
   timed_out: 'muted',
+  lapsed: 'muted',
 };
 
 function getExpiresAt(trip: Trip): number {

@@ -338,14 +338,14 @@
         "ended": "منتهية",
         "pending": "قيد الانتظار",
         "status": {
-          "draft": "مسودة",
-          "scheduled": "مجدول",
           "live": "مباشر",
-          "awaiting_confirmation": "بانتظار التأكيد",
+          "awaiting-confirmation": "بانتظار التأكيد",
+          "offer-submitted": "تم تقديم العرض",
+          "awaiting-your-confirmation": "بانتظار تأكيدك",
+          "confirmed": "مؤكد",
           "completed": "مكتمل",
           "closed": "مغلق",
-          "expired": "منتهي الصلاحية",
-          "cancelled": "ملغى"
+          "expired": "منتهي الصلاحية"
         },
         "notStarted": "لم تبدأ بعد",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
@@ -412,16 +412,19 @@
           "seats_many": "{{count}} مقعداً",
           "seats_other": "{{count}} مقعد",
           "accept": "قبول",
+          "select": "اختيار",
           "reject": "رفض",
           "rejectConfirmTitle": "رفض هذا العرض؟",
-          "rejectConfirmBody": "سيتم إعلام الراكب بأن عرضه قد رُفض.",
+          "rejectConfirmBodyNotifyPassenger": "سيتم إعلام الراكب بأن عرضه قد رُفض.",
+          "rejectConfirmBodyNotifyDriver": "سيتم إعلام السائق بأن عرضه قد رُفض.",
           "offerStatus": {
             "active": "قيد الانتظار",
             "selected": "بانتظار التأكيد",
             "confirmed": "مؤكد",
             "withdrawn": "مسحوب",
             "declined": "مرفوض",
-            "timed_out": "منتهي الصلاحية"
+            "timed_out": "انتهت المهلة",
+            "lapsed": "منتهٍ"
           }
         },
         "offer": {
@@ -443,9 +446,15 @@
           "totalCalc": "{{price}} × {{seats}}",
           "submit": "إرسال العرض",
           "withdraw": "سحب العرض",
+          "confirm": "تأكيد العرض",
+          "decline": "رفض",
+          "declineConfirmTitle": "رفض هذا العرض؟",
+          "declineConfirmBodyNotifyDriver": "سيتم إعلام السائق بأنك رفضت عرضه.",
+          "declineConfirmBodyNotifyPassenger": "سيتم إعلام الراكب بأنك رفضت عرضه.",
           "withdrawConfirmAction": "سحب",
           "withdrawConfirmTitle": "سحب هذا العرض؟",
-          "withdrawConfirmBody": "لن يرى الراكب هذا العرض بعد الآن.",
+          "withdrawConfirmBodyNotifyPassenger": "لن يرى الراكب هذا العرض بعد الآن.",
+          "withdrawConfirmBodyNotifyDriver": "لن يرى السائق هذا العرض بعد الآن.",
           "closed": "لم تعد هذه القائمة تقبل العروض."
         }
       },

@@ -1,22 +1,29 @@
 export type RfqCapacityMode = 'full' | 'partial';
 
+/** Persisted offer statuses from RMS (`OfferStatus`). */
 export type RfqOfferStatus =
   | 'active'
   | 'selected'
   | 'confirmed'
   | 'withdrawn'
   | 'declined'
-  | 'timed_out';
+  | 'timed_out'
+  | 'lapsed';
 
+/**
+ * Role-tagged display statuses from RMS. Never the raw DB enum.
+ */
 export type RfqStatusValue =
-  | 'draft'
-  | 'scheduled'
   | 'live'
-  | 'awaiting_confirmation'
+  | 'awaiting-confirmation'
+  | 'offer-submitted'
+  | 'awaiting-your-confirmation'
+  | 'confirmed'
   | 'completed'
   | 'closed'
-  | 'expired'
-  | 'cancelled';
+  | 'expired';
+
+export type RfqDisplayVariant = 'muted' | 'accent' | 'warning' | 'success';
 
 export type RfqOfferVehicleSummary = {
   id: string;
@@ -40,6 +47,8 @@ export type RfqOfferSummary = {
   offeredQuantity: string | null;
   price: string | null;
   confirmationDeadlineAt: string | null;
+  contactExchangeAllowed?: boolean;
+  contactExchangeClosesAt?: string | null;
   /** Driver vehicle attached when offering on a passenger request. */
   vehicle?: RfqOfferVehicleSummary | null;
 };
@@ -48,8 +57,7 @@ export type RfqOwnerActions = {
   canSubmitOffer: boolean;
   canSelect: boolean;
   canClose: boolean;
-  canCancel: boolean;
-  canActivate: boolean;
+  canComplete: boolean;
 };
 
 export type RfqResponderActions = {
@@ -59,41 +67,43 @@ export type RfqResponderActions = {
   canDecline: boolean;
 };
 
-export type RfqOwnerSnapshot = {
-  role: 'owner';
+type RfqSnapshotBase = {
   id: string;
-  platformId: string;
-  externalRef: string | null;
   status: RfqStatusValue;
+  statusLabel?: string;
+  statusVariant?: RfqDisplayVariant;
   enforceCapacityLimit: boolean;
   totalQuantity: string | null;
   confirmedQuantity: string;
-  remainingQuantity: string | null;
-  startsAt: string | null;
+  remainingQuantity?: string | null;
+  availableQuantity?: string | null;
   expiresAt: string | null;
+};
+
+export type RfqOwnerSnapshot = RfqSnapshotBase & {
+  role: 'owner';
+  platformId: string;
+  externalRef: string | null;
+  reservedQuantity?: string;
   closedAt: string | null;
   closedReason: 'owner_manual' | 'auto_no_deal' | null;
   offers: RfqOfferSummary[];
   actions: RfqOwnerActions;
 };
 
-export type RfqResponderSnapshot = {
+export type RfqResponderSnapshot = RfqSnapshotBase & {
   role: 'responder';
-  id: string;
   platformId: string;
   externalRef: string | null;
-  status: RfqStatusValue;
-  enforceCapacityLimit: boolean;
-  totalQuantity: string | null;
-  confirmedQuantity: string;
-  remainingQuantity: string | null;
-  startsAt: string | null;
-  expiresAt: string | null;
   myOffers: RfqOfferSummary[];
   actions: RfqResponderActions;
 };
 
-export type RfqSnapshot = RfqOwnerSnapshot | RfqResponderSnapshot;
+export type RfqPublicSnapshot = RfqSnapshotBase & {
+  role: 'public';
+};
+
+export type RfqSnapshot = RfqOwnerSnapshot | RfqResponderSnapshot | RfqPublicSnapshot;
 
 export type RfqOfferResponse = {
   id: string;
@@ -104,6 +114,8 @@ export type RfqOfferResponse = {
   offeredQuantity: string | null;
   price: string | null;
   confirmationDeadlineAt: string | null;
+  contactExchangeAllowed?: boolean;
+  contactExchangeClosesAt?: string | null;
   vehicle?: RfqOfferVehicleSummary | null;
 };
 

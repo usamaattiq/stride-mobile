@@ -331,6 +331,7 @@ export function ListingDetailScreen(): React.ReactElement {
                     tripId={trip.id}
                     vehicleMode={trip.vehicleMode}
                     vehicleTotalSeats={trip.vehicleTotalSeats}
+                    isPassengerRequest={trip.vehicleId == null}
                     onCountChange={setResponsesCount}
                   />
                 </View>

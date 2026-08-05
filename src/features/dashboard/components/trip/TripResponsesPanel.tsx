@@ -19,6 +19,8 @@ export type TripResponsesPanelProps = {
   tripId: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
+  /** Passenger request listings receive offers from drivers. */
+  isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
 };
 
@@ -29,6 +31,7 @@ const BADGE_STYLE_BY_STATUS: Record<RfqOfferStatus, { bg: string; text: string }
   withdrawn: { bg: colors.background.subtle, text: colors.text.tertiary },
   declined: { bg: colors.background.subtle, text: colors.text.tertiary },
   timed_out: { bg: colors.background.subtle, text: colors.text.tertiary },
+  lapsed: { bg: colors.background.subtle, text: colors.text.tertiary },
 };
 
 function OfferBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
@@ -60,10 +63,14 @@ export function TripResponsesPanel({
   tripId,
   vehicleMode,
   vehicleTotalSeats,
+  isPassengerRequest = false,
   onCountChange,
 }: TripResponsesPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isFullPrivate = vehicleMode === 'fullPrivate';
+  const rejectConfirmBody = isPassengerRequest
+    ? t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyDriver')
+    : t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyPassenger');
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -92,9 +99,14 @@ export function TripResponsesPanel({
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
 
-  const act = (offerId: string, action: 'accept' | 'reject') => {
+  const act = (offerId: string, action: 'select' | 'accept' | 'reject') => {
     setActingOfferId(offerId);
-    const request = action === 'accept' ? rfqApi.acceptOffer : rfqApi.rejectOffer;
+    const request =
+      action === 'select'
+        ? rfqApi.selectOffer
+        : action === 'accept'
+          ? rfqApi.acceptOffer
+          : rfqApi.rejectOffer;
     void request(tripId, offerId)
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
@@ -203,8 +215,8 @@ export function TripResponsesPanel({
                       style={styles.offerActionButton}
                     />
                     <Button
-                      label={t('dashboard.listings.detail.responses.accept')}
-                      onPress={() => act(offer.id, 'accept')}
+                      label={t('dashboard.listings.detail.responses.select')}
+                      onPress={() => act(offer.id, 'select')}
                       loading={isActing}
                       disabled={isActing}
                       style={styles.offerActionButton}
@@ -221,7 +233,7 @@ export function TripResponsesPanel({
         visible={rejectTarget != null}
         icon="times"
         title={t('dashboard.listings.detail.responses.rejectConfirmTitle')}
-        message={t('dashboard.listings.detail.responses.rejectConfirmBody')}
+        message={rejectConfirmBody}
         cancelAction={{
           label: t('common.cancel'),
           onPress: () => setRejectTarget(null),

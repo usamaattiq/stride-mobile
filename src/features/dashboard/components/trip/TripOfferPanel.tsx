@@ -39,7 +39,7 @@ export type TripOfferPanelProps = {
   initialVehicleId?: string | null;
 };
 
-const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out'];
+const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
 
 function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
   const isConfirmed = status === 'confirmed';
@@ -121,7 +121,9 @@ export function TripOfferPanel({
   );
   const [submitting, setSubmitting] = React.useState(false);
   const [withdrawing, setWithdrawing] = React.useState(false);
+  const [confirming, setConfirming] = React.useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
+  const [confirmDecline, setConfirmDecline] = React.useState(false);
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
 
   const selectedVehicle = React.useMemo(
@@ -235,6 +237,35 @@ export function TripOfferPanel({
       });
   };
 
+  const confirmOffer = () => {
+    if (!activeOffer) {
+      return;
+    }
+    setConfirming(true);
+    setError(null);
+    void rfqApi
+      .confirmOffer(tripId, activeOffer.id)
+      .then(() => load())
+      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
+      .finally(() => setConfirming(false));
+  };
+
+  const declineOffer = () => {
+    if (!activeOffer) {
+      return;
+    }
+    setConfirming(true);
+    setError(null);
+    void rfqApi
+      .declineOffer(tripId, activeOffer.id)
+      .then(() => load())
+      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
+      .finally(() => {
+        setConfirming(false);
+        setConfirmDecline(false);
+      });
+  };
+
   const goAddVehicle = () => {
     setVehiclePickerOpen(false);
     beginAddVehicle();
@@ -304,6 +335,31 @@ export function TripOfferPanel({
           loading={withdrawing}
           disabled={withdrawing}
         />
+      ) : null}
+
+      {hasActionableOffer &&
+      activeOffer?.status === 'selected' &&
+      (snapshot.actions.canConfirm || snapshot.actions.canDecline) ? (
+        <View style={styles.confirmActions}>
+          {snapshot.actions.canDecline ? (
+            <Button
+              label={t('dashboard.listings.detail.offer.decline')}
+              variant="secondary"
+              onPress={() => setConfirmDecline(true)}
+              disabled={confirming}
+              style={styles.confirmActionButton}
+            />
+          ) : null}
+          {snapshot.actions.canConfirm ? (
+            <Button
+              label={t('dashboard.listings.detail.offer.confirm')}
+              onPress={confirmOffer}
+              loading={confirming}
+              disabled={confirming}
+              style={styles.confirmActionButton}
+            />
+          ) : null}
+        </View>
       ) : null}
 
       {!hasActionableOffer && snapshot.actions.canSubmitOffer ? (
@@ -424,7 +480,11 @@ export function TripOfferPanel({
         visible={confirmWithdraw}
         icon="undo"
         title={t('dashboard.listings.detail.offer.withdrawConfirmTitle')}
-        message={t('dashboard.listings.detail.offer.withdrawConfirmBody')}
+        message={
+          requiresVehicle
+            ? t('dashboard.listings.detail.offer.withdrawConfirmBodyNotifyPassenger')
+            : t('dashboard.listings.detail.offer.withdrawConfirmBodyNotifyDriver')
+        }
         cancelAction={{
           label: t('common.cancel'),
           onPress: () => setConfirmWithdraw(false),
@@ -432,6 +492,25 @@ export function TripOfferPanel({
         confirmAction={{
           label: t('dashboard.listings.detail.offer.withdrawConfirmAction'),
           onPress: withdrawOffer,
+        }}
+      />
+
+      <AppDialog
+        visible={confirmDecline}
+        icon="times"
+        title={t('dashboard.listings.detail.offer.declineConfirmTitle')}
+        message={
+          requiresVehicle
+            ? t('dashboard.listings.detail.offer.declineConfirmBodyNotifyPassenger')
+            : t('dashboard.listings.detail.offer.declineConfirmBodyNotifyDriver')
+        }
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setConfirmDecline(false),
+        }}
+        confirmAction={{
+          label: t('dashboard.listings.detail.offer.decline'),
+          onPress: declineOffer,
         }}
       />
     </View>
@@ -467,6 +546,16 @@ const styles = StyleSheet.create({
   },
   statusBlock: {
     gap: spacing.sm,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  confirmActionButton: {
+    flex: 1,
+    minHeight: 40,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   statusRow: {
     flexDirection: 'row',

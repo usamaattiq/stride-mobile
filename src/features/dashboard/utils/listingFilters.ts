@@ -5,17 +5,14 @@ import type { Trip, TripListingType } from '../types/trip.types';
 export type ListingStatusFilter = 'all' | 'live' | 'past' | 'completed';
 
 const LIVE_STATUSES: ReadonlySet<RfqStatusValue> = new Set([
-  'draft',
-  'scheduled',
   'live',
-  'awaiting_confirmation',
+  'awaiting-confirmation',
+  'offer-submitted',
+  'awaiting-your-confirmation',
+  'confirmed',
 ]);
 
-const PAST_STATUSES: ReadonlySet<RfqStatusValue> = new Set([
-  'closed',
-  'expired',
-  'cancelled',
-]);
+const PAST_STATUSES: ReadonlySet<RfqStatusValue> = new Set(['closed', 'expired']);
 
 function getExpiresAt(trip: Trip): number {
   return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;

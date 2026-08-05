@@ -338,14 +338,14 @@
         "ended": "Ended",
         "pending": "Pending",
         "status": {
-          "draft": "Draft",
-          "scheduled": "Scheduled",
           "live": "Live",
-          "awaiting_confirmation": "Awaiting confirmation",
+          "awaiting-confirmation": "Awaiting confirmation",
+          "offer-submitted": "Offer submitted",
+          "awaiting-your-confirmation": "Awaiting your confirmation",
+          "confirmed": "Confirmed",
           "completed": "Completed",
           "closed": "Closed",
-          "expired": "Expired",
-          "cancelled": "Cancelled"
+          "expired": "Expired"
         },
         "notStarted": "Not started yet",
         "timerHours": "{{hours}}h {{minutes}}m left",
@@ -412,16 +412,19 @@
           "seats_many": "{{count}} seats",
           "seats_other": "{{count}} seats",
           "accept": "Accept",
+          "select": "Select",
           "reject": "Reject",
           "rejectConfirmTitle": "Reject this offer?",
-          "rejectConfirmBody": "The passenger will be notified that their offer was declined.",
+          "rejectConfirmBodyNotifyPassenger": "The passenger will be notified that their offer was declined.",
+          "rejectConfirmBodyNotifyDriver": "The driver will be notified that their offer was declined.",
           "offerStatus": {
             "active": "Pending",
             "selected": "Awaiting confirmation",
             "confirmed": "Confirmed",
             "withdrawn": "Withdrawn",
             "declined": "Declined",
-            "timed_out": "Expired"
+            "timed_out": "Timed out",
+            "lapsed": "Lapsed"
           }
         },
         "offer": {
@@ -443,9 +446,15 @@
           "totalCalc": "{{price}} × {{seats}}",
           "submit": "Send offer",
           "withdraw": "Withdraw offer",
+          "confirm": "Confirm offer",
+          "decline": "Decline",
+          "declineConfirmTitle": "Decline this offer?",
+          "declineConfirmBodyNotifyDriver": "The driver will be notified that you declined their offer.",
+          "declineConfirmBodyNotifyPassenger": "The passenger will be notified that you declined their offer.",
           "withdrawConfirmAction": "Withdraw",
           "withdrawConfirmTitle": "Withdraw this offer?",
-          "withdrawConfirmBody": "The passenger will no longer see this offer.",
+          "withdrawConfirmBodyNotifyPassenger": "The passenger will no longer see this offer.",
+          "withdrawConfirmBodyNotifyDriver": "The driver will no longer see this offer.",
           "closed": "This listing is no longer accepting offers."
         }
       },
