@@ -76,10 +76,8 @@ function formatCountdown(remainingMs: number, t: TFunction): string {
 
 function RequestThumbnail({
   vehicleClass,
-  seatsCount,
 }: {
   vehicleClass: VehicleClass | null;
-  seatsCount: number | null;
 }): React.ReactElement {
   const iconName = vehicleClass ? VEHICLE_CLASS_ICONS[vehicleClass] : 'car';
 
@@ -94,15 +92,6 @@ function RequestThumbnail({
       <View style={styles.requestThumbIconWell}>
         <FontAwesome5 name={iconName} size={24} color={colors.primary} solid />
       </View>
-
-      {seatsCount != null ? (
-        <View style={styles.requestThumbSeats}>
-          <FontAwesome name="user" size={7} color={colors.white} />
-          <AppText weight="semibold" style={styles.requestThumbSeatsText}>
-            {seatsCount}
-          </AppText>
-        </View>
-      ) : null}
     </LinearGradient>
   );
 }
@@ -286,10 +275,7 @@ export function ListingCard({
               contentFit="cover"
             />
           ) : isPassengerRequest ? (
-            <RequestThumbnail
-              vehicleClass={trip.vehicleClass}
-              seatsCount={trip.vehicleTotalSeats}
-            />
+            <RequestThumbnail vehicleClass={trip.vehicleClass} />
           ) : (
             <View style={styles.thumbnailFallback}>
               <FontAwesome name="car" size={18} color={colors.text.tertiary} />
@@ -585,22 +571,6 @@ const styles = StyleSheet.create({
     shadowRadius: 7,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
-  },
-  requestThumbSeats: {
-    position: 'absolute',
-    right: 4,
-    bottom: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  requestThumbSeatsText: {
-    fontSize: 10,
-    color: colors.white,
   },
   photoBadge: {
     position: 'absolute',
