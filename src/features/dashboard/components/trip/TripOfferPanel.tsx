@@ -22,6 +22,7 @@ import type {
   RfqSnapshot,
 } from '@/services/api/rfqApi.types';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
+import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
@@ -490,13 +491,13 @@ export function TripOfferPanel({
               </View>
             ) : null}
             {!isFullPrivate ? (
-              <AuthTextField
+              <SeatsStepper
                 label={t('dashboard.listings.detail.offer.seatsLabel')}
-                value={seats}
-                onChangeText={setSeats}
-                keyboardType="number-pad"
-                placeholder={t('dashboard.listings.detail.offer.seatsPlaceholder')}
-                dense
+                required
+                value={Number.isInteger(seatsNumber) && seatsNumber >= 1 ? seatsNumber : 1}
+                min={1}
+                max={maxSeats}
+                onChange={(next) => setSeats(String(next))}
               />
             ) : null}
             <AuthTextField

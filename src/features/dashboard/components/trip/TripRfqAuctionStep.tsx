@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { DurationSlider } from '@/features/dashboard/components/trip/DurationSlider';
+import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type {
   TripDraft,
@@ -95,6 +96,11 @@ function isListingComplete(draft: TripDraft, requirePrice: boolean, requireSeats
   );
 }
 
+function parseTripSeats(value: string): number {
+  const seats = Number.parseInt(value.trim(), 10);
+  return Number.isInteger(seats) && seats >= 1 ? seats : 1;
+}
+
 export function TripRfqAuctionStep({
   draft,
   onChange,
@@ -168,7 +174,13 @@ export function TripRfqAuctionStep({
               <SelectCard
                 key={option.id}
                 selected={draft.listingType === option.id}
-                onPress={() => onChange({ listingType: option.id })}
+                onPress={() =>
+                  onChange({
+                    listingType: option.id,
+                    // RFQ uses RMS default expiry (24h) — no user duration control.
+                    ...(option.id === 'rfq' ? { durationHours: 24 } : {}),
+                  })
+                }
                 title={option.title}
                 description={option.description}
                 icon={option.icon}
@@ -197,14 +209,13 @@ export function TripRfqAuctionStep({
             dense
           />
         ) : (
-          <AuthTextField
+          <SeatsStepper
             label={t('trips.create.seats')}
             required
-            value={draft.seats}
-            onChangeText={(seats) => onChange({ seats })}
-            placeholder={t('trips.create.seatsPlaceholder')}
-            keyboardType="number-pad"
-            dense
+            value={parseTripSeats(draft.seats)}
+            min={1}
+            max={50}
+            onChange={(seats) => onChange({ seats: String(seats) })}
           />
         )}
 
@@ -229,11 +240,13 @@ export function TripRfqAuctionStep({
           <AppText style={styles.helperText}>{t('trips.create.paymentMethodHint')}</AppText>
         </View>
 
-        <DurationSlider
-          label={t('trips.create.durationLabel')}
-          value={draft.durationHours}
-          onChange={(durationHours) => onChange({ durationHours })}
-        />
+        {draft.listingType === 'auction' ? (
+          <DurationSlider
+            label={t('trips.create.durationLabel')}
+            value={draft.durationHours}
+            onChange={(durationHours) => onChange({ durationHours })}
+          />
+        ) : null}
 
         <Button
           label={t('common.continue')}

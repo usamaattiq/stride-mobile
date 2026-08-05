@@ -1,18 +1,21 @@
 import React from 'react';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { i18n as appI18n } from '@/i18n';
-import { AppText } from '@/shared/components/AppText';
 import { BiometricToggleRow } from '@/shared/components/BiometricToggleRow';
 import { Button } from '@/shared/components/Button';
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
 import { onlyLatinDigits } from '@/shared/utils/latin-digits';
-import { colors, radius, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
+import {
+  DEFAULT_SEATS_MAX,
+  DEFAULT_SEATS_MIN,
+  SeatsStepper,
+} from './SeatsStepper';
 import { VehicleClassPicker } from './VehicleClassPicker';
 import type { VehicleDraft } from '../types/vehicle.types';
 import {
@@ -20,9 +23,6 @@ import {
   isVehicleDetailsValid,
   type VehicleDetailsField,
 } from '../utils/vehicleValidation';
-
-const MIN_SEATS = 1;
-const MAX_SEATS = 60;
 
 type VehicleDetailsFormProps = {
   draft: VehicleDraft;
@@ -34,7 +34,7 @@ type VehicleDetailsFormProps = {
 
 function parseSeatCount(value: string): number {
   const seats = Number.parseInt(value.trim(), 10);
-  return Number.isFinite(seats) && seats > 0 ? seats : MIN_SEATS;
+  return Number.isFinite(seats) && seats > 0 ? seats : DEFAULT_SEATS_MIN;
 }
 
 export function VehicleDetailsForm({
@@ -63,11 +63,6 @@ export function VehicleDetailsForm({
     }
     const key = getVehicleFieldErrorKey(field, draft);
     return key ? t(key) : undefined;
-  };
-
-  const setSeatCount = (next: number) => {
-    markTouched('totalSeats');
-    onChange({ totalSeats: String(Math.max(MIN_SEATS, Math.min(MAX_SEATS, next))) });
   };
 
   const handleSubmit = () => {
@@ -125,66 +120,18 @@ export function VehicleDetailsForm({
           onToggle={(hasAc) => onChange({ hasAc })}
         />
 
-        <View style={styles.seatsWrap}>
-          <AppText weight="medium" style={styles.seatsLabel}>
-            {t('vehicles.fields.totalSeats')}
-            <AppText style={styles.required}> *</AppText>
-          </AppText>
-          <View
-            style={[
-              styles.seatsRow,
-              fieldError('totalSeats') ? styles.seatsRowError : null,
-            ]}
-          >
-            <AppText weight="semibold" style={styles.seatsCaption} numberOfLines={1}>
-              {t('vehicles.seatsCount', { count: seatCount })}
-            </AppText>
-            <View style={styles.stepper}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('vehicles.fields.decreaseSeats')}
-                disabled={seatCount <= MIN_SEATS}
-                onPress={() => setSeatCount(seatCount - 1)}
-                style={({ pressed }) => [
-                  styles.stepperButton,
-                  seatCount <= MIN_SEATS && styles.stepperButtonDisabled,
-                  pressed && seatCount > MIN_SEATS && styles.pressed,
-                ]}
-              >
-                <FontAwesome5
-                  name="minus"
-                  size={12}
-                  color={seatCount <= MIN_SEATS ? colors.text.tertiary : colors.primary}
-                  solid
-                />
-              </Pressable>
-              <AppText weight="bold" style={styles.stepperValue}>
-                {seatCount}
-              </AppText>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('vehicles.fields.increaseSeats')}
-                disabled={seatCount >= MAX_SEATS}
-                onPress={() => setSeatCount(seatCount + 1)}
-                style={({ pressed }) => [
-                  styles.stepperButton,
-                  seatCount >= MAX_SEATS && styles.stepperButtonDisabled,
-                  pressed && seatCount < MAX_SEATS && styles.pressed,
-                ]}
-              >
-                <FontAwesome5
-                  name="plus"
-                  size={12}
-                  color={seatCount >= MAX_SEATS ? colors.text.tertiary : colors.primary}
-                  solid
-                />
-              </Pressable>
-            </View>
-          </View>
-          {fieldError('totalSeats') ? (
-            <AppText style={styles.seatsError}>{fieldError('totalSeats')}</AppText>
-          ) : null}
-        </View>
+        <SeatsStepper
+          label={t('vehicles.fields.totalSeats')}
+          required
+          value={seatCount}
+          min={DEFAULT_SEATS_MIN}
+          max={DEFAULT_SEATS_MAX}
+          onChange={(next) => {
+            markTouched('totalSeats');
+            onChange({ totalSeats: String(next) });
+          }}
+          error={fieldError('totalSeats')}
+        />
 
         <VehicleClassPicker
           label={t('vehicles.fields.class')}
@@ -246,68 +193,5 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 96,
     paddingTop: spacing.sm,
-  },
-  seatsWrap: {
-    gap: spacing.xs,
-  },
-  seatsLabel: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  required: {
-    fontSize: 13,
-    color: colors.primary,
-  },
-  seatsRow: {
-    minHeight: 46,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  seatsRowError: {
-    borderColor: colors.primary,
-  },
-  seatsCaption: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  stepperButton: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperButtonDisabled: {
-    opacity: 0.45,
-    borderColor: colors.border.default,
-    backgroundColor: colors.background.subtle,
-  },
-  stepperValue: {
-    minWidth: 26,
-    textAlign: 'center',
-    fontSize: 16,
-    color: colors.text.primary,
-  },
-  seatsError: {
-    fontSize: 12,
-    color: colors.primary,
-  },
-  pressed: {
-    opacity: 0.85,
   },
 });
