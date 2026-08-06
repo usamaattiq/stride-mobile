@@ -59,11 +59,15 @@ export function MyListingsScreen(): React.ReactElement {
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
-  /** True from tab focus until the deferred fetch finishes — keeps the screen light. */
+  /** True only until the first successful/failed load — keep cached list on later tab focuses. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
+  const hasLoadedOnceRef = React.useRef(false);
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
+  const [visitedTypes, setVisitedTypes] = React.useState(
+    () => new Set<TripListingType>(['rfq']),
+  );
 
   const typeOptions = React.useMemo(
     () => [
@@ -73,18 +77,33 @@ export function MyListingsScreen(): React.ReactElement {
     [t],
   );
 
+  React.useEffect(() => {
+    setVisitedTypes((current) => {
+      if (current.has(listingType)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(listingType);
+      return next;
+    });
+  }, [listingType]);
+
   useFocusEffect(
     React.useCallback(() => {
       let cancelled = false;
-      setIsScreenLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setIsScreenLoading(true);
+      }
 
       const task = InteractionManager.runAfterInteractions(() => {
         void refreshTrips()
           .catch(() => undefined)
           .finally(() => {
-            if (!cancelled) {
-              setIsScreenLoading(false);
+            if (cancelled) {
+              return;
             }
+            hasLoadedOnceRef.current = true;
+            setIsScreenLoading(false);
           });
       });
 
@@ -215,10 +234,14 @@ export function MyListingsScreen(): React.ReactElement {
   );
 
   const renderTypePage = (type: TripListingType, width: number) => {
+    if (!visitedTypes.has(type)) {
+      return <View key={type} style={[styles.page, { width }]} />;
+    }
+
     const pageTrips = tripsByType[type];
     let pageBody: React.ReactElement;
 
-    if (isScreenLoading) {
+    if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (

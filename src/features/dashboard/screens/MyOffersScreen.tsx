@@ -41,7 +41,9 @@ export function MyOffersScreen(): React.ReactElement {
   const [offers, setOffers] = React.useState<Trip[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
+  /** True only until the first load — keep cached offers on later tab focuses. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
+  const hasLoadedOnceRef = React.useRef(false);
 
   const refreshOffers = React.useCallback(async () => {
     setLoadError(null);
@@ -59,15 +61,19 @@ export function MyOffersScreen(): React.ReactElement {
   useFocusEffect(
     React.useCallback(() => {
       let cancelled = false;
-      setIsScreenLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setIsScreenLoading(true);
+      }
 
       const task = InteractionManager.runAfterInteractions(() => {
         void refreshOffers()
           .catch(() => undefined)
           .finally(() => {
-            if (!cancelled) {
-              setIsScreenLoading(false);
+            if (cancelled) {
+              return;
             }
+            hasLoadedOnceRef.current = true;
+            setIsScreenLoading(false);
           });
       });
 
@@ -95,7 +101,7 @@ export function MyOffersScreen(): React.ReactElement {
 
   let body: React.ReactElement;
 
-  if (isScreenLoading) {
+  if (isScreenLoading && !hasLoadedOnceRef.current) {
     body = (
       <View style={styles.skeletonList}>
         {Array.from({ length: SKELETON_COUNT }, (_, index) => (
