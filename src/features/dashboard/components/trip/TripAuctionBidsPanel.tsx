@@ -6,12 +6,18 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { auctionApi } from '@/services/api/auctionApi';
-import type { AuctionOwnerSnapshot, AuctionParticipantRank } from '@/services/api/auctionApi.types';
+import type {
+  AuctionBidVehicleSummary,
+  AuctionOwnerSnapshot,
+  AuctionParticipantRank,
+} from '@/services/api/auctionApi.types';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
+import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
+import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripAuctionBidsPanelProps = {
@@ -31,6 +37,7 @@ export function TripAuctionBidsPanel({
   const [error, setError] = React.useState<string | null>(null);
   const [acting, setActing] = React.useState(false);
   const [confirmClose, setConfirmClose] = React.useState(false);
+  const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
 
   const whatsappMessage = isPassengerRequest
     ? t('dashboard.listings.detail.contact.messageAsPassenger')
@@ -203,6 +210,16 @@ export function TripAuctionBidsPanel({
             const isConfirmed = row.participantId === snapshot.confirmedParticipantId;
             return (
               <View key={row.participantId} style={styles.bidCard}>
+                {row.vehicle ? (
+                  <OfferVehicleSummaryCard
+                    vehicle={row.vehicle}
+                    onPress={() => {
+                      if (row.vehicle) {
+                        setVehicleDetail(row.vehicle);
+                      }
+                    }}
+                  />
+                ) : null}
                 <View style={styles.bidHeaderRow}>
                   <AppText weight="semibold" style={styles.bidTitle} numberOfLines={1}>
                     {row.participantName?.trim() ||
@@ -261,6 +278,11 @@ export function TripAuctionBidsPanel({
           label: t('common.cancel'),
           onPress: () => setConfirmClose(false),
         }}
+      />
+      <OfferVehicleDetailSheet
+        visible={vehicleDetail != null}
+        vehicle={vehicleDetail}
+        onClose={() => setVehicleDetail(null)}
       />
     </View>
   );

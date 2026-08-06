@@ -16,12 +16,30 @@ export type AuctionDisplayVariant = 'muted' | 'accent' | 'warning' | 'success';
 
 export type AuctionParticipantStatus = 'active' | 'withdrawn' | 'declined' | 'timed_out';
 
+export type AuctionBidVehicleSummary = {
+  id: string;
+  title: string;
+  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
+  totalSeats: number;
+  plateNumber: string;
+  brand: string | null;
+  model: string | null;
+  photoUrl: string | null;
+  photoViewUrl?: string | null;
+  description?: string;
+  hasAc?: boolean;
+  year?: number | null;
+  photoUrls?: string[];
+  photoDisplayUris?: string[];
+};
+
 export type AuctionParticipantRank = {
   participantId: string;
   peakAmount: number;
   rank: number;
   participantName?: string | null;
   participantPhone?: string | null;
+  vehicle?: AuctionBidVehicleSummary | null;
 };
 
 export type AuctionOwnerActions = {
@@ -107,4 +125,5 @@ export type AuctionBidSummary = {
 
 export type PlaceBidPayload = {
   amount: number;
+  vehicleId?: string;
 };

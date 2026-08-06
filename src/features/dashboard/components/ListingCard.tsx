@@ -91,13 +91,15 @@ function getExpiresAt(trip: Trip): number {
 }
 
 function formatCountdown(remainingMs: number, t: TFunction): string {
-  const totalMinutes = Math.max(1, Math.floor(remainingMs / 60_000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
   if (hours > 0) {
     return t('dashboard.listings.card.timerHours', { hours, minutes });
   }
-  return t('dashboard.listings.card.timerMinutes', { minutes });
+  return t('dashboard.listings.card.timerMinutesSeconds', { minutes, seconds });
 }
 
 function RequestThumbnail({
@@ -142,10 +144,12 @@ export function ListingCard({
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
   const [now, setNow] = React.useState(() => Date.now());
+  const remainingMs = getExpiresAt(trip) - now;
+  const tickMs = remainingMs > 0 && remainingMs < 60 * 60_000 ? 1_000 : 30_000;
   React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
+    const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
-  }, []);
+  }, [tickMs]);
 
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = cityDisplayName(trip.arrivalCity.label);
@@ -165,7 +169,6 @@ export function ListingCard({
       : trip.vehicleMode === 'shared'
         ? t('trips.create.vehicleModeShared')
         : null;
-  const remainingMs = getExpiresAt(trip) - now;
   const active = remainingMs > 0;
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
   // Auctions: use AMS display status/label as-is (never remap participant_status → "Bid active").
@@ -208,11 +211,8 @@ export function ListingCard({
   const price =
     offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
   const isPassengerRequest = trip.vehicleId == null;
-  const showCountdown =
-    !trip.rfqStatus &&
-    !trip.auctionStatus &&
-    !trip.myOfferStatus &&
-    (pending || active);
+  // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
+  const showCountdown = pending || active;
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')

@@ -362,6 +362,7 @@
         "notStarted": "Not started yet",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",
+        "timerMinutesSeconds": "{{minutes}}m {{seconds}}s left",
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "View photos"
       },
@@ -847,6 +848,7 @@
       "durationLabel": "Listing duration",
       "durationValue": "{{count}} hour(s)",
       "durationMinutesOnly": "{{count}} min",
+      "durationDevThreeMinutes": "3 min (dev)",
       "durationHoursMinutes": "{{hours}}h {{minutes}}m",
       "scheduleTitle": "Start listing",
       "scheduleSubtitle": "Start instantly or schedule for later",
