@@ -190,7 +190,6 @@ export function TripRfqAuctionStep({
                     listingType: option.id,
                     // RFQ uses RMS default expiry (24h) — no user duration control.
                     ...(option.id === 'rfq' ? { durationHours: 24 } : {}),
-                    ...(option.id === 'auction' ? { vehicleMode: 'fullPrivate' } : {}),
                   })
                 }
                 title={option.title}
