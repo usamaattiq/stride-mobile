@@ -15,6 +15,7 @@ import { colors, radius, spacing } from '@/theme';
 import type { TripVehicleMode } from '../../types/trip.types';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { TripMessagingSheet } from './TripMessagingSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripResponsesPanelProps = {
@@ -87,6 +88,7 @@ export function TripResponsesPanel({
   const [actingOfferId, setActingOfferId] = React.useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = React.useState<RfqOfferSummary | null>(null);
   const [vehicleDetail, setVehicleDetail] = React.useState<RfqOfferVehicleSummary | null>(null);
+  const [chatTarget, setChatTarget] = React.useState<RfqOfferSummary | null>(null);
 
   const load = React.useCallback(() => {
     setLoading(true);
@@ -234,6 +236,7 @@ export function TripResponsesPanel({
                     name={offer.responderName?.trim() || null}
                     phone={offer.responderPhone}
                     message={whatsappMessage}
+                    onMessagePress={() => setChatTarget(offer)}
                   />
                 ) : null}
 
@@ -265,6 +268,15 @@ export function TripResponsesPanel({
         visible={vehicleDetail != null}
         vehicle={vehicleDetail}
         onClose={() => setVehicleDetail(null)}
+      />
+
+      <TripMessagingSheet
+        visible={chatTarget != null}
+        onClose={() => setChatTarget(null)}
+        tripId={tripId}
+        counterpartyId={chatTarget?.responderId ?? ''}
+        counterpartyName={chatTarget?.responderName?.trim() || null}
+        offerId={chatTarget?.id}
       />
 
       <AppDialog

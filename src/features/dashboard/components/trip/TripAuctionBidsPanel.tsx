@@ -18,6 +18,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { TripMessagingSheet } from './TripMessagingSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripAuctionBidsPanelProps = {
@@ -38,6 +39,7 @@ export function TripAuctionBidsPanel({
   const [acting, setActing] = React.useState(false);
   const [confirmClose, setConfirmClose] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(false);
 
   const whatsappMessage = isPassengerRequest
     ? t('dashboard.listings.detail.contact.messageAsPassenger')
@@ -263,8 +265,17 @@ export function TripAuctionBidsPanel({
           name={contactRow.participantName ?? null}
           phone={contactRow.participantPhone}
           message={whatsappMessage}
+          onMessagePress={() => setChatOpen(true)}
         />
       ) : null}
+
+      <TripMessagingSheet
+        visible={chatOpen && contactRow != null}
+        onClose={() => setChatOpen(false)}
+        tripId={tripId}
+        counterpartyId={contactRow?.participantId}
+        counterpartyName={contactRow?.participantName ?? null}
+      />
 
       <AppDialog
         visible={confirmClose}

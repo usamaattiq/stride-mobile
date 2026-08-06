@@ -35,6 +35,7 @@ import type { TripVehicleMode } from '../../types/trip.types';
 import type { Vehicle } from '../../types/vehicle.types';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import { OfferVehicleDetailSheet, type OfferVehicleDetailSource } from './OfferVehicleDetailSheet';
+import { TripMessagingSheet } from './TripMessagingSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripOfferPanelProps = {
@@ -197,6 +198,7 @@ export function TripOfferPanel({
   const [confirmDecline, setConfirmDecline] = React.useState(false);
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(false);
 
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -553,8 +555,17 @@ export function TripOfferPanel({
           name={snapshot.ownerName ?? null}
           phone={snapshot.ownerPhone}
           message={whatsappMessage}
+          onMessagePress={() => setChatOpen(true)}
         />
       ) : null}
+
+      <TripMessagingSheet
+        visible={chatOpen && activeOffer != null}
+        onClose={() => setChatOpen(false)}
+        tripId={tripId}
+        counterpartyName={snapshot?.ownerName ?? null}
+        offerId={activeOffer?.id}
+      />
 
       <AppBottomSheet
         visible={requiresVehicle && vehiclePickerOpen}

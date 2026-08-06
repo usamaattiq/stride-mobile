@@ -38,6 +38,7 @@ import {
   OfferVehicleDetailSheet,
   type OfferVehicleDetailSource,
 } from './OfferVehicleDetailSheet';
+import { TripMessagingSheet } from './TripMessagingSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripBidPanelProps = {
@@ -132,6 +133,7 @@ export function TripBidPanel({
   const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | null>(initialVehicleId);
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(false);
   const amountTouchedRef = React.useRef(false);
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -568,8 +570,16 @@ export function TripBidPanel({
           name={snapshot.ownerName}
           phone={snapshot.ownerPhone}
           message={whatsappMessage}
+          onMessagePress={() => setChatOpen(true)}
         />
       ) : null}
+
+      <TripMessagingSheet
+        visible={chatOpen}
+        onClose={() => setChatOpen(false)}
+        tripId={tripId}
+        counterpartyName={snapshot?.ownerName ?? null}
+      />
 
       <AppDialog
         visible={confirmWithdraw}

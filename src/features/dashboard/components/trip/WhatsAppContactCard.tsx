@@ -17,6 +17,8 @@ export type WhatsAppContactCardProps = {
   phone: string;
   /** Prefill text for WhatsApp. */
   message: string;
+  /** Opens in-app 1:1 chat when both parties have confirmed. */
+  onMessagePress?: () => void;
 };
 
 const WHATSAPP_GREEN = '#25D366';
@@ -27,6 +29,7 @@ export function WhatsAppContactCard({
   name,
   phone,
   message,
+  onMessagePress,
 }: WhatsAppContactCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -62,6 +65,20 @@ export function WhatsAppContactCard({
           </AppText>
         </View>
       </View>
+
+      {onMessagePress ? (
+        <Pressable
+          onPress={onMessagePress}
+          style={styles.messageButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+        >
+          <FontAwesome name="comment" size={16} color={colors.white} />
+          <AppText weight="semibold" style={styles.messageLabel} numberOfLines={1}>
+            {t('dashboard.listings.detail.contact.message')}
+          </AppText>
+        </Pressable>
+      ) : null}
 
       <Pressable
         onPress={openChat}
@@ -121,6 +138,22 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     color: colors.text.secondary,
+  },
+  messageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+  },
+  messageLabel: {
+    flexShrink: 1,
+    fontSize: 14,
+    color: colors.white,
   },
   whatsappButton: {
     flexDirection: 'row',

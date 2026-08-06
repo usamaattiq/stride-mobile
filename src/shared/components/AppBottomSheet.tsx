@@ -3,11 +3,16 @@ import {
   Modal,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import {
+  KeyboardProvider,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/theme';
@@ -21,6 +26,52 @@ export type AppBottomSheetProps = {
   sheetStyle?: StyleProp<ViewStyle>;
 };
 
+function BottomSheetFrame({
+  onClose,
+  children,
+  heightRatio,
+  sheetStyle,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+  heightRatio: number;
+  sheetStyle?: StyleProp<ViewStyle>;
+}): React.ReactElement {
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  const clampedRatio = Math.min(0.95, Math.max(0.4, heightRatio));
+  const baseHeight = windowHeight * clampedRatio;
+  const closedPaddingBottom = Math.max(insets.bottom, spacing.sm);
+  // Leave a little room under the status bar so the sheet never clips off-screen.
+  const topReserve = Math.max(insets.top, spacing.md);
+
+  const animatedSheetStyle = useAnimatedStyle(() => {
+    // keyboardHeight is 0 when closed, -kb when open.
+    const kb = Math.max(0, -keyboardHeight.value);
+    return {
+      // Sit flush above the keyboard instead of sliding the whole sheet off-screen.
+      marginBottom: kb,
+      height: Math.min(baseHeight, windowHeight - kb - topReserve),
+      paddingBottom: kb > 0 ? spacing.sm : closedPaddingBottom,
+    };
+  });
+
+  return (
+    <View style={styles.modalRoot}>
+      <Pressable
+        style={styles.backdrop}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      />
+      <Animated.View style={[styles.sheet, animatedSheetStyle, sheetStyle]}>
+        <View style={styles.sheetInner}>{children}</View>
+      </Animated.View>
+    </View>
+  );
+}
+
 export function AppBottomSheet({
   visible,
   onClose,
@@ -28,9 +79,6 @@ export function AppBottomSheet({
   heightRatio = 0.8,
   sheetStyle,
 }: AppBottomSheetProps): React.ReactElement {
-  const insets = useSafeAreaInsets();
-  const clampedRatio = Math.min(0.95, Math.max(0.4, heightRatio));
-
   return (
     <Modal
       visible={visible}
@@ -39,33 +87,11 @@ export function AppBottomSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
+      {/* Nested provider so keyboard events work correctly inside RN Modal. */}
       <KeyboardProvider>
-        <View style={styles.modalRoot}>
-          <Pressable
-            style={styles.backdrop}
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          />
-          <View
-            style={[
-              styles.sheet,
-              {
-                height: `${Math.round(clampedRatio * 100)}%`,
-                paddingBottom: Math.max(insets.bottom, spacing.sm),
-              },
-              sheetStyle,
-            ]}
-          >
-            <KeyboardAvoidingView
-              style={styles.sheetInner}
-              behavior="padding"
-              keyboardVerticalOffset={insets.top}
-            >
-              {children}
-            </KeyboardAvoidingView>
-          </View>
-        </View>
+        <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
+          {children}
+        </BottomSheetFrame>
       </KeyboardProvider>
     </Modal>
   );
