@@ -1,8 +1,16 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
@@ -15,16 +23,30 @@ import type {
   AuctionType,
 } from '@/services/api/auctionApi.types';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
+import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
+import { useVehicles } from '../../context/VehicleContext';
+import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
+import type { Vehicle } from '../../types/vehicle.types';
+import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { TripVehicleSelectStep } from './TripVehicleSelectStep';
+import {
+  OfferVehicleDetailSheet,
+  type OfferVehicleDetailSource,
+} from './OfferVehicleDetailSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripBidPanelProps = {
   tripId: string;
   isPassengerRequest?: boolean;
+  /** When true, driver must pick one of their vehicles before placing a bid. */
+  requiresVehicle?: boolean;
+  /** Pre-select this vehicle after returning from add-vehicle flow. */
+  initialVehicleId?: string | null;
   onBidChange?: (update: {
     auctionStatus: AuctionStatusValue;
     auctionStatusLabel: string;
@@ -91,9 +113,14 @@ function nextBidHint(
 export function TripBidPanel({
   tripId,
   isPassengerRequest = false,
+  requiresVehicle = false,
+  initialVehicleId = null,
   onBidChange,
 }: TripBidPanelProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const navigation =
+    useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
+  const { vehicles, isLoading: vehiclesLoading, refreshVehicles, beginAddVehicle } = useVehicles();
   const [snapshot, setSnapshot] = React.useState<AuctionParticipantSnapshot | null>(null);
   const [publicSnapshot, setPublicSnapshot] = React.useState<AuctionPublicSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -102,7 +129,14 @@ export function TripBidPanel({
   const [submitting, setSubmitting] = React.useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
   const [confirmDecline, setConfirmDecline] = React.useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | null>(initialVehicleId);
+  const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
+  const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
   const amountTouchedRef = React.useRef(false);
+  const selectedVehicle = React.useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
+    [selectedVehicleId, vehicles],
+  );
 
   const whatsappMessage = isPassengerRequest
     ? t('dashboard.listings.detail.contact.messageAsDriver')
@@ -161,6 +195,26 @@ export function TripBidPanel({
     load();
   }, [load]);
 
+  React.useEffect(() => {
+    if (!requiresVehicle) {
+      return;
+    }
+    void refreshVehicles().catch(() => undefined);
+  }, [requiresVehicle, refreshVehicles]);
+
+  React.useEffect(() => {
+    if (!requiresVehicle) {
+      return;
+    }
+    if (initialVehicleId) {
+      setSelectedVehicleId(initialVehicleId);
+      return;
+    }
+    if (!selectedVehicleId && vehicles.length === 1) {
+      setSelectedVehicleId(vehicles[0]!.id);
+    }
+  }, [requiresVehicle, initialVehicleId, selectedVehicleId, vehicles]);
+
   // Poll while live so countdown / lead status stay fresh without a WS client.
   React.useEffect(() => {
     const isLive =
@@ -184,6 +238,10 @@ export function TripBidPanel({
   }, [applySnapshot, publicSnapshot?.status, snapshot?.status, tripId]);
 
   const placeBid = () => {
+    if (requiresVehicle && !selectedVehicleId) {
+      setError(t('dashboard.listings.detail.offer.selectVehicle'));
+      return;
+    }
     const parsed = Math.round(Number(amount.replace(/[^\d]/g, '')));
     if (!Number.isFinite(parsed) || parsed < 1) {
       setError(t('dashboard.listings.detail.bid.invalidAmount'));
@@ -192,7 +250,10 @@ export function TripBidPanel({
     setSubmitting(true);
     setError(null);
     void auctionApi
-      .placeBid(tripId, { amount: parsed })
+      .placeBid(tripId, {
+        amount: parsed,
+        ...(requiresVehicle && selectedVehicleId ? { vehicleId: selectedVehicleId } : {}),
+      })
       .then((result) => {
         if (result.role === 'participant') {
           amountTouchedRef.current = false;
@@ -201,6 +262,16 @@ export function TripBidPanel({
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.bid.submitFailed'))))
       .finally(() => setSubmitting(false));
+  };
+
+  const goAddVehicle = () => {
+    setVehiclePickerOpen(false);
+    beginAddVehicle();
+    navigation.navigate('VehicleDetails', {
+      mode: 'add',
+      returnTo: 'ListingDetail',
+      listingTripId: tripId,
+    });
   };
 
   const runAction = (action: 'withdraw' | 'confirm' | 'decline') => {
@@ -215,6 +286,10 @@ export function TripBidPanel({
     void request(tripId)
       .then((result) => {
         if (result.role === 'participant') {
+          if (action === 'withdraw') {
+            amountTouchedRef.current = false;
+            setAmount('');
+          }
           applySnapshot(result);
         }
       })
@@ -267,6 +342,32 @@ export function TripBidPanel({
         </View>
         <AppText style={styles.meta}>{t('dashboard.listings.detail.bid.openHint')}</AppText>
         {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+        {requiresVehicle ? (
+          <View style={styles.vehiclePicker}>
+            <AppText weight="semibold" style={styles.vehiclePickerLabel}>
+              {t('dashboard.listings.detail.offer.vehicleLabel')}
+            </AppText>
+            {selectedVehicle ? (
+              <View style={styles.selectedVehicleBlock}>
+                <OfferVehicleSummaryCard
+                  vehicle={selectedVehicle as Vehicle}
+                  onPress={() => setVehicleDetail(selectedVehicle)}
+                />
+                <Button
+                  label={t('dashboard.listings.detail.offer.changeVehicle')}
+                  variant="secondary"
+                  onPress={() => setVehiclePickerOpen(true)}
+                />
+              </View>
+            ) : (
+              <Button
+                label={t('dashboard.listings.detail.offer.selectVehicle')}
+                variant="secondary"
+                onPress={() => setVehiclePickerOpen(true)}
+              />
+            )}
+          </View>
+        ) : null}
         <AuthTextField
           label={t('dashboard.listings.detail.bid.amountLabel')}
           value={amount}
@@ -283,6 +384,48 @@ export function TripBidPanel({
           label={t('dashboard.listings.detail.bid.submit')}
           onPress={placeBid}
           loading={submitting}
+          disabled={requiresVehicle && !selectedVehicleId}
+        />
+        <AppBottomSheet
+          visible={requiresVehicle && vehiclePickerOpen}
+          onClose={() => setVehiclePickerOpen(false)}
+          heightRatio={0.75}
+        >
+          <View style={styles.sheetHeader}>
+            <AppText weight="bold" style={styles.sheetTitle}>
+              {t('dashboard.listings.detail.offer.selectVehicleTitle')}
+            </AppText>
+            <Pressable
+              onPress={() => setVehiclePickerOpen(false)}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
+            >
+              <FontAwesome name="times" size={18} color={colors.text.secondary} />
+            </Pressable>
+          </View>
+          <ScrollView
+            style={styles.sheetScroll}
+            contentContainerStyle={styles.sheetScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <TripVehicleSelectStep
+              vehicles={vehicles}
+              isLoading={vehiclesLoading}
+              selectedVehicleId={selectedVehicleId}
+              onSelectVehicle={(vehicleId) => {
+                setSelectedVehicleId(vehicleId);
+                setVehiclePickerOpen(false);
+              }}
+              onAddVehicle={goAddVehicle}
+            />
+          </ScrollView>
+        </AppBottomSheet>
+        <OfferVehicleDetailSheet
+          visible={vehicleDetail != null}
+          vehicle={vehicleDetail}
+          onClose={() => setVehicleDetail(null)}
         />
       </View>
     );
@@ -297,6 +440,8 @@ export function TripBidPanel({
     snapshot.remainingSeconds != null
       ? formatRemaining(snapshot.remainingSeconds, t)
       : null;
+  const hasActiveBid = snapshot.participantStatus === 'active';
+  const showPlaceBidForm = actions.canPlaceBid && !hasActiveBid;
 
   return (
     <View style={styles.root}>
@@ -334,8 +479,34 @@ export function TripBidPanel({
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-      {actions.canPlaceBid ? (
+      {showPlaceBidForm ? (
         <>
+          {requiresVehicle ? (
+            <View style={styles.vehiclePicker}>
+              <AppText weight="semibold" style={styles.vehiclePickerLabel}>
+                {t('dashboard.listings.detail.offer.vehicleLabel')}
+              </AppText>
+              {selectedVehicle ? (
+                <View style={styles.selectedVehicleBlock}>
+                  <OfferVehicleSummaryCard
+                    vehicle={selectedVehicle as Vehicle}
+                    onPress={() => setVehicleDetail(selectedVehicle)}
+                  />
+                  <Button
+                    label={t('dashboard.listings.detail.offer.changeVehicle')}
+                    variant="secondary"
+                    onPress={() => setVehiclePickerOpen(true)}
+                  />
+                </View>
+              ) : (
+                <Button
+                  label={t('dashboard.listings.detail.offer.selectVehicle')}
+                  variant="secondary"
+                  onPress={() => setVehiclePickerOpen(true)}
+                />
+              )}
+            </View>
+          ) : null}
           <AuthTextField
             label={t('dashboard.listings.detail.bid.amountLabel')}
             value={amount}
@@ -349,13 +520,10 @@ export function TripBidPanel({
             )}
           />
           <Button
-            label={
-              snapshot.hasParticipated
-                ? t('dashboard.listings.detail.bid.update')
-                : t('dashboard.listings.detail.bid.submit')
-            }
+            label={t('dashboard.listings.detail.bid.submit')}
             onPress={placeBid}
             loading={submitting}
+            disabled={requiresVehicle && !selectedVehicleId}
           />
         </>
       ) : null}
@@ -429,6 +597,47 @@ export function TripBidPanel({
           onPress: () => setConfirmDecline(false),
         }}
       />
+      <AppBottomSheet
+        visible={requiresVehicle && vehiclePickerOpen}
+        onClose={() => setVehiclePickerOpen(false)}
+        heightRatio={0.75}
+      >
+        <View style={styles.sheetHeader}>
+          <AppText weight="bold" style={styles.sheetTitle}>
+            {t('dashboard.listings.detail.offer.selectVehicleTitle')}
+          </AppText>
+          <Pressable
+            onPress={() => setVehiclePickerOpen(false)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          >
+            <FontAwesome name="times" size={18} color={colors.text.secondary} />
+          </Pressable>
+        </View>
+        <ScrollView
+          style={styles.sheetScroll}
+          contentContainerStyle={styles.sheetScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <TripVehicleSelectStep
+            vehicles={vehicles}
+            isLoading={vehiclesLoading}
+            selectedVehicleId={selectedVehicleId}
+            onSelectVehicle={(vehicleId) => {
+              setSelectedVehicleId(vehicleId);
+              setVehiclePickerOpen(false);
+            }}
+            onAddVehicle={goAddVehicle}
+          />
+        </ScrollView>
+      </AppBottomSheet>
+      <OfferVehicleDetailSheet
+        visible={vehicleDetail != null}
+        vehicle={vehicleDetail}
+        onClose={() => setVehicleDetail(null)}
+      />
     </View>
   );
 }
@@ -476,5 +685,31 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  vehiclePicker: {
+    gap: spacing.xs,
+  },
+  vehiclePickerLabel: {
+    fontSize: 13,
+    color: colors.text.primary,
+  },
+  selectedVehicleBlock: {
+    gap: spacing.sm,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
+  },
+  sheetTitle: {
+    fontSize: 17,
+    color: colors.text.primary,
+  },
+  sheetScroll: {
+    flex: 1,
+  },
+  sheetScrollContent: {
+    paddingBottom: spacing.lg,
   },
 });

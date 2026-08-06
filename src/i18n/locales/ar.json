@@ -362,6 +362,7 @@
         "notStarted": "لم تبدأ بعد",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",
+        "timerMinutesSeconds": "متبقي {{minutes}}د {{seconds}}ث",
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "عرض الصور"
       },
@@ -847,6 +848,7 @@
       "durationLabel": "مدة الإدراج",
       "durationValue": "{{count}} ساعة",
       "durationMinutesOnly": "{{count}} د",
+      "durationDevThreeMinutes": "3 دقائق (تطوير)",
       "durationHoursMinutes": "{{hours}} س {{minutes}} د",
       "scheduleTitle": "بدء الإدراج",
       "scheduleSubtitle": "ابدأ فوراً أو جدول لاحقاً",

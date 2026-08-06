@@ -109,6 +109,7 @@ export function TripRfqAuctionStep({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
   const isPassenger = user.role === 'passenger';
+  const auctionAllowed = draft.vehicleMode === 'fullPrivate';
 
   const listingOptions: Array<{
     id: TripListingType;
@@ -126,14 +127,24 @@ export function TripRfqAuctionStep({
         <MaterialCommunityIcons name="file-document-outline" size={18} color={colors.primary} />
       ),
     },
-    {
-      id: 'auction',
-      title: t('trips.create.listingAuction'),
-      description: t('trips.create.listingAuctionHint'),
-      icon: <FontAwesome5 name="gavel" size={15} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome5 name="gavel" size={15} color={colors.primary} />,
-    },
+    ...(auctionAllowed
+      ? [
+          {
+            id: 'auction' as const,
+            title: t('trips.create.listingAuction'),
+            description: t('trips.create.listingAuctionHint'),
+            icon: <FontAwesome5 name="gavel" size={15} color={colors.text.tertiary} />,
+            selectedIcon: <FontAwesome5 name="gavel" size={15} color={colors.primary} />,
+          },
+        ]
+      : []),
   ];
+
+  React.useEffect(() => {
+    if (!auctionAllowed && draft.listingType === 'auction') {
+      onChange({ listingType: 'rfq', durationHours: 24 });
+    }
+  }, [auctionAllowed, draft.listingType, onChange]);
 
   const paymentOptions: Array<{
     id: TripPaymentMethod;
@@ -187,6 +198,7 @@ export function TripRfqAuctionStep({
                 selectedIcon={option.selectedIcon}
               />
             ))}
+            {!auctionAllowed ? <View style={styles.listingCardSpacer} /> : null}
           </View>
         </View>
 
@@ -276,6 +288,9 @@ const styles = StyleSheet.create({
   cardsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  listingCardSpacer: {
+    flex: 1,
   },
   selectCard: {
     flex: 1,

@@ -92,6 +92,7 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
   const [trips, setTrips] = React.useState<Trip[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
+  const hasLoadedOnceRef = React.useRef(false);
   const [query, setQuery] = React.useState('');
   const [listingType, setListingType] = React.useState<TripListingType>('rfq');
   const [filters, setFilters] = React.useState<TripBrowseFilters>(EMPTY_TRIP_BROWSE_FILTERS);
@@ -99,6 +100,9 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
+  const [visitedTypes, setVisitedTypes] = React.useState(
+    () => new Set<TripListingType>(['rfq']),
+  );
 
   const typeOptions = React.useMemo(
     () => [
@@ -108,8 +112,21 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
     [t],
   );
 
+  React.useEffect(() => {
+    setVisitedTypes((current) => {
+      if (current.has(listingType)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(listingType);
+      return next;
+    });
+  }, [listingType]);
+
   const loadRequests = React.useCallback(async () => {
-    setIsScreenLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setIsScreenLoading(true);
+    }
     setLoadError(null);
     try {
       const result = await tripApi.browse({
@@ -122,6 +139,7 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
       setLoadError(getErrorMessage(error, t('dashboard.home.requestsLoadFailed')));
       setTrips([]);
     } finally {
+      hasLoadedOnceRef.current = true;
       setIsScreenLoading(false);
     }
   }, [t]);
@@ -216,10 +234,14 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
   }, [trips, query, filters]);
 
   const renderTypePage = (type: TripListingType, width: number) => {
+    if (!visitedTypes.has(type)) {
+      return <View key={type} style={[styles.page, { width }]} />;
+    }
+
     const pageTrips = tripsByType[type];
     let pageBody: React.ReactElement;
 
-    if (isScreenLoading) {
+    if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -350,6 +372,7 @@ const styles = StyleSheet.create({
   typeHeader: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
+    // Same brand clearance as HomeScreen panelHeader under titles.
     paddingBottom: spacing.xxl,
   },
   sheet: {
@@ -359,6 +382,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     marginTop: -18,
     overflow: 'hidden',
+  },
+  page: {
+    flex: 1,
   },
   searchWrap: {
     paddingHorizontal: spacing.md,

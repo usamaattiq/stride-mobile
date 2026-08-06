@@ -300,7 +300,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
         {step === 'vehicleMode' ? (
           <TripVehicleModeStep
             value={draft.vehicleMode}
-            onChange={(vehicleMode) => patchDraft({ vehicleMode })}
+            onChange={(vehicleMode) =>
+              patchDraft({
+                vehicleMode,
+                // Auctions are private-only — drop auction if switching to shared.
+                ...(vehicleMode === 'shared' && draft.listingType === 'auction'
+                  ? { listingType: 'rfq', durationHours: 24 }
+                  : {}),
+              })
+            }
             onContinue={goToNextStep}
           />
         ) : null}

@@ -351,6 +351,8 @@ export function ListingDetailScreen(): React.ReactElement {
               <TripBidPanel
                 tripId={trip.id}
                 isPassengerRequest={trip.vehicleId == null}
+                requiresVehicle={trip.vehicleId == null}
+                initialVehicleId={route.params.selectVehicleId ?? null}
                 onBidChange={handleBidChange}
               />
             ) : (
