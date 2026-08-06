@@ -200,7 +200,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoCount: 0,
     vehicleClass: draft.vehicleClass,
     vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
-    vehicleMode: draft.vehicleMode,
+    vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
     departureAt,
