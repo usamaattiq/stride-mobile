@@ -1,7 +1,12 @@
 import React from 'react';
 import {
+  Animated,
+  Dimensions,
   FlatList,
   InteractionManager,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -23,13 +28,16 @@ import { DashboardSearchBar } from '../components/DashboardSearchBar';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { ListingsEmptyState } from '../components/ListingsEmptyState';
+import { SegmentControl } from '../components/SegmentControl';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip } from '../types/trip.types';
-import { matchesListingQuery } from '../utils/listingFilters';
+import type { Trip, TripListingType } from '../types/trip.types';
+import { matchesListingQuery, matchesListingType } from '../utils/listingFilters';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 const SKELETON_COUNT = 4;
+const LISTING_TYPES: TripListingType[] = ['rfq', 'auction'];
+const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
 export function MyOffersScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -41,9 +49,24 @@ export function MyOffersScreen(): React.ReactElement {
   const [offers, setOffers] = React.useState<Trip[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
+  const [listingType, setListingType] = React.useState<TripListingType>('rfq');
   /** True only until the first load — keep cached offers on later tab focuses. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
   const hasLoadedOnceRef = React.useRef(false);
+  const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
+  const pagerRef = React.useRef<ScrollView>(null);
+  const scrollX = React.useRef(new Animated.Value(0)).current;
+  const [visitedTypes, setVisitedTypes] = React.useState(
+    () => new Set<TripListingType>(['rfq']),
+  );
+
+  const typeOptions = React.useMemo(
+    () => [
+      { id: 'rfq' as const, label: t('dashboard.home.categoryRfq') },
+      { id: 'auction' as const, label: t('dashboard.home.categoryAuction') },
+    ],
+    [t],
+  );
 
   const refreshOffers = React.useCallback(async () => {
     setLoadError(null);
@@ -57,6 +80,17 @@ export function MyOffersScreen(): React.ReactElement {
   }, [t]);
 
   const { refreshControlProps } = usePullToRefresh(refreshOffers);
+
+  React.useEffect(() => {
+    setVisitedTypes((current) => {
+      if (current.has(listingType)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(listingType);
+      return next;
+    });
+  }, [listingType]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -84,8 +118,76 @@ export function MyOffersScreen(): React.ReactElement {
     }, [refreshOffers]),
   );
 
-  const filteredOffers = React.useMemo(
-    () => offers.filter((trip) => matchesListingQuery(trip, query)),
+  const selectListingType = React.useCallback(
+    (next: TripListingType, animated = true) => {
+      setListingType(next);
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = LISTING_TYPES.indexOf(next);
+      pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+      if (!animated) {
+        scrollX.setValue(index * pageWidth);
+      }
+    },
+    [pageWidth, scrollX],
+  );
+
+  const animatedTypeIndex = React.useMemo(() => {
+    if (pageWidth <= 0) {
+      return undefined;
+    }
+    return scrollX.interpolate({
+      inputRange: [0, pageWidth],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+  }, [pageWidth, scrollX]);
+
+  const syncTypeFromOffset = React.useCallback(
+    (offsetX: number) => {
+      if (pageWidth <= 0) {
+        return;
+      }
+      const index = Math.round(offsetX / pageWidth);
+      const nextType = LISTING_TYPES[Math.min(Math.max(index, 0), LISTING_TYPES.length - 1)];
+      setListingType((current) => (current === nextType ? current : nextType));
+    },
+    [pageWidth],
+  );
+
+  const onPagerScrollEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      syncTypeFromOffset(event.nativeEvent.contentOffset.x);
+    },
+    [syncTypeFromOffset],
+  );
+
+  const onPagerLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const width = event.nativeEvent.layout.width;
+      if (width <= 0 || width === pageWidth) {
+        return;
+      }
+      setPageWidth(width);
+      const index = LISTING_TYPES.indexOf(listingType);
+      scrollX.setValue(index * width);
+      requestAnimationFrame(() => {
+        pagerRef.current?.scrollTo({ x: index * width, animated: false });
+      });
+    },
+    [listingType, pageWidth, scrollX],
+  );
+
+  const offersByType = React.useMemo(
+    () => ({
+      rfq: offers.filter(
+        (trip) => matchesListingType(trip, 'rfq') && matchesListingQuery(trip, query),
+      ),
+      auction: offers.filter(
+        (trip) => matchesListingType(trip, 'auction') && matchesListingQuery(trip, query),
+      ),
+    }),
     [offers, query],
   );
 
@@ -99,78 +201,91 @@ export function MyOffersScreen(): React.ReactElement {
     [navigation],
   );
 
-  let body: React.ReactElement;
+  const renderTypePage = (type: TripListingType, width: number): React.ReactElement => {
+    if (!visitedTypes.has(type)) {
+      return <View key={type} style={[styles.page, { width }]} />;
+    }
 
-  if (isScreenLoading && !hasLoadedOnceRef.current) {
-    body = (
-      <View style={styles.skeletonList}>
-        {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-          <ListingCardSkeleton key={`offers-skeleton-${index}`} />
-        ))}
+    const pageOffers = offersByType[type];
+    let pageBody: React.ReactElement;
+
+    if (isScreenLoading && !hasLoadedOnceRef.current) {
+      pageBody = (
+        <View style={styles.skeletonList}>
+          {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+            <ListingCardSkeleton key={`offers-skeleton-${type}-${index}`} />
+          ))}
+        </View>
+      );
+    } else if (loadError && offers.length === 0) {
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.centered}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <AppText style={styles.errorText}>{loadError}</AppText>
+          <Button
+            label={t('dashboard.listings.retry')}
+            onPress={() => {
+              setIsScreenLoading(true);
+              void refreshOffers()
+                .catch(() => undefined)
+                .finally(() => setIsScreenLoading(false));
+            }}
+          />
+        </ScrollView>
+      );
+    } else if (offers.length === 0) {
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState
+            variant="none"
+            title={t('dashboard.offers.emptyTitle')}
+            subtitle={t(
+              isPassenger
+                ? 'dashboard.offers.emptySubtitlePassenger'
+                : 'dashboard.offers.emptySubtitleDriver',
+            )}
+            icon="tag"
+          />
+        </ScrollView>
+      );
+    } else if (pageOffers.length === 0) {
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState variant="filtered" />
+        </ScrollView>
+      );
+    } else {
+      pageBody = (
+        <FlatList
+          data={pageOffers}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTrip}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={ListSeparator}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+        />
+      );
+    }
+
+    return (
+      <View key={type} style={[styles.page, { width }]}>
+        {pageBody}
       </View>
     );
-  } else if (loadError && offers.length === 0) {
-    body = (
-      <ScrollView
-        contentContainerStyle={styles.centered}
-        refreshControl={<RefreshControl {...refreshControlProps} />}
-        showsVerticalScrollIndicator={false}
-      >
-        <AppText style={styles.errorText}>{loadError}</AppText>
-        <Button
-          label={t('dashboard.listings.retry')}
-          onPress={() => {
-            setIsScreenLoading(true);
-            void refreshOffers()
-              .catch(() => undefined)
-              .finally(() => setIsScreenLoading(false));
-          }}
-        />
-      </ScrollView>
-    );
-  } else if (offers.length === 0) {
-    body = (
-      <ScrollView
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl {...refreshControlProps} />}
-        showsVerticalScrollIndicator={false}
-      >
-        <ListingsEmptyState
-          variant="none"
-          title={t('dashboard.offers.emptyTitle')}
-          subtitle={t(
-            isPassenger
-              ? 'dashboard.offers.emptySubtitlePassenger'
-              : 'dashboard.offers.emptySubtitleDriver',
-          )}
-          icon="tag"
-        />
-      </ScrollView>
-    );
-  } else if (filteredOffers.length === 0) {
-    body = (
-      <ScrollView
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl {...refreshControlProps} />}
-        showsVerticalScrollIndicator={false}
-      >
-        <ListingsEmptyState variant="filtered" />
-      </ScrollView>
-    );
-  } else {
-    body = (
-      <FlatList
-        data={filteredOffers}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTrip}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={ListSeparator}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl {...refreshControlProps} />}
-      />
-    );
-  }
+  };
 
   return (
     <AuthScaffold
@@ -185,6 +300,15 @@ export function MyOffersScreen(): React.ReactElement {
       compactHeader
       scrollable={false}
       contentWrapStyle={styles.contentWrap}
+      headerExtra={
+        <SegmentControl
+          variant="onBrand"
+          options={typeOptions}
+          value={listingType}
+          onChange={selectListingType}
+          animatedIndex={animatedTypeIndex}
+        />
+      }
     >
       <View style={styles.filters}>
         <DashboardSearchBar
@@ -193,7 +317,26 @@ export function MyOffersScreen(): React.ReactElement {
           placeholder={t('dashboard.listings.searchPlaceholder')}
         />
       </View>
-      {body}
+      <View style={styles.pager} onLayout={onPagerLayout}>
+        <Animated.ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+            useNativeDriver: true,
+          })}
+          onScrollEndDrag={onPagerScrollEnd}
+          onMomentumScrollEnd={onPagerScrollEnd}
+          scrollEventThrottle={16}
+        >
+          {LISTING_TYPES.map((type) => renderTypePage(type, pageWidth))}
+        </Animated.ScrollView>
+      </View>
     </AuthScaffold>
   );
 }
@@ -211,6 +354,13 @@ const styles = StyleSheet.create({
   },
   filters: {
     marginBottom: spacing.md,
+  },
+  pager: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  page: {
+    flex: 1,
   },
   listContent: {
     flexGrow: 1,

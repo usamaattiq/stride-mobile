@@ -250,8 +250,8 @@ export function TripResponsesPanel({
                       style={styles.offerActionButton}
                     />
                     <Button
-                      label={t('dashboard.listings.detail.responses.select')}
-                      onPress={() => act(offer.id, 'select')}
+                      label={t('dashboard.listings.detail.responses.accept')}
+                      onPress={() => act(offer.id, 'accept')}
                       loading={isActing}
                       disabled={isActing}
                       style={styles.offerActionButton}
