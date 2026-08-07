@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackHandler, StyleSheet, View } from 'react-native';
+import { Animated, BackHandler, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -13,11 +13,13 @@ import { colors, spacing } from '@/theme';
 
 import { DriverListingsPanel } from '../components/DriverListingsPanel';
 import { HomeHeader } from '../components/HomeHeader';
-import { MessagesPanel } from '../components/MessagesPanel';
+import { MessagesPanel, type MessagesPanelHandle } from '../components/MessagesPanel';
 import { NotificationsPanel } from '../components/NotificationsPanel';
 import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
+import { SegmentControl } from '../components/SegmentControl';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardTabParamList, HomePanel, HomeStackParamList } from '../navigation/types';
+import type { MessageFilter } from '../types/messages.types';
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>,
@@ -33,6 +35,11 @@ export function HomeScreen(): React.ReactElement {
   const { user } = useDashboardSession();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
+  const [messageFilter, setMessageFilter] = React.useState<MessageFilter>('all');
+  const [animatedMessageIndex, setAnimatedMessageIndex] = React.useState<
+    Animated.AnimatedInterpolation<number> | undefined
+  >(undefined);
+  const messagesPanelRef = React.useRef<MessagesPanelHandle>(null);
 
   const isPassenger = user.role === 'passenger';
   const showPanelChrome = panel === 'messages' || panel === 'notifications';
@@ -40,7 +47,23 @@ export function HomeScreen(): React.ReactElement {
   const showCurvedBody = showPanelChrome;
   const showDriverFeed = !isPassenger && panel === 'feed';
 
-  const showMessages = React.useCallback(() => setPanel('messages'), []);
+  const messageFilterOptions = React.useMemo(
+    () => [
+      { id: 'all' as const, label: t('dashboard.messages.filterAll') },
+      { id: 'unread' as const, label: t('dashboard.messages.filterUnread') },
+    ],
+    [t],
+  );
+
+  const selectMessageFilter = React.useCallback((next: MessageFilter) => {
+    messagesPanelRef.current?.selectFilter(next);
+  }, []);
+
+  const showMessages = React.useCallback(() => {
+    setMessageFilter('all');
+    setAnimatedMessageIndex(undefined);
+    setPanel('messages');
+  }, []);
   const showNotifications = React.useCallback(() => setPanel('notifications'), []);
   const goToSettings = React.useCallback(() => {
     navigation
@@ -124,6 +147,17 @@ export function HomeScreen(): React.ReactElement {
               {panelSubtitle}
             </AppText>
           ) : null}
+          {panel === 'messages' ? (
+            <View style={styles.panelSegment}>
+              <SegmentControl
+                variant="onBrand"
+                options={messageFilterOptions}
+                value={messageFilter}
+                onChange={selectMessageFilter}
+                animatedIndex={animatedMessageIndex}
+              />
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -138,7 +172,14 @@ export function HomeScreen(): React.ReactElement {
         {panel === 'feed' ? (
           isPassenger ? <PassengerSearchPanel /> : <DriverListingsPanel />
         ) : null}
-        {panel === 'messages' ? <MessagesPanel /> : null}
+        {panel === 'messages' ? (
+          <MessagesPanel
+            ref={messagesPanelRef}
+            filter={messageFilter}
+            onFilterChange={setMessageFilter}
+            onAnimatedIndexChange={setAnimatedMessageIndex}
+          />
+        ) : null}
         {panel === 'notifications' ? <NotificationsPanel /> : null}
       </View>
     </View>
@@ -165,6 +206,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: colors.text.onBrandMuted,
+  },
+  panelSegment: {
+    marginTop: spacing.sm,
   },
   body: {
     flex: 1,

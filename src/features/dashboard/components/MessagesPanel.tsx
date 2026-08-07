@@ -1,8 +1,14 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
   FlatList,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -15,166 +21,261 @@ import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, spacing } from '@/theme';
 
-import { DashboardSearchBar } from './DashboardSearchBar';
 import { MessageCard } from './MessageCard';
-import { MessageFilterTabs } from './MessageFilterTabs';
-import { MessageLegend } from './MessageLegend';
 import { MessagesEmptyState } from './MessagesEmptyState';
 import { TripMessagingSheet } from './trip/TripMessagingSheet';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { HomeMessage, MessageFilter } from '../types/messages.types';
 import { mapInboxItemToHomeMessage } from '../utils/mapInboxItemToHomeMessage';
 
-export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactElement {
-  const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const { user } = useDashboardSession();
-  const [query, setQuery] = React.useState('');
-  const [filter, setFilter] = React.useState<MessageFilter>('all');
-  const [messages, setMessages] = React.useState<HomeMessage[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [activeChat, setActiveChat] = React.useState<HomeMessage | null>(null);
+const MESSAGE_FILTERS: MessageFilter[] = ['all', 'unread'];
+const INITIAL_PAGE_WIDTH = Dimensions.get('window').width;
 
-  const loadInbox = React.useCallback(async () => {
-    try {
-      // API scopes by JWT role (passenger vs driver activity).
-      const inbox = await chatApi.listInbox();
-      const newestFirst = [...inbox].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-      setMessages((prev) => {
-        const prevById = new Map(prev.map((row) => [row.id, row]));
-        return newestFirst.map((item) => {
-          const mapped = mapInboxItemToHomeMessage(item, t, i18n.language);
-          const existing = prevById.get(mapped.id);
-          // Keep prior avatar URI so signed URL refreshes don't flash-reload images.
-          if (existing?.avatar.imageUri && mapped.avatar.imageUri) {
-            return {
-              ...mapped,
-              avatar: { ...mapped.avatar, imageUri: existing.avatar.imageUri },
-            };
-          }
-          return mapped;
+export type MessagesPanelHandle = {
+  selectFilter: (filter: MessageFilter, animated?: boolean) => void;
+};
+
+type MessagesPanelProps = {
+  filter: MessageFilter;
+  onFilterChange: (filter: MessageFilter) => void;
+  onAnimatedIndexChange?: (
+    animatedIndex: Animated.AnimatedInterpolation<number> | undefined,
+  ) => void;
+};
+
+export const MessagesPanel = React.memo(
+  React.forwardRef<MessagesPanelHandle, MessagesPanelProps>(function MessagesPanel(
+    { filter, onFilterChange, onAnimatedIndexChange },
+    ref,
+  ): React.ReactElement {
+    const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+    const { user } = useDashboardSession();
+    const [messages, setMessages] = React.useState<HomeMessage[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
+    const [activeChat, setActiveChat] = React.useState<HomeMessage | null>(null);
+    const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
+    const pagerRef = React.useRef<ScrollView>(null);
+    const scrollX = React.useRef(new Animated.Value(0)).current;
+
+    const loadInbox = React.useCallback(async () => {
+      try {
+        // API scopes by JWT role (passenger vs driver activity).
+        const inbox = await chatApi.listInbox();
+        const newestFirst = [...inbox].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        setMessages((prev) => {
+          const prevById = new Map(prev.map((row) => [row.id, row]));
+          return newestFirst.map((item) => {
+            const mapped = mapInboxItemToHomeMessage(item, t, i18n.language);
+            const existing = prevById.get(mapped.id);
+            // Keep prior avatar URI so signed URL refreshes don't flash-reload images.
+            if (existing?.avatar.imageUri && mapped.avatar.imageUri) {
+              return {
+                ...mapped,
+                avatar: { ...mapped.avatar, imageUri: existing.avatar.imageUri },
+              };
+            }
+            return mapped;
+          });
         });
-      });
-      setError(null);
-    } catch (err) {
-      setError(getErrorMessage(err, t('dashboard.messages.loadFailed')));
-    } finally {
-      setLoading(false);
-    }
-  }, [i18n.language, t]);
-
-  React.useEffect(() => {
-    setLoading(true);
-    setMessages([]);
-    void loadInbox();
-  }, [loadInbox, user.role]);
-
-  const { refreshControlProps } = usePullToRefresh(loadInbox);
-
-  const unreadCount = React.useMemo(
-    () => messages.filter((message) => message.unread).length,
-    [messages],
-  );
-
-  const visibleMessages = React.useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return messages.filter((message) => {
-      if (filter === 'unread' && !message.unread) {
-        return false;
+        setError(null);
+      } catch (err) {
+        setError(getErrorMessage(err, t('dashboard.messages.loadFailed')));
+      } finally {
+        setLoading(false);
       }
+    }, [i18n.language, t]);
 
-      if (!normalizedQuery) {
-        return true;
+    React.useEffect(() => {
+      setLoading(true);
+      setMessages([]);
+      void loadInbox();
+    }, [loadInbox, user.role]);
+
+    const { refreshControlProps } = usePullToRefresh(loadInbox);
+
+    const selectFilter = React.useCallback(
+      (next: MessageFilter, animated = true) => {
+        onFilterChange(next);
+        if (pageWidth <= 0) {
+          return;
+        }
+        const index = MESSAGE_FILTERS.indexOf(next);
+        pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+        if (!animated) {
+          scrollX.setValue(index * pageWidth);
+        }
+      },
+      [onFilterChange, pageWidth, scrollX],
+    );
+
+    React.useImperativeHandle(ref, () => ({ selectFilter }), [selectFilter]);
+
+    const animatedFilterIndex = React.useMemo(() => {
+      if (pageWidth <= 0) {
+        return undefined;
+      }
+      return scrollX.interpolate({
+        inputRange: [0, pageWidth],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+      });
+    }, [pageWidth, scrollX]);
+
+    React.useEffect(() => {
+      onAnimatedIndexChange?.(animatedFilterIndex);
+    }, [animatedFilterIndex, onAnimatedIndexChange]);
+
+    const syncFilterFromOffset = React.useCallback(
+      (offsetX: number) => {
+        if (pageWidth <= 0) {
+          return;
+        }
+        const index = Math.round(offsetX / pageWidth);
+        const nextFilter =
+          MESSAGE_FILTERS[Math.min(Math.max(index, 0), MESSAGE_FILTERS.length - 1)];
+        onFilterChange(nextFilter);
+      },
+      [onFilterChange, pageWidth],
+    );
+
+    const onPagerScrollEnd = React.useCallback(
+      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        syncFilterFromOffset(event.nativeEvent.contentOffset.x);
+      },
+      [syncFilterFromOffset],
+    );
+
+    const onPagerLayout = React.useCallback(
+      (event: LayoutChangeEvent) => {
+        const width = event.nativeEvent.layout.width;
+        if (width <= 0 || width === pageWidth) {
+          return;
+        }
+        setPageWidth(width);
+        const index = MESSAGE_FILTERS.indexOf(filter);
+        scrollX.setValue(index * width);
+        requestAnimationFrame(() => {
+          pagerRef.current?.scrollTo({ x: index * width, animated: false });
+        });
+      },
+      [filter, pageWidth, scrollX],
+    );
+
+    const messagesByFilter = React.useMemo(
+      () => ({
+        all: messages,
+        unread: messages.filter((message) => message.unread),
+      }),
+      [messages],
+    );
+
+    const renderItem = React.useCallback(
+      ({ item }: { item: HomeMessage }) => (
+        <MessageCard message={item} onPress={setActiveChat} />
+      ),
+      [],
+    );
+
+    const closeChat = React.useCallback(() => {
+      const closedId = activeChat?.id;
+      setActiveChat(null);
+      // Opening the thread marks messages read — update locally, don't refetch inbox.
+      if (closedId) {
+        setMessages((prev) =>
+          prev.map((row) => (row.id === closedId && row.unread ? { ...row, unread: false } : row)),
+        );
+      }
+    }, [activeChat?.id]);
+
+    const renderFilterPage = (pageFilter: MessageFilter, width: number): React.ReactElement => {
+      const pageMessages = messagesByFilter[pageFilter];
+
+      let pageBody: React.ReactElement;
+      if (loading) {
+        pageBody = (
+          <View style={styles.loading}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        );
+      } else if (pageMessages.length === 0) {
+        pageBody = (
+          <ScrollView
+            contentContainerStyle={styles.emptyScroll}
+            refreshControl={<RefreshControl {...refreshControlProps} />}
+            showsVerticalScrollIndicator={false}
+          >
+            <MessagesEmptyState />
+          </ScrollView>
+        );
+      } else {
+        pageBody = (
+          <FlatList
+            data={pageMessages}
+            keyExtractor={messageKeyExtractor}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            ItemSeparatorComponent={MessageSeparator}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={<RefreshControl {...refreshControlProps} />}
+            removeClippedSubviews
+            initialNumToRender={6}
+            windowSize={7}
+          />
+        );
       }
 
       return (
-        message.senderName.toLowerCase().includes(normalizedQuery) ||
-        message.preview.toLowerCase().includes(normalizedQuery) ||
-        message.context.title.toLowerCase().includes(normalizedQuery) ||
-        message.context.subtitle.toLowerCase().includes(normalizedQuery)
+        <View key={pageFilter} style={[styles.page, { width }]}>
+          {pageBody}
+        </View>
       );
-    });
-  }, [filter, messages, query]);
+    };
 
-  const listHeader = (
-    <View style={styles.listHeader}>
-      <DashboardSearchBar
-        value={query}
-        onChangeText={setQuery}
-        placeholder={t('dashboard.messages.searchPlaceholder')}
-      />
-      <MessageFilterTabs
-        active={filter}
-        allCount={messages.length}
-        unreadCount={unreadCount}
-        onChange={setFilter}
-      />
-      {error ? (
-        <AppText style={styles.errorText}>{error}</AppText>
-      ) : null}
-    </View>
-  );
+    return (
+      <>
+        <View style={styles.root}>
+          {error ? (
+            <AppText style={styles.errorText}>{error}</AppText>
+          ) : null}
 
-  const renderItem = React.useCallback(
-    ({ item }: { item: HomeMessage }) => (
-      <MessageCard message={item} onPress={setActiveChat} />
-    ),
-    [],
-  );
+          <View style={styles.pager} onLayout={onPagerLayout}>
+            <Animated.ScrollView
+              ref={pagerRef}
+              horizontal
+              pagingEnabled
+              bounces={false}
+              decelerationRate="fast"
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+                useNativeDriver: true,
+              })}
+              onScrollEndDrag={onPagerScrollEnd}
+              onMomentumScrollEnd={onPagerScrollEnd}
+              scrollEventThrottle={16}
+            >
+              {MESSAGE_FILTERS.map((pageFilter) => renderFilterPage(pageFilter, pageWidth))}
+            </Animated.ScrollView>
+          </View>
+        </View>
 
-  const closeChat = React.useCallback(() => {
-    const closedId = activeChat?.id;
-    setActiveChat(null);
-    // Opening the thread marks messages read — update locally, don't refetch inbox.
-    if (closedId) {
-      setMessages((prev) =>
-        prev.map((row) => (row.id === closedId && row.unread ? { ...row, unread: false } : row)),
-      );
-    }
-  }, [activeChat?.id]);
-
-  return (
-    <>
-      <FlatList
-        data={visibleMessages}
-        keyExtractor={messageKeyExtractor}
-        renderItem={renderItem}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={
-          loading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <MessagesEmptyState />
-          )
-        }
-        ListFooterComponent={visibleMessages.length > 0 ? <MessageLegend /> : null}
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={MessageSeparator}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl {...refreshControlProps} />}
-        removeClippedSubviews
-        initialNumToRender={6}
-        windowSize={7}
-      />
-
-      <TripMessagingSheet
-        visible={activeChat != null}
-        onClose={closeChat}
-        tripId={activeChat?.tripId ?? ''}
-        counterpartyId={activeChat?.counterpartyId}
-        counterpartyName={activeChat?.senderName ?? null}
-        counterpartyAvatarUrl={activeChat?.avatar.imageUri ?? null}
-        counterpartyRole={activeChat?.counterpartyRole ?? null}
-        offerId={activeChat?.offerId ?? undefined}
-      />
-    </>
-  );
-});
+        <TripMessagingSheet
+          visible={activeChat != null}
+          onClose={closeChat}
+          tripId={activeChat?.tripId ?? ''}
+          counterpartyId={activeChat?.counterpartyId}
+          counterpartyName={activeChat?.senderName ?? null}
+          counterpartyAvatarUrl={activeChat?.avatar.imageUri ?? null}
+          counterpartyRole={activeChat?.counterpartyRole ?? null}
+          offerId={activeChat?.offerId ?? undefined}
+        />
+      </>
+    );
+  }),
+);
 
 function messageKeyExtractor(item: HomeMessage): string {
   return item.id;
@@ -185,9 +286,16 @@ function MessageSeparator(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  list: {
+  root: {
     flex: 1,
     backgroundColor: colors.background.subtle,
+  },
+  pager: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  page: {
+    flex: 1,
   },
   listContent: {
     flexGrow: 1,
@@ -195,9 +303,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
   },
-  listHeader: {
-    gap: spacing.sm,
-    paddingBottom: spacing.sm,
+  emptyScroll: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   separator: {
     height: spacing.sm,
@@ -209,5 +319,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     color: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
 });
