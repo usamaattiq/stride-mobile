@@ -23,6 +23,26 @@ export type TripChatMessage = {
   readAt: string | null;
 };
 
+export type TripConversationInboxItem = {
+  id: string;
+  tripId: string;
+  listingType: 'rfq' | 'auction';
+  offerId: string | null;
+  counterpartyId: string;
+  counterpartyName: string | null;
+  counterpartyAvatarUrl: string | null;
+  departureCityLabel: string;
+  arrivalCityLabel: string;
+  lastMessage: {
+    id: string;
+    body: string;
+    senderId: string;
+    createdAt: string;
+  } | null;
+  unread: boolean;
+  updatedAt: string;
+};
+
 export type OpenConversationPayload = {
   /** Required when the listing owner opens chat. */
   counterpartyId?: string;

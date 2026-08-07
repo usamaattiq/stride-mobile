@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -25,22 +25,21 @@ const AVATAR_TONES: Record<MessageAvatarTone, string> = {
 
 const CONTEXT_THEME: Record<
   MessageContextKind,
-  { soft: string; text: string; icon: React.ComponentProps<typeof FontAwesome>['name'] }
+  {
+    soft: string;
+    text: string;
+    icon: React.ComponentProps<typeof FontAwesome5>['name'];
+  }
 > = {
-  request: {
+  rfq: {
     soft: colors.primarySoft,
     text: colors.primary,
     icon: 'bus',
   },
-  booking: {
-    soft: colors.accent.blue.soft,
-    text: colors.accent.blue.text,
-    icon: 'calendar',
-  },
-  listing: {
-    soft: colors.accent.green.soft,
-    text: colors.accent.green.text,
-    icon: 'list-alt',
+  auction: {
+    soft: colors.accent.purple.soft,
+    text: colors.accent.purple.text,
+    icon: 'gavel',
   },
 };
 
@@ -51,9 +50,9 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
     <Pressable
       accessibilityRole="button"
       onPress={() => onPress?.(message)}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.cardWrap, pressed && styles.pressed]}
     >
-      <View style={styles.row}>
+      <View style={styles.card}>
         {message.avatar.imageUri ? (
           <Image source={{ uri: message.avatar.imageUri }} style={styles.avatar} />
         ) : (
@@ -100,7 +99,12 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
 
           <View style={[styles.context, { backgroundColor: contextTheme.soft }]}>
             <View style={styles.contextIconWrap}>
-              <FontAwesome name={contextTheme.icon} size={14} color={contextTheme.text} />
+              <FontAwesome5
+                name={contextTheme.icon}
+                size={13}
+                color={contextTheme.text}
+                solid
+              />
             </View>
             <View style={styles.contextCopy}>
               <AppText
@@ -114,7 +118,7 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
                 {message.context.subtitle}
               </AppText>
             </View>
-            <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
+            <FontAwesome5 name="chevron-right" size={11} color={colors.text.tertiary} />
           </View>
         </View>
       </View>
@@ -123,23 +127,29 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
+  cardWrap: {
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    padding: spacing.sm,
+    shadowColor: '#B42318',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   pressed: {
     opacity: 0.92,
   },
-  row: {
+  card: {
     flexDirection: 'row',
     gap: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+    padding: spacing.md,
   },
   avatar: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: radius.full,
   },
   avatarFallback: {
@@ -147,7 +157,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.white,
   },
   body: {
@@ -163,7 +173,7 @@ const styles = StyleSheet.create({
   },
   name: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: colors.text.primary,
   },
   meta: {
@@ -176,13 +186,13 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   statusDot: {
-    width: 7,
-    height: 7,
+    width: 8,
+    height: 8,
     borderRadius: radius.full,
   },
   preview: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.text.secondary,
   },
   previewUnread: {
@@ -192,14 +202,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: 2,
+    marginTop: spacing.xxs,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     borderRadius: radius.sm,
   },
   contextIconWrap: {
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -211,10 +221,10 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   contextTitle: {
-    fontSize: 12,
+    fontSize: 13,
   },
   contextSubtitle: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.text.secondary,
   },
 });

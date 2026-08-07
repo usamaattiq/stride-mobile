@@ -3,9 +3,13 @@ import type {
   OpenConversationPayload,
   TripChatMessage,
   TripConversation,
+  TripConversationInboxItem,
 } from './chatApi.types';
 
 export const chatApi = {
+  listInbox: (): Promise<TripConversationInboxItem[]> =>
+    apiRequest({ method: 'GET', url: '/trips/conversations' }),
+
   openConversation: (tripId: string, payload: OpenConversationPayload): Promise<TripConversation> =>
     apiRequest({ method: 'POST', url: `/trips/${tripId}/conversations`, data: payload }),
 
