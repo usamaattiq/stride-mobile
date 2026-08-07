@@ -560,14 +560,18 @@ export function TripBidPanel({
         />
       ) : null}
 
-      {snapshot.ownerName && snapshot.ownerPhone ? (
+      {snapshot.participantStatus === 'active' &&
+      (snapshot.status === 'live' ||
+        snapshot.status === 'awaiting_confirmation' ||
+        snapshot.status === 'awaiting_action' ||
+        Boolean(snapshot.ownerPhone)) ? (
         <WhatsAppContactCard
           title={
             isPassengerRequest
               ? t('dashboard.listings.detail.contact.passengerContact')
               : t('dashboard.listings.detail.contact.driverContact')
           }
-          name={snapshot.ownerName}
+          name={snapshot.ownerName ?? null}
           phone={snapshot.ownerPhone}
           message={whatsappMessage}
           onMessagePress={() => setChatOpen(true)}

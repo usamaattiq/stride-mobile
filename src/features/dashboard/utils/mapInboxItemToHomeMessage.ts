@@ -16,14 +16,11 @@ function avatarToneFromId(id: string): MessageAvatarTone {
 }
 
 function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
+  const trimmed = name.trim();
+  if (!trimmed) {
     return '?';
   }
-  if (parts.length === 1) {
-    return parts[0]!.charAt(0).toUpperCase();
-  }
-  return `${parts[0]!.charAt(0)}${parts[1]!.charAt(0)}`.toUpperCase();
+  return trimmed.charAt(0).toUpperCase();
 }
 
 function formatInboxTime(iso: string, t: TFunction, locale: string): string {

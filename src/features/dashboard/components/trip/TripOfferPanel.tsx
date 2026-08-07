@@ -548,7 +548,10 @@ export function TripOfferPanel({
         ) : null}
       </View>
 
-      {isConfirmedOffer && snapshot.ownerPhone ? (
+      {activeOffer != null &&
+      (activeOffer.status === 'active' ||
+        activeOffer.status === 'selected' ||
+        (activeOffer.status === 'confirmed' && Boolean(snapshot.ownerPhone))) ? (
         <WhatsAppContactCard
           title={creatorContactTitle}
           icon={requiresVehicle ? 'user' : 'car'}

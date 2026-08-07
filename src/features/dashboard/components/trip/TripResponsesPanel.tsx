@@ -229,7 +229,9 @@ export function TripResponsesPanel({
                   />
                 ) : null}
 
-                {offer.status === 'confirmed' && offer.responderPhone ? (
+                {offer.status === 'active' ||
+                offer.status === 'selected' ||
+                (offer.status === 'confirmed' && Boolean(offer.responderPhone)) ? (
                   <WhatsAppContactCard
                     title={responderContactTitle}
                     icon={isPassengerRequest ? 'car' : 'user'}
