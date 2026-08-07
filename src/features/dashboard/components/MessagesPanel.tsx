@@ -163,6 +163,8 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
         tripId={activeChat?.tripId ?? ''}
         counterpartyId={activeChat?.counterpartyId}
         counterpartyName={activeChat?.senderName ?? null}
+        counterpartyAvatarUrl={activeChat?.avatar.imageUri ?? null}
+        counterpartyRole={activeChat?.counterpartyRole ?? null}
         offerId={activeChat?.offerId ?? undefined}
       />
     </>

@@ -31,6 +31,7 @@ export type TripConversationInboxItem = {
   counterpartyId: string;
   counterpartyName: string | null;
   counterpartyAvatarUrl: string | null;
+  counterpartyRole: 'passenger' | 'driver' | null;
   departureCityLabel: string;
   arrivalCityLabel: string;
   lastMessage: {

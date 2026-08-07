@@ -564,6 +564,7 @@ export function TripOfferPanel({
         onClose={() => setChatOpen(false)}
         tripId={tripId}
         counterpartyName={snapshot?.ownerName ?? null}
+        counterpartyRole={requiresVehicle ? 'passenger' : 'driver'}
         offerId={activeOffer?.id}
       />
 

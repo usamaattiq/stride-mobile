@@ -276,6 +276,7 @@ export function TripResponsesPanel({
         tripId={tripId}
         counterpartyId={chatTarget?.responderId ?? ''}
         counterpartyName={chatTarget?.responderName?.trim() || null}
+        counterpartyRole={isPassengerRequest ? 'driver' : 'passenger'}
         offerId={chatTarget?.id}
       />
 

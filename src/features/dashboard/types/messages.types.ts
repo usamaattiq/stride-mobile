@@ -8,6 +8,7 @@ export type HomeMessage = {
   listingType: 'rfq' | 'auction';
   offerId: string | null;
   counterpartyId: string;
+  counterpartyRole: 'passenger' | 'driver' | null;
   senderName: string;
   preview: string;
   timeLabel: string;

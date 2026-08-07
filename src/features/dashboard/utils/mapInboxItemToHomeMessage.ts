@@ -66,6 +66,7 @@ export function mapInboxItemToHomeMessage(
     listingType: item.listingType,
     offerId: item.offerId,
     counterpartyId: item.counterpartyId,
+    counterpartyRole: item.counterpartyRole,
     senderName: name,
     preview: item.lastMessage?.body?.trim() || t('dashboard.messages.noPreview'),
     timeLabel: formatInboxTime(activityAt, t, locale),

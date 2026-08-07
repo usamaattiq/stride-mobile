@@ -9,6 +9,7 @@ import {
   type ListRenderItemInfo,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -28,9 +29,39 @@ export type TripMessagingSheetProps = {
   /** Required when the listing owner opens chat. */
   counterpartyId?: string;
   counterpartyName: string | null;
+  /** Optional profile photo for the chat header. */
+  counterpartyAvatarUrl?: string | null;
+  /** Optional role label under the name (Passenger / Driver). */
+  counterpartyRole?: 'passenger' | 'driver' | null;
   /** Required for RFQ threads. */
   offerId?: string;
 };
+
+const AVATAR_FALLBACKS = [
+  colors.accent.purple.avatar,
+  colors.accent.green.avatar,
+  colors.accent.pink.avatar,
+  colors.accent.blue.avatar,
+] as const;
+
+function avatarFallbackColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_FALLBACKS[hash % AVATAR_FALLBACKS.length] ?? colors.accent.purple.avatar;
+}
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return '?';
+  }
+  if (parts.length === 1) {
+    return parts[0]!.charAt(0).toUpperCase();
+  }
+  return `${parts[0]!.charAt(0)}${parts[1]!.charAt(0)}`.toUpperCase();
+}
 
 function mergeMessages(existing: TripChatMessage[], incoming: TripChatMessage[]): TripChatMessage[] {
   if (incoming.length === 0) {
@@ -86,6 +117,8 @@ export function TripMessagingSheet({
   tripId,
   counterpartyId,
   counterpartyName,
+  counterpartyAvatarUrl,
+  counterpartyRole,
   offerId,
 }: TripMessagingSheetProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -104,6 +137,15 @@ export function TripMessagingSheet({
 
   const titleName =
     counterpartyName?.trim() || t('dashboard.listings.detail.contact.fallbackName');
+  const avatarSeed = counterpartyId?.trim() || titleName;
+  const avatarInitials = initialsFromName(titleName);
+  const avatarColor = avatarFallbackColor(avatarSeed);
+  const roleLabel =
+    counterpartyRole === 'driver'
+      ? t('profile.roles.driver')
+      : counterpartyRole === 'passenger'
+        ? t('profile.roles.passenger')
+        : null;
 
   const refresh = React.useCallback(
     async (activeConversationId: string, opts?: { silent?: boolean }) => {
@@ -262,13 +304,29 @@ export function TripMessagingSheet({
     <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.9}>
       <View style={styles.root}>
         <View style={styles.header}>
+          {counterpartyAvatarUrl ? (
+            <Image
+              source={{ uri: counterpartyAvatarUrl }}
+              style={styles.headerAvatar}
+              cachePolicy="memory-disk"
+              recyclingKey={avatarSeed}
+            />
+          ) : (
+            <View style={[styles.headerAvatar, styles.headerAvatarFallback, { backgroundColor: avatarColor }]}>
+              <AppText weight="bold" style={styles.headerAvatarInitial}>
+                {avatarInitials}
+              </AppText>
+            </View>
+          )}
           <View style={styles.headerCopy}>
             <AppText weight="bold" style={styles.headerTitle} numberOfLines={1}>
               {titleName}
             </AppText>
-            <AppText style={styles.headerHint} numberOfLines={1}>
-              {t('dashboard.listings.detail.contact.chatHint')}
-            </AppText>
+            {roleLabel ? (
+              <AppText style={styles.headerHint} numberOfLines={1}>
+                {roleLabel}
+              </AppText>
+            ) : null}
           </View>
           <Pressable
             onPress={onClose}
@@ -288,6 +346,12 @@ export function TripMessagingSheet({
           <View style={styles.centered}>
             <AppText style={styles.errorText}>{error}</AppText>
           </View>
+        ) : messages.length === 0 ? (
+          <View style={styles.centered}>
+            <AppText style={styles.emptyText}>
+              {t('dashboard.listings.detail.contact.chatEmpty')}
+            </AppText>
+          </View>
         ) : (
           <FlatList
             style={styles.list}
@@ -298,11 +362,6 @@ export function TripMessagingSheet({
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="interactive"
-            ListEmptyComponent={
-              <AppText style={[styles.emptyText, styles.emptyTextInverted]}>
-                {t('dashboard.listings.detail.contact.chatEmpty')}
-              </AppText>
-            }
           />
         )}
 
@@ -350,12 +409,25 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
     paddingBottom: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.default,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+  },
+  headerAvatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAvatarInitial: {
+    fontSize: 14,
+    color: colors.white,
   },
   headerCopy: {
     flex: 1,
@@ -388,10 +460,6 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 13,
     paddingVertical: spacing.xl,
-  },
-  // Inverted list flips empty-state text; un-flip so it reads normally.
-  emptyTextInverted: {
-    transform: [{ scaleY: -1 }],
   },
   bubbleRow: {
     flexDirection: 'row',

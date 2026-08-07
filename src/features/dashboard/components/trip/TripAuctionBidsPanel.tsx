@@ -275,6 +275,7 @@ export function TripAuctionBidsPanel({
         tripId={tripId}
         counterpartyId={contactRow?.participantId}
         counterpartyName={contactRow?.participantName ?? null}
+        counterpartyRole={isPassengerRequest ? 'driver' : 'passenger'}
       />
 
       <AppDialog

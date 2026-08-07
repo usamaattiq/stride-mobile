@@ -579,6 +579,7 @@ export function TripBidPanel({
         onClose={() => setChatOpen(false)}
         tripId={tripId}
         counterpartyName={snapshot?.ownerName ?? null}
+        counterpartyRole={isPassengerRequest ? 'passenger' : 'driver'}
       />
 
       <AppDialog
