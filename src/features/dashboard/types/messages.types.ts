@@ -9,6 +9,7 @@ export type HomeMessage = {
   offerId: string | null;
   counterpartyId: string;
   counterpartyRole: 'passenger' | 'driver' | null;
+  viewerIsOwner: boolean;
   senderName: string;
   preview: string;
   timeLabel: string;

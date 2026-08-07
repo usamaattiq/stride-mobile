@@ -28,6 +28,8 @@ export type TripConversationInboxItem = {
   tripId: string;
   listingType: 'rfq' | 'auction';
   offerId: string | null;
+  /** True when the viewer owns the trip (others applied on their request/listing). */
+  viewerIsOwner: boolean;
   counterpartyId: string;
   counterpartyName: string | null;
   counterpartyAvatarUrl: string | null;

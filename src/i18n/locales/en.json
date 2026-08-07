@@ -264,20 +264,24 @@
     },
     "messages": {
       "title": "Messages",
-      "subtitle": "Chats about RFQs, auctions, and bookings.",
+      "subtitle": "Chats on trips you posted and trips you applied to.",
       "searchPlaceholder": "Search messages...",
       "filterAll": "All Messages",
       "filterUnread": "Unread",
       "legendUnread": "Unread",
       "legendRead": "Read",
       "emptyTitle": "No messages",
-      "emptySubtitle": "When someone messages you about an RFQ, auction, or booking, it will show up here.",
+      "emptySubtitle": "Messages appear when you chat on a trip you posted or a trip you applied to in this role.",
       "loadFailed": "Couldn't load messages. Pull to retry.",
       "noPreview": "No messages yet",
       "yesterday": "Yesterday",
       "daysAgo": "{{count}}d ago",
       "contextRfq": "RFQ conversation",
-      "contextAuction": "Auction conversation"
+      "contextAuction": "Auction conversation",
+      "contextOnYourRfq": "Applied on your RFQ",
+      "contextOnYourAuction": "Applied on your auction",
+      "contextYourRfqOffer": "RFQ you applied to",
+      "contextYourAuctionBid": "Auction you applied to"
     },
     "notifications": {
       "title": "Notifications",

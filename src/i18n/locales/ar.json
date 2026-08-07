@@ -264,20 +264,24 @@
     },
     "messages": {
       "title": "الرسائل",
-      "subtitle": "محادثات حول طلبات العروض والمزادات والحجوزات.",
+      "subtitle": "محادثات على الرحلات التي نشرتها والتي تقدمت إليها.",
       "searchPlaceholder": "ابحث في الرسائل...",
       "filterAll": "كل الرسائل",
       "filterUnread": "غير مقروءة",
       "legendUnread": "غير مقروءة",
       "legendRead": "مقروءة",
       "emptyTitle": "لا توجد رسائل",
-      "emptySubtitle": "عندما يراسلك أحد بشأن طلب عرض أو مزاد أو حجز، ستظهر الرسالة هنا.",
+      "emptySubtitle": "تظهر الرسائل عندما تتحدث حول رحلة نشرتها أو رحلة تقدمت إليها في هذا الدور.",
       "loadFailed": "تعذر تحميل الرسائل. اسحب لإعادة المحاولة.",
       "noPreview": "لا توجد رسائل بعد",
       "yesterday": "أمس",
       "daysAgo": "منذ {{count}} ي",
       "contextRfq": "محادثة طلب عرض",
-      "contextAuction": "محادثة مزاد"
+      "contextAuction": "محادثة مزاد",
+      "contextOnYourRfq": "تقدم على طلب العرض الخاص بك",
+      "contextOnYourAuction": "تقدم على المزاد الخاص بك",
+      "contextYourRfqOffer": "طلب عرض تقدمت إليه",
+      "contextYourAuctionBid": "مزاد تقدمت إليه"
     },
     "notifications": {
       "title": "الإشعارات",

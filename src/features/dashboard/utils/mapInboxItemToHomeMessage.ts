@@ -60,6 +60,14 @@ export function mapInboxItemToHomeMessage(
   const arrival = cityDisplayName(item.arrivalCityLabel);
   const activityAt = item.lastMessage?.createdAt ?? item.updatedAt;
 
+  const subtitle = item.viewerIsOwner
+    ? item.listingType === 'auction'
+      ? t('dashboard.messages.contextOnYourAuction')
+      : t('dashboard.messages.contextOnYourRfq')
+    : item.listingType === 'auction'
+      ? t('dashboard.messages.contextYourAuctionBid')
+      : t('dashboard.messages.contextYourRfqOffer');
+
   return {
     id: item.id,
     tripId: item.tripId,
@@ -67,6 +75,7 @@ export function mapInboxItemToHomeMessage(
     offerId: item.offerId,
     counterpartyId: item.counterpartyId,
     counterpartyRole: item.counterpartyRole,
+    viewerIsOwner: item.viewerIsOwner,
     senderName: name,
     preview: item.lastMessage?.body?.trim() || t('dashboard.messages.noPreview'),
     timeLabel: formatInboxTime(activityAt, t, locale),
@@ -79,10 +88,7 @@ export function mapInboxItemToHomeMessage(
     context: {
       kind: item.listingType,
       title: `${departure} → ${arrival}`,
-      subtitle:
-        item.listingType === 'auction'
-          ? t('dashboard.messages.contextAuction')
-          : t('dashboard.messages.contextRfq'),
+      subtitle,
     },
   };
 }

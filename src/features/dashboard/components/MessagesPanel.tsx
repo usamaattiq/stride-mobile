@@ -21,11 +21,13 @@ import { MessageFilterTabs } from './MessageFilterTabs';
 import { MessageLegend } from './MessageLegend';
 import { MessagesEmptyState } from './MessagesEmptyState';
 import { TripMessagingSheet } from './trip/TripMessagingSheet';
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { HomeMessage, MessageFilter } from '../types/messages.types';
 import { mapInboxItemToHomeMessage } from '../utils/mapInboxItemToHomeMessage';
 
 export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const [query, setQuery] = React.useState('');
   const [filter, setFilter] = React.useState<MessageFilter>('all');
   const [messages, setMessages] = React.useState<HomeMessage[]>([]);
@@ -35,10 +37,12 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
 
   const loadInbox = React.useCallback(async () => {
     try {
+      // API scopes by JWT role (passenger vs driver activity).
       const inbox = await chatApi.listInbox();
+      const newestFirst = [...inbox].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       setMessages((prev) => {
         const prevById = new Map(prev.map((row) => [row.id, row]));
-        return inbox.map((item) => {
+        return newestFirst.map((item) => {
           const mapped = mapInboxItemToHomeMessage(item, t, i18n.language);
           const existing = prevById.get(mapped.id);
           // Keep prior avatar URI so signed URL refreshes don't flash-reload images.
@@ -61,8 +65,9 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
 
   React.useEffect(() => {
     setLoading(true);
+    setMessages([]);
     void loadInbox();
-  }, [loadInbox]);
+  }, [loadInbox, user.role]);
 
   const { refreshControlProps } = usePullToRefresh(loadInbox);
 
