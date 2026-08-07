@@ -36,7 +36,21 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
   const loadInbox = React.useCallback(async () => {
     try {
       const inbox = await chatApi.listInbox();
-      setMessages(inbox.map((item) => mapInboxItemToHomeMessage(item, t, i18n.language)));
+      setMessages((prev) => {
+        const prevById = new Map(prev.map((row) => [row.id, row]));
+        return inbox.map((item) => {
+          const mapped = mapInboxItemToHomeMessage(item, t, i18n.language);
+          const existing = prevById.get(mapped.id);
+          // Keep prior avatar URI so signed URL refreshes don't flash-reload images.
+          if (existing?.avatar.imageUri && mapped.avatar.imageUri) {
+            return {
+              ...mapped,
+              avatar: { ...mapped.avatar, imageUri: existing.avatar.imageUri },
+            };
+          }
+          return mapped;
+        });
+      });
       setError(null);
     } catch (err) {
       setError(getErrorMessage(err, t('dashboard.messages.loadFailed')));
@@ -105,9 +119,15 @@ export const MessagesPanel = React.memo(function MessagesPanel(): React.ReactEle
   );
 
   const closeChat = React.useCallback(() => {
+    const closedId = activeChat?.id;
     setActiveChat(null);
-    void loadInbox();
-  }, [loadInbox]);
+    // Opening the thread marks messages read — update locally, don't refetch inbox.
+    if (closedId) {
+      setMessages((prev) =>
+        prev.map((row) => (row.id === closedId && row.unread ? { ...row, unread: false } : row)),
+      );
+    }
+  }, [activeChat?.id]);
 
   return (
     <>

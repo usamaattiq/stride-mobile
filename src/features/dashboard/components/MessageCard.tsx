@@ -1,6 +1,7 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -54,7 +55,12 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
     >
       <View style={styles.card}>
         {message.avatar.imageUri ? (
-          <Image source={{ uri: message.avatar.imageUri }} style={styles.avatar} />
+          <Image
+            source={{ uri: message.avatar.imageUri }}
+            style={styles.avatar}
+            cachePolicy="memory-disk"
+            recyclingKey={message.counterpartyId}
+          />
         ) : (
           <View
             style={[
