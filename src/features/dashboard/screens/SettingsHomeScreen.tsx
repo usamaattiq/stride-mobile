@@ -191,9 +191,6 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'general-info':
         navigation.navigate('GeneralInformation');
         break;
-      case 'nic-verification':
-        navigation.navigate('NicVerification');
-        break;
       case 'become-driver':
         navigation.navigate('DriverVerification', { purpose: 'become' });
         break;
