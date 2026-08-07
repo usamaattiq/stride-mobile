@@ -208,17 +208,17 @@ const styles = StyleSheet.create({
   },
   dot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
+    top: 3,
+    right: 3,
+    width: 9,
+    height: 9,
     borderRadius: radius.full,
     backgroundColor: colors.primary,
     borderWidth: 1.5,
     borderColor: colors.white,
   },
   dotOnBrand: {
-    backgroundColor: colors.white,
+    backgroundColor: '#FEC84B',
     borderColor: colors.primary,
   },
   badge: {

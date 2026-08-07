@@ -49,7 +49,7 @@ export const MessagesPanel = React.memo(
     ref,
   ): React.ReactElement {
     const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-    const { user } = useDashboardSession();
+    const { user, setHasUnreadMessages } = useDashboardSession();
     const [messages, setMessages] = React.useState<HomeMessage[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
@@ -78,13 +78,14 @@ export const MessagesPanel = React.memo(
             return mapped;
           });
         });
+        setHasUnreadMessages(newestFirst.some((item) => item.unread));
         setError(null);
       } catch (err) {
         setError(getErrorMessage(err, t('dashboard.messages.loadFailed')));
       } finally {
         setLoading(false);
       }
-    }, [i18n.language, t]);
+    }, [i18n.language, setHasUnreadMessages, t]);
 
     React.useEffect(() => {
       setLoading(true);
@@ -181,12 +182,18 @@ export const MessagesPanel = React.memo(
       const closedId = activeChat?.id;
       setActiveChat(null);
       // Opening the thread marks messages read — update locally, don't refetch inbox.
-      if (closedId) {
-        setMessages((prev) =>
-          prev.map((row) => (row.id === closedId && row.unread ? { ...row, unread: false } : row)),
-        );
+      if (!closedId) {
+        return;
       }
-    }, [activeChat?.id]);
+      setHasUnreadMessages(
+        messages.some((row) => row.unread && row.id !== closedId),
+      );
+      setMessages((prev) =>
+        prev.map((row) =>
+          row.id === closedId && row.unread ? { ...row, unread: false } : row,
+        ),
+      );
+    }, [activeChat?.id, messages, setHasUnreadMessages]);
 
     const renderFilterPage = (pageFilter: MessageFilter, width: number): React.ReactElement => {
       const pageMessages = messagesByFilter[pageFilter];

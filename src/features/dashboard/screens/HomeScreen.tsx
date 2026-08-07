@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { chatApi } from '@/services/api/chatApi';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { colors, spacing } from '@/theme';
@@ -32,7 +33,7 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
  */
 export function HomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const { user } = useDashboardSession();
+  const { user, setHasUnreadMessages } = useDashboardSession();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
   const [messageFilter, setMessageFilter] = React.useState<MessageFilter>('all');
@@ -54,6 +55,17 @@ export function HomeScreen(): React.ReactElement {
     ],
     [t],
   );
+
+  const refreshUnreadIndicator = React.useCallback(() => {
+    void chatApi
+      .listInbox()
+      .then((inbox) => {
+        setHasUnreadMessages(inbox.some((item) => item.unread));
+      })
+      .catch(() => {
+        // Keep last known indicator if the poll fails.
+      });
+  }, [setHasUnreadMessages]);
 
   const selectMessageFilter = React.useCallback((next: MessageFilter) => {
     messagesPanelRef.current?.selectFilter(next);
@@ -92,6 +104,8 @@ export function HomeScreen(): React.ReactElement {
 
   useFocusEffect(
     React.useCallback(() => {
+      refreshUnreadIndicator();
+
       const onHardwareBack = () => {
         if (panel !== 'feed') {
           setPanel('feed');
@@ -102,8 +116,12 @@ export function HomeScreen(): React.ReactElement {
 
       const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
       return () => sub.remove();
-    }, [panel]),
+    }, [panel, refreshUnreadIndicator]),
   );
+
+  React.useEffect(() => {
+    refreshUnreadIndicator();
+  }, [refreshUnreadIndicator, user.role]);
 
   React.useEffect(() => {
     const tabNavigation = navigation.getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>();
