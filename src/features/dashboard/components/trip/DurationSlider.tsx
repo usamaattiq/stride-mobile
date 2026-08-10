@@ -11,6 +11,8 @@ const MIN_HOURS = 0.5;
 const MAX_HOURS = 24;
 const SLIDER_STEP_HOURS = 0.5;
 const TICK_HOURS = [6, 12, 18, 24];
+/** Dev shortcut for fast auction end-to-end testing. */
+const DEV_THREE_MINUTES_HOURS = 3 / 60;
 
 type DurationSliderProps = {
   value: number;
@@ -18,7 +20,14 @@ type DurationSliderProps = {
   label: string;
 };
 
+function isDevThreeMinutes(hours: number): boolean {
+  return Math.abs(hours - DEV_THREE_MINUTES_HOURS) < 1e-8;
+}
+
 function snapToHalfHour(hours: number): number {
+  if (isDevThreeMinutes(hours)) {
+    return DEV_THREE_MINUTES_HOURS;
+  }
   const snapped = Math.round(hours / SLIDER_STEP_HOURS) * SLIDER_STEP_HOURS;
   return Math.min(MAX_HOURS, Math.max(MIN_HOURS, Number(snapped.toFixed(1))));
 }
@@ -45,6 +54,7 @@ function formatDurationLabel(
 export function DurationSlider({ value, onChange, label }: DurationSliderProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const safeValue = snapToHalfHour(value);
+  const isDevSelected = isDevThreeMinutes(safeValue);
 
   return (
     <View style={styles.wrap}>
@@ -60,7 +70,7 @@ export function DurationSlider({ value, onChange, label }: DurationSliderProps):
         minimumValue={MIN_HOURS}
         maximumValue={MAX_HOURS}
         step={SLIDER_STEP_HOURS}
-        value={safeValue}
+        value={isDevSelected ? MIN_HOURS : safeValue}
         onValueChange={(next) => onChange(snapToHalfHour(next))}
         minimumTrackTintColor={colors.primary}
         maximumTrackTintColor={colors.border.default}
@@ -69,7 +79,7 @@ export function DurationSlider({ value, onChange, label }: DurationSliderProps):
 
       <View style={styles.ticks}>
         {TICK_HOURS.map((hour) => {
-          const selected = hour === safeValue;
+          const selected = !isDevSelected && hour === safeValue;
           return (
             <Pressable
               key={hour}
@@ -90,6 +100,23 @@ export function DurationSlider({ value, onChange, label }: DurationSliderProps):
           );
         })}
       </View>
+
+      {__DEV__ ? (
+        <Pressable
+          onPress={() => onChange(DEV_THREE_MINUTES_HOURS)}
+          style={[styles.devButton, isDevSelected && styles.tickSelected]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: isDevSelected }}
+          accessibilityLabel={t('trips.create.durationDevThreeMinutes')}
+        >
+          <AppText
+            weight={isDevSelected ? 'semibold' : 'regular'}
+            style={[styles.tickLabel, isDevSelected && styles.tickLabelSelected]}
+          >
+            {t('trips.create.durationDevThreeMinutes')}
+          </AppText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -132,5 +159,14 @@ const styles = StyleSheet.create({
   },
   tickLabelSelected: {
     color: colors.primary,
+  },
+  devButton: {
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.subtle,
   },
 });

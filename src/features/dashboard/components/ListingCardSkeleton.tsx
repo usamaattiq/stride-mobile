@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   mainRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.xs + 2,
     paddingBottom: spacing.xs,
   },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingVertical: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,

@@ -6,28 +6,35 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { rfqApi } from '@/services/api/rfqApi';
-import type { RfqOfferStatus, RfqOfferSummary, RfqOwnerSnapshot } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqOfferSummary, RfqOfferVehicleSummary, RfqOwnerSnapshot } from '@/services/api/rfqApi.types';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 
 import type { TripVehicleMode } from '../../types/trip.types';
+import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
+import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { TripMessagingSheet } from './TripMessagingSheet';
+import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripResponsesPanelProps = {
   tripId: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
+  /** Passenger request listings receive offers from drivers. */
+  isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
 };
 
 const BADGE_STYLE_BY_STATUS: Record<RfqOfferStatus, { bg: string; text: string }> = {
-  active: { bg: colors.primarySoft, text: colors.primary },
+  active: { bg: colors.accent.amber.soft, text: colors.accent.amber.text },
   selected: { bg: colors.primarySoft, text: colors.primary },
   confirmed: { bg: colors.accent.green.soft, text: colors.accent.green.text },
   withdrawn: { bg: colors.background.subtle, text: colors.text.tertiary },
   declined: { bg: colors.background.subtle, text: colors.text.tertiary },
   timed_out: { bg: colors.background.subtle, text: colors.text.tertiary },
+  lapsed: { bg: colors.background.subtle, text: colors.text.tertiary },
 };
 
 function OfferBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
@@ -41,19 +48,47 @@ function OfferBadge({ status, label }: { status: RfqOfferStatus; label: string }
   );
 }
 
+/** Offers arrive newest-first; keep only the latest response per passenger. */
+function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
+  const seen = new Set<string>();
+  const latest: RfqOfferSummary[] = [];
+  for (const offer of offers) {
+    if (seen.has(offer.responderId)) {
+      continue;
+    }
+    seen.add(offer.responderId);
+    latest.push(offer);
+  }
+  return latest;
+}
+
 export function TripResponsesPanel({
   tripId,
   vehicleMode,
   vehicleTotalSeats,
+  isPassengerRequest = false,
   onCountChange,
 }: TripResponsesPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isFullPrivate = vehicleMode === 'fullPrivate';
+  const rejectConfirmBody = isPassengerRequest
+    ? t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyDriver')
+    : t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyPassenger');
+  // Owner messaging the responder: passenger request → owner is passenger; else driver.
+  const whatsappMessage = isPassengerRequest
+    ? t('dashboard.listings.detail.contact.messageAsPassenger')
+    : t('dashboard.listings.detail.contact.messageAsDriver');
+  // Responder on a passenger request is a driver; on a driver trip is a passenger.
+  const responderContactTitle = isPassengerRequest
+    ? t('dashboard.listings.detail.contact.driverContact')
+    : t('dashboard.listings.detail.contact.passengerContact');
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [actingOfferId, setActingOfferId] = React.useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = React.useState<RfqOfferSummary | null>(null);
+  const [vehicleDetail, setVehicleDetail] = React.useState<RfqOfferVehicleSummary | null>(null);
+  const [chatTarget, setChatTarget] = React.useState<RfqOfferSummary | null>(null);
 
   const load = React.useCallback(() => {
     setLoading(true);
@@ -62,8 +97,9 @@ export function TripResponsesPanel({
       .getSnapshot(tripId)
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
-        setSnapshot(ownerSnapshot);
-        onCountChange?.(ownerSnapshot.offers.length);
+        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        setSnapshot({ ...ownerSnapshot, offers });
+        onCountChange?.(offers.length);
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed'))))
       .finally(() => setLoading(false));
@@ -76,11 +112,21 @@ export function TripResponsesPanel({
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
 
-  const act = (offerId: string, action: 'accept' | 'reject') => {
+  const act = (offerId: string, action: 'select' | 'accept' | 'reject') => {
     setActingOfferId(offerId);
-    const request = action === 'accept' ? rfqApi.acceptOffer : rfqApi.rejectOffer;
+    const request =
+      action === 'select'
+        ? rfqApi.selectOffer
+        : action === 'accept'
+          ? rfqApi.acceptOffer
+          : rfqApi.rejectOffer;
     void request(tripId, offerId)
-      .then((result) => setSnapshot(result as RfqOwnerSnapshot))
+      .then((result) => {
+        const ownerSnapshot = result as RfqOwnerSnapshot;
+        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        setSnapshot({ ...ownerSnapshot, offers });
+        onCountChange?.(offers.length);
+      })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {
         setActingOfferId(null);
@@ -144,9 +190,12 @@ export function TripResponsesPanel({
             return (
               <View key={offer.id} style={styles.offerCard}>
                 <View style={styles.offerHeaderRow}>
-                  <AppText weight="semibold" style={styles.offerTitle}>
-                    {t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
-                  </AppText>
+                  <View style={styles.offerIdentity}>
+                    <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
+                      {offer.responderName?.trim() ||
+                        t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
+                    </AppText>
+                  </View>
                   <OfferBadge status={offer.status} label={statusLabel(offer.status)} />
                 </View>
 
@@ -157,7 +206,7 @@ export function TripResponsesPanel({
                         // Full-private offers hold offeredQuantity=1 (the whole-vehicle
                         // capacity slot) — show the vehicle's real seat count instead.
                         count: isFullPrivate
-                          ? (vehicleTotalSeats ?? 1)
+                          ? (offer.vehicle?.totalSeats ?? vehicleTotalSeats ?? 1)
                           : Number(offer.offeredQuantity),
                       })}
                     </AppText>
@@ -168,6 +217,30 @@ export function TripResponsesPanel({
                     </AppText>
                   ) : null}
                 </View>
+
+                {offer.vehicle ? (
+                  <OfferVehicleSummaryCard
+                    vehicle={offer.vehicle}
+                    onPress={() => {
+                      if (offer.vehicle) {
+                        setVehicleDetail(offer.vehicle);
+                      }
+                    }}
+                  />
+                ) : null}
+
+                {offer.status === 'active' ||
+                offer.status === 'selected' ||
+                (offer.status === 'confirmed' && Boolean(offer.responderPhone)) ? (
+                  <WhatsAppContactCard
+                    title={responderContactTitle}
+                    icon={isPassengerRequest ? 'car' : 'user'}
+                    name={offer.responderName?.trim() || null}
+                    phone={offer.responderPhone}
+                    message={whatsappMessage}
+                    onMessagePress={() => setChatTarget(offer)}
+                  />
+                ) : null}
 
                 {canDecide ? (
                   <View style={styles.offerActions}>
@@ -193,11 +266,27 @@ export function TripResponsesPanel({
         </View>
       )}
 
+      <OfferVehicleDetailSheet
+        visible={vehicleDetail != null}
+        vehicle={vehicleDetail}
+        onClose={() => setVehicleDetail(null)}
+      />
+
+      <TripMessagingSheet
+        visible={chatTarget != null}
+        onClose={() => setChatTarget(null)}
+        tripId={tripId}
+        counterpartyId={chatTarget?.responderId ?? ''}
+        counterpartyName={chatTarget?.responderName?.trim() || null}
+        counterpartyRole={isPassengerRequest ? 'driver' : 'passenger'}
+        offerId={chatTarget?.id}
+      />
+
       <AppDialog
         visible={rejectTarget != null}
         icon="times"
         title={t('dashboard.listings.detail.responses.rejectConfirmTitle')}
-        message={t('dashboard.listings.detail.responses.rejectConfirmBody')}
+        message={rejectConfirmBody}
         cancelAction={{
           label: t('common.cancel'),
           onPress: () => setRejectTarget(null),
@@ -281,8 +370,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   offerTitle: {
+    flexShrink: 1,
     fontSize: 13,
     color: colors.text.primary,
+  },
+  offerIdentity: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   badge: {
     borderRadius: radius.full,

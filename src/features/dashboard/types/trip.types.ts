@@ -1,4 +1,5 @@
-import type { RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { AuctionParticipantStatus, AuctionStatusValue } from '@/services/api/auctionApi.types';
+import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { VehicleClass } from './vehicle.types';
 
@@ -20,6 +21,8 @@ export type TripLocationPoint = {
 
 export type TripDraft = {
   vehicleId: string | null;
+  /** Passenger requests pick a class instead of a concrete vehicle. */
+  vehicleClass: VehicleClass | null;
   vehicleMode: TripVehicleMode | null;
   departureCity: TripCity | null;
   departurePoint: TripLocationPoint | null;
@@ -36,6 +39,8 @@ export type TripDraft = {
   arrivalTimeSet: boolean;
   listingType: TripListingType | null;
   startingPrice: string;
+  /** Passenger requests: number of seats needed (string for text input). */
+  seats: string;
   paymentMethod: TripPaymentMethod | null;
   durationHours: number;
   startMode: TripStartMode | null;
@@ -46,7 +51,7 @@ export type TripDraft = {
 
 export type Trip = {
   id: string;
-  vehicleId: string;
+  vehicleId: string | null;
   vehicleTitle: string | null;
   vehiclePhotoUrl: string | null;
   vehiclePhotoUrls: string[];
@@ -72,11 +77,28 @@ export type Trip = {
   publishedAt: string;
   /** RFQ status exactly as returned by rfq-management-system. Only populated for the owning driver's own listings. */
   rfqStatus: RfqStatusValue | null;
+  /** Auction display status from AMS. */
+  auctionStatus: AuctionStatusValue | null;
+  /** AMS status_label — render as-is. */
+  auctionStatusLabel: string | null;
+  auctionStatusVariant: 'muted' | 'accent' | 'warning' | 'success' | null;
+  auctionRemainingSeconds: number | null;
+  /** Viewer's latest offer status when shown on My Offers. */
+  myOfferStatus: RfqOfferStatus | null;
+  /** Viewer's latest offer price when shown on My Offers. */
+  myOfferPrice: string | null;
+  /** Viewer's auction bid status when shown on My Offers. */
+  myBidStatus: AuctionParticipantStatus | null;
+  myBidAmount: number | null;
+  /** Listing owner contact once confirmed (My Offers). */
+  counterpartyName: string | null;
+  counterpartyPhone: string | null;
 };
 
 export function createEmptyTripDraft(): TripDraft {
   return {
     vehicleId: null,
+    vehicleClass: null,
     vehicleMode: null,
     departureCity: null,
     departurePoint: null,
@@ -89,8 +111,9 @@ export function createEmptyTripDraft(): TripDraft {
     arrivalTimeSet: false,
     listingType: null,
     startingPrice: '',
+    seats: '1',
     paymentMethod: null,
-    durationHours: 6,
+    durationHours: 24,
     startMode: null,
     scheduledStartAt: null,
     description: '',
@@ -108,9 +131,11 @@ export function canPublishTripDraft(draft: TripDraft): boolean {
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   const departureRequired = draft.vehicleMode === 'shared';
+  const hasVehicle = Boolean(draft.vehicleId);
+  const hasVehicleClass = Boolean(draft.vehicleClass);
 
   if (
-    !draft.vehicleId ||
+    (!hasVehicle && !hasVehicleClass) ||
     !draft.vehicleMode ||
     !draft.departureCity ||
     (departureRequired && !draft.departureAt) ||
@@ -127,7 +152,15 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   }
 
   const trimmedPrice = draft.startingPrice.trim();
-  if (!trimmedPrice) {
+  // Passenger requests (vehicle class only) do not set a price per seat.
+  if (hasVehicle && !trimmedPrice) {
+    return null;
+  }
+
+  const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
+  const seatsValid =
+    Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
+  if (hasVehicleClass && !hasVehicle && !seatsValid) {
     return null;
   }
 
@@ -165,9 +198,9 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoUrl: null,
     vehiclePhotoUrls: [],
     vehiclePhotoCount: 0,
-    vehicleClass: null,
-    vehicleTotalSeats: null,
-    vehicleMode: draft.vehicleMode,
+    vehicleClass: draft.vehicleClass,
+    vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
+    vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
     departureAt,
@@ -176,7 +209,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     arrivalPoint,
     arrivalAt,
     listingType: draft.listingType,
-    startingPrice: trimmedPrice,
+    startingPrice: trimmedPrice || null,
     paymentMethod: draft.paymentMethod,
     durationHours: draft.durationHours,
     startMode: draft.startMode,
@@ -184,5 +217,15 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
     rfqStatus: null,
+    auctionStatus: null,
+    auctionStatusLabel: null,
+    auctionStatusVariant: null,
+    auctionRemainingSeconds: null,
+    myOfferStatus: null,
+    myOfferPrice: null,
+    myBidStatus: null,
+    myBidAmount: null,
+    counterpartyName: null,
+    counterpartyPhone: null,
   };
 }

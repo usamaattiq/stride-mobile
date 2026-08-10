@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -15,6 +17,7 @@ import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, radius, spacing } from '@/theme';
 
 import { DashboardSearchBar } from '../components/DashboardSearchBar';
@@ -47,10 +50,13 @@ export function VehicleListScreen(): React.ReactElement {
     beginAddVehicle,
     refreshVehicles,
   } = useVehicles();
+  const { refreshControlProps } = usePullToRefresh(refreshVehicles);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<VehicleBrowseFilters>(EMPTY_VEHICLE_BROWSE_FILTERS);
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const stackOrigin = resolveVehicleStackOrigin(navigation);
+  const parentNavigation = navigation.getParent();
+  const canLeaveStack = parentNavigation?.canGoBack() ?? false;
   const filterCount = countActiveVehicleBrowseFilters(filters);
 
   useFocusEffect(
@@ -127,7 +133,11 @@ export function VehicleListScreen(): React.ReactElement {
     );
   } else if (showInitialError) {
     listBody = (
-      <View style={styles.centered}>
+      <ScrollView
+        contentContainerStyle={styles.centered}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
+        showsVerticalScrollIndicator={false}
+      >
         <AppText style={styles.errorText}>{loadError}</AppText>
         <Button
           label={t('vehicles.retry')}
@@ -135,7 +145,7 @@ export function VehicleListScreen(): React.ReactElement {
             void refreshVehicles().catch(() => undefined);
           }}
         />
-      </View>
+      </ScrollView>
     );
   } else {
     listBody = (
@@ -166,6 +176,7 @@ export function VehicleListScreen(): React.ReactElement {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl {...refreshControlProps} />}
       />
     );
   }
@@ -174,6 +185,7 @@ export function VehicleListScreen(): React.ReactElement {
     <AuthScaffold
       title={t('vehicles.listTitle')}
       subtitle={t('vehicles.listSubtitle')}
+      onBack={canLeaveStack ? () => parentNavigation?.goBack() : undefined}
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader

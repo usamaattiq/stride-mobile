@@ -40,7 +40,7 @@ export function TripProvider({
 
   const refreshTrips = React.useCallback(async () => {
     const role = useProfileStore.getState().profile?.role;
-    if (role !== 'driver') {
+    if (role !== 'driver' && role !== 'passenger') {
       setTrips([]);
       setLoadError(null);
       return;

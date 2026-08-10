@@ -1,5 +1,4 @@
 import React from 'react';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { VehicleDetailsScreen } from '../screens/VehicleDetailsScreen';
@@ -19,12 +18,4 @@ export function VehicleStackNavigator(): React.ReactElement {
       <Stack.Screen name="VehiclePhotos" component={VehiclePhotosScreen} />
     </Stack.Navigator>
   );
-}
-
-/** Hide the tab bar while viewing or editing a vehicle inside the Vehicle tab. */
-export function shouldHideVehicleTabBar(
-  route: Parameters<typeof getFocusedRouteNameFromRoute>[0],
-): boolean {
-  const focusedRoute = getFocusedRouteNameFromRoute(route) ?? 'VehicleList';
-  return focusedRoute !== 'VehicleList';
 }

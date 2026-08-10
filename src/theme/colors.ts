@@ -54,6 +54,11 @@ export const colors = {
       text: '#059669',
       avatar: '#10B981',
     },
+    amber: {
+      soft: '#FED7AA',
+      text: '#EA580C',
+      avatar: '#F97316',
+    },
     pink: {
       soft: '#FCE7F3',
       text: '#DB2777',

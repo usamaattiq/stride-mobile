@@ -6,6 +6,9 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
   if (params.q?.trim()) {
     search.set('q', params.q.trim());
   }
+  if (params.kind) {
+    search.set('kind', params.kind);
+  }
   if (params.listingType) {
     search.set('listingType', params.listingType);
   }
@@ -39,6 +42,9 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
 
 export const tripApi = {
   list: (): Promise<TripDto[]> => apiRequest({ method: 'GET', url: '/trips' }),
+
+  /** Trips the viewer has offered on (My Offers tab). */
+  listMyOffers: (): Promise<TripDto[]> => apiRequest({ method: 'GET', url: '/trips/offers' }),
 
   browse: (params: BrowseTripsParams = {}): Promise<PaginatedTripsDto> =>
     apiRequest({ method: 'GET', url: `/trips/browse${buildBrowseQuery(params)}` }),

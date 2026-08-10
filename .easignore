@@ -1,0 +1,12 @@
+# Keep EAS upload free of local native build caches (avoids Windows EBUSY locks).
+android/.gradle/
+android/app/build/
+android/build/
+android/.cxx/
+ios/Pods/
+ios/build/
+.expo/
+node_modules/
+.env
+.env.*
+!.env.example

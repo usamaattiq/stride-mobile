@@ -16,6 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { useResizeMode } from 'react-native-keyboard-controller';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
@@ -24,17 +25,19 @@ import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
 import { formatTripDateTime } from '../components/trip/dateRangeUtils';
+import { TripAuctionBidsPanel } from '../components/trip/TripAuctionBidsPanel';
+import { TripBidPanel } from '../components/trip/TripBidPanel';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
 import { TripOfferPanel } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
-import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
@@ -49,8 +52,6 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
-  const { user } = useDashboardSession();
-  const isPassenger = user.role === 'passenger';
   const { getTripById, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
@@ -65,6 +66,12 @@ export function ListingDetailScreen(): React.ReactElement {
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
   const [responsesCount, setResponsesCount] = React.useState(0);
+
+  /** Owned listings come from the user's My Listings cache; discovery items do not. */
+  const isOwnListing = Boolean(getTripById(route.params.tripId));
+  // Offer form needs adjustResize so the price field can scroll above the keyboard
+  // (app default is Android pan, which leaves the focused field covered).
+  useResizeMode();
 
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
@@ -145,6 +152,17 @@ export function ListingDetailScreen(): React.ReactElement {
       .finally(() => setLoading(false));
   }, [cached, route.params.tripId, t]);
 
+  const reloadTrip = React.useCallback(async () => {
+    setLoadError(null);
+    const dto = await tripApi.getById(route.params.tripId);
+    setTrip(mapTripDtoToTrip(dto));
+    if (isOwnListing) {
+      await refreshTrips().catch(() => undefined);
+    }
+  }, [isOwnListing, refreshTrips, route.params.tripId]);
+
+  const { refreshControlProps } = usePullToRefresh(reloadTrip);
+
   const handleRemove = () => {
     if (!trip || removing) {
       return;
@@ -164,6 +182,58 @@ export function ListingDetailScreen(): React.ReactElement {
   };
 
   const goBack = () => navigation.goBack();
+
+  const handleOfferChange = React.useCallback(
+    (update: {
+      rfqStatus: Trip['rfqStatus'];
+      myOfferStatus: Trip['myOfferStatus'];
+      myOfferPrice: Trip['myOfferPrice'];
+      counterpartyName: Trip['counterpartyName'];
+      counterpartyPhone: Trip['counterpartyPhone'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              rfqStatus: update.rfqStatus,
+              myOfferStatus: update.myOfferStatus,
+              myOfferPrice: update.myOfferPrice,
+              counterpartyName: update.counterpartyName,
+              counterpartyPhone: update.counterpartyPhone,
+            }
+          : current,
+      );
+    },
+    [],
+  );
+
+  const handleBidChange = React.useCallback(
+    (update: {
+      auctionStatus: Trip['auctionStatus'];
+      auctionStatusLabel: Trip['auctionStatusLabel'];
+      auctionStatusVariant: Trip['auctionStatusVariant'];
+      myBidStatus: Trip['myBidStatus'];
+      myBidAmount: Trip['myBidAmount'];
+      counterpartyName: Trip['counterpartyName'];
+      counterpartyPhone: Trip['counterpartyPhone'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              auctionStatus: update.auctionStatus,
+              auctionStatusLabel: update.auctionStatusLabel,
+              auctionStatusVariant: update.auctionStatusVariant,
+              myBidStatus: update.myBidStatus,
+              myBidAmount: update.myBidAmount,
+              counterpartyName: update.counterpartyName,
+              counterpartyPhone: update.counterpartyPhone,
+            }
+          : current,
+      );
+    },
+    [],
+  );
 
   if (loading) {
     return (
@@ -245,8 +315,12 @@ export function ListingDetailScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
+      // Clearance above the keyboard for the focused price field + submit button.
+      // Only affects keyboard-open scroll — no permanent empty gap at the bottom.
+      scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
+      refreshControlProps={refreshControlProps}
       headerRight={
-        user.role === 'driver' ? (
+        isOwnListing ? (
           <Pressable
             onPress={openRemove}
             style={styles.headerRemoveButton}
@@ -262,7 +336,7 @@ export function ListingDetailScreen(): React.ReactElement {
       <View style={styles.content}>
         <ListingCard trip={trip} showPhotoCount />
 
-        {isPassenger ? (
+        {!isOwnListing ? (
           <>
             <TripDetailsOverview
               description={description}
@@ -273,11 +347,24 @@ export function ListingDetailScreen(): React.ReactElement {
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
-            <TripOfferPanel
-              tripId={trip.id}
-              vehicleMode={trip.vehicleMode}
-              vehicleTotalSeats={trip.vehicleTotalSeats}
-            />
+            {trip.listingType === 'auction' ? (
+              <TripBidPanel
+                tripId={trip.id}
+                isPassengerRequest={trip.vehicleId == null}
+                requiresVehicle={trip.vehicleId == null}
+                initialVehicleId={route.params.selectVehicleId ?? null}
+                onBidChange={handleBidChange}
+              />
+            ) : (
+              <TripOfferPanel
+                tripId={trip.id}
+                vehicleMode={trip.vehicleMode}
+                vehicleTotalSeats={trip.vehicleTotalSeats}
+                requiresVehicle={trip.vehicleId == null}
+                initialVehicleId={route.params.selectVehicleId ?? null}
+                onOfferChange={handleOfferChange}
+              />
+            )}
           </>
         ) : (
           <>
@@ -318,12 +405,21 @@ export function ListingDetailScreen(): React.ReactElement {
                 </View>
 
                 <View style={[styles.page, { width: pageWidth }]}>
-                  <TripResponsesPanel
-                    tripId={trip.id}
-                    vehicleMode={trip.vehicleMode}
-                    vehicleTotalSeats={trip.vehicleTotalSeats}
-                    onCountChange={setResponsesCount}
-                  />
+                  {trip.listingType === 'auction' ? (
+                    <TripAuctionBidsPanel
+                      tripId={trip.id}
+                      isPassengerRequest={trip.vehicleId == null}
+                      onCountChange={setResponsesCount}
+                    />
+                  ) : (
+                    <TripResponsesPanel
+                      tripId={trip.id}
+                      vehicleMode={trip.vehicleMode}
+                      vehicleTotalSeats={trip.vehicleTotalSeats}
+                      isPassengerRequest={trip.vehicleId == null}
+                      onCountChange={setResponsesCount}
+                    />
+                  )}
                 </View>
               </Animated.ScrollView>
             </View>

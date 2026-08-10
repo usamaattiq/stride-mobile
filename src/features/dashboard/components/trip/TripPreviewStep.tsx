@@ -4,8 +4,10 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
+import { VEHICLE_CLASS_OPTIONS } from '@/features/dashboard/constants/vehicleClasses';
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '@/features/dashboard/components/trip/TripDetailsOverview';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import {
   draftToTrip,
@@ -50,7 +52,7 @@ function enrichPreviewTrip(draft: TripDraft, vehicle: Vehicle | undefined): Trip
         ? vehicle.photoDisplayUris
         : vehicle?.photoUris ?? base.vehiclePhotoUrls,
     vehiclePhotoCount: vehicle?.photoUris.length ?? base.vehiclePhotoCount,
-    vehicleClass: vehicle?.vehicleClass ?? base.vehicleClass,
+    vehicleClass: vehicle?.vehicleClass ?? draft.vehicleClass ?? base.vehicleClass,
     vehicleTotalSeats: vehicle?.totalSeats ?? base.vehicleTotalSeats,
     // Keep only real points for maps / display (not city placeholders).
     departurePoint: draft.departurePoint ?? base.departurePoint,
@@ -67,9 +69,14 @@ export function TripPreviewStep({
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
   const locale = i18n.language;
   const iosArabicAlign =
     currentLanguage === 'ar' ? iosArabicOpticalAlignStyle : null;
+  const publishLabel = t(
+    isPassenger ? 'trips.create.publishRequest' : 'trips.create.publish',
+  );
 
   const trip = enrichPreviewTrip(draft, vehicle);
   const fromCity = draft.departureCity
@@ -82,13 +89,21 @@ export function TripPreviewStep({
       : draft.vehicleMode === 'shared'
         ? t('trips.create.vehicleModeShared')
         : null;
+  const vehicleLabel =
+    vehicle?.title ??
+    (draft.vehicleClass
+      ? t(
+          VEHICLE_CLASS_OPTIONS.find((item) => item.id === draft.vehicleClass)?.labelKey ??
+            'vehicles.classPlaceholder',
+        )
+      : t('trips.create.previewVehicle'));
   const description =
     draft.description.trim() ||
     (fromCity && toCity
       ? t('dashboard.listings.detail.descriptionBody', {
           from: fromCity,
           to: toCity,
-          vehicle: vehicle?.title ?? t('trips.create.previewVehicle'),
+          vehicle: vehicleLabel,
           mode: modeLabel ?? t('trips.create.notSpecified'),
         })
       : null);
@@ -124,7 +139,7 @@ export function TripPreviewStep({
           publishing && styles.actionDisabled,
         ]}
         accessibilityRole="button"
-        accessibilityLabel={t('trips.create.publish')}
+        accessibilityLabel={publishLabel}
         accessibilityState={{ busy: publishing, disabled: publishing }}
       >
         {publishing ? (
@@ -133,7 +148,7 @@ export function TripPreviewStep({
           <>
             <FontAwesome name="paper-plane" size={14} color={colors.white} />
             <AppText weight="bold" style={[styles.publishButtonText, iosArabicAlign]}>
-              {t('trips.create.publish')}
+              {publishLabel}
             </AppText>
           </>
         )}

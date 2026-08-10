@@ -7,12 +7,12 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -22,22 +22,18 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
 import { DashboardSearchBar } from '../components/DashboardSearchBar';
-import { HomeHeader } from '../components/HomeHeader';
 import { ListingCard } from '../components/ListingCard';
 import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { ListingStatusChips } from '../components/ListingStatusChips';
 import { ListingsEmptyState } from '../components/ListingsEmptyState';
-import { PassengerSearchPanel } from '../components/PassengerSearchPanel';
 import { SegmentControl } from '../components/SegmentControl';
-import { useDashboardSession } from '../context/DashboardSessionContext';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { DashboardTabParamList } from '../navigation/types';
 import type { Trip, TripListingType } from '../types/trip.types';
 import {
   matchesListingQuery,
@@ -54,10 +50,8 @@ export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const tabNavigation =
-    useNavigation<BottomTabNavigationProp<DashboardTabParamList, 'MyListings'>>();
-  const { user } = useDashboardSession();
   const { trips, loadError, refreshTrips, removeTrip } = useTrips();
+  const { refreshControlProps } = usePullToRefresh(refreshTrips);
 
   const [listingType, setListingType] = React.useState<TripListingType>('rfq');
   const [statusFilter, setStatusFilter] = React.useState<ListingStatusFilter>('all');
@@ -65,16 +59,15 @@ export function MyListingsScreen(): React.ReactElement {
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
-  /** True from tab focus until the deferred fetch finishes — keeps the screen light. */
-  const [isScreenLoading, setIsScreenLoading] = React.useState(user.role === 'driver');
+  /** True only until the first successful/failed load — keep cached list on later tab focuses. */
+  const [isScreenLoading, setIsScreenLoading] = React.useState(true);
+  const hasLoadedOnceRef = React.useRef(false);
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
-
-  const roleLabel =
-    user.role === 'driver'
-      ? t('profile.roles.driver')
-      : t('profile.roles.passenger');
+  const [visitedTypes, setVisitedTypes] = React.useState(
+    () => new Set<TripListingType>(['rfq']),
+  );
 
   const typeOptions = React.useMemo(
     () => [
@@ -84,31 +77,33 @@ export function MyListingsScreen(): React.ReactElement {
     [t],
   );
 
-  const goToSettings = React.useCallback(() => {
-    tabNavigation.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
-  }, [tabNavigation]);
-
-  const goToHome = React.useCallback(() => {
-    tabNavigation.navigate({ name: 'Home', params: { screen: 'HomeMain' } });
-  }, [tabNavigation]);
+  React.useEffect(() => {
+    setVisitedTypes((current) => {
+      if (current.has(listingType)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(listingType);
+      return next;
+    });
+  }, [listingType]);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (user.role !== 'driver') {
-        setIsScreenLoading(false);
-        return;
-      }
-
       let cancelled = false;
-      setIsScreenLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setIsScreenLoading(true);
+      }
 
       const task = InteractionManager.runAfterInteractions(() => {
         void refreshTrips()
           .catch(() => undefined)
           .finally(() => {
-            if (!cancelled) {
-              setIsScreenLoading(false);
+            if (cancelled) {
+              return;
             }
+            hasLoadedOnceRef.current = true;
+            setIsScreenLoading(false);
           });
       });
 
@@ -116,7 +111,7 @@ export function MyListingsScreen(): React.ReactElement {
         cancelled = true;
         task.cancel();
       };
-    }, [refreshTrips, user.role]),
+    }, [refreshTrips]),
   );
 
   const selectListingType = React.useCallback(
@@ -227,27 +222,6 @@ export function MyListingsScreen(): React.ReactElement {
     [navigation],
   );
 
-  if (user.role !== 'driver') {
-    return (
-      <View style={styles.searchRoot}>
-        <FocusAwareStatusBar style="light" />
-        <HomeHeader
-          firstName={user.firstName}
-          roleLabel={roleLabel}
-          avatarUri={user.avatarUri}
-          credits={user.credits}
-          notificationCount={user.notificationCount}
-          hasUnreadMessages={user.hasUnreadMessages}
-          variant="onBrand"
-          onChatPress={goToHome}
-          onNotificationsPress={goToHome}
-          onProfilePress={goToSettings}
-        />
-        <PassengerSearchPanel />
-      </View>
-    );
-  }
-
   const filtersHeader = (
     <View style={styles.filters}>
       <ListingStatusChips active={statusFilter} onChange={setStatusFilter} />
@@ -260,10 +234,14 @@ export function MyListingsScreen(): React.ReactElement {
   );
 
   const renderTypePage = (type: TripListingType, width: number) => {
+    if (!visitedTypes.has(type)) {
+      return <View key={type} style={[styles.page, { width }]} />;
+    }
+
     const pageTrips = tripsByType[type];
     let pageBody: React.ReactElement;
 
-    if (isScreenLoading) {
+    if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -273,7 +251,11 @@ export function MyListingsScreen(): React.ReactElement {
       );
     } else if (loadError && trips.length === 0) {
       pageBody = (
-        <View style={styles.centered}>
+        <ScrollView
+          contentContainerStyle={styles.centered}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
           <AppText style={styles.errorText}>{loadError}</AppText>
           <Button
             label={t('dashboard.listings.retry')}
@@ -284,12 +266,28 @@ export function MyListingsScreen(): React.ReactElement {
                 .finally(() => setIsScreenLoading(false));
             }}
           />
-        </View>
+        </ScrollView>
       );
     } else if (trips.length === 0) {
-      pageBody = <ListingsEmptyState variant="none" />;
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState variant="none" />
+        </ScrollView>
+      );
     } else if (pageTrips.length === 0) {
-      pageBody = <ListingsEmptyState variant="filtered" />;
+      pageBody = (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <ListingsEmptyState variant="filtered" />
+        </ScrollView>
+      );
     } else {
       pageBody = (
         <FlatList
@@ -305,6 +303,7 @@ export function MyListingsScreen(): React.ReactElement {
           removeClippedSubviews
           updateCellsBatchingPeriod={50}
           keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl {...refreshControlProps} />}
         />
       );
     }
@@ -394,10 +393,6 @@ function ListSeparator(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  searchRoot: {
-    flex: 1,
-    backgroundColor: colors.primary,
-  },
   contentWrap: {
     flex: 1,
     paddingTop: spacing.md,
@@ -439,3 +434,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+
+
+
+
+
+
+
+

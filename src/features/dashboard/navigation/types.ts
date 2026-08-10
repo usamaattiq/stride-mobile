@@ -8,7 +8,7 @@ export type DashboardTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList>;
   MyListings: undefined;
   CreateTrip: undefined;
-  Vehicle: NavigatorScreenParams<VehicleRouteParamList>;
+  MyOffers: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
 };
 

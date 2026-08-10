@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   accessToken: 'musafir249.auth.accessToken',
   deviceInstallId: 'musafir249.device.installId',
   cachedMpin: 'musafir249.security.cachedMpin',
+  pushToken: 'musafir249.push.token',
 } as const;
 
 async function getItem(key: string): Promise<string | null> {
@@ -33,4 +34,8 @@ export const secureStorage = {
   getCachedMpin: (): Promise<string | null> => getItem(STORAGE_KEYS.cachedMpin),
   setCachedMpin: (mpin: string): Promise<void> => setItem(STORAGE_KEYS.cachedMpin, mpin),
   clearCachedMpin: (): Promise<void> => removeItem(STORAGE_KEYS.cachedMpin),
+
+  getPushToken: (): Promise<string | null> => getItem(STORAGE_KEYS.pushToken),
+  setPushToken: (token: string): Promise<void> => setItem(STORAGE_KEYS.pushToken, token),
+  clearPushToken: (): Promise<void> => removeItem(STORAGE_KEYS.pushToken),
 };

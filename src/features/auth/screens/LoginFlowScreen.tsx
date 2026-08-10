@@ -9,7 +9,7 @@ import { authApi } from '@/services/api/authApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
-import { registerForPushNotificationsAsync } from '@/services/push/pushToken';
+import { registerForPushNotifications } from '@/services/pushNotifications';
 import type { UserProfileDto } from '@/services/api/authApi.types';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
@@ -163,12 +163,22 @@ export function LoginFlowScreen(): React.ReactElement {
     // biometric login on the very next sign-in (not only after a second login).
     await devicePrefs.setCachedMpin(usedMpin);
     await devicePrefs.setBiometricEnabled(profile.biometricEnabled);
-    void registerForPushNotificationsAsync();
+    void registerForPushNotifications();
 
     Keyboard.dismiss();
     isLeavingRef.current = true;
     useLoginFlowStore.getState().reset();
     navigation.replace('Dashboard');
+  };
+
+  const handlePhoneDigitsChange = (digits: string) => {
+    setSendOtpError(null);
+    setPhoneDigits(digits);
+  };
+
+  const handleCountryChange = (next: typeof country) => {
+    setSendOtpError(null);
+    setCountry(next);
   };
 
   const handleSendOtp = async () => {
@@ -370,8 +380,8 @@ export function LoginFlowScreen(): React.ReactElement {
         <LoginPhoneScreen
           country={country}
           phoneDigits={phoneDigits}
-          onChangeCountry={setCountry}
-          onChangePhone={setPhoneDigits}
+          onChangeCountry={handleCountryChange}
+          onChangePhone={handlePhoneDigitsChange}
           onContinue={() => void handleSendOtp()}
           loading={sendingOtp}
           errorMessage={sendOtpError}

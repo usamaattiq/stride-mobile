@@ -9,7 +9,7 @@ import { authApi } from '@/services/api/authApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
-import { registerForPushNotificationsAsync } from '@/services/push/pushToken';
+import { registerForPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
@@ -200,6 +200,7 @@ export function SignupFlowScreen(): React.ReactElement {
 
       await useAuthStore.getState().setAuthenticated(result.accessToken);
       useProfileStore.getState().setProfile(result.profile);
+      void registerForPushNotifications();
 
       const devicePrefs = useDevicePrefsStore.getState();
       await devicePrefs.setLastPhone({
@@ -211,7 +212,6 @@ export function SignupFlowScreen(): React.ReactElement {
       // Always cache so Face ID can be enabled later from Settings without
       // requiring a second manual login first.
       await devicePrefs.setCachedMpin(draft.mpin);
-      void registerForPushNotificationsAsync();
 
       Keyboard.dismiss();
       isLeavingRef.current = true;
@@ -237,8 +237,14 @@ export function SignupFlowScreen(): React.ReactElement {
           <SignupPhoneScreen
             country={draft.country}
             phoneDigits={draft.phoneDigits}
-            onChangeCountry={(country) => patchDraft({ country })}
-            onChangePhone={(phoneDigits) => patchDraft({ phoneDigits })}
+            onChangeCountry={(country) => {
+              setSendOtpError(null);
+              patchDraft({ country });
+            }}
+            onChangePhone={(phoneDigits) => {
+              setSendOtpError(null);
+              patchDraft({ phoneDigits });
+            }}
             onContinue={() => void handleSendOtp()}
             loading={sendingOtp}
             errorMessage={sendOtpError}

@@ -14,6 +14,7 @@ type TripRootNavigation = NavigationProp<DashboardRootStackParamList>;
 type CompleteVehicleFlowOptions = {
   selectVehicleId?: string;
   stackOrigin?: VehicleStackOrigin;
+  listingTripId?: string;
 };
 
 /**
@@ -69,15 +70,31 @@ export function completeVehicleFlow(
     return;
   }
 
+  if (returnTo === 'ListingDetail' && options?.listingTripId) {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          { name: 'MainTabs' },
+          {
+            name: 'ListingDetail',
+            params: {
+              tripId: options.listingTripId,
+              ...(options.selectVehicleId
+                ? { selectVehicleId: options.selectVehicleId }
+                : {}),
+            },
+          },
+        ],
+      }),
+    );
+    return;
+  }
+
   navigation.dispatch(
     CommonActions.reset({
-      index: 0,
-      routes: [
-        {
-          name: 'MainTabs',
-          params: { screen: 'Vehicle', params: { screen: 'VehicleList' } },
-        },
-      ],
+      index: 1,
+      routes: [{ name: 'MainTabs' }, { name: 'ManageVehicles' }],
     }),
   );
 }
@@ -112,15 +129,18 @@ export function exitTripCreation(rootNavigation: TripRootNavigation): void {
   }
 }
 
-/** After publish — land on My Listings so the new trip is visible. */
-export function exitTripCreationToListings(rootNavigation: TripRootNavigation): void {
+/** After publish — land on My Listings (drivers) or Home (passengers). */
+export function exitTripCreationToListings(
+  rootNavigation: TripRootNavigation,
+  options?: { screen?: 'MyListings' | 'Home' },
+): void {
   rootNavigation.dispatch(
     CommonActions.reset({
       index: 0,
       routes: [
         {
           name: 'MainTabs',
-          params: { screen: 'MyListings' },
+          params: { screen: options?.screen ?? 'MyListings' },
         },
       ],
     }),

@@ -28,10 +28,12 @@ function navigateAfterVehicleSave(
   returnTo: VehicleFlowReturnTo,
   savedVehicle: Vehicle,
   stackOrigin: VehicleStackOrigin,
+  listingTripId?: string,
 ): void {
   completeVehicleFlow(navigation, returnTo, {
     selectVehicleId: savedVehicle.id,
     stackOrigin,
+    listingTripId,
   });
 }
 
@@ -47,6 +49,7 @@ export function VehiclePhotosScreen(): React.ReactElement {
 
   const returnTo = route.params?.returnTo ?? 'VehicleList';
   const stackOrigin = route.params?.stackOrigin ?? resolveVehicleStackOrigin(navigation);
+  const listingTripId = route.params?.listingTripId;
 
   const handleAddPhotos = (uris: string[]) => {
     setSaveError(null);
@@ -116,7 +119,13 @@ export function VehiclePhotosScreen(): React.ReactElement {
           onPress: () => {
             setSavedVisible(false);
             if (savedVehicle) {
-              navigateAfterVehicleSave(navigation, returnTo, savedVehicle, stackOrigin);
+              navigateAfterVehicleSave(
+                navigation,
+                returnTo,
+                savedVehicle,
+                stackOrigin,
+                listingTripId,
+              );
             }
           },
         }}

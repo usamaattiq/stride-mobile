@@ -11,8 +11,10 @@ import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetail
 import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
 import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
 import { TripScheduleStep } from '@/features/dashboard/components/trip/TripScheduleStep';
+import { TripVehicleClassStep } from '@/features/dashboard/components/trip/TripVehicleClassStep';
 import { TripVehicleModeStep } from '@/features/dashboard/components/trip/TripVehicleModeStep';
 import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/TripVehicleSelectStep';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import { useTrips } from '@/features/dashboard/context/TripContext';
 import { useVehicles } from '@/features/dashboard/context/VehicleContext';
 import type { DashboardRootStackParamList } from '@/features/dashboard/navigation/dashboardRootTypes';
@@ -29,7 +31,7 @@ type TripCreationStep =
   | 'schedule'
   | 'preview';
 
-const STEP_ORDER: TripCreationStep[] = [
+const DRIVER_STEP_ORDER: TripCreationStep[] = [
   'vehicle',
   'vehicleMode',
   'details',
@@ -38,16 +40,30 @@ const STEP_ORDER: TripCreationStep[] = [
   'preview',
 ];
 
-const TOTAL_STEPS = STEP_ORDER.length;
+/** Passengers pick shared vs private first, then vehicle class (SUV, sedan, …). */
+const PASSENGER_STEP_ORDER: TripCreationStep[] = [
+  'vehicleMode',
+  'vehicle',
+  'details',
+  'listing',
+  'schedule',
+  'preview',
+];
 
-const STEP_PROGRESS: Record<TripCreationStep, number> = {
-  vehicle: 1,
-  vehicleMode: 2,
-  details: 3,
-  listing: 4,
-  schedule: 5,
-  preview: 6,
-};
+function stepOrderForRole(isPassenger: boolean): TripCreationStep[] {
+  return isPassenger ? PASSENGER_STEP_ORDER : DRIVER_STEP_ORDER;
+}
+
+function firstStepForRole(isPassenger: boolean): TripCreationStep {
+  return stepOrderForRole(isPassenger)[0]!;
+}
+
+function stepProgress(step: TripCreationStep, isPassenger: boolean): number {
+  const order = stepOrderForRole(isPassenger);
+  return order.indexOf(step) + 1;
+}
+
+const TOTAL_STEPS = DRIVER_STEP_ORDER.length;
 
 type Nav = NativeStackNavigationProp<DashboardRootStackParamList, 'TripCreation'>;
 
@@ -55,10 +71,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'TripCreation'>>();
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
   const { draft, patchDraft, publishDraft, isPublishing } = useTrips();
-  const { vehicles, isLoading: isLoadingVehicles, refreshVehicles, getVehicleById, beginAddVehicle } =
+  const { vehicles, isLoading: isLoadingVehicles, loadError: vehiclesLoadError, refreshVehicles, getVehicleById, beginAddVehicle } =
     useVehicles();
-  const [step, setStep] = React.useState<TripCreationStep>('vehicle');
+  const [step, setStep] = React.useState<TripCreationStep>(() => firstStepForRole(isPassenger));
   const [publishError, setPublishError] = React.useState<string | null>(null);
   const isLeavingRef = React.useRef(false);
   const didReturnFromVehicleRef = React.useRef(false);
@@ -67,22 +85,34 @@ export function TripCreationFlowScreen(): React.ReactElement {
     if (route.params?.flowKey === undefined) {
       return;
     }
-    setStep('vehicle');
+    setStep(firstStepForRole(isPassenger));
     isLeavingRef.current = false;
-  }, [route.params?.flowKey]);
+    if (!isPassenger) {
+      void refreshVehicles().catch(() => undefined);
+    }
+  }, [route.params?.flowKey, isPassenger, refreshVehicles]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isPassenger) {
+        return;
+      }
+      void refreshVehicles().catch(() => undefined);
+    }, [isPassenger, refreshVehicles]),
+  );
 
   React.useEffect(() => {
     const selectVehicleId = route.params?.selectVehicleId;
-    if (!selectVehicleId) {
+    if (!selectVehicleId || isPassenger) {
       return;
     }
     // Refresh vehicle list so the newly added vehicle is available in state.
     void refreshVehicles().catch(() => undefined).finally(() => {
-      patchDraft({ vehicleId: selectVehicleId });
+      patchDraft({ vehicleId: selectVehicleId, vehicleClass: null });
       setStep('vehicleMode');
       navigation.setParams({ selectVehicleId: undefined });
     });
-  }, [navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
+  }, [isPassenger, navigation, patchDraft, refreshVehicles, route.params?.selectVehicleId]);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
@@ -96,20 +126,22 @@ export function TripCreationFlowScreen(): React.ReactElement {
   }, []);
 
   const goToNextStep = React.useCallback(() => {
-    const index = STEP_ORDER.indexOf(step);
-    if (index < STEP_ORDER.length - 1) {
-      goToStep(STEP_ORDER[index + 1]!);
+    const order = stepOrderForRole(isPassenger);
+    const index = order.indexOf(step);
+    if (index < order.length - 1) {
+      goToStep(order[index + 1]!);
     }
-  }, [goToStep, step]);
+  }, [goToStep, isPassenger, step]);
 
   const goToPreviousStep = React.useCallback(() => {
-    const index = STEP_ORDER.indexOf(step);
+    const order = stepOrderForRole(isPassenger);
+    const index = order.indexOf(step);
     if (index > 0) {
-      goToStep(STEP_ORDER[index - 1]!);
+      goToStep(order[index - 1]!);
       return true;
     }
     return false;
-  }, [goToStep, step]);
+  }, [goToStep, isPassenger, step]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -127,14 +159,14 @@ export function TripCreationFlowScreen(): React.ReactElement {
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (step === 'vehicle' || isLeavingRef.current) {
+      if (step === firstStepForRole(isPassenger) || isLeavingRef.current) {
         return;
       }
       event.preventDefault();
       goToPreviousStep();
     });
     return unsubscribe;
-  }, [navigation, step, goToPreviousStep]);
+  }, [navigation, step, goToPreviousStep, isPassenger]);
 
   const handlePublish = () => {
     if (isPublishing) {
@@ -144,7 +176,9 @@ export function TripCreationFlowScreen(): React.ReactElement {
     void publishDraft()
       .then((trip) => {
         if (!trip) {
-          setPublishError(t('trips.create.publishFailed'));
+          setPublishError(
+            t(isPassenger ? 'trips.create.publishRequestFailed' : 'trips.create.publishFailed'),
+          );
           return;
         }
         isLeavingRef.current = true;
@@ -154,7 +188,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
         });
       })
       .catch((error) => {
-        setPublishError(getErrorMessage(error, t('trips.create.publishFailed')));
+        setPublishError(
+          getErrorMessage(
+            error,
+            t(isPassenger ? 'trips.create.publishRequestFailed' : 'trips.create.publishFailed'),
+          ),
+        );
       });
   };
 
@@ -171,10 +210,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const header = React.useMemo(() => {
     switch (step) {
       case 'vehicle':
-        return {
-          title: t('trips.create.vehicleTitle'),
-          subtitle: t('trips.create.vehicleSubtitle'),
-        };
+        return isPassenger
+          ? {
+              title: t('trips.create.vehicleClassTitle'),
+              subtitle: t('trips.create.vehicleClassSubtitle'),
+            }
+          : {
+              title: t('trips.create.vehicleTitle'),
+              subtitle: t('trips.create.vehicleSubtitle'),
+            };
       case 'vehicleMode':
         return {
           title: t('trips.create.vehicleModeTitle'),
@@ -196,14 +240,19 @@ export function TripCreationFlowScreen(): React.ReactElement {
           subtitle: t('trips.create.scheduleSubtitle'),
         };
       case 'preview':
-        return {
-          title: t('trips.create.previewTitle'),
-          subtitle: t('trips.create.previewSubtitle'),
-        };
+        return isPassenger
+          ? {
+              title: t('trips.create.previewRequestTitle'),
+              subtitle: t('trips.create.previewRequestSubtitle'),
+            }
+          : {
+              title: t('trips.create.previewTitle'),
+              subtitle: t('trips.create.previewSubtitle'),
+            };
       default:
         return { title: t('trips.create.flowTitle'), subtitle: undefined };
     }
-  }, [step, t]);
+  }, [isPassenger, step, t]);
 
   const selectedVehicle = draft.vehicleId ? getVehicleById(draft.vehicleId) : undefined;
 
@@ -220,26 +269,46 @@ export function TripCreationFlowScreen(): React.ReactElement {
         showLegalFooter={false}
         showLanguageSwitcher={false}
         stepCount={TOTAL_STEPS}
-        currentStep={STEP_PROGRESS[step]}
+        currentStep={stepProgress(step, isPassenger)}
         scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
         {step === 'vehicle' ? (
-          <TripVehicleSelectStep
-            vehicles={vehicles}
-            isLoading={isLoadingVehicles}
-            selectedVehicleId={draft.vehicleId}
-            onSelectVehicle={(vehicleId) => {
-              patchDraft({ vehicleId });
-              goToNextStep();
-            }}
-            onAddVehicle={handleAddVehicle}
-          />
+          isPassenger ? (
+            <TripVehicleClassStep
+              value={draft.vehicleClass}
+              onChange={(vehicleClass) => {
+                patchDraft({ vehicleClass, vehicleId: null });
+              }}
+              onContinue={goToNextStep}
+            />
+          ) : (
+            <TripVehicleSelectStep
+              vehicles={vehicles}
+              isLoading={isLoadingVehicles}
+              loadError={vehiclesLoadError}
+              onRetry={() => void refreshVehicles().catch(() => undefined)}
+              selectedVehicleId={draft.vehicleId}
+              onSelectVehicle={(vehicleId) => {
+                patchDraft({ vehicleId, vehicleClass: null });
+                goToNextStep();
+              }}
+              onAddVehicle={handleAddVehicle}
+            />
+          )
         ) : null}
 
         {step === 'vehicleMode' ? (
           <TripVehicleModeStep
             value={draft.vehicleMode}
-            onChange={(vehicleMode) => patchDraft({ vehicleMode })}
+            onChange={(vehicleMode) =>
+              patchDraft({
+                vehicleMode,
+                // Auctions are private-only — drop auction if switching to shared.
+                ...(vehicleMode === 'shared' && draft.listingType === 'auction'
+                  ? { listingType: 'rfq', durationHours: 24 }
+                  : {}),
+              })
+            }
             onContinue={goToNextStep}
           />
         ) : null}

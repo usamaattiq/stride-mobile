@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { DurationSlider } from '@/features/dashboard/components/trip/DurationSlider';
+import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type {
   TripDraft,
   TripListingType,
@@ -82,12 +84,21 @@ function SelectCard({
   );
 }
 
-function isListingComplete(draft: TripDraft): boolean {
+function isListingComplete(draft: TripDraft, requirePrice: boolean, requireSeats: boolean): boolean {
+  const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
+  const seatsValid =
+    Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
   return Boolean(
     draft.listingType &&
       draft.paymentMethod &&
-      draft.startingPrice.trim().length > 0,
+      (!requirePrice || draft.startingPrice.trim().length > 0) &&
+      (!requireSeats || seatsValid),
   );
+}
+
+function parseTripSeats(value: string): number {
+  const seats = Number.parseInt(value.trim(), 10);
+  return Number.isInteger(seats) && seats >= 1 ? seats : 1;
 }
 
 export function TripRfqAuctionStep({
@@ -96,6 +107,9 @@ export function TripRfqAuctionStep({
   onContinue,
 }: TripRfqAuctionStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
+  const auctionAllowed = draft.vehicleMode === 'fullPrivate';
 
   const listingOptions: Array<{
     id: TripListingType;
@@ -113,14 +127,24 @@ export function TripRfqAuctionStep({
         <MaterialCommunityIcons name="file-document-outline" size={18} color={colors.primary} />
       ),
     },
-    {
-      id: 'auction',
-      title: t('trips.create.listingAuction'),
-      description: t('trips.create.listingAuctionHint'),
-      icon: <FontAwesome5 name="gavel" size={15} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome5 name="gavel" size={15} color={colors.primary} />,
-    },
+    ...(auctionAllowed
+      ? [
+          {
+            id: 'auction' as const,
+            title: t('trips.create.listingAuction'),
+            description: t('trips.create.listingAuctionHint'),
+            icon: <FontAwesome5 name="gavel" size={15} color={colors.text.tertiary} />,
+            selectedIcon: <FontAwesome5 name="gavel" size={15} color={colors.primary} />,
+          },
+        ]
+      : []),
   ];
+
+  React.useEffect(() => {
+    if (!auctionAllowed && draft.listingType === 'auction') {
+      onChange({ listingType: 'rfq', durationHours: 24 });
+    }
+  }, [auctionAllowed, draft.listingType, onChange]);
 
   const paymentOptions: Array<{
     id: TripPaymentMethod;
@@ -161,25 +185,51 @@ export function TripRfqAuctionStep({
               <SelectCard
                 key={option.id}
                 selected={draft.listingType === option.id}
-                onPress={() => onChange({ listingType: option.id })}
+                onPress={() =>
+                  onChange({
+                    listingType: option.id,
+                    // RFQ uses RMS default expiry (24h) — no user duration control.
+                    ...(option.id === 'rfq' ? { durationHours: 24 } : {}),
+                  })
+                }
                 title={option.title}
                 description={option.description}
                 icon={option.icon}
                 selectedIcon={option.selectedIcon}
               />
             ))}
+            {!auctionAllowed ? <View style={styles.listingCardSpacer} /> : null}
           </View>
         </View>
 
-        <AuthTextField
-          label={t('trips.create.startingPrice')}
-          required
-          value={draft.startingPrice}
-          onChangeText={(startingPrice) => onChange({ startingPrice })}
-          placeholder={t('trips.create.startingPricePlaceholder')}
-          keyboardType="decimal-pad"
-          dense
-        />
+        {!isPassenger ? (
+          <AuthTextField
+            label={t(
+              draft.vehicleMode === 'fullPrivate'
+                ? 'trips.create.startingPriceFullVehicle'
+                : 'trips.create.startingPrice',
+            )}
+            required
+            value={draft.startingPrice}
+            onChangeText={(startingPrice) => onChange({ startingPrice })}
+            placeholder={t(
+              draft.vehicleMode === 'fullPrivate'
+                ? 'trips.create.startingPriceFullVehiclePlaceholder'
+                : 'trips.create.startingPricePlaceholder',
+            )}
+            keyboardType="decimal-pad"
+            dense
+          />
+        ) : (
+          <SeatsStepper
+            label={t('trips.create.seats')}
+            required
+            value={parseTripSeats(draft.seats)}
+            min={1}
+            max={50}
+            onChange={(seats) => onChange({ seats: String(seats) })}
+          />
+        )}
 
         <View style={styles.section}>
           <AppText weight="medium" style={styles.sectionLabel}>
@@ -202,16 +252,18 @@ export function TripRfqAuctionStep({
           <AppText style={styles.helperText}>{t('trips.create.paymentMethodHint')}</AppText>
         </View>
 
-        <DurationSlider
-          label={t('trips.create.durationLabel')}
-          value={draft.durationHours}
-          onChange={(durationHours) => onChange({ durationHours })}
-        />
+        {draft.listingType === 'auction' ? (
+          <DurationSlider
+            label={t('trips.create.durationLabel')}
+            value={draft.durationHours}
+            onChange={(durationHours) => onChange({ durationHours })}
+          />
+        ) : null}
 
         <Button
           label={t('common.continue')}
           onPress={onContinue}
-          disabled={!isListingComplete(draft)}
+          disabled={!isListingComplete(draft, !isPassenger, isPassenger)}
         />
       </View>
     </AuthCard>
@@ -236,6 +288,9 @@ const styles = StyleSheet.create({
   cardsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  listingCardSpacer: {
+    flex: 1,
   },
   selectCard: {
     flex: 1,

@@ -32,6 +32,16 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     description: dto.description ?? null,
     publishedAt: dto.publishedAt,
     rfqStatus: dto.rfqStatus ?? null,
+    auctionStatus: dto.auctionStatus ?? null,
+    auctionStatusLabel: dto.auctionStatusLabel ?? null,
+    auctionStatusVariant: dto.auctionStatusVariant ?? null,
+    auctionRemainingSeconds: dto.auctionRemainingSeconds ?? null,
+    myOfferStatus: dto.myOfferStatus ?? null,
+    myOfferPrice: dto.myOfferPrice ?? null,
+    myBidStatus: dto.myBidStatus ?? null,
+    myBidAmount: dto.myBidAmount ?? null,
+    counterpartyName: dto.counterpartyName ?? null,
+    counterpartyPhone: dto.counterpartyPhone ?? null,
   };
 }
 
@@ -42,7 +52,10 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
   }
 
   return {
-    vehicleId: preview.vehicleId,
+    ...(preview.vehicleId ? { vehicleId: preview.vehicleId } : {}),
+    ...(preview.vehicleClass && !preview.vehicleId
+      ? { vehicleClass: preview.vehicleClass }
+      : {}),
     vehicleMode: preview.vehicleMode,
     departureCity: preview.departureCity,
     departurePoint: preview.departurePoint,
@@ -52,7 +65,10 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
     arrivalPoint: preview.arrivalPoint,
     arrivalAt: preview.arrivalAt,
     listingType: preview.listingType,
-    startingPrice: preview.startingPrice!,
+    ...(preview.startingPrice ? { startingPrice: preview.startingPrice } : {}),
+    ...(preview.vehicleClass && !preview.vehicleId && preview.vehicleTotalSeats != null
+      ? { seats: preview.vehicleTotalSeats }
+      : {}),
     paymentMethod: preview.paymentMethod,
     durationHours: preview.durationHours,
     startMode: preview.startMode,

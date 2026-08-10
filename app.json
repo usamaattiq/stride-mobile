@@ -4,6 +4,7 @@
     "slug": "musafir249",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "musafir249",
     "icon": "./assets/splash-logo.png",
     "userInterfaceStyle": "light",
     "splash": {
@@ -49,9 +50,7 @@
         "android.permission.USE_FINGERPRINT",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.silveraxisltd.musafir249",
-      "usesCleartextTraffic": true,
-      "googleServicesFile": "./google-services.json"
+      "package": "com.silveraxisltd.musafir249"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -115,7 +114,6 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/splash-logo.png",
           "color": "#B42318"
         }
       ]

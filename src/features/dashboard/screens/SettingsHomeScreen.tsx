@@ -12,6 +12,7 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { authApi } from '@/services/api/authApi';
 import { getErrorMessage } from '@/services/api/errorMessage';
+import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
@@ -31,6 +32,7 @@ import {
   type SettingsMenuItem,
 } from '../constants/settingsMenu';
 import { useDashboardSession } from '../context/DashboardSessionContext';
+import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
@@ -57,7 +59,10 @@ export function SettingsHomeScreen(): React.ReactElement {
   } = useDashboardSession();
   const { resetDraft } = useSignupDraftStore();
   const navigation = useNavigation<SettingsNav>();
-  const rootNavigation = navigation.getParent()?.getParent() as
+  const dashboardRootNavigation = navigation.getParent()?.getParent() as
+    | NativeStackNavigationProp<DashboardRootStackParamList>
+    | undefined;
+  const authRootNavigation = dashboardRootNavigation?.getParent() as
     | NativeStackNavigationProp<AuthStackParamList>
     | undefined;
 
@@ -112,12 +117,15 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const handleLogout = () => {
     setDialog(null);
-    void authApi.logout().catch(() => undefined);
-    void useAuthStore.getState().signOut();
-    useProfileStore.getState().clearProfile();
-    resetDraft();
-    resetSession();
-    rootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    void (async () => {
+      await unregisterPushNotifications();
+      await authApi.logout().catch(() => undefined);
+      await useAuthStore.getState().signOut();
+      useProfileStore.getState().clearProfile();
+      resetDraft();
+      resetSession();
+      authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    })();
   };
 
   const closeRoleDialog = () => {
@@ -187,9 +195,6 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'general-info':
         navigation.navigate('GeneralInformation');
         break;
-      case 'nic-verification':
-        navigation.navigate('NicVerification');
-        break;
       case 'become-driver':
         navigation.navigate('DriverVerification', { purpose: 'become' });
         break;
@@ -200,6 +205,9 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'switch-passenger':
         setSwitchRoleError(null);
         setDialog('passenger');
+        break;
+      case 'manage-vehicles':
+        dashboardRootNavigation?.navigate('ManageVehicles');
         break;
       default:
         break;

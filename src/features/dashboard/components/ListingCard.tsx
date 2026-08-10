@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,14 +7,16 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { i18n as appI18n } from '@/i18n';
-import type { RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
+import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
-import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { VEHICLE_CLASS_ICONS, VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 
@@ -38,15 +40,50 @@ function formatTripWhen(trip: Trip, locale: string): string {
   return `${day} at ${time}`;
 }
 
-const RFQ_STATUS_TONE: Record<RfqStatusValue, 'green' | 'blue' | 'muted'> = {
-  draft: 'muted',
-  scheduled: 'muted',
+type StatusBadgeTone = 'green' | 'blue' | 'amber' | 'muted';
+
+const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   live: 'green',
-  awaiting_confirmation: 'blue',
+  'awaiting-confirmation': 'blue',
+  'offer-submitted': 'amber',
+  'awaiting-your-confirmation': 'blue',
+  confirmed: 'blue',
   completed: 'blue',
   closed: 'muted',
   expired: 'muted',
-  cancelled: 'muted',
+};
+
+const AUCTION_STATUS_TONE: Record<AuctionStatusValue, StatusBadgeTone> = {
+  'coming-soon': 'blue',
+  live: 'green',
+  'awaiting-confirmation': 'blue',
+  'awaiting-action': 'amber',
+  'awaiting-your-confirmation': 'blue',
+  declined: 'muted',
+  'timed-out': 'muted',
+  completed: 'blue',
+  closed: 'muted',
+  expired: 'muted',
+};
+
+const AUCTION_VARIANT_TONE: Record<
+  'muted' | 'accent' | 'warning' | 'success',
+  StatusBadgeTone
+> = {
+  muted: 'muted',
+  accent: 'green',
+  warning: 'amber',
+  success: 'blue',
+};
+
+const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
+  active: 'amber',
+  selected: 'blue',
+  confirmed: 'blue',
+  withdrawn: 'muted',
+  declined: 'muted',
+  timed_out: 'muted',
+  lapsed: 'muted',
 };
 
 function getExpiresAt(trip: Trip): number {
@@ -54,13 +91,37 @@ function getExpiresAt(trip: Trip): number {
 }
 
 function formatCountdown(remainingMs: number, t: TFunction): string {
-  const totalMinutes = Math.max(1, Math.floor(remainingMs / 60_000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
   if (hours > 0) {
     return t('dashboard.listings.card.timerHours', { hours, minutes });
   }
-  return t('dashboard.listings.card.timerMinutes', { minutes });
+  return t('dashboard.listings.card.timerMinutesSeconds', { minutes, seconds });
+}
+
+function RequestThumbnail({
+  vehicleClass,
+}: {
+  vehicleClass: VehicleClass | null;
+}): React.ReactElement {
+  const iconName = vehicleClass ? VEHICLE_CLASS_ICONS[vehicleClass] : 'car';
+
+  return (
+    <LinearGradient
+      colors={['#FFF8F7', '#FEE4E2', '#F9C6C0']}
+      locations={[0, 0.55, 1]}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.95, y: 1 }}
+      style={styles.requestThumb}
+    >
+      <View style={styles.requestThumbIconWell}>
+        <FontAwesome5 name={iconName} size={24} color={colors.primary} solid />
+      </View>
+    </LinearGradient>
+  );
 }
 
 export type ListingCardProps = {
@@ -83,10 +144,12 @@ export function ListingCard({
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
   const [now, setNow] = React.useState(() => Date.now());
+  const remainingMs = getExpiresAt(trip) - now;
+  const tickMs = remainingMs > 0 && remainingMs < 60 * 60_000 ? 1_000 : 30_000;
   React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
+    const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
-  }, []);
+  }, [tickMs]);
 
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = cityDisplayName(trip.arrivalCity.label);
@@ -106,23 +169,34 @@ export function ListingCard({
       : trip.vehicleMode === 'shared'
         ? t('trips.create.vehicleModeShared')
         : null;
-  const remainingMs = getExpiresAt(trip) - now;
   const active = remainingMs > 0;
   const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  // Auctions: use AMS display status/label as-is (never remap participant_status → "Bid active").
+  const useAuctionTag = trip.listingType === 'auction' && Boolean(trip.auctionStatus);
   const badgeState = pending
     ? 'pending'
-    : trip.rfqStatus
-      ? 'rfqStatus'
-      : active
-        ? 'active'
-        : 'ended';
+    : useAuctionTag
+      ? 'auctionStatus'
+      : trip.myOfferStatus
+        ? 'myOfferStatus'
+        : trip.rfqStatus
+          ? 'rfqStatus'
+          : active
+            ? 'active'
+            : 'ended';
   const badgeTone = pending
     ? 'muted'
-    : trip.rfqStatus
-      ? RFQ_STATUS_TONE[trip.rfqStatus]
-      : active
-        ? 'green'
-        : 'muted';
+    : useAuctionTag && trip.auctionStatus
+      ? trip.auctionStatusVariant
+        ? AUCTION_VARIANT_TONE[trip.auctionStatusVariant]
+        : AUCTION_STATUS_TONE[trip.auctionStatus]
+      : trip.myOfferStatus
+        ? OFFER_STATUS_TONE[trip.myOfferStatus]
+        : trip.rfqStatus
+          ? RFQ_STATUS_TONE[trip.rfqStatus]
+          : active
+            ? 'green'
+            : 'muted';
   const photoTotal = Math.max(trip.vehiclePhotoCount, trip.vehiclePhotoUrl ? 1 : 0);
   const galleryImages = trip.vehiclePhotoUrls.length
     ? trip.vehiclePhotoUrls
@@ -130,7 +204,15 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const price = trip.startingPrice?.trim() || null;
+  const offerPrice =
+    trip.myBidAmount != null
+      ? String(trip.myBidAmount)
+      : trip.myOfferPrice?.trim() || null;
+  const price =
+    offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
+  const isPassengerRequest = trip.vehicleId == null;
+  // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
+  const showCountdown = pending || active;
   const listingLabel =
     trip.listingType === 'auction'
       ? t('trips.create.listingAuction')
@@ -183,6 +265,7 @@ export function ListingCard({
           style={[
             styles.timerBadge,
             badgeTone === 'blue' && styles.timerBadgeBlue,
+            badgeTone === 'amber' && styles.timerBadgeAmber,
             badgeTone === 'muted' && styles.timerBadgeEnded,
           ]}
         >
@@ -194,7 +277,9 @@ export function ListingCard({
                 ? colors.accent.green.text
                 : badgeTone === 'blue'
                   ? colors.accent.blue.text
-                  : colors.text.secondary
+                  : badgeTone === 'amber'
+                    ? colors.accent.amber.text
+                    : colors.text.secondary
             }
           />
           <AppText
@@ -202,17 +287,23 @@ export function ListingCard({
             style={[
               styles.timerText,
               badgeTone === 'blue' && styles.timerTextBlue,
+              badgeTone === 'amber' && styles.timerTextAmber,
               badgeTone === 'muted' && styles.timerTextEnded,
             ]}
             numberOfLines={1}
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'rfqStatus'
-                ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
-                : badgeState === 'active'
-                  ? t('dashboard.listings.card.active')
-                  : t('dashboard.listings.card.ended')}
+              : badgeState === 'auctionStatus'
+                ? trip.auctionStatusLabel?.trim() ||
+                  t(`dashboard.listings.card.auctionStatus.${trip.auctionStatus}`)
+                : badgeState === 'myOfferStatus'
+                  ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
+                  : badgeState === 'rfqStatus'
+                    ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                    : badgeState === 'active'
+                      ? t('dashboard.listings.card.active')
+                      : t('dashboard.listings.card.ended')}
           </AppText>
         </View>
       </View>
@@ -231,6 +322,8 @@ export function ListingCard({
               style={styles.thumbnailImage}
               contentFit="cover"
             />
+          ) : isPassengerRequest ? (
+            <RequestThumbnail vehicleClass={trip.vehicleClass} />
           ) : (
             <View style={styles.thumbnailFallback}>
               <FontAwesome name="car" size={18} color={colors.text.tertiary} />
@@ -296,12 +389,26 @@ export function ListingCard({
                   </AppText>
                 </View>
               ) : null}
-              {classLabel || seatsLabel ? (
-                <View style={styles.metaRow}>
-                  <FontAwesome name="car" size={11} color={colors.primary} />
-                  <AppText style={styles.metaText} numberOfLines={1}>
-                    {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
-                  </AppText>
+              {classLabel || seatsLabel || (!price && showCountdown) ? (
+                <View style={styles.vehicleTypeRow}>
+                  {classLabel || seatsLabel ? (
+                    <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
+                      <FontAwesome name="car" size={11} color={colors.primary} />
+                      <AppText style={styles.metaText} numberOfLines={1}>
+                        {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
+                      </AppText>
+                    </View>
+                  ) : (
+                    <View style={styles.vehicleTypeMeta} />
+                  )}
+                  {!price && showCountdown ? (
+                    <View style={styles.inlineCountdownBadge}>
+                      <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                      <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                        {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                      </AppText>
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -311,16 +418,18 @@ export function ListingCard({
                 <AppText weight="bold" style={styles.priceAmount}>
                   {price}
                 </AppText>
-                <AppText style={styles.priceSuffix}>
-                  {t('dashboard.listings.pricePerSeatSuffix')}
-                </AppText>
+                {trip.vehicleMode === 'shared' ? (
+                  <AppText style={styles.priceSuffix}>
+                    {t('dashboard.listings.pricePerSeatSuffix')}
+                  </AppText>
+                ) : null}
               </View>
             ) : null}
           </View>
         </View>
       </View>
 
-      {!trip.rfqStatus && (pending || active) ? (
+      {price && showCountdown ? (
         <View style={styles.bottomRow}>
           <View style={styles.countdownBadge}>
             <FontAwesome name="clock-o" size={10} color={colors.primary} />
@@ -388,7 +497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.xs,
   },
   topBadges: {
@@ -431,6 +540,9 @@ const styles = StyleSheet.create({
   timerBadgeBlue: {
     backgroundColor: colors.accent.blue.soft,
   },
+  timerBadgeAmber: {
+    backgroundColor: colors.accent.amber.soft,
+  },
   timerText: {
     fontSize: 11,
     color: colors.accent.green.text,
@@ -441,18 +553,21 @@ const styles = StyleSheet.create({
   timerTextBlue: {
     color: colors.accent.blue.text,
   },
+  timerTextAmber: {
+    color: colors.accent.amber.text,
+  },
   mainRow: {
     flexDirection: 'row',
     // alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxs,
+    paddingBottom: spacing.sm,
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingBottom: spacing.xs,
   },
   countdownBadge: {
@@ -491,6 +606,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  requestThumb: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  requestThumbIconWell: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    shadowColor: '#7F1D1D',
+    shadowOpacity: 0.16,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   photoBadge: {
     position: 'absolute',
@@ -564,9 +698,37 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 3,
   },
+  vehicleTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  vehicleTypeMeta: {
+    flex: 1,
+    minWidth: 0,
+  },
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
+  },
+  inlineCountdownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 0,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    shadowColor: '#000000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   priceAmount: {
     fontSize: 22,

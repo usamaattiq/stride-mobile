@@ -50,7 +50,8 @@ export function VehicleProvider({
       const list = await vehicleApi.list();
       setVehicles(list.map(mapVehicleDtoToVehicle));
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Failed to load vehicles');
+      const message = error instanceof Error ? error.message : 'Failed to load vehicles';
+      setLoadError(message);
       throw error;
     } finally {
       setIsLoading(false);

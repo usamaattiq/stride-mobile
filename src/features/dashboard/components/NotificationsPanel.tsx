@@ -1,52 +1,129 @@
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { notificationsApi, type InboxNotificationDto } from '@/services/api/notificationsApi';
+import { handlePingDeepLink } from '@/services/pingDeepLinkRouting';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
-import { DEMO_NOTIFICATIONS } from '../constants/notifications';
 import type { AppNotification } from '../types/notifications.types';
 
-export const NotificationsPanel = React.memo(
-  function NotificationsPanel(): React.ReactElement {
-    const { t } = useTranslation(undefined, { i18n: appI18n });
+function formatRelativeTime(iso: string, locale: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 1) {
+    return 'now';
+  }
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  const days = Math.round(hours / 24);
+  if (days < 7) {
+    return `${days}d`;
+  }
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+}
 
-    const renderItem = React.useCallback(
-      ({ item }: { item: AppNotification }) => (
-        <NotificationRow notification={item} />
-      ),
-      [],
-    );
+function mapInboxItem(item: InboxNotificationDto, locale: string): AppNotification {
+  const kindRaw = item.data && typeof item.data.kind === 'string' ? item.data.kind : 'system';
+  const kind: AppNotification['kind'] =
+    kindRaw.includes('offer') || kindRaw.includes('bid') || kindRaw.includes('rfq')
+      ? 'offer'
+      : kindRaw.includes('confirm') || kindRaw.includes('booking')
+        ? 'booking'
+        : 'system';
 
-    return (
-      <FlatList
-        data={DEMO_NOTIFICATIONS}
-        keyExtractor={notificationKeyExtractor}
-        ListHeaderComponent={null}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <AppText weight="semibold" style={styles.emptyTitle}>
-              {t('dashboard.notifications.emptyTitle')}
-            </AppText>
-            <AppText style={styles.emptySubtitle}>
-              {t('dashboard.notifications.emptySubtitle')}
-            </AppText>
-          </View>
-        }
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={NotificationSeparator}
-        showsVerticalScrollIndicator={false}
-        removeClippedSubviews
-        initialNumToRender={8}
-        windowSize={7}
-      />
-    );
-  },
-);
+  return {
+    id: item.id,
+    title: item.title,
+    body: item.body,
+    timeLabel: formatRelativeTime(item.createdAt, locale),
+    unread: !item.isRead,
+    kind,
+    deepLink: item.deepLink,
+  };
+}
+
+export const NotificationsPanel = React.memo(function NotificationsPanel(): React.ReactElement {
+  const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const [items, setItems] = React.useState<AppNotification[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await notificationsApi.listInbox({ limit: 50 });
+      setItems(result.items.map((row) => mapInboxItem(row, i18n.language)));
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [i18n.language]);
+
+  React.useEffect(() => {
+    void load();
+  }, [load]);
+
+  const onPress = React.useCallback(async (notification: AppNotification) => {
+    if (notification.unread) {
+      void notificationsApi.markRead(notification.id).catch(() => undefined);
+      setItems((prev) =>
+        prev.map((row) => (row.id === notification.id ? { ...row, unread: false } : row)),
+      );
+    }
+    if (notification.deepLink) {
+      handlePingDeepLink(notification.deepLink);
+    }
+  }, []);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: AppNotification }) => (
+      <NotificationRow notification={item} onPress={onPress} />
+    ),
+    [onPress],
+  );
+
+  return (
+    <FlatList
+      data={items}
+      keyExtractor={notificationKeyExtractor}
+      ListHeaderComponent={null}
+      ListEmptyComponent={
+        <View style={styles.empty}>
+          <AppText weight="semibold" style={styles.emptyTitle}>
+            {t('dashboard.notifications.emptyTitle')}
+          </AppText>
+          <AppText style={styles.emptySubtitle}>
+            {t('dashboard.notifications.emptySubtitle')}
+          </AppText>
+        </View>
+      }
+      renderItem={renderItem}
+      contentContainerStyle={styles.listContent}
+      ItemSeparatorComponent={NotificationSeparator}
+      showsVerticalScrollIndicator={false}
+      removeClippedSubviews
+      initialNumToRender={8}
+      windowSize={7}
+      refreshing={loading}
+      onRefresh={() => {
+        void load();
+      }}
+    />
+  );
+});
 
 function notificationKeyExtractor(item: AppNotification): string {
   return item.id;
@@ -54,8 +131,10 @@ function notificationKeyExtractor(item: AppNotification): string {
 
 const NotificationRow = React.memo(function NotificationRow({
   notification,
+  onPress,
 }: {
   notification: AppNotification;
+  onPress: (item: AppNotification) => void;
 }): React.ReactElement {
   const iconName =
     notification.kind === 'offer'
@@ -65,7 +144,10 @@ const NotificationRow = React.memo(function NotificationRow({
         : 'bell';
 
   return (
-    <View style={[styles.card, notification.unread && styles.cardUnread]}>
+    <Pressable
+      onPress={() => onPress(notification)}
+      style={({ pressed }) => [styles.card, notification.unread && styles.cardUnread, pressed && styles.pressed]}
+    >
       <View style={styles.iconWrap}>
         <FontAwesome5 name={iconName} size={14} color={colors.primary} solid />
       </View>
@@ -81,7 +163,7 @@ const NotificationRow = React.memo(function NotificationRow({
         </AppText>
       </View>
       {notification.unread ? <View style={styles.unreadDot} /> : null}
-    </View>
+    </Pressable>
   );
 });
 
@@ -109,6 +191,9 @@ const styles = StyleSheet.create({
   cardUnread: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.primaryMuted,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   iconWrap: {
     width: 36,

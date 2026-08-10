@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   View,
 } from 'react-native';
@@ -12,6 +13,7 @@ import { spacing, colors } from '@/theme';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 
 import { FeedPaginationBar } from './FeedPaginationBar';
 import { ListingCard } from './ListingCard';
@@ -44,6 +46,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
   const [trips, setTrips] = React.useState<Trip[]>([]);
   const [totalPages, setTotalPages] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
+  const hasLoadedOnceRef = React.useRef(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const [pendingFilters, setPendingFilters] = React.useState<TripBrowseFilters>(EMPTY_TRIP_BROWSE_FILTERS);
@@ -54,7 +57,9 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
   }, [query]);
 
   const loadTrips = React.useCallback(async () => {
-    setIsLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setIsLoading(true);
+    }
     setLoadError(null);
     try {
       const result = await tripApi.browse({
@@ -78,6 +83,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
       setTrips([]);
       setTotalPages(0);
     } finally {
+      hasLoadedOnceRef.current = true;
       setIsLoading(false);
     }
   }, [category, debouncedQuery, filters, page]);
@@ -87,6 +93,8 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
       void loadTrips();
     }, [loadTrips]),
   );
+
+  const { refreshControlProps } = usePullToRefresh(loadTrips);
 
   React.useEffect(() => {
     setPage(1);
@@ -162,6 +170,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
         removeClippedSubviews
         initialNumToRender={PAGE_SIZE}
         windowSize={7}
+        refreshControl={<RefreshControl {...refreshControlProps} />}
       />
 
       <TripFilterSheet

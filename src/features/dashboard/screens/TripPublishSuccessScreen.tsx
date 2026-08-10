@@ -42,7 +42,9 @@ export function TripPublishSuccessScreen(): React.ReactElement {
   }, [badgeScale, contentOpacity]);
 
   const goToListings = React.useCallback(() => {
-    exitTripCreationToListings(navigation);
+    exitTripCreationToListings(navigation, {
+      screen: 'MyListings',
+    });
   }, [navigation]);
 
   // Hardware back should behave the same as the CTA — there's nothing to go

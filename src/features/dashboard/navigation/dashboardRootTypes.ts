@@ -22,8 +22,9 @@ export type DashboardRootStackParamList = {
   MainTabs: NavigatorScreenParams<DashboardTabParamList> | undefined;
   TripCreation: TripCreationParams | undefined;
   TripPublishSuccess: undefined;
+  ManageVehicles: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
-  ListingDetail: { tripId: string };
+  ListingDetail: { tripId: string; selectVehicleId?: string };
   SearchResults: SearchResultsParams;
 };
