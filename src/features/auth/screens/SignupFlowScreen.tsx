@@ -9,6 +9,7 @@ import { authApi } from '@/services/api/authApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
+import { registerForPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
@@ -199,6 +200,7 @@ export function SignupFlowScreen(): React.ReactElement {
 
       await useAuthStore.getState().setAuthenticated(result.accessToken);
       useProfileStore.getState().setProfile(result.profile);
+      void registerForPushNotifications();
 
       const devicePrefs = useDevicePrefsStore.getState();
       await devicePrefs.setLastPhone({

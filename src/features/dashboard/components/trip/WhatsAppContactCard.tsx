@@ -14,12 +14,23 @@ export type WhatsAppContactCardProps = {
   /** Header icon — defaults to user. */
   icon?: React.ComponentProps<typeof FontAwesome>['name'];
   name: string | null;
-  phone: string;
+  /** When set, WhatsApp is shown. Omit until contact exchange (confirm). */
+  phone?: string | null;
   /** Prefill text for WhatsApp. */
   message: string;
+  /** Opens in-app 1:1 chat (available once an offer/bid is in play). */
+  onMessagePress?: () => void;
 };
 
 const WHATSAPP_GREEN = '#25D366';
+
+function displayInitial(name: string | null | undefined): string {
+  const trimmed = name?.trim() ?? '';
+  if (!trimmed) {
+    return '?';
+  }
+  return trimmed.charAt(0).toUpperCase();
+}
 
 export function WhatsAppContactCard({
   title,
@@ -27,11 +38,19 @@ export function WhatsAppContactCard({
   name,
   phone,
   message,
+  onMessagePress,
 }: WhatsAppContactCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const phoneValue = phone?.trim() || null;
+  const showWhatsApp = Boolean(phoneValue);
+  const displayName = name?.trim() || null;
+  const initial = displayInitial(displayName);
 
   const openChat = () => {
-    void openWhatsAppChat(phone, message).catch(() => undefined);
+    if (!phoneValue) {
+      return;
+    }
+    void openWhatsAppChat(phoneValue, message).catch(() => undefined);
   };
 
   return (
@@ -45,35 +64,51 @@ export function WhatsAppContactCard({
 
       <View style={styles.identity}>
         <View style={styles.avatar}>
-          <FontAwesome name="user" size={16} color={colors.primary} />
+          <AppText weight="bold" style={styles.avatarInitial}>
+            {initial}
+          </AppText>
         </View>
         <View style={styles.copy}>
-          {name ? (
-            <AppText weight="semibold" style={styles.name} numberOfLines={1}>
-              {name}
-            </AppText>
-          ) : (
-            <AppText weight="semibold" style={styles.name} numberOfLines={1}>
-              {t('dashboard.listings.detail.contact.fallbackName')}
-            </AppText>
-          )}
+          <AppText weight="semibold" style={styles.name} numberOfLines={1}>
+            {displayName ?? t('dashboard.listings.detail.contact.fallbackName')}
+          </AppText>
           <AppText style={styles.hint} numberOfLines={1}>
-            {t('dashboard.listings.detail.contact.whatsappHint')}
+            {showWhatsApp
+              ? t('dashboard.listings.detail.contact.whatsappHint')
+              : t('dashboard.listings.detail.contact.chatHint')}
           </AppText>
         </View>
       </View>
 
-      <Pressable
-        onPress={openChat}
-        style={styles.whatsappButton}
-        accessibilityRole="button"
-        accessibilityLabel={t('dashboard.listings.detail.contact.whatsappA11y', { phone })}
-      >
-        <FontAwesome5 name="whatsapp" size={18} color={colors.white} brand />
-        <AppText weight="semibold" style={styles.whatsappLabel} numberOfLines={1}>
-          {phone}
-        </AppText>
-      </Pressable>
+      {onMessagePress ? (
+        <Pressable
+          onPress={onMessagePress}
+          style={styles.messageButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+        >
+          <FontAwesome name="comment" size={16} color={colors.white} />
+          <AppText weight="semibold" style={styles.messageLabel} numberOfLines={1}>
+            {t('dashboard.listings.detail.contact.message')}
+          </AppText>
+        </Pressable>
+      ) : null}
+
+      {showWhatsApp ? (
+        <Pressable
+          onPress={openChat}
+          style={styles.whatsappButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.listings.detail.contact.whatsappA11y', {
+            phone: phoneValue,
+          })}
+        >
+          <FontAwesome5 name="whatsapp" size={18} color={colors.white} brand />
+          <AppText weight="semibold" style={styles.whatsappLabel} numberOfLines={1}>
+            {phoneValue}
+          </AppText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -109,6 +144,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarInitial: {
+    fontSize: 15,
+    color: colors.primary,
+  },
   copy: {
     flex: 1,
     minWidth: 0,
@@ -121,6 +160,22 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     color: colors.text.secondary,
+  },
+  messageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+  },
+  messageLabel: {
+    flexShrink: 1,
+    fontSize: 14,
+    color: colors.white,
   },
   whatsappButton: {
     flexDirection: 'row',

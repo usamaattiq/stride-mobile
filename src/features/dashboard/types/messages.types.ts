@@ -1,9 +1,15 @@
-export type MessageContextKind = 'request' | 'booking' | 'listing';
+export type MessageContextKind = 'rfq' | 'auction';
 
 export type MessageAvatarTone = 'purple' | 'green' | 'pink' | 'blue';
 
 export type HomeMessage = {
   id: string;
+  tripId: string;
+  listingType: 'rfq' | 'auction';
+  offerId: string | null;
+  counterpartyId: string;
+  counterpartyRole: 'passenger' | 'driver' | null;
+  viewerIsOwner: boolean;
   senderName: string;
   preview: string;
   timeLabel: string;

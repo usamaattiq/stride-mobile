@@ -1,9 +1,10 @@
 ﻿import { Alert } from 'react-native';
 
 import { i18n as appI18n } from '@/i18n';
+import { resetToWelcome } from '@/navigation/navigationRef';
+import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { authStore } from '@/store/authStore';
 import { profileStore } from '@/store/profileStore';
-import { resetToWelcome } from '@/navigation/navigationRef';
 
 let handling = false;
 
@@ -20,6 +21,7 @@ export const sessionRevokedHandler = {
     handling = true;
 
     try {
+      await unregisterPushNotifications();
       await authStore.signOut();
       profileStore.clearProfile();
       resetToWelcome();

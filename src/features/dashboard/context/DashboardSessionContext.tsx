@@ -60,6 +60,7 @@ type DashboardSessionContextValue = {
   hasDriverVerification: boolean;
   /** Local-only override (DEV shortcuts). Prefer becomeDriver / switchToPassenger. */
   setRole: (role: AppRole) => void;
+  setHasUnreadMessages: (hasUnread: boolean) => void;
   becomeDriver: (input: BecomeDriverInput) => Promise<void>;
   switchToDriver: () => Promise<void>;
   switchToPassenger: () => Promise<void>;
@@ -159,6 +160,14 @@ export function DashboardSessionProvider({
 
   const setRole = React.useCallback((role: AppRole) => {
     setLocalOverrides((current) => ({ ...current, role }));
+  }, []);
+
+  const setHasUnreadMessages = React.useCallback((hasUnreadMessages: boolean) => {
+    setLocalOverrides((current) =>
+      current.hasUnreadMessages === hasUnreadMessages
+        ? current
+        : { ...current, hasUnreadMessages },
+    );
   }, []);
 
   const becomeDriver = React.useCallback(
@@ -262,6 +271,7 @@ export function DashboardSessionProvider({
       user,
       hasDriverVerification,
       setRole,
+      setHasUnreadMessages,
       becomeDriver,
       switchToDriver,
       switchToPassenger,
@@ -275,6 +285,7 @@ export function DashboardSessionProvider({
       user,
       hasDriverVerification,
       setRole,
+      setHasUnreadMessages,
       becomeDriver,
       switchToDriver,
       switchToPassenger,

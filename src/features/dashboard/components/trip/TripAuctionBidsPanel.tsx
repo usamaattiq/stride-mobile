@@ -18,6 +18,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
+import { TripMessagingSheet } from './TripMessagingSheet';
 import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripAuctionBidsPanelProps = {
@@ -38,6 +39,7 @@ export function TripAuctionBidsPanel({
   const [acting, setActing] = React.useState(false);
   const [confirmClose, setConfirmClose] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
+  const [chatTarget, setChatTarget] = React.useState<AuctionParticipantRank | null>(null);
 
   const whatsappMessage = isPassengerRequest
     ? t('dashboard.listings.detail.contact.messageAsPassenger')
@@ -130,11 +132,8 @@ export function TripAuctionBidsPanel({
     return <View />;
   }
 
-  const confirmedRow = snapshot.ranking.find(
-    (row) => row.participantId === snapshot.confirmedParticipantId,
-  );
-  // Contact only after confirm — never while selected and still awaiting confirmation.
-  const contactRow: AuctionParticipantRank | undefined = confirmedRow;
+  const isAwaiting =
+    snapshot.status === 'awaiting_confirmation' || snapshot.status === 'awaiting_action';
 
   return (
     <View style={styles.root}>
@@ -208,6 +207,11 @@ export function TripAuctionBidsPanel({
           {snapshot.ranking.map((row) => {
             const isSelected = row.participantId === snapshot.selectedParticipantId;
             const isConfirmed = row.participantId === snapshot.confirmedParticipantId;
+            const showMessage =
+              snapshot.status === 'live' ||
+              (isAwaiting && isSelected) ||
+              (isConfirmed && Boolean(row.participantPhone));
+
             return (
               <View key={row.participantId} style={styles.bidCard}>
                 {row.vehicle ? (
@@ -251,20 +255,30 @@ export function TripAuctionBidsPanel({
                     amount: row.peakAmount,
                   })}
                 </AppText>
+
+                {showMessage ? (
+                  <WhatsAppContactCard
+                    title={contactTitle}
+                    name={row.participantName ?? null}
+                    phone={row.participantPhone}
+                    message={whatsappMessage}
+                    onMessagePress={() => setChatTarget(row)}
+                  />
+                ) : null}
               </View>
             );
           })}
         </View>
       )}
 
-      {contactRow?.participantPhone ? (
-        <WhatsAppContactCard
-          title={contactTitle}
-          name={contactRow.participantName ?? null}
-          phone={contactRow.participantPhone}
-          message={whatsappMessage}
-        />
-      ) : null}
+      <TripMessagingSheet
+        visible={chatTarget != null}
+        onClose={() => setChatTarget(null)}
+        tripId={tripId}
+        counterpartyId={chatTarget?.participantId}
+        counterpartyName={chatTarget?.participantName ?? null}
+        counterpartyRole={isPassengerRequest ? 'driver' : 'passenger'}
+      />
 
       <AppDialog
         visible={confirmClose}
@@ -344,7 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.subtle,
     borderRadius: radius.lg,
     padding: spacing.md,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   bidHeaderRow: {
     flexDirection: 'row',

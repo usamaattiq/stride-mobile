@@ -1,0 +1,88 @@
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+
+import { notificationsApi } from '@/services/api/notificationsApi';
+import { getDeviceId } from '@/services/deviceId';
+import { secureStorage } from '@/services/storage/secureStorage';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+function resolveProjectId(): string | undefined {
+  const eas = Constants.easConfig?.projectId;
+  if (typeof eas === 'string' && eas.length > 0) {
+    return eas;
+  }
+  const extra = Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined;
+  return extra?.eas?.projectId;
+}
+
+/**
+ * Requests permission, obtains an Expo push token, and registers it with stride-api → Ping.
+ * Safe to call multiple times; failures are logged and never thrown to callers.
+ */
+export async function registerForPushNotifications(): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    const current = await Notifications.getPermissionsAsync();
+    let status = current.status;
+    if (status !== 'granted') {
+      const requested = await Notifications.requestPermissionsAsync();
+      status = requested.status;
+    }
+    if (status !== 'granted') {
+      return;
+    }
+
+    const projectId = resolveProjectId();
+    const tokenResponse = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined,
+    );
+    const token = tokenResponse.data;
+    if (!token) {
+      return;
+    }
+
+    const deviceId = await getDeviceId();
+    await notificationsApi.registerDeviceToken({
+      token,
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      deviceId,
+    });
+    await secureStorage.setPushToken(token);
+  } catch (error) {
+    console.warn('[push] Failed to register device token', error);
+  }
+}
+
+/** Unregisters the last known Expo token from Ping via the BFF (call on logout). */
+export async function unregisterPushNotifications(): Promise<void> {
+  try {
+    const token = await secureStorage.getPushToken();
+    if (!token) {
+      return;
+    }
+    await notificationsApi.unregisterDeviceToken(token);
+    await secureStorage.clearPushToken();
+  } catch (error) {
+    console.warn('[push] Failed to unregister device token', error);
+  }
+}
+
+export function resolveDeepLinkFromNotificationData(
+  data: Record<string, unknown> | undefined,
+): string | null {
+  const value = data?.deepLink;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}

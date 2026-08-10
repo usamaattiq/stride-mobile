@@ -5,4 +5,5 @@ export type AppNotification = {
   timeLabel: string;
   unread: boolean;
   kind: 'offer' | 'booking' | 'system';
+  deepLink?: string;
 };

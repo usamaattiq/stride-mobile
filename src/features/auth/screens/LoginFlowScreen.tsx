@@ -9,6 +9,7 @@ import { authApi } from '@/services/api/authApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
+import { registerForPushNotifications } from '@/services/pushNotifications';
 import type { UserProfileDto } from '@/services/api/authApi.types';
 import { useAuthStore } from '@/store/authStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
@@ -162,6 +163,7 @@ export function LoginFlowScreen(): React.ReactElement {
     // biometric login on the very next sign-in (not only after a second login).
     await devicePrefs.setCachedMpin(usedMpin);
     await devicePrefs.setBiometricEnabled(profile.biometricEnabled);
+    void registerForPushNotifications();
 
     Keyboard.dismiss();
     isLeavingRef.current = true;
