@@ -12,6 +12,7 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { authApi } from '@/services/api/authApi';
 import { getErrorMessage } from '@/services/api/errorMessage';
+import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
@@ -116,12 +117,15 @@ export function SettingsHomeScreen(): React.ReactElement {
 
   const handleLogout = () => {
     setDialog(null);
-    void authApi.logout().catch(() => undefined);
-    void useAuthStore.getState().signOut();
-    useProfileStore.getState().clearProfile();
-    resetDraft();
-    resetSession();
-    authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    void (async () => {
+      await unregisterPushNotifications();
+      await authApi.logout().catch(() => undefined);
+      await useAuthStore.getState().signOut();
+      useProfileStore.getState().clearProfile();
+      resetDraft();
+      resetSession();
+      authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    })();
   };
 
   const closeRoleDialog = () => {

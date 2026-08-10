@@ -11,6 +11,8 @@ import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
 import { isSessionRevokedError } from './src/services/api/apiError';
+import { usePingNotificationRouting } from './src/services/pingDeepLinkRouting';
+import { registerForPushNotifications } from './src/services/pushNotifications';
 import { authStore } from './src/store/authStore';
 import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
@@ -44,6 +46,8 @@ export default function App() {
   const [isI18nReady, setIsI18nReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts(appFontAssets);
   const [initialRouteName, setInitialRouteName] = useState<keyof AuthStackParamList | null>(null);
+
+  usePingNotificationRouting();
 
   useEffect(() => {
     let mounted = true;
@@ -96,6 +100,7 @@ export default function App() {
       try {
         const profile = await authApi.getMe();
         profileStore.setProfile(profile);
+        void registerForPushNotifications();
         if (mounted) {
           setInitialRouteName('Dashboard');
         }
