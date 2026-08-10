@@ -5,6 +5,7 @@ node_modules/
 !.env.example
 .expo/
 google-service-account.json
+google-services.json
 *.p8
 *.jks
 *.keystore
