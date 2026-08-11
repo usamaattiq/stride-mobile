@@ -56,10 +56,12 @@ export function SearchResultsFilterSheet({
 }: SearchResultsFilterSheetProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [draft, setDraft] = React.useState<SearchResultsFilters>(filters);
+  const [priceDragging, setPriceDragging] = React.useState(false);
 
   React.useEffect(() => {
     if (visible) {
       setDraft(filters);
+      setPriceDragging(false);
     }
   }, [filters, visible]);
 
@@ -94,6 +96,9 @@ export function SearchResultsFilterSheet({
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        // iOS: ScrollView steals horizontal thumb drags unless locked while sliding.
+        scrollEnabled={!priceDragging}
+        keyboardShouldPersistTaps="handled"
       >
         <FilterSection title={t('dashboard.search.results.priceRange')}>
           <PriceRangeSlider
@@ -102,6 +107,7 @@ export function SearchResultsFilterSheet({
             step={PRICE_STEP}
             value={draft.priceRange}
             onChange={(priceRange) => patchDraft({ priceRange })}
+            onDraggingChange={setPriceDragging}
             formatValue={formatPrice}
           />
         </FilterSection>
