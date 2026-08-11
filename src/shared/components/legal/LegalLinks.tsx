@@ -65,6 +65,7 @@ export function LegalLinks({
             accessibilityRole="link"
             accessibilityLabel={t('auth.welcome.terms')}
             onPress={handleTerms}
+            suppressHighlighting
             style={styles.legalLink}
           >
             {t('auth.welcome.terms')}
@@ -75,6 +76,7 @@ export function LegalLinks({
             accessibilityRole="link"
             accessibilityLabel={t('auth.welcome.privacy')}
             onPress={handlePrivacy}
+            suppressHighlighting
             style={styles.legalLink}
           >
             {t('auth.welcome.privacy')}
