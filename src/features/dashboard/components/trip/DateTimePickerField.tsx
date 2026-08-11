@@ -1,12 +1,24 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
+
+const IOS_PICKER_HEIGHT = 216;
+const IOS_SHEET_PADDING = spacing.sm * 2;
+const iosPickerWidth = Dimensions.get('window').width - IOS_SHEET_PADDING;
 
 type DateTimePickerFieldProps = {
   label: string;
@@ -64,26 +76,25 @@ export function DateTimePickerField({
   timeConfirmed,
 }: DateTimePickerFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const insets = useSafeAreaInsets();
   const locale = i18n.language;
   const hasValue = Boolean(value);
   const hasTimeValue = timeConfirmed ?? hasValue;
   const current = parseIso(value);
   const [pickerMode, setPickerMode] = React.useState<'date' | 'time' | null>(null);
+  const [draft, setDraft] = React.useState(current);
+
+  const openPicker = (nextMode: 'date' | 'time') => {
+    setDraft(current);
+    setPickerMode(nextMode);
+  };
 
   const commit = (next: Date, part: 'date' | 'time') => {
     onChange(next.toISOString(), part);
   };
 
-  const handleChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setPickerMode(null);
-    }
-
-    if (event.type === 'dismissed' || !selected) {
-      return;
-    }
-
-    if (pickerMode === 'date') {
+  const applySelection = (selected: Date, part: 'date' | 'time') => {
+    if (part === 'date') {
       const base = hasValue ? current : new Date();
       const merged = new Date(base);
       merged.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
@@ -91,12 +102,38 @@ export function DateTimePickerField({
       return;
     }
 
-    if (pickerMode === 'time') {
-      const base = hasValue ? current : new Date();
-      const merged = new Date(base);
-      merged.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
-      commit(merged, 'time');
+    const base = hasValue ? current : new Date();
+    const merged = new Date(base);
+    merged.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+    commit(merged, 'time');
+  };
+
+  const handleAndroidChange = (event: DateTimePickerEvent, selected?: Date) => {
+    const part = pickerMode;
+    setPickerMode(null);
+    if (event.type === 'dismissed' || !selected || !part) {
+      return;
     }
+    applySelection(selected, part);
+  };
+
+  const handleIosChange = (_event: DateTimePickerEvent, selected?: Date) => {
+    if (selected) {
+      setDraft(selected);
+    }
+  };
+
+  const handleIosDone = () => {
+    const part = pickerMode;
+    setPickerMode(null);
+    if (!part) {
+      return;
+    }
+    applySelection(draft, part);
+  };
+
+  const handleIosCancel = () => {
+    setPickerMode(null);
   };
 
   return (
@@ -112,7 +149,7 @@ export function DateTimePickerField({
       <View style={styles.row}>
         {mode === 'date-time' ? (
           <Pressable
-            onPress={() => setPickerMode('date')}
+            onPress={() => openPicker('date')}
             style={[styles.part, styles.partDate]}
             accessibilityRole="button"
             accessibilityLabel={t('trips.create.selectDate')}
@@ -124,7 +161,7 @@ export function DateTimePickerField({
         ) : null}
 
         <Pressable
-          onPress={() => setPickerMode('time')}
+          onPress={() => openPicker('time')}
           style={[styles.part, mode === 'date-time' ? styles.partTime : styles.partFull]}
           accessibilityRole="button"
           accessibilityLabel={t('trips.create.selectTime')}
@@ -135,14 +172,64 @@ export function DateTimePickerField({
         </Pressable>
       </View>
 
-      {pickerMode ? (
+      {pickerMode && Platform.OS === 'android' ? (
         <DateTimePicker
           value={current}
           mode={pickerMode}
           minimumDate={minimumDate}
-          onChange={handleChange}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleAndroidChange}
+          display="default"
         />
+      ) : null}
+
+      {Platform.OS === 'ios' ? (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={pickerMode != null}
+          onRequestClose={handleIosCancel}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={handleIosCancel}>
+            <View
+              style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}
+            >
+              <View style={styles.modalCard}>
+                {pickerMode ? (
+                  <View style={styles.iosPickerWrap}>
+                    <DateTimePicker
+                      value={draft}
+                      mode={pickerMode}
+                      minimumDate={minimumDate}
+                      onChange={handleIosChange}
+                      display="spinner"
+                      themeVariant="light"
+                      textColor={colors.text.primary}
+                      style={styles.iosPicker}
+                    />
+                  </View>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleIosDone}
+                  style={styles.modalDone}
+                >
+                  <AppText weight="semibold" style={styles.modalDoneText}>
+                    {t('common.done')}
+                  </AppText>
+                </Pressable>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                onPress={handleIosCancel}
+                style={styles.modalCancel}
+              >
+                <AppText weight="semibold" style={styles.modalDoneText}>
+                  {t('common.cancel')}
+                </AppText>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
       ) : null}
     </View>
   );
@@ -193,5 +280,46 @@ const styles = StyleSheet.create({
   },
   partPlaceholder: {
     color: colors.text.tertiary,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  modalCard: {
+    overflow: 'hidden',
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
+  },
+  iosPickerWrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iosPicker: {
+    width: iosPickerWidth,
+    height: IOS_PICKER_HEIGHT,
+  },
+  modalDone: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+  },
+  modalDoneText: {
+    fontSize: 17,
+    color: colors.primary,
+  },
+  modalCancel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
   },
 });
