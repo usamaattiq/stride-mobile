@@ -30,14 +30,14 @@ export const notificationsApi = {
   }): Promise<{ registered: boolean }> =>
     apiRequest({
       method: 'POST',
-      url: '/api/notifications/device-tokens',
+      url: '/notifications/device-tokens',
       data: input,
     }),
 
   unregisterDeviceToken: (token: string): Promise<{ deleted: boolean }> =>
     apiRequest({
       method: 'DELETE',
-      url: '/api/notifications/device-tokens',
+      url: '/notifications/device-tokens',
       data: { token },
     }),
 
@@ -48,14 +48,14 @@ export const notificationsApi = {
   }): Promise<InboxListResult> =>
     apiRequest({
       method: 'GET',
-      url: '/api/notifications/inbox',
+      url: '/notifications/inbox',
       params: query,
     }),
 
   markRead: (notificationId: string): Promise<InboxNotificationDto> =>
     apiRequest({
       method: 'PATCH',
-      url: '/api/notifications/inbox/read',
+      url: '/notifications/inbox/read',
       data: { notificationId },
     }),
 };
