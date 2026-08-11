@@ -34,16 +34,17 @@ import { ListingsEmptyState } from '../components/ListingsEmptyState';
 import { SegmentControl } from '../components/SegmentControl';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip, TripListingType } from '../types/trip.types';
+import type { Trip } from '../types/trip.types';
+import type { TripListingCategory } from '../types/tripBrowse.types';
 import {
+  matchesListingCategory,
   matchesListingQuery,
   matchesListingStatus,
-  matchesListingType,
   type ListingStatusFilter,
 } from '../utils/listingFilters';
 
 const SKELETON_COUNT = 4;
-const LISTING_TYPES: TripListingType[] = ['rfq', 'auction'];
+const LISTING_CATEGORIES: TripListingCategory[] = ['all', 'rfq', 'auction'];
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
 export function MyListingsScreen(): React.ReactElement {
@@ -53,7 +54,8 @@ export function MyListingsScreen(): React.ReactElement {
   const { trips, loadError, refreshTrips, removeTrip } = useTrips();
   const { refreshControlProps } = usePullToRefresh(refreshTrips);
 
-  const [listingType, setListingType] = React.useState<TripListingType>('rfq');
+  const [listingCategory, setListingCategory] =
+    React.useState<TripListingCategory>('all');
   const [statusFilter, setStatusFilter] = React.useState<ListingStatusFilter>('all');
   const [query, setQuery] = React.useState('');
   const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
@@ -65,12 +67,13 @@ export function MyListingsScreen(): React.ReactElement {
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
-  const [visitedTypes, setVisitedTypes] = React.useState(
-    () => new Set<TripListingType>(['rfq']),
+  const [visitedCategories, setVisitedCategories] = React.useState(
+    () => new Set<TripListingCategory>(['all']),
   );
 
   const typeOptions = React.useMemo(
     () => [
+      { id: 'all' as const, label: t('dashboard.home.categoryAllListings') },
       { id: 'rfq' as const, label: t('dashboard.home.categoryRfq') },
       { id: 'auction' as const, label: t('dashboard.home.categoryAuction') },
     ],
@@ -78,15 +81,15 @@ export function MyListingsScreen(): React.ReactElement {
   );
 
   React.useEffect(() => {
-    setVisitedTypes((current) => {
-      if (current.has(listingType)) {
+    setVisitedCategories((current) => {
+      if (current.has(listingCategory)) {
         return current;
       }
       const next = new Set(current);
-      next.add(listingType);
+      next.add(listingCategory);
       return next;
     });
-  }, [listingType]);
+  }, [listingCategory]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -114,13 +117,13 @@ export function MyListingsScreen(): React.ReactElement {
     }, [refreshTrips]),
   );
 
-  const selectListingType = React.useCallback(
-    (next: TripListingType, animated = true) => {
-      setListingType(next);
+  const selectListingCategory = React.useCallback(
+    (next: TripListingCategory, animated = true) => {
+      setListingCategory(next);
       if (pageWidth <= 0) {
         return;
       }
-      const index = LISTING_TYPES.indexOf(next);
+      const index = LISTING_CATEGORIES.indexOf(next);
       pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
       if (!animated) {
         scrollX.setValue(index * pageWidth);
@@ -134,29 +137,30 @@ export function MyListingsScreen(): React.ReactElement {
       return undefined;
     }
     return scrollX.interpolate({
-      inputRange: [0, pageWidth],
-      outputRange: [0, 1],
+      inputRange: [0, pageWidth, pageWidth * 2],
+      outputRange: [0, 1, 2],
       extrapolate: 'clamp',
     });
   }, [pageWidth, scrollX]);
 
-  const syncTypeFromOffset = React.useCallback(
+  const syncCategoryFromOffset = React.useCallback(
     (offsetX: number) => {
       if (pageWidth <= 0) {
         return;
       }
       const index = Math.round(offsetX / pageWidth);
-      const nextType = LISTING_TYPES[Math.min(Math.max(index, 0), LISTING_TYPES.length - 1)];
-      setListingType((current) => (current === nextType ? current : nextType));
+      const nextCategory =
+        LISTING_CATEGORIES[Math.min(Math.max(index, 0), LISTING_CATEGORIES.length - 1)];
+      setListingCategory((current) => (current === nextCategory ? current : nextCategory));
     },
     [pageWidth],
   );
 
   const onPagerScrollEnd = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      syncTypeFromOffset(event.nativeEvent.contentOffset.x);
+      syncCategoryFromOffset(event.nativeEvent.contentOffset.x);
     },
-    [syncTypeFromOffset],
+    [syncCategoryFromOffset],
   );
 
   const onPagerLayout = React.useCallback(
@@ -166,23 +170,24 @@ export function MyListingsScreen(): React.ReactElement {
         return;
       }
       setPageWidth(width);
-      const index = LISTING_TYPES.indexOf(listingType);
+      const index = LISTING_CATEGORIES.indexOf(listingCategory);
       scrollX.setValue(index * width);
       requestAnimationFrame(() => {
         pagerRef.current?.scrollTo({ x: index * width, animated: false });
       });
     },
-    [listingType, pageWidth, scrollX],
+    [listingCategory, pageWidth, scrollX],
   );
 
-  const tripsByType = React.useMemo(() => {
+  const tripsByCategory = React.useMemo(() => {
     const applySharedFilters = (trip: Trip) =>
       matchesListingStatus(trip, statusFilter) && matchesListingQuery(trip, query);
 
     return {
-      rfq: trips.filter((trip) => matchesListingType(trip, 'rfq') && applySharedFilters(trip)),
+      all: trips.filter(applySharedFilters),
+      rfq: trips.filter((trip) => matchesListingCategory(trip, 'rfq') && applySharedFilters(trip)),
       auction: trips.filter(
-        (trip) => matchesListingType(trip, 'auction') && applySharedFilters(trip),
+        (trip) => matchesListingCategory(trip, 'auction') && applySharedFilters(trip),
       ),
     };
   }, [trips, statusFilter, query]);
@@ -233,19 +238,19 @@ export function MyListingsScreen(): React.ReactElement {
     </View>
   );
 
-  const renderTypePage = (type: TripListingType, width: number) => {
-    if (!visitedTypes.has(type)) {
-      return <View key={type} style={[styles.page, { width }]} />;
+  const renderCategoryPage = (category: TripListingCategory, width: number) => {
+    if (!visitedCategories.has(category)) {
+      return <View key={category} style={[styles.page, { width }]} />;
     }
 
-    const pageTrips = tripsByType[type];
+    const pageTrips = tripsByCategory[category];
     let pageBody: React.ReactElement;
 
     if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-            <ListingCardSkeleton key={`listing-skeleton-${type}-${index}`} />
+            <ListingCardSkeleton key={`listing-skeleton-${category}-${index}`} />
           ))}
         </View>
       );
@@ -309,7 +314,7 @@ export function MyListingsScreen(): React.ReactElement {
     }
 
     return (
-      <View key={type} style={[styles.page, { width }]}>
+      <View key={category} style={[styles.page, { width }]}>
         {pageBody}
       </View>
     );
@@ -328,8 +333,8 @@ export function MyListingsScreen(): React.ReactElement {
         <SegmentControl
           variant="onBrand"
           options={typeOptions}
-          value={listingType}
-          onChange={selectListingType}
+          value={listingCategory}
+          onChange={selectListingCategory}
           animatedIndex={animatedTypeIndex}
         />
       }
@@ -352,7 +357,7 @@ export function MyListingsScreen(): React.ReactElement {
           onMomentumScrollEnd={onPagerScrollEnd}
           scrollEventThrottle={16}
         >
-          {LISTING_TYPES.map((type) => renderTypePage(type, pageWidth))}
+          {LISTING_CATEGORIES.map((category) => renderCategoryPage(category, pageWidth))}
         </Animated.ScrollView>
       </View>
 

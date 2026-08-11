@@ -29,16 +29,17 @@ import { RequestSearchRow } from './RequestSearchRow';
 import { SegmentControl } from './SegmentControl';
 import { TripFilterSheet } from './TripFilterSheet';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip, TripListingType } from '../types/trip.types';
+import type { Trip } from '../types/trip.types';
 import {
   countActiveTripBrowseFilters,
   EMPTY_TRIP_BROWSE_FILTERS,
   type TripBrowseFilters,
+  type TripListingCategory,
 } from '../types/tripBrowse.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 const SKELETON_COUNT = 3;
-const LISTING_TYPES: TripListingType[] = ['rfq', 'auction'];
+const LISTING_CATEGORIES: TripListingCategory[] = ['all', 'rfq', 'auction'];
 const PAGE_SIZE = 20;
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
@@ -94,18 +95,20 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
   const hasLoadedOnceRef = React.useRef(false);
   const [query, setQuery] = React.useState('');
-  const [listingType, setListingType] = React.useState<TripListingType>('rfq');
+  const [listingCategory, setListingCategory] =
+    React.useState<TripListingCategory>('all');
   const [filters, setFilters] = React.useState<TripBrowseFilters>(EMPTY_TRIP_BROWSE_FILTERS);
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
-  const [visitedTypes, setVisitedTypes] = React.useState(
-    () => new Set<TripListingType>(['rfq']),
+  const [visitedCategories, setVisitedCategories] = React.useState(
+    () => new Set<TripListingCategory>(['all']),
   );
 
   const typeOptions = React.useMemo(
     () => [
+      { id: 'all' as const, label: t('dashboard.home.categoryAllListings') },
       { id: 'rfq' as const, label: t('dashboard.home.categoryRfq') },
       { id: 'auction' as const, label: t('dashboard.home.categoryAuction') },
     ],
@@ -113,15 +116,15 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
   );
 
   React.useEffect(() => {
-    setVisitedTypes((current) => {
-      if (current.has(listingType)) {
+    setVisitedCategories((current) => {
+      if (current.has(listingCategory)) {
         return current;
       }
       const next = new Set(current);
-      next.add(listingType);
+      next.add(listingCategory);
       return next;
     });
-  }, [listingType]);
+  }, [listingCategory]);
 
   const loadRequests = React.useCallback(async () => {
     if (!hasLoadedOnceRef.current) {
@@ -160,13 +163,13 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
     }, [loadRequests]),
   );
 
-  const selectListingType = React.useCallback(
-    (next: TripListingType, animated = true) => {
-      setListingType(next);
+  const selectListingCategory = React.useCallback(
+    (next: TripListingCategory, animated = true) => {
+      setListingCategory(next);
       if (pageWidth <= 0) {
         return;
       }
-      const index = LISTING_TYPES.indexOf(next);
+      const index = LISTING_CATEGORIES.indexOf(next);
       pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
       if (!animated) {
         scrollX.setValue(index * pageWidth);
@@ -180,29 +183,30 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
       return undefined;
     }
     return scrollX.interpolate({
-      inputRange: [0, pageWidth],
-      outputRange: [0, 1],
+      inputRange: [0, pageWidth, pageWidth * 2],
+      outputRange: [0, 1, 2],
       extrapolate: 'clamp',
     });
   }, [pageWidth, scrollX]);
 
-  const syncTypeFromOffset = React.useCallback(
+  const syncCategoryFromOffset = React.useCallback(
     (offsetX: number) => {
       if (pageWidth <= 0) {
         return;
       }
       const index = Math.round(offsetX / pageWidth);
-      const nextType = LISTING_TYPES[Math.min(Math.max(index, 0), LISTING_TYPES.length - 1)];
-      setListingType((current) => (current === nextType ? current : nextType));
+      const nextCategory =
+        LISTING_CATEGORIES[Math.min(Math.max(index, 0), LISTING_CATEGORIES.length - 1)];
+      setListingCategory((current) => (current === nextCategory ? current : nextCategory));
     },
     [pageWidth],
   );
 
   const onPagerScrollEnd = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      syncTypeFromOffset(event.nativeEvent.contentOffset.x);
+      syncCategoryFromOffset(event.nativeEvent.contentOffset.x);
     },
-    [syncTypeFromOffset],
+    [syncCategoryFromOffset],
   );
 
   const onPagerLayout = React.useCallback(
@@ -212,40 +216,41 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
         return;
       }
       setPageWidth(width);
-      const index = LISTING_TYPES.indexOf(listingType);
+      const index = LISTING_CATEGORIES.indexOf(listingCategory);
       scrollX.setValue(index * width);
       requestAnimationFrame(() => {
         pagerRef.current?.scrollTo({ x: index * width, animated: false });
       });
     },
-    [listingType, pageWidth, scrollX],
+    [listingCategory, pageWidth, scrollX],
   );
 
   const activeFilterCount = countActiveTripBrowseFilters(filters);
 
-  const tripsByType = React.useMemo(() => {
+  const tripsByCategory = React.useMemo(() => {
     const applySharedFilters = (trip: Trip) =>
       matchesQuery(trip, query) && matchesFilters(trip, filters);
 
     return {
+      all: trips.filter(applySharedFilters),
       rfq: trips.filter((trip) => trip.listingType === 'rfq' && applySharedFilters(trip)),
       auction: trips.filter((trip) => trip.listingType === 'auction' && applySharedFilters(trip)),
     };
   }, [trips, query, filters]);
 
-  const renderTypePage = (type: TripListingType, width: number) => {
-    if (!visitedTypes.has(type)) {
-      return <View key={type} style={[styles.page, { width }]} />;
+  const renderCategoryPage = (category: TripListingCategory, width: number) => {
+    if (!visitedCategories.has(category)) {
+      return <View key={category} style={[styles.page, { width }]} />;
     }
 
-    const pageTrips = tripsByType[type];
+    const pageTrips = tripsByCategory[category];
     let pageBody: React.ReactElement;
 
     if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-            <ListingCardSkeleton key={`home-request-skeleton-${type}-${index}`} />
+            <ListingCardSkeleton key={`home-request-skeleton-${category}-${index}`} />
           ))}
         </View>
       );
@@ -298,7 +303,7 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
 
     return (
       <ScrollView
-        key={type}
+        key={category}
         style={{ width }}
         contentContainerStyle={styles.pageContent}
         showsVerticalScrollIndicator={false}
@@ -317,8 +322,8 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
         <SegmentControl
           variant="onBrand"
           options={typeOptions}
-          value={listingType}
-          onChange={selectListingType}
+          value={listingCategory}
+          onChange={selectListingCategory}
           animatedIndex={animatedTypeIndex}
         />
       </View>
@@ -350,7 +355,7 @@ export const DriverListingsPanel = React.memo(function DriverListingsPanel(): Re
             onMomentumScrollEnd={onPagerScrollEnd}
             scrollEventThrottle={16}
           >
-            {LISTING_TYPES.map((type) => renderTypePage(type, pageWidth))}
+            {LISTING_CATEGORIES.map((category) => renderCategoryPage(category, pageWidth))}
           </Animated.ScrollView>
         </View>
       </View>
