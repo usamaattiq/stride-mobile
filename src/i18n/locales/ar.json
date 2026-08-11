@@ -106,7 +106,8 @@
         "creditsEarned": "لقد ربحت",
         "credits": "{{count}} نقطة",
         "creditsReason": "مقابل أول إعلان لك",
-        "dashboard": "الذهاب إلى لوحة التحكم"
+        "dashboard": "الذهاب إلى لوحة التحكم",
+        "preparingDashboard": "جاري تجهيز لوحة التحكم"
       }
     },
     "login": {
