@@ -287,7 +287,8 @@
       "title": "Notifications",
       "subtitle": "Updates about offers, bookings, and listings.",
       "emptyTitle": "No notifications",
-      "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
+      "emptySubtitle": "Updates about offers, bookings, and listings will appear here.",
+      "loadFailed": "Couldn't load notifications. Pull to retry."
     },
     "search": {
       "shared": "Shared",
