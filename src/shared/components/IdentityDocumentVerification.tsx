@@ -7,11 +7,20 @@ import {
   type KeyboardTypeOptions,
 } from 'react-native';
 
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { DocumentUploadField } from '@/shared/components/DocumentUploadField';
 import { KeyboardDoneBar } from '@/shared/components/KeyboardDoneBar';
-import { colors, getFontFamily, radius, spacing } from '@/theme';
+import { toLatinDigits } from '@/shared/utils/latin-digits';
+import {
+  colors,
+  getFontFamily,
+  getInputFontFamily,
+  isNumericKeyboardType,
+  radius,
+  spacing,
+} from '@/theme';
 
 export type IdentityDocumentVerificationProps = {
   documentNumber: string;
@@ -63,9 +72,24 @@ export function IdentityDocumentVerification({
   loading = false,
   errorMessage = null,
 }: IdentityDocumentVerificationProps): React.ReactElement {
+  const { currentLanguage } = useLanguage();
   const accessoryId = React.useId();
   const showDoneBar = keyboardType !== 'default';
   const canSubmit = !loading && Boolean(frontUri) && Boolean(backUri);
+  const keepLatinDigits = isNumericKeyboardType(keyboardType);
+  // Arabic placeholder must use Cairo; digit entry still prefers Outfit when numeric.
+  const inputFontFamily = !documentNumber
+    ? getFontFamily(currentLanguage, 'regular')
+    : getInputFontFamily(currentLanguage, keepLatinDigits ? keyboardType : 'default');
+
+  const handleChangeDocumentNumber = React.useCallback(
+    (text: string) => {
+      onChangeDocumentNumber(keepLatinDigits ? toLatinDigits(text) : text);
+    },
+    [keepLatinDigits, onChangeDocumentNumber],
+  );
+
+  const displayValue = keepLatinDigits ? toLatinDigits(documentNumber) : documentNumber;
 
   return (
     <View style={styles.fields}>
@@ -75,17 +99,13 @@ export function IdentityDocumentVerification({
           <AppText style={styles.required}> *</AppText>
         </AppText>
         <TextInput
-          value={documentNumber}
-          onChangeText={onChangeDocumentNumber}
+          value={displayValue}
+          onChangeText={handleChangeDocumentNumber}
           placeholder={documentNumberPlaceholder}
           placeholderTextColor={colors.text.tertiary}
           keyboardType={keyboardType}
           inputAccessoryViewID={showDoneBar ? accessoryId : undefined}
-          style={[
-            styles.input,
-            // Document IDs are digit-heavy; Outfit keeps Latin numerals centered on iOS Arabic.
-            { fontFamily: getFontFamily('en', 'regular') },
-          ]}
+          style={[styles.input, { fontFamily: inputFontFamily }]}
         />
         {showDoneBar ? (
           <KeyboardDoneBar nativeID={accessoryId} disabled={!canSubmit} onDone={onSubmit} />
