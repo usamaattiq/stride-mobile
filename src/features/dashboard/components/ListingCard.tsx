@@ -360,8 +360,6 @@ export function ListingCard({
             </AppText>
           </View>
 
-          <View style={styles.bodyDivider} />
-
           <View style={styles.detailsPriceRow}>
             <View style={styles.detailsCol}>
               {modeLabel ? (
@@ -376,26 +374,12 @@ export function ListingCard({
                   </AppText>
                 </View>
               ) : null}
-              {classLabel || seatsLabel || (!price && showCountdown) ? (
-                <View style={styles.vehicleTypeRow}>
-                  {classLabel || seatsLabel ? (
-                    <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
-                      <FontAwesome name="car" size={11} color={colors.primary} />
-                      <AppText style={styles.metaText} numberOfLines={1}>
-                        {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
-                      </AppText>
-                    </View>
-                  ) : (
-                    <View style={styles.vehicleTypeMeta} />
-                  )}
-                  {!price && showCountdown ? (
-                    <View style={styles.inlineCountdownBadge}>
-                      <FontAwesome name="clock-o" size={10} color={colors.primary} />
-                      <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-                        {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-                      </AppText>
-                    </View>
-                  ) : null}
+              {classLabel || seatsLabel ? (
+                <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
+                  <FontAwesome name="car" size={11} color={colors.primary} />
+                  <AppText style={styles.metaText} numberOfLines={1}>
+                    {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
+                  </AppText>
                 </View>
               ) : null}
             </View>
@@ -413,19 +397,19 @@ export function ListingCard({
               </View>
             ) : null}
           </View>
+
+          {showCountdown ? (
+            <View style={styles.bodyCountdownRow}>
+              <View style={styles.countdownBadge}>
+                <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                  {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                </AppText>
+              </View>
+            </View>
+          ) : null}
         </View>
       </View>
-
-      {price && showCountdown ? (
-        <View style={styles.bottomRow}>
-          <View style={styles.countdownBadge}>
-            <FontAwesome name="clock-o" size={10} color={colors.primary} />
-            <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-              {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-            </AppText>
-          </View>
-        </View>
-      ) : null}
     </>
   );
 
@@ -545,17 +529,11 @@ const styles = StyleSheet.create({
   },
   mainRow: {
     flexDirection: 'row',
-    // alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.sm,
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing.xs,
-    paddingBottom: spacing.xs,
   },
   countdownBadge: {
     flexDirection: 'row',
@@ -567,16 +545,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
-    shadowColor: '#000000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
   },
   countdownText: {
     fontSize: 11,
     color: colors.primary,
-    
   },
   thumbnail: {
     width: 88,
@@ -662,11 +634,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  bodyDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
-    marginVertical: 2,
-  },
   detailsPriceRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -677,13 +644,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 3,
   },
-  vehicleTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    minWidth: 0,
-  },
   vehicleTypeMeta: {
     flex: 1,
     minWidth: 0,
@@ -692,22 +652,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexShrink: 0,
   },
-  inlineCountdownBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flexShrink: 0,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    shadowColor: '#000000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+  bodyCountdownRow: {
+    marginTop: 'auto',
+    alignItems: 'flex-end',
   },
   priceAmount: {
     fontSize: 22,
