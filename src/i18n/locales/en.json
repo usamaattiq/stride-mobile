@@ -171,9 +171,9 @@
       "History": "History",
       "Settings": "Settings",
       "CreateTrip": "Add trip",
-      "CreateRequest": "Create request",
+      "CreateRequest": "Create",
       "createTripA11y": "Create trip",
-      "createRequestA11y": "Create request"
+      "createRequestA11y": "Create"
     },
     "offers": {
       "title": "My Offers",

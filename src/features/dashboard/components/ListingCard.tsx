@@ -127,7 +127,6 @@ function RequestThumbnail({
 export type ListingCardProps = {
   trip: Trip;
   onPress?: () => void;
-  onRemovePress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
   /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
@@ -137,7 +136,6 @@ export type ListingCardProps = {
 export function ListingCard({
   trip,
   onPress,
-  onRemovePress,
   showPhotoCount = false,
   pending = false,
 }: ListingCardProps): React.ReactElement {
@@ -353,17 +351,6 @@ export function ListingCard({
                 {toCity}
               </AppText>
             </View>
-            {onRemovePress ? (
-              <Pressable
-                onPress={onRemovePress}
-                style={styles.removeButton}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('dashboard.listings.remove.a11y')}
-              >
-                <FontAwesome name="trash-o" size={14} color={colors.primary} />
-              </Pressable>
-            ) : null}
           </View>
 
           <View style={styles.metaRow}>
@@ -663,14 +650,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 16,
     color: colors.text.primary,
-  },
-  removeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
   },
   metaRow: {
     flexDirection: 'row',

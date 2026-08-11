@@ -18,12 +18,9 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
-import { getErrorMessage } from '@/services/api/errorMessage';
-import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, spacing } from '@/theme';
 
 import { DashboardSearchBar } from '../components/DashboardSearchBar';
@@ -51,16 +48,13 @@ export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const { trips, loadError, refreshTrips, removeTrip } = useTrips();
+  const { trips, loadError, refreshTrips } = useTrips();
   const { refreshControlProps } = usePullToRefresh(refreshTrips);
 
   const [listingCategory, setListingCategory] =
     React.useState<TripListingCategory>('all');
   const [statusFilter, setStatusFilter] = React.useState<ListingStatusFilter>('all');
   const [query, setQuery] = React.useState('');
-  const [tripToRemove, setTripToRemove] = React.useState<Trip | null>(null);
-  const [removing, setRemoving] = React.useState(false);
-  const [removeError, setRemoveError] = React.useState<string | null>(null);
   /** True only until the first successful/failed load — keep cached list on later tab focuses. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
   const hasLoadedOnceRef = React.useRef(false);
@@ -192,24 +186,6 @@ export function MyListingsScreen(): React.ReactElement {
     };
   }, [trips, statusFilter, query]);
 
-  const handleConfirmRemove = () => {
-    if (!tripToRemove || removing) {
-      return;
-    }
-    setRemoving(true);
-    setRemoveError(null);
-    void removeTrip(tripToRemove.id)
-      .then(() => {
-        setTripToRemove(null);
-      })
-      .catch((error) => {
-        setRemoveError(getErrorMessage(error, t('dashboard.listings.remove.failed')));
-      })
-      .finally(() => {
-        setRemoving(false);
-      });
-  };
-
   const renderTrip = React.useCallback(
     ({ item }: { item: Trip }) => (
       <ListingCard
@@ -217,10 +193,6 @@ export function MyListingsScreen(): React.ReactElement {
         showPhotoCount={false}
         onPress={() => {
           navigation.navigate('ListingDetail', { tripId: item.id });
-        }}
-        onRemovePress={() => {
-          setRemoveError(null);
-          setTripToRemove(item);
         }}
       />
     ),
@@ -360,35 +332,6 @@ export function MyListingsScreen(): React.ReactElement {
           {LISTING_CATEGORIES.map((category) => renderCategoryPage(category, pageWidth))}
         </Animated.ScrollView>
       </View>
-
-      <AppDialog
-        visible={tripToRemove !== null}
-        icon="trash"
-        title={t('dashboard.listings.remove.title')}
-        message={
-          removeError ??
-          (tripToRemove
-            ? t('dashboard.listings.remove.confirm', {
-                from: cityDisplayName(tripToRemove.departureCity.label),
-                to: cityDisplayName(tripToRemove.arrivalCity.label),
-              })
-            : undefined)
-        }
-        cancelAction={{
-          label: t('common.cancel'),
-          onPress: () => {
-            if (removing) {
-              return;
-            }
-            setTripToRemove(null);
-            setRemoveError(null);
-          },
-        }}
-        confirmAction={{
-          label: t('dashboard.listings.remove.confirmAction'),
-          onPress: handleConfirmRemove,
-        }}
-      />
     </AuthScaffold>
   );
 }
