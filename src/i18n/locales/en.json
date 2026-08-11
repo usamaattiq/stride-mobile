@@ -864,7 +864,7 @@
       "paymentMethodHint": "Choose how you want to receive payments.",
       "paymentCash": "Cash",
       "paymentOnline": "Online",
-      "paymentBoth": "Both",
+      "paymentBoth": "Cash/Online",
       "durationLabel": "Listing duration",
       "durationValue": "{{count}} hour(s)",
       "durationMinutesOnly": "{{count}} min",

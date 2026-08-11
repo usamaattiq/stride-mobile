@@ -864,7 +864,7 @@
       "paymentMethodHint": "اختر كيف تريد استلام المدفوعات.",
       "paymentCash": "نقداً",
       "paymentOnline": "إلكتروني",
-      "paymentBoth": "كلاهما",
+      "paymentBoth": "نقداً/إلكتروني",
       "durationLabel": "مدة الإدراج",
       "durationValue": "{{count}} ساعة",
       "durationMinutesOnly": "{{count}} د",
