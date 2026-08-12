@@ -1,6 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -157,21 +156,9 @@ export function TripResponsesPanel({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <View style={styles.headerCopy}>
-          <AppText weight="bold" style={styles.headerTitle}>
-            {t('dashboard.listings.detail.responses.title')}
-          </AppText>
-        </View>
-        <Pressable
-          onPress={load}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.detail.responses.refresh')}
-        >
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
-      </View>
+      <AppText weight="bold" style={styles.headerTitle}>
+        {t('dashboard.listings.detail.responses.title')}
+      </AppText>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
@@ -318,17 +305,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     textAlign: 'center',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  headerCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
   },
   headerTitle: {
     fontSize: 15,
