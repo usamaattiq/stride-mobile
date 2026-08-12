@@ -211,8 +211,8 @@ export function ListingCard({
   const isPassengerRequest = trip.vehicleId == null;
   // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
   const showCountdown = pending || active;
-  const listingLabel =
-    trip.listingType === 'auction'
+  const isAuction = trip.listingType === 'auction';
+  const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');
   const paymentLabel =
@@ -245,9 +245,25 @@ export function ListingCard({
 
       <View style={styles.topRow}>
         <View style={styles.topBadges}>
-          <View style={styles.topBadge}>
-            <FontAwesome name="list-ul" size={9} color={colors.primary} />
-            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+          <View
+            style={[
+              styles.topBadge,
+              isAuction ? styles.listingBadgeAuction : styles.listingBadgeRfq,
+            ]}
+          >
+            <FontAwesome
+              name={isAuction ? 'gavel' : 'list-ul'}
+              size={9}
+              color={isAuction ? colors.accent.purple.text : colors.accent.blue.text}
+            />
+            <AppText
+              weight="semibold"
+              style={[
+                styles.topBadgeText,
+                isAuction ? styles.listingBadgeTextAuction : styles.listingBadgeTextRfq,
+              ]}
+              numberOfLines={1}
+            >
               {listingLabel}
             </AppText>
           </View>
@@ -488,10 +504,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.primarySoft,
   },
+  listingBadgeRfq: {
+    backgroundColor: colors.accent.blue.soft,
+  },
+  listingBadgeAuction: {
+    backgroundColor: colors.accent.purple.soft,
+  },
   topBadgeText: {
     flexShrink: 1,
     fontSize: 11,
     color: colors.primary,
+  },
+  listingBadgeTextRfq: {
+    color: colors.accent.blue.text,
+  },
+  listingBadgeTextAuction: {
+    color: colors.accent.purple.text,
   },
   timerBadge: {
     flexDirection: 'row',
