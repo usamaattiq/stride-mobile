@@ -469,7 +469,7 @@
           "bidderLabel": "Bidder #{{rank}}",
           "amount": "PKR {{amount}}",
           "rank": "Rank {{rank}}",
-          "selected": "Selected",
+          "selected": "Awaiting confirmation",
           "confirmed": "Confirmed"
         },
         "bid": {

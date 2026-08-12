@@ -29,7 +29,7 @@ export type TripResponsesPanelProps = {
 
 const BADGE_STYLE_BY_STATUS: Record<RfqOfferStatus, { bg: string; text: string }> = {
   active: { bg: colors.accent.amber.soft, text: colors.accent.amber.text },
-  selected: { bg: colors.primarySoft, text: colors.primary },
+  selected: { bg: colors.accent.blue.soft, text: colors.accent.blue.text },
   confirmed: { bg: colors.accent.green.soft, text: colors.accent.green.text },
   withdrawn: { bg: colors.background.subtle, text: colors.text.tertiary },
   declined: { bg: colors.background.subtle, text: colors.text.tertiary },
@@ -251,7 +251,7 @@ export function TripResponsesPanel({
                     />
                     <Button
                       label={t('dashboard.listings.detail.responses.accept')}
-                      onPress={() => act(offer.id, 'accept')}
+                      onPress={() => act(offer.id, 'select')}
                       loading={isActing}
                       disabled={isActing}
                       style={styles.offerActionButton}

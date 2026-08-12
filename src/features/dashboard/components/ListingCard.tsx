@@ -47,7 +47,7 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   'awaiting-confirmation': 'blue',
   'offer-submitted': 'amber',
   'awaiting-your-confirmation': 'blue',
-  confirmed: 'blue',
+  confirmed: 'green',
   completed: 'blue',
   closed: 'muted',
   expired: 'muted',
@@ -73,13 +73,13 @@ const AUCTION_VARIANT_TONE: Record<
   muted: 'muted',
   accent: 'green',
   warning: 'amber',
-  success: 'blue',
+  success: 'green',
 };
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
   active: 'amber',
   selected: 'blue',
-  confirmed: 'blue',
+  confirmed: 'green',
   withdrawn: 'muted',
   declined: 'muted',
   timed_out: 'muted',

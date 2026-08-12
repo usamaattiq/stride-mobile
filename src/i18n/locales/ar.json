@@ -469,7 +469,7 @@
           "bidderLabel": "مزايد #{{rank}}",
           "amount": "{{amount}} ر.ب",
           "rank": "الترتيب {{rank}}",
-          "selected": "محدد",
+          "selected": "بانتظار التأكيد",
           "confirmed": "مؤكد"
         },
         "bid": {

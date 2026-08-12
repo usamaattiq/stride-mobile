@@ -237,11 +237,21 @@ export function TripAuctionBidsPanel({
                       isConfirmed
                         ? styles.badgeSuccess
                         : isSelected
-                          ? styles.badgeAccent
+                          ? styles.badgeAwaiting
                           : styles.badgeMuted,
                     ]}
                   >
-                    <AppText weight="semibold" style={styles.badgeText}>
+                    <AppText
+                      weight="semibold"
+                      style={[
+                        styles.badgeText,
+                        isConfirmed
+                          ? styles.badgeTextSuccess
+                          : isSelected
+                            ? styles.badgeTextAwaiting
+                            : styles.badgeTextMuted,
+                      ]}
+                    >
                       {isConfirmed
                         ? t('dashboard.listings.detail.auctionBids.confirmed')
                         : isSelected
@@ -382,15 +392,23 @@ const styles = StyleSheet.create({
   badgeSuccess: {
     backgroundColor: colors.accent.green.soft,
   },
-  badgeAccent: {
-    backgroundColor: colors.primarySoft,
+  badgeAwaiting: {
+    backgroundColor: colors.accent.blue.soft,
   },
   badgeMuted: {
     backgroundColor: colors.background.subtle,
   },
   badgeText: {
     fontSize: 11,
-    color: colors.text.primary,
+  },
+  badgeTextSuccess: {
+    color: colors.accent.green.text,
+  },
+  badgeTextAwaiting: {
+    color: colors.accent.blue.text,
+  },
+  badgeTextMuted: {
+    color: colors.text.tertiary,
   },
   errorText: {
     color: colors.primary,
