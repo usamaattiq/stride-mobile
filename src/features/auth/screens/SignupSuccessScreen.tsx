@@ -90,7 +90,7 @@ export function SignupSuccessScreen({
       confettiAnims.map((anim) =>
         Animated.timing(anim, {
           toValue: 1,
-          duration: 1600,
+          duration: PREPARE_DURATION_MS,
           delay: 300,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
