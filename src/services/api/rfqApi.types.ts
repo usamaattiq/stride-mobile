@@ -49,6 +49,8 @@ export type RfqOfferSummary = {
   responderName?: string | null;
   /** Phone only while contact exchange is allowed. */
   responderPhone?: string | null;
+  /** Whether the offer sender completed identity verification. */
+  responderIsVerified?: boolean;
   status: RfqOfferStatus;
   capacityMode: RfqCapacityMode;
   offeredQuantity: string | null;

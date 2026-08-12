@@ -1,6 +1,7 @@
 import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqStatusValue } from '@/services/api/rfqApi.types';
 
+import type { TripListingCategory } from '../types/tripBrowse.types';
 import type { Trip, TripListingType } from '../types/trip.types';
 
 export type ListingStatusFilter = 'all' | 'live' | 'past' | 'completed';
@@ -57,6 +58,13 @@ export function getListingStatusBucket(trip: Trip, now = Date.now()): Exclude<Li
 
 export function matchesListingType(trip: Trip, listingType: TripListingType): boolean {
   return trip.listingType === listingType;
+}
+
+export function matchesListingCategory(trip: Trip, category: TripListingCategory): boolean {
+  if (category === 'all') {
+    return true;
+  }
+  return trip.listingType === category;
 }
 
 export function matchesListingStatus(

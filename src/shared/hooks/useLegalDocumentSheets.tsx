@@ -55,7 +55,7 @@ export function useLegalDocumentSheets(): LegalDocumentSheetControl {
         sections={termsSections}
         closeLabel={t('legal.common.close')}
         onClose={() => setActiveSheet(null)}
-        heightRatio={0.8}
+        heightRatio={0.85}
       />
       <LegalDocumentBottomSheet
         visible={activeSheet === 'privacy'}
@@ -65,7 +65,7 @@ export function useLegalDocumentSheets(): LegalDocumentSheetControl {
         sections={privacySections}
         closeLabel={t('legal.common.close')}
         onClose={() => setActiveSheet(null)}
-        heightRatio={0.8}
+        heightRatio={0.85}
       />
     </>
   );

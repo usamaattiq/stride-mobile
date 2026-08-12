@@ -1,5 +1,6 @@
 import React from 'react';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -8,7 +9,11 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
-import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import {
+  VEHICLE_CLASS_OPTIONS,
+  getVehicleClassImage,
+  getVehicleClassLabelKey,
+} from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 
 type VehicleClassPickerProps = {
@@ -19,17 +24,6 @@ type VehicleClassPickerProps = {
   required?: boolean;
   error?: string;
   onBlur?: () => void;
-};
-
-const CLASS_ICONS: Record<
-  VehicleClass,
-  React.ComponentProps<typeof FontAwesome5>['name']
-> = {
-  suv: 'car-side',
-  sedan: 'car',
-  bus: 'bus',
-  van: 'shuttle-van',
-  coaster: 'bus',
 };
 
 export function VehicleClassPicker({
@@ -44,9 +38,8 @@ export function VehicleClassPicker({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
-  const selectedLabel = value
-    ? t(VEHICLE_CLASS_OPTIONS.find((item) => item.id === value)?.labelKey ?? 'vehicles.classPlaceholder')
-    : placeholder;
+  const selectedLabel = value ? t(getVehicleClassLabelKey(value)) : placeholder;
+  const selectedImage = getVehicleClassImage(value);
 
   const closePicker = () => {
     setPickerVisible(false);
@@ -68,12 +61,11 @@ export function VehicleClassPicker({
       >
         <View style={styles.fieldLeading}>
           <View style={styles.iconWrap}>
-            <FontAwesome5
-              name={value ? CLASS_ICONS[value] : 'car'}
-              size={14}
-              color={colors.primary}
-              solid
-            />
+            {selectedImage ? (
+              <Image source={selectedImage} style={styles.fieldImage} contentFit="contain" />
+            ) : (
+              <FontAwesome5 name="car" size={14} color={colors.primary} solid />
+            )}
           </View>
           <AppText style={[styles.value, !value && styles.placeholder]}>{selectedLabel}</AppText>
         </View>
@@ -81,7 +73,7 @@ export function VehicleClassPicker({
       </Pressable>
       {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
-      <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.55}>
+      <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.6}>
         <View style={styles.sheetHandle} />
         <AppText weight="semibold" style={styles.sheetTitle}>
           {t('vehicles.classPickerTitle')}
@@ -90,6 +82,7 @@ export function VehicleClassPicker({
         <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {VEHICLE_CLASS_OPTIONS.map((option) => {
             const selected = value === option.id;
+            const imageSource = getVehicleClassImage(option.id);
             return (
               <Pressable
                 key={option.id}
@@ -103,12 +96,13 @@ export function VehicleClassPicker({
               >
                 <View style={styles.optionLeading}>
                   <View style={[styles.optionIcon, selected && styles.optionIconSelected]}>
-                    <FontAwesome5
-                      name={CLASS_ICONS[option.id]}
-                      size={15}
-                      color={selected ? colors.white : colors.primary}
-                      solid
-                    />
+                    {imageSource ? (
+                      <Image
+                        source={imageSource}
+                        style={styles.optionImage}
+                        contentFit="contain"
+                      />
+                    ) : null}
                   </View>
                   <AppText weight={selected ? 'semibold' : 'regular'} style={styles.optionLabel}>
                     {t(option.labelKey)}
@@ -165,12 +159,18 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
+    width: 34,
+    height: 34,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
+    overflow: 'hidden',
+    padding: 2,
+  },
+  fieldImage: {
+    width: '100%',
+    height: '100%',
   },
   value: {
     flex: 1,
@@ -217,15 +217,21 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   optionIcon: {
-    width: 34,
-    height: 34,
+    width: 42,
+    height: 42,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+    padding: 2,
   },
   optionIconSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.white,
+  },
+  optionImage: {
+    width: '100%',
+    height: '100%',
   },
   optionLabel: {
     fontSize: 15,

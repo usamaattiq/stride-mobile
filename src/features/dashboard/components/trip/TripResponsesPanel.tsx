@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -29,7 +29,7 @@ export type TripResponsesPanelProps = {
 
 const BADGE_STYLE_BY_STATUS: Record<RfqOfferStatus, { bg: string; text: string }> = {
   active: { bg: colors.accent.amber.soft, text: colors.accent.amber.text },
-  selected: { bg: colors.primarySoft, text: colors.primary },
+  selected: { bg: colors.accent.blue.soft, text: colors.accent.blue.text },
   confirmed: { bg: colors.accent.green.soft, text: colors.accent.green.text },
   withdrawn: { bg: colors.background.subtle, text: colors.text.tertiary },
   declined: { bg: colors.background.subtle, text: colors.text.tertiary },
@@ -157,21 +157,9 @@ export function TripResponsesPanel({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <View style={styles.headerCopy}>
-          <AppText weight="bold" style={styles.headerTitle}>
-            {t('dashboard.listings.detail.responses.title')}
-          </AppText>
-        </View>
-        <Pressable
-          onPress={load}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.detail.responses.refresh')}
-        >
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
-      </View>
+      <AppText weight="bold" style={styles.headerTitle}>
+        {t('dashboard.listings.detail.responses.title')}
+      </AppText>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
@@ -191,10 +179,20 @@ export function TripResponsesPanel({
               <View key={offer.id} style={styles.offerCard}>
                 <View style={styles.offerHeaderRow}>
                   <View style={styles.offerIdentity}>
-                    <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
-                      {offer.responderName?.trim() ||
-                        t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
-                    </AppText>
+                    <View style={styles.offerNameRow}>
+                      <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
+                        {offer.responderName?.trim() ||
+                          t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
+                      </AppText>
+                      {offer.responderIsVerified === true ? (
+                        <FontAwesome
+                          name="check-circle"
+                          size={14}
+                          color="#0095F6"
+                          accessibilityLabel={t('profile.verification.verified')}
+                        />
+                      ) : null}
+                    </View>
                   </View>
                   <OfferBadge status={offer.status} label={statusLabel(offer.status)} />
                 </View>
@@ -253,7 +251,7 @@ export function TripResponsesPanel({
                     />
                     <Button
                       label={t('dashboard.listings.detail.responses.accept')}
-                      onPress={() => act(offer.id, 'accept')}
+                      onPress={() => act(offer.id, 'select')}
                       loading={isActing}
                       disabled={isActing}
                       style={styles.offerActionButton}
@@ -319,17 +317,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textAlign: 'center',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  headerCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
   headerTitle: {
     fontSize: 15,
     color: colors.text.primary,
@@ -378,6 +365,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  offerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
   },
   badge: {
     borderRadius: radius.full,

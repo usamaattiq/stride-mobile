@@ -31,12 +31,13 @@ import { ListingsEmptyState } from '../components/ListingsEmptyState';
 import { SegmentControl } from '../components/SegmentControl';
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
-import type { Trip, TripListingType } from '../types/trip.types';
-import { matchesListingQuery, matchesListingType } from '../utils/listingFilters';
+import type { Trip } from '../types/trip.types';
+import type { TripListingCategory } from '../types/tripBrowse.types';
+import { matchesListingCategory, matchesListingQuery } from '../utils/listingFilters';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 const SKELETON_COUNT = 4;
-const LISTING_TYPES: TripListingType[] = ['rfq', 'auction'];
+const LISTING_CATEGORIES: TripListingCategory[] = ['all', 'rfq', 'auction'];
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
 export function MyOffersScreen(): React.ReactElement {
@@ -49,19 +50,21 @@ export function MyOffersScreen(): React.ReactElement {
   const [offers, setOffers] = React.useState<Trip[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
-  const [listingType, setListingType] = React.useState<TripListingType>('rfq');
+  const [listingCategory, setListingCategory] =
+    React.useState<TripListingCategory>('all');
   /** True only until the first load — keep cached offers on later tab focuses. */
   const [isScreenLoading, setIsScreenLoading] = React.useState(true);
   const hasLoadedOnceRef = React.useRef(false);
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
-  const [visitedTypes, setVisitedTypes] = React.useState(
-    () => new Set<TripListingType>(['rfq']),
+  const [visitedCategories, setVisitedCategories] = React.useState(
+    () => new Set<TripListingCategory>(['all']),
   );
 
   const typeOptions = React.useMemo(
     () => [
+      { id: 'all' as const, label: t('dashboard.home.categoryAllListings') },
       { id: 'rfq' as const, label: t('dashboard.home.categoryRfq') },
       { id: 'auction' as const, label: t('dashboard.home.categoryAuction') },
     ],
@@ -82,15 +85,15 @@ export function MyOffersScreen(): React.ReactElement {
   const { refreshControlProps } = usePullToRefresh(refreshOffers);
 
   React.useEffect(() => {
-    setVisitedTypes((current) => {
-      if (current.has(listingType)) {
+    setVisitedCategories((current) => {
+      if (current.has(listingCategory)) {
         return current;
       }
       const next = new Set(current);
-      next.add(listingType);
+      next.add(listingCategory);
       return next;
     });
-  }, [listingType]);
+  }, [listingCategory]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -118,13 +121,13 @@ export function MyOffersScreen(): React.ReactElement {
     }, [refreshOffers]),
   );
 
-  const selectListingType = React.useCallback(
-    (next: TripListingType, animated = true) => {
-      setListingType(next);
+  const selectListingCategory = React.useCallback(
+    (next: TripListingCategory, animated = true) => {
+      setListingCategory(next);
       if (pageWidth <= 0) {
         return;
       }
-      const index = LISTING_TYPES.indexOf(next);
+      const index = LISTING_CATEGORIES.indexOf(next);
       pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
       if (!animated) {
         scrollX.setValue(index * pageWidth);
@@ -138,29 +141,30 @@ export function MyOffersScreen(): React.ReactElement {
       return undefined;
     }
     return scrollX.interpolate({
-      inputRange: [0, pageWidth],
-      outputRange: [0, 1],
+      inputRange: [0, pageWidth, pageWidth * 2],
+      outputRange: [0, 1, 2],
       extrapolate: 'clamp',
     });
   }, [pageWidth, scrollX]);
 
-  const syncTypeFromOffset = React.useCallback(
+  const syncCategoryFromOffset = React.useCallback(
     (offsetX: number) => {
       if (pageWidth <= 0) {
         return;
       }
       const index = Math.round(offsetX / pageWidth);
-      const nextType = LISTING_TYPES[Math.min(Math.max(index, 0), LISTING_TYPES.length - 1)];
-      setListingType((current) => (current === nextType ? current : nextType));
+      const nextCategory =
+        LISTING_CATEGORIES[Math.min(Math.max(index, 0), LISTING_CATEGORIES.length - 1)];
+      setListingCategory((current) => (current === nextCategory ? current : nextCategory));
     },
     [pageWidth],
   );
 
   const onPagerScrollEnd = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      syncTypeFromOffset(event.nativeEvent.contentOffset.x);
+      syncCategoryFromOffset(event.nativeEvent.contentOffset.x);
     },
-    [syncTypeFromOffset],
+    [syncCategoryFromOffset],
   );
 
   const onPagerLayout = React.useCallback(
@@ -170,22 +174,23 @@ export function MyOffersScreen(): React.ReactElement {
         return;
       }
       setPageWidth(width);
-      const index = LISTING_TYPES.indexOf(listingType);
+      const index = LISTING_CATEGORIES.indexOf(listingCategory);
       scrollX.setValue(index * width);
       requestAnimationFrame(() => {
         pagerRef.current?.scrollTo({ x: index * width, animated: false });
       });
     },
-    [listingType, pageWidth, scrollX],
+    [listingCategory, pageWidth, scrollX],
   );
 
-  const offersByType = React.useMemo(
+  const offersByCategory = React.useMemo(
     () => ({
+      all: offers.filter((trip) => matchesListingQuery(trip, query)),
       rfq: offers.filter(
-        (trip) => matchesListingType(trip, 'rfq') && matchesListingQuery(trip, query),
+        (trip) => matchesListingCategory(trip, 'rfq') && matchesListingQuery(trip, query),
       ),
       auction: offers.filter(
-        (trip) => matchesListingType(trip, 'auction') && matchesListingQuery(trip, query),
+        (trip) => matchesListingCategory(trip, 'auction') && matchesListingQuery(trip, query),
       ),
     }),
     [offers, query],
@@ -201,19 +206,19 @@ export function MyOffersScreen(): React.ReactElement {
     [navigation],
   );
 
-  const renderTypePage = (type: TripListingType, width: number): React.ReactElement => {
-    if (!visitedTypes.has(type)) {
-      return <View key={type} style={[styles.page, { width }]} />;
+  const renderCategoryPage = (category: TripListingCategory, width: number): React.ReactElement => {
+    if (!visitedCategories.has(category)) {
+      return <View key={category} style={[styles.page, { width }]} />;
     }
 
-    const pageOffers = offersByType[type];
+    const pageOffers = offersByCategory[category];
     let pageBody: React.ReactElement;
 
     if (isScreenLoading && !hasLoadedOnceRef.current) {
       pageBody = (
         <View style={styles.skeletonList}>
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-            <ListingCardSkeleton key={`offers-skeleton-${type}-${index}`} />
+            <ListingCardSkeleton key={`offers-skeleton-${category}-${index}`} />
           ))}
         </View>
       );
@@ -281,7 +286,7 @@ export function MyOffersScreen(): React.ReactElement {
     }
 
     return (
-      <View key={type} style={[styles.page, { width }]}>
+      <View key={category} style={[styles.page, { width }]}>
         {pageBody}
       </View>
     );
@@ -304,8 +309,8 @@ export function MyOffersScreen(): React.ReactElement {
         <SegmentControl
           variant="onBrand"
           options={typeOptions}
-          value={listingType}
-          onChange={selectListingType}
+          value={listingCategory}
+          onChange={selectListingCategory}
           animatedIndex={animatedTypeIndex}
         />
       }
@@ -334,7 +339,7 @@ export function MyOffersScreen(): React.ReactElement {
           onMomentumScrollEnd={onPagerScrollEnd}
           scrollEventThrottle={16}
         >
-          {LISTING_TYPES.map((type) => renderTypePage(type, pageWidth))}
+          {LISTING_CATEGORIES.map((category) => renderCategoryPage(category, pageWidth))}
         </Animated.ScrollView>
       </View>
     </AuthScaffold>

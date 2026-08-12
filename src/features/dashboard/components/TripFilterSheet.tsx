@@ -1,8 +1,8 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
-import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import {
   CITY_RESULTS_MAX_HEIGHT,
   CitySearchField,
@@ -41,10 +41,8 @@ const VEHICLE_MODE_OPTIONS: ChipOption<TripVehicleMode>[] = [
   { id: 'fullPrivate', labelKey: 'trips.create.vehicleModeFullPrivate' },
 ];
 
-const SEAT_OPTIONS = Array.from({ length: 50 }, (_, index) => index + 1);
-const SEAT_OPTION_HEIGHT = 40;
-const SEAT_DROPDOWN_VISIBLE_COUNT = 3;
-const SEAT_DROPDOWN_HEIGHT = SEAT_OPTION_HEIGHT * SEAT_DROPDOWN_VISIBLE_COUNT;
+const FILTER_SEATS_MIN = 1;
+const FILTER_SEATS_MAX = 50;
 
 export function TripFilterSheet({
   visible,
@@ -55,13 +53,6 @@ export function TripFilterSheet({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [draft, setDraft] = React.useState<TripBrowseFilters>(filters);
   const [resetSeed, setResetSeed] = React.useState(0);
-  const [seatDropdownOpen, setSeatDropdownOpen] = React.useState(false);
-  const [seatDropdownLayout, setSeatDropdownLayout] = React.useState<{
-    x: number;
-    y: number;
-    width: number;
-  } | null>(null);
-  const seatTriggerRef = React.useRef<View>(null);
   const scrollRef = React.useRef<ScrollView>(null);
   const departureFieldY = React.useRef(0);
   const arrivalFieldY = React.useRef(0);
@@ -79,17 +70,11 @@ export function TripFilterSheet({
     return () => hideSub.remove();
   }, []);
 
-  const closeSeatDropdown = React.useCallback(() => {
-    setSeatDropdownOpen(false);
-    setSeatDropdownLayout(null);
-  }, []);
-
   React.useEffect(() => {
     if (visible) {
       setDraft(filters);
-      closeSeatDropdown();
     }
-  }, [closeSeatDropdown, filters, visible]);
+  }, [filters, visible]);
 
   const activeCount = countActiveTripBrowseFilters(draft);
   const hasActiveFilters = activeCount > 0;
@@ -98,22 +83,10 @@ export function TripFilterSheet({
     setDraft((current) => ({ ...current, ...partial }));
   };
 
-  const openSeatDropdown = () => {
-    seatTriggerRef.current?.measureInWindow((x, y, width, height) => {
-      setSeatDropdownLayout({
-        x,
-        y: y + height + spacing.xs,
-        width,
-      });
-      setSeatDropdownOpen(true);
-    });
-  };
-
   const handleReset = () => {
     const clearedFilters = EMPTY_TRIP_BROWSE_FILTERS;
     setDraft(clearedFilters);
     setResetSeed((current) => current + 1);
-    closeSeatDropdown();
     onApply(clearedFilters);
     onClose();
   };
@@ -122,13 +95,12 @@ export function TripFilterSheet({
     if (!hasActiveFilters) {
       return;
     }
-    closeSeatDropdown();
     onApply(draft);
     onClose();
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.7}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.75}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>
@@ -144,32 +116,13 @@ export function TripFilterSheet({
         contentContainerStyle={styles.scrollContent}
         scrollEnabled={false}
       >
-        <FilterSection title={t('dashboard.home.filterSeats')}>
-          <View ref={seatTriggerRef} collapsable={false} style={styles.seatDropdownWrap}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                if (seatDropdownOpen) {
-                  closeSeatDropdown();
-                  return;
-                }
-                openSeatDropdown();
-              }}
-              style={({ pressed }) => [styles.seatDropdownTrigger, pressed && styles.pressed]}
-            >
-              <AppText style={[styles.seatDropdownValue, draft.minSeats == null && styles.seatPlaceholder]}>
-                {draft.minSeats == null
-                  ? 'Select seats'
-                  : t('dashboard.home.filterSeatsCount', { count: draft.minSeats })}
-              </AppText>
-              <FontAwesome
-                name={seatDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                size={12}
-                color={colors.text.secondary}
-              />
-            </Pressable>
-          </View>
-        </FilterSection>
+        <SeatsStepper
+          label={t('dashboard.home.filterSeats')}
+          value={draft.minSeats ?? FILTER_SEATS_MIN}
+          min={FILTER_SEATS_MIN}
+          max={FILTER_SEATS_MAX}
+          onChange={(minSeats) => patchDraft({ minSeats })}
+        />
 
         <View onLayout={(event) => { departureFieldY.current = event.nativeEvent.layout.y; }}>
           <CitySearchField
@@ -232,7 +185,6 @@ export function TripFilterSheet({
             })}
           </ChipRow>
         </FilterSection>
-
       </ScrollView>
 
       <View style={styles.footerRow}>
@@ -271,72 +223,6 @@ export function TripFilterSheet({
           </AppText>
         </Pressable>
       </View>
-
-      <Modal
-        visible={seatDropdownOpen && seatDropdownLayout != null}
-        transparent
-        animationType="none"
-        onRequestClose={closeSeatDropdown}
-        statusBarTranslucent
-      >
-        <View style={styles.seatModalRoot} pointerEvents="box-none">
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={closeSeatDropdown}
-            accessibilityRole="button"
-            accessibilityLabel="Close seats"
-          />
-          {seatDropdownLayout ? (
-            <View
-              style={[
-                styles.seatDropdownList,
-                {
-                  top: seatDropdownLayout.y,
-                  left: seatDropdownLayout.x,
-                  width: seatDropdownLayout.width,
-                },
-              ]}
-            >
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator
-                style={styles.seatDropdownScroll}
-              >
-                {SEAT_OPTIONS.map((seats) => {
-                  const selected = draft.minSeats === seats;
-                  return (
-                    <Pressable
-                      key={seats}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => {
-                        patchDraft({ minSeats: selected ? null : seats });
-                        closeSeatDropdown();
-                      }}
-                      style={({ pressed }) => [
-                        styles.seatOptionRow,
-                        selected && styles.seatOptionRowSelected,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <AppText
-                        weight={selected ? 'semibold' : 'regular'}
-                        style={[styles.seatOptionText, selected && styles.seatOptionTextSelected]}
-                      >
-                        {seats}
-                      </AppText>
-                      {selected ? (
-                        <FontAwesome name="check" size={12} color={colors.primary} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          ) : null}
-        </View>
-      </Modal>
-
     </AppBottomSheet>
   );
 }
@@ -496,67 +382,6 @@ const styles = StyleSheet.create({
   },
   chipLabelIdle: {
     color: colors.text.primary,
-  },
-  seatDropdownWrap: {},
-  seatDropdownTrigger: {
-    minHeight: 46,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  seatDropdownValue: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  seatPlaceholder: {
-    color: colors.text.tertiary,
-  },
-  seatModalRoot: {
-    flex: 1,
-  },
-  seatDropdownList: {
-    position: 'absolute',
-    height: SEAT_DROPDOWN_HEIGHT,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  seatDropdownScroll: {
-    flexGrow: 0,
-    height: SEAT_DROPDOWN_HEIGHT,
-  },
-  seatOptionRow: {
-    height: SEAT_OPTION_HEIGHT,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border.default,
-  },
-  seatOptionRowSelected: {
-    backgroundColor: colors.primarySoft,
-  },
-  seatOptionText: {
-    fontSize: 14,
-    color: colors.text.primary,
-  },
-  seatOptionTextSelected: {
-    color: colors.primary,
   },
   pressed: {
     opacity: 0.85,

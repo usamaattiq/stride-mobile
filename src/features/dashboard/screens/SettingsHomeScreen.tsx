@@ -357,6 +357,7 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     marginTop: 'auto',
+    marginBottom: spacing.lg,
   },
   versionLabel: {
     fontSize: 12,

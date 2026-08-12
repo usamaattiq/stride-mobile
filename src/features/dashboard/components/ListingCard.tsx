@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -15,7 +15,7 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
-import { VEHICLE_CLASS_ICONS, VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
@@ -47,7 +47,7 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   'awaiting-confirmation': 'blue',
   'offer-submitted': 'amber',
   'awaiting-your-confirmation': 'blue',
-  confirmed: 'blue',
+  confirmed: 'green',
   completed: 'blue',
   closed: 'muted',
   expired: 'muted',
@@ -73,13 +73,13 @@ const AUCTION_VARIANT_TONE: Record<
   muted: 'muted',
   accent: 'green',
   warning: 'amber',
-  success: 'blue',
+  success: 'green',
 };
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
   active: 'amber',
   selected: 'blue',
-  confirmed: 'blue',
+  confirmed: 'green',
   withdrawn: 'muted',
   declined: 'muted',
   timed_out: 'muted',
@@ -107,27 +107,28 @@ function RequestThumbnail({
 }: {
   vehicleClass: VehicleClass | null;
 }): React.ReactElement {
-  const iconName = vehicleClass ? VEHICLE_CLASS_ICONS[vehicleClass] : 'car';
+  const imageSource = getVehicleClassImage(vehicleClass);
 
   return (
-    <LinearGradient
-      colors={['#FFF8F7', '#FEE4E2', '#F9C6C0']}
-      locations={[0, 0.55, 1]}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.95, y: 1 }}
-      style={styles.requestThumb}
-    >
-      <View style={styles.requestThumbIconWell}>
-        <FontAwesome5 name={iconName} size={24} color={colors.primary} solid />
-      </View>
-    </LinearGradient>
+    <View style={styles.requestThumb}>
+      {imageSource ? (
+        <Image
+          source={imageSource}
+          style={styles.requestThumbImage}
+          contentFit="contain"
+        />
+      ) : (
+        <View style={styles.requestThumbFallback}>
+          <FontAwesome name="car" size={22} color={colors.primary} />
+        </View>
+      )}
+    </View>
   );
 }
 
 export type ListingCardProps = {
   trip: Trip;
   onPress?: () => void;
-  onRemovePress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
   /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
@@ -137,7 +138,6 @@ export type ListingCardProps = {
 export function ListingCard({
   trip,
   onPress,
-  onRemovePress,
   showPhotoCount = false,
   pending = false,
 }: ListingCardProps): React.ReactElement {
@@ -154,10 +154,7 @@ export function ListingCard({
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = cityDisplayName(trip.arrivalCity.label);
   const classLabel = trip.vehicleClass
-    ? t(
-        VEHICLE_CLASS_OPTIONS.find((item) => item.id === trip.vehicleClass)?.labelKey ??
-          'vehicles.classPlaceholder',
-      )
+    ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;
   const seatsLabel =
     trip.vehicleTotalSeats != null
@@ -213,8 +210,8 @@ export function ListingCard({
   const isPassengerRequest = trip.vehicleId == null;
   // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
   const showCountdown = pending || active;
-  const listingLabel =
-    trip.listingType === 'auction'
+  const isAuction = trip.listingType === 'auction';
+  const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');
   const paymentLabel =
@@ -247,9 +244,25 @@ export function ListingCard({
 
       <View style={styles.topRow}>
         <View style={styles.topBadges}>
-          <View style={styles.topBadge}>
-            <FontAwesome name="list-ul" size={9} color={colors.primary} />
-            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+          <View
+            style={[
+              styles.topBadge,
+              isAuction ? styles.listingBadgeAuction : styles.listingBadgeRfq,
+            ]}
+          >
+            <FontAwesome
+              name={isAuction ? 'gavel' : 'list-ul'}
+              size={9}
+              color={isAuction ? colors.accent.purple.text : colors.accent.blue.text}
+            />
+            <AppText
+              weight="semibold"
+              style={[
+                styles.topBadgeText,
+                isAuction ? styles.listingBadgeTextAuction : styles.listingBadgeTextRfq,
+              ]}
+              numberOfLines={1}
+            >
               {listingLabel}
             </AppText>
           </View>
@@ -310,7 +323,10 @@ export function ListingCard({
 
       <View style={styles.mainRow}>
         <Pressable
-          style={styles.thumbnail}
+          style={[
+            styles.thumbnail,
+            isPassengerRequest && !trip.vehiclePhotoUrl && styles.thumbnailRequest,
+          ]}
           disabled={!galleryImages.length}
           onPress={() => setGalleryVisible(true)}
           accessibilityRole={galleryImages.length ? 'button' : undefined}
@@ -353,17 +369,6 @@ export function ListingCard({
                 {toCity}
               </AppText>
             </View>
-            {onRemovePress ? (
-              <Pressable
-                onPress={onRemovePress}
-                style={styles.removeButton}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('dashboard.listings.remove.a11y')}
-              >
-                <FontAwesome name="trash-o" size={14} color={colors.primary} />
-              </Pressable>
-            ) : null}
           </View>
 
           <View style={styles.metaRow}>
@@ -372,8 +377,6 @@ export function ListingCard({
               {formatTripWhen(trip, i18n.language)}
             </AppText>
           </View>
-
-          <View style={styles.bodyDivider} />
 
           <View style={styles.detailsPriceRow}>
             <View style={styles.detailsCol}>
@@ -389,26 +392,12 @@ export function ListingCard({
                   </AppText>
                 </View>
               ) : null}
-              {classLabel || seatsLabel || (!price && showCountdown) ? (
-                <View style={styles.vehicleTypeRow}>
-                  {classLabel || seatsLabel ? (
-                    <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
-                      <FontAwesome name="car" size={11} color={colors.primary} />
-                      <AppText style={styles.metaText} numberOfLines={1}>
-                        {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
-                      </AppText>
-                    </View>
-                  ) : (
-                    <View style={styles.vehicleTypeMeta} />
-                  )}
-                  {!price && showCountdown ? (
-                    <View style={styles.inlineCountdownBadge}>
-                      <FontAwesome name="clock-o" size={10} color={colors.primary} />
-                      <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-                        {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-                      </AppText>
-                    </View>
-                  ) : null}
+              {classLabel || seatsLabel ? (
+                <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
+                  <FontAwesome name="car" size={11} color={colors.primary} />
+                  <AppText style={styles.metaText} numberOfLines={1}>
+                    {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
+                  </AppText>
                 </View>
               ) : null}
             </View>
@@ -426,19 +415,19 @@ export function ListingCard({
               </View>
             ) : null}
           </View>
+
+          {showCountdown ? (
+            <View style={styles.bodyCountdownRow}>
+              <View style={styles.countdownBadge}>
+                <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                  {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                </AppText>
+              </View>
+            </View>
+          ) : null}
         </View>
       </View>
-
-      {price && showCountdown ? (
-        <View style={styles.bottomRow}>
-          <View style={styles.countdownBadge}>
-            <FontAwesome name="clock-o" size={10} color={colors.primary} />
-            <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-              {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-            </AppText>
-          </View>
-        </View>
-      ) : null}
     </>
   );
 
@@ -517,10 +506,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.primarySoft,
   },
+  listingBadgeRfq: {
+    backgroundColor: colors.accent.blue.soft,
+  },
+  listingBadgeAuction: {
+    backgroundColor: colors.accent.purple.soft,
+  },
   topBadgeText: {
     flexShrink: 1,
     fontSize: 11,
     color: colors.primary,
+  },
+  listingBadgeTextRfq: {
+    color: colors.accent.blue.text,
+  },
+  listingBadgeTextAuction: {
+    color: colors.accent.purple.text,
   },
   timerBadge: {
     flexDirection: 'row',
@@ -558,17 +559,11 @@ const styles = StyleSheet.create({
   },
   mainRow: {
     flexDirection: 'row',
-    // alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.sm,
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing.xs,
-    paddingBottom: spacing.xs,
   },
   countdownBadge: {
     flexDirection: 'row',
@@ -580,16 +575,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
-    shadowColor: '#000000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
   },
   countdownText: {
     fontSize: 11,
     color: colors.primary,
-    
   },
   thumbnail: {
     width: 88,
@@ -597,6 +586,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
+  },
+  thumbnailRequest: {
+    backgroundColor: 'transparent',
   },
   thumbnailImage: {
     width: '100%',
@@ -612,19 +604,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
-  requestThumbIconWell: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  requestThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  requestThumbFallback: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
-    shadowColor: '#7F1D1D',
-    shadowOpacity: 0.16,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
   },
   photoBadge: {
     position: 'absolute',
@@ -664,14 +653,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
-  removeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -683,11 +664,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  bodyDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border.default,
-    marginVertical: 2,
-  },
   detailsPriceRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -698,13 +674,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 3,
   },
-  vehicleTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    minWidth: 0,
-  },
   vehicleTypeMeta: {
     flex: 1,
     minWidth: 0,
@@ -713,22 +682,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexShrink: 0,
   },
-  inlineCountdownBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flexShrink: 0,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-    shadowColor: '#000000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+  bodyCountdownRow: {
+    marginTop: 'auto',
+    alignItems: 'flex-end',
   },
   priceAmount: {
     fontSize: 22,

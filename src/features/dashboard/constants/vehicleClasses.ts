@@ -1,25 +1,51 @@
+import type { ImageSourcePropType } from 'react-native';
+
 import type { VehicleClass } from '../types/vehicle.types';
 
 export type VehicleClassOption = {
-  id: VehicleClass;
-  labelKey: `vehicles.classes.${VehicleClass}`;
+  id: Exclude<VehicleClass, 'coaster'>;
+  labelKey: `vehicles.classes.${Exclude<VehicleClass, 'coaster'>}`;
 };
 
+/** Selectable vehicle types only — coaster kept in types for legacy API data. */
 export const VEHICLE_CLASS_OPTIONS: VehicleClassOption[] = [
-  { id: 'suv', labelKey: 'vehicles.classes.suv' },
   { id: 'sedan', labelKey: 'vehicles.classes.sedan' },
-  { id: 'bus', labelKey: 'vehicles.classes.bus' },
+  { id: 'suv', labelKey: 'vehicles.classes.suv' },
   { id: 'van', labelKey: 'vehicles.classes.van' },
-  { id: 'coaster', labelKey: 'vehicles.classes.coaster' },
+  { id: 'bus', labelKey: 'vehicles.classes.bus' },
 ];
 
-export const VEHICLE_CLASS_ICONS: Record<
-  VehicleClass,
-  'car-side' | 'car' | 'bus' | 'shuttle-van'
-> = {
-  suv: 'car-side',
-  sedan: 'car',
-  bus: 'bus',
-  van: 'shuttle-van',
-  coaster: 'bus',
+const SEDAN_ICON = require('@/assets/images/sedan.png');
+const SUV_ICON = require('@/assets/images/suv.png');
+const VAN_ICON = require('@/assets/images/van.png');
+const BUS_ICON = require('@/assets/images/bus.png');
+
+/** Class artwork for passenger request cards / pickers. Legacy `coaster` maps to bus. */
+export const VEHICLE_CLASS_IMAGES: Record<VehicleClass, ImageSourcePropType> = {
+  sedan: SEDAN_ICON,
+  suv: SUV_ICON,
+  van: VAN_ICON,
+  bus: BUS_ICON,
+  coaster: BUS_ICON,
 };
+
+export function getVehicleClassImage(
+  vehicleClass: VehicleClass | null | undefined,
+): ImageSourcePropType | null {
+  if (!vehicleClass) {
+    return null;
+  }
+  return VEHICLE_CLASS_IMAGES[vehicleClass] ?? null;
+}
+
+export function getVehicleClassLabelKey(
+  vehicleClass: VehicleClass | null | undefined,
+): `vehicles.classes.${VehicleClass}` | 'vehicles.classPlaceholder' {
+  if (!vehicleClass) {
+    return 'vehicles.classPlaceholder';
+  }
+  if (vehicleClass === 'coaster') {
+    return 'vehicles.classes.bus';
+  }
+  return `vehicles.classes.${vehicleClass}`;
+}

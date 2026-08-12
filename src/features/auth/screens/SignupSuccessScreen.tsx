@@ -1,19 +1,33 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Animated, Easing, StyleSheet, View, type DimensionValue } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Platform,
+  StyleSheet,
+  View,
+  type DimensionValue,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { AppTopBar } from '@/shared/components/AppTopBar';
-import { Button } from '@/shared/components/Button';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { useProfileStore } from '@/store/profileStore';
-import { colors, radius, spacing } from '@/theme';
+import {
+  colors,
+  iosArabicOpticalAlignStyle,
+  radius,
+  spacing,
+  typography,
+} from '@/theme';
 
 const DEFAULT_CREDITS = 50;
+const PREPARE_DURATION_MS = 3000;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -47,11 +61,14 @@ export function SignupSuccessScreen({
   onGoToDashboard,
 }: SignupSuccessScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const credits = useProfileStore((state) => state.profile?.credits ?? DEFAULT_CREDITS);
   const badgeScale = React.useRef(new Animated.Value(0)).current;
   const contentOpacity = React.useRef(new Animated.Value(0)).current;
+  const prepareProgress = React.useRef(new Animated.Value(0)).current;
   const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
+  const didNavigateRef = React.useRef(false);
 
   React.useEffect(() => {
     Animated.sequence([
@@ -68,14 +85,12 @@ export function SignupSuccessScreen({
       }),
     ]).start();
 
-    // Confetti holds for a beat, then drifts down and dissolves — like it's
-    // celebrating the tick before settling.
     Animated.stagger(
       70,
       confettiAnims.map((anim) =>
         Animated.timing(anim, {
           toValue: 1,
-          duration: 1600,
+          duration: PREPARE_DURATION_MS,
           delay: 300,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
@@ -83,6 +98,33 @@ export function SignupSuccessScreen({
       ),
     ).start();
   }, [badgeScale, contentOpacity, confettiAnims]);
+
+  React.useEffect(() => {
+    prepareProgress.setValue(0);
+    const animation = Animated.timing(prepareProgress, {
+      toValue: 1,
+      duration: PREPARE_DURATION_MS,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: false,
+    });
+
+    animation.start(({ finished }) => {
+      if (!finished || didNavigateRef.current) {
+        return;
+      }
+      didNavigateRef.current = true;
+      onGoToDashboard();
+    });
+
+    return () => {
+      animation.stop();
+    };
+  }, [onGoToDashboard, prepareProgress]);
+
+  const prepareWidth = prepareProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -155,18 +197,36 @@ export function SignupSuccessScreen({
               <AppText weight="bold" style={styles.creditsAmount}>
                 {t('auth.signup.success.credits', { count: credits })}
               </AppText>
-              <AppText style={styles.creditsReason}>
-                {t('auth.signup.success.creditsReason')}
-              </AppText>
             </View>
             <FontAwesome5 name="coins" size={46} color="#E8A13A" />
           </View>
         </Animated.View>
-      <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-        <Button label={t('auth.signup.success.dashboard')} onPress={onGoToDashboard} />
-      </View>
-      </View>
 
+        <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          <View
+            style={styles.prepareButton}
+            accessibilityRole="progressbar"
+            accessibilityLabel={t('auth.signup.success.preparingDashboard')}
+            accessibilityState={{ busy: true }}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.prepareFill, { width: prepareWidth }]}
+            />
+            <AppText
+              weight="bold"
+              style={[
+                styles.prepareLabel,
+                Platform.OS === 'ios' && currentLanguage === 'ar'
+                  ? iosArabicOpticalAlignStyle
+                  : null,
+              ]}
+            >
+              {t('auth.signup.success.preparingDashboard')}
+            </AppText>
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -176,8 +236,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  // Matches AuthScaffold's header inset (Signup/Login) so the language
-  // button sits at the same distance from the edge across auth screens.
   topBar: {
     paddingHorizontal: spacing.md,
   },
@@ -255,15 +313,31 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     color: colors.text.primary,
   },
-  creditsReason: {
-    marginTop: spacing.xxs,
-    fontSize: 13,
-    color: colors.text.secondary,
-  },
   actions: {
     alignSelf: 'stretch',
     paddingHorizontal: spacing.xl,
     marginTop: spacing.xxxl,
     gap: spacing.md,
+  },
+  prepareButton: {
+    minHeight: 56,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.primary,
+    direction: 'ltr',
+  },
+  prepareFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  prepareLabel: {
+    ...typography.button,
+    color: colors.text.inverse,
+    textAlign: 'center',
+    zIndex: 1,
   },
 });
