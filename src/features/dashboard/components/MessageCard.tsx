@@ -15,6 +15,8 @@ import type {
 type MessageCardProps = {
   message: HomeMessage;
   onPress?: (message: HomeMessage) => void;
+  /** Opens the linked RFQ / auction listing (context chip). */
+  onPressRequest?: (message: HomeMessage) => void;
 };
 
 const AVATAR_TONES: Record<MessageAvatarTone, string> = {
@@ -44,7 +46,11 @@ const CONTEXT_THEME: Record<
   },
 };
 
-export function MessageCard({ message, onPress }: MessageCardProps): React.ReactElement {
+export function MessageCard({
+  message,
+  onPress,
+  onPressRequest,
+}: MessageCardProps): React.ReactElement {
   const contextTheme = CONTEXT_THEME[message.context.kind];
 
   return (
@@ -103,7 +109,16 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
             {message.preview}
           </AppText>
 
-          <View style={[styles.context, { backgroundColor: contextTheme.soft }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={message.context.title}
+            onPress={() => onPressRequest?.(message)}
+            style={({ pressed }) => [
+              styles.context,
+              { backgroundColor: contextTheme.soft },
+              pressed && styles.contextPressed,
+            ]}
+          >
             <View style={styles.contextIconWrap}>
               <FontAwesome5
                 name={contextTheme.icon}
@@ -125,7 +140,7 @@ export function MessageCard({ message, onPress }: MessageCardProps): React.React
               </AppText>
             </View>
             <FontAwesome5 name="chevron-right" size={11} color={colors.text.tertiary} />
-          </View>
+          </Pressable>
         </View>
       </View>
     </Pressable>
@@ -212,6 +227,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     borderRadius: radius.sm,
+  },
+  contextPressed: {
+    opacity: 0.85,
   },
   contextIconWrap: {
     width: 28,

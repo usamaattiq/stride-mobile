@@ -12,6 +12,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -25,6 +27,7 @@ import { MessageCard } from './MessageCard';
 import { MessagesEmptyState } from './MessagesEmptyState';
 import { TripMessagingSheet } from './trip/TripMessagingSheet';
 import { useDashboardSession } from '../context/DashboardSessionContext';
+import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { HomeMessage, MessageFilter } from '../types/messages.types';
 import { mapInboxItemToHomeMessage } from '../utils/mapInboxItemToHomeMessage';
 
@@ -49,6 +52,8 @@ export const MessagesPanel = React.memo(
     ref,
   ): React.ReactElement {
     const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+    const navigation =
+      useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
     const { user, setHasUnreadMessages } = useDashboardSession();
     const [messages, setMessages] = React.useState<HomeMessage[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -171,11 +176,22 @@ export const MessagesPanel = React.memo(
       [messages],
     );
 
+    const openRequest = React.useCallback(
+      (message: HomeMessage) => {
+        navigation.navigate('ListingDetail', { tripId: message.tripId });
+      },
+      [navigation],
+    );
+
     const renderItem = React.useCallback(
       ({ item }: { item: HomeMessage }) => (
-        <MessageCard message={item} onPress={setActiveChat} />
+        <MessageCard
+          message={item}
+          onPress={setActiveChat}
+          onPressRequest={openRequest}
+        />
       ),
-      [],
+      [openRequest],
     );
 
     const closeChat = React.useCallback(() => {
