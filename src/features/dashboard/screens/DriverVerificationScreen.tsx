@@ -42,6 +42,7 @@ export function DriverVerificationScreen(): React.ReactElement {
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [successKind, setSuccessKind] = React.useState<SuccessKind | null>(null);
+  const [skipConfirmVisible, setSkipConfirmVisible] = React.useState(false);
 
   const runAction = async (kind: SuccessKind, action: () => Promise<void>) => {
     if (submitting) {
@@ -103,7 +104,12 @@ export function DriverVerificationScreen(): React.ReactElement {
     void runAction(isCompleteFlow ? 'completed' : 'verified', submit);
   };
 
-  const handleSkip = () => {
+  const handleSkipPress = () => {
+    setSkipConfirmVisible(true);
+  };
+
+  const handleSkipConfirm = () => {
+    setSkipConfirmVisible(false);
     void runAction('skipped', () => switchToDriver());
   };
 
@@ -157,13 +163,28 @@ export function DriverVerificationScreen(): React.ReactElement {
               setSubmitError(null);
             }}
             onSubmit={handleSubmit}
-            onSkip={isCompleteFlow ? undefined : handleSkip}
+            onSkip={isCompleteFlow ? undefined : handleSkipPress}
             keyboardType="default"
             loading={submitting}
             errorMessage={submitError}
           />
         </AuthCard>
       </AuthScaffold>
+
+      <AppDialog
+        visible={skipConfirmVisible}
+        icon="exclamation-triangle"
+        title={t('driverVerification.skipConfirmTitle')}
+        message={t('driverVerification.skipConfirmBody')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setSkipConfirmVisible(false),
+        }}
+        confirmAction={{
+          label: t('driverVerification.skipConfirmConfirm'),
+          onPress: handleSkipConfirm,
+        }}
+      />
 
       <AppDialog
         visible={successKind !== null}
