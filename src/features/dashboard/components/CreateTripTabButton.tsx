@@ -31,7 +31,7 @@ export function CreateTripTabButton(props: BottomTabBarButtonProps): React.React
       accessibilityLabel={a11yLabel}
     >
       <View style={styles.button}>
-        <FontAwesome name="plus" size={22} color={colors.white} />
+        <FontAwesome name="plus" size={26} color={colors.white} />
       </View>
       <AppText
         weight="medium"
@@ -44,11 +44,11 @@ export function CreateTripTabButton(props: BottomTabBarButtonProps): React.React
   );
 }
 
-const FAB_SIZE = 56;
+const FAB_SIZE = 62;
 
 const styles = StyleSheet.create({
   wrap: {
-    top: -18,
+    top: -30,
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 0,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
+    borderWidth: 0.5,
     borderColor: colors.white,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
