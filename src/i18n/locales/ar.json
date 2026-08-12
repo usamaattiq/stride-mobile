@@ -171,9 +171,9 @@
       "History": "السجل",
       "Settings": "الإعدادات",
       "CreateTrip": "إضافة رحلة",
-      "CreateRequest": "إنشاء",
+      "CreateRequest": "طلب",
       "createTripA11y": "إنشاء رحلة",
-      "createRequestA11y": "إنشاء"
+      "createRequestA11y": "طلب"
     },
     "offers": {
       "title": "عروضي",
