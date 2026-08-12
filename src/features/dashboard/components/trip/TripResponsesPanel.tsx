@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -178,10 +179,20 @@ export function TripResponsesPanel({
               <View key={offer.id} style={styles.offerCard}>
                 <View style={styles.offerHeaderRow}>
                   <View style={styles.offerIdentity}>
-                    <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
-                      {offer.responderName?.trim() ||
-                        t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
-                    </AppText>
+                    <View style={styles.offerNameRow}>
+                      <AppText weight="semibold" style={styles.offerTitle} numberOfLines={1}>
+                        {offer.responderName?.trim() ||
+                          t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 })}
+                      </AppText>
+                      {offer.responderIsVerified === true ? (
+                        <FontAwesome
+                          name="check-circle"
+                          size={14}
+                          color="#0095F6"
+                          accessibilityLabel={t('profile.verification.verified')}
+                        />
+                      ) : null}
+                    </View>
                   </View>
                   <OfferBadge status={offer.status} label={statusLabel(offer.status)} />
                 </View>
@@ -354,6 +365,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  offerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
   },
   badge: {
     borderRadius: radius.full,
