@@ -178,7 +178,13 @@ export const MessagesPanel = React.memo(
 
     const openRequest = React.useCallback(
       (message: HomeMessage) => {
-        navigation.navigate('ListingDetail', { tripId: message.tripId });
+        if (!message.tripId) {
+          return;
+        }
+        navigation.navigate('ListingDetail', {
+          tripId: message.tripId,
+          viewerIsOwner: message.viewerIsOwner,
+        });
       },
       [navigation],
     );

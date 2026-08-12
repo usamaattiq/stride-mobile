@@ -67,8 +67,10 @@ export function ListingDetailScreen(): React.ReactElement {
   const [removeError, setRemoveError] = React.useState<string | null>(null);
   const [responsesCount, setResponsesCount] = React.useState(0);
 
-  /** Owned listings come from the user's My Listings cache; discovery items do not. */
-  const isOwnListing = Boolean(getTripById(route.params.tripId));
+  /** Owned listings come from the user's My Listings cache; discovery items do not.
+   * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
+  const isOwnListing =
+    route.params.viewerIsOwner === true || Boolean(getTripById(route.params.tripId));
   // Offer form needs adjustResize so the price field can scroll above the keyboard
   // (app default is Android pan, which leaves the focused field covered).
   useResizeMode();
