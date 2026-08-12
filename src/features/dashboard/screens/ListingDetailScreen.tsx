@@ -20,6 +20,7 @@ import { useResizeMode } from 'react-native-keyboard-controller';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
+import { auctionApi } from '@/services/api/auctionApi';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -66,6 +67,11 @@ export function ListingDetailScreen(): React.ReactElement {
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
+  const [confirmCloseAuction, setConfirmCloseAuction] = React.useState(false);
+  const [closingAuction, setClosingAuction] = React.useState(false);
+  const [closeAuctionError, setCloseAuctionError] = React.useState<string | null>(null);
+  const [canCloseAuction, setCanCloseAuction] = React.useState(false);
+  const [auctionPanelKey, setAuctionPanelKey] = React.useState(0);
   const [responsesCount, setResponsesCount] = React.useState(0);
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
@@ -166,6 +172,30 @@ export function ListingDetailScreen(): React.ReactElement {
 
   const { refreshControlProps } = usePullToRefresh(reloadTrip);
 
+  React.useEffect(() => {
+    if (!isOwnListing || !trip || trip.listingType !== 'auction') {
+      setCanCloseAuction(false);
+      return;
+    }
+    let cancelled = false;
+    void auctionApi
+      .getSnapshot(trip.id)
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+        setCanCloseAuction(result.role === 'owner' && result.actions.canClose);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCanCloseAuction(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwnListing, trip?.id, trip?.listingType, trip?.auctionStatus]);
+
   const handleRemove = () => {
     if (!trip || removing) {
       return;
@@ -182,6 +212,28 @@ export function ListingDetailScreen(): React.ReactElement {
         setRemoveError(getErrorMessage(error, t('dashboard.listings.remove.failed')));
       })
       .finally(() => setRemoving(false));
+  };
+
+  const handleCloseAuction = () => {
+    if (!trip || closingAuction) {
+      return;
+    }
+    setClosingAuction(true);
+    setCloseAuctionError(null);
+    void auctionApi
+      .close(trip.id)
+      .then(async () => {
+        setConfirmCloseAuction(false);
+        setCanCloseAuction(false);
+        setAuctionPanelKey((key) => key + 1);
+        await reloadTrip().catch(() => undefined);
+      })
+      .catch((error) => {
+        setCloseAuctionError(
+          getErrorMessage(error, t('dashboard.listings.detail.auctionBids.actionFailed')),
+        );
+      })
+      .finally(() => setClosingAuction(false));
   };
 
   const goBack = () => navigation.goBack();
@@ -314,6 +366,7 @@ export function ListingDetailScreen(): React.ReactElement {
   // Hide delete once the listing is past / completed / closed / expired / ended.
   const canRemoveListing =
     isOwnListing && trip != null && getListingStatusBucket(trip) === 'live';
+  const showHeaderActions = canCloseAuction || canRemoveListing;
 
   return (
     <AuthScaffold
@@ -327,16 +380,34 @@ export function ListingDetailScreen(): React.ReactElement {
       scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
       refreshControlProps={refreshControlProps}
       headerRight={
-        canRemoveListing ? (
-          <Pressable
-            onPress={openRemove}
-            style={styles.headerRemoveButton}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t('dashboard.listings.remove.a11y')}
-          >
-            <FontAwesome name="trash-o" size={16} color={colors.white} />
-          </Pressable>
+        showHeaderActions ? (
+          <View style={styles.headerActions}>
+            {canCloseAuction ? (
+              <Pressable
+                onPress={() => {
+                  setCloseAuctionError(null);
+                  setConfirmCloseAuction(true);
+                }}
+                style={styles.headerActionButton}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('dashboard.listings.detail.auctionBids.close')}
+              >
+                <FontAwesome name="stop-circle" size={17} color={colors.white} />
+              </Pressable>
+            ) : null}
+            {canRemoveListing ? (
+              <Pressable
+                onPress={openRemove}
+                style={styles.headerActionButton}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('dashboard.listings.remove.a11y')}
+              >
+                <FontAwesome name="trash-o" size={16} color={colors.white} />
+              </Pressable>
+            ) : null}
+          </View>
         ) : undefined
       }
     >
@@ -414,6 +485,7 @@ export function ListingDetailScreen(): React.ReactElement {
                 <View style={[styles.page, { width: pageWidth }]}>
                   {trip.listingType === 'auction' ? (
                     <TripAuctionBidsPanel
+                      key={auctionPanelKey}
                       tripId={trip.id}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
@@ -433,6 +505,29 @@ export function ListingDetailScreen(): React.ReactElement {
           </>
         )}
       </View>
+
+      <AppDialog
+        visible={confirmCloseAuction}
+        icon="stop-circle"
+        title={t('dashboard.listings.detail.auctionBids.closeConfirmTitle')}
+        message={
+          closeAuctionError ?? t('dashboard.listings.detail.auctionBids.closeConfirmBody')
+        }
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => {
+            if (closingAuction) {
+              return;
+            }
+            setConfirmCloseAuction(false);
+            setCloseAuctionError(null);
+          },
+        }}
+        confirmAction={{
+          label: t('dashboard.listings.detail.auctionBids.close'),
+          onPress: handleCloseAuction,
+        }}
+      />
 
       <AppDialog
         visible={confirmRemove}
@@ -485,7 +580,12 @@ const styles = StyleSheet.create({
   page: {
     gap: spacing.xs,
   },
-  headerRemoveButton: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  headerActionButton: {
     width: 34,
     height: 34,
     borderRadius: 999,
