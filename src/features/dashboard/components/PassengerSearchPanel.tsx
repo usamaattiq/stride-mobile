@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Dimensions,
   Modal,
   Platform,
   Pressable,
@@ -22,6 +23,9 @@ import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
+
+const IOS_DATE_PICKER_HEIGHT = 216;
+const iosDatePickerWidth = Dimensions.get('window').width;
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
@@ -87,6 +91,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [departureDate, setDepartureDate] = React.useState(() => startOfLocalDay(new Date()));
   const [passengerCount, setPassengerCount] = React.useState(1);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [draftDate, setDraftDate] = React.useState(() => departureDate);
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
   const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
@@ -170,11 +175,25 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const handleDatePickerChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
-    }
-    if (event.type === 'dismissed' || !selected) {
+      if (event.type === 'dismissed' || !selected) {
+        return;
+      }
+      setDepartureDate(startOfLocalDay(selected));
       return;
     }
-    setDepartureDate(startOfLocalDay(selected));
+    if (selected) {
+      setDraftDate(selected);
+    }
+  };
+
+  const openDatePicker = () => {
+    setDraftDate(departureDate);
+    setShowDatePicker(true);
+  };
+
+  const handleDatePickerDone = () => {
+    setShowDatePicker(false);
+    setDepartureDate(startOfLocalDay(draftDate));
   };
 
   const handleCityPickerClose = React.useCallback(() => {
@@ -290,7 +309,7 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         <View style={styles.field}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => setShowDatePicker(true)}
+            onPress={openDatePicker}
             style={({ pressed }) => [styles.dateMainPress, pressed && styles.pressed]}
           >
             <FontAwesome name="calendar" size={13} color={colors.white} />
@@ -440,24 +459,29 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         Platform.OS === 'ios' ? (
           <Modal transparent animationType="fade" visible onRequestClose={() => setShowDatePicker(false)}>
             <Pressable style={styles.dateModalBackdrop} onPress={() => setShowDatePicker(false)}>
-              <Pressable style={styles.dateModalCard} onPress={() => undefined}>
-                <DateTimePicker
-                  value={departureDate}
-                  mode="date"
-                  minimumDate={today}
-                  onChange={handleDatePickerChange}
-                  display="spinner"
-                />
+              <View style={styles.dateModalCard} onStartShouldSetResponder={() => true}>
+                <View style={styles.dateModalPickerWrap}>
+                  <DateTimePicker
+                    value={draftDate}
+                    mode="date"
+                    minimumDate={today}
+                    onChange={handleDatePickerChange}
+                    display="spinner"
+                    themeVariant="light"
+                    textColor={colors.text.primary}
+                    style={styles.dateModalPicker}
+                  />
+                </View>
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => setShowDatePicker(false)}
+                  onPress={handleDatePickerDone}
                   style={styles.dateModalDone}
                 >
                   <AppText weight="bold" style={styles.dateModalDoneText}>
                     {t('common.done')}
                   </AppText>
                 </Pressable>
-              </Pressable>
+              </View>
             </Pressable>
           </Modal>
         ) : (
@@ -672,6 +696,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     paddingBottom: spacing.lg,
+  },
+  dateModalPickerWrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateModalPicker: {
+    width: iosDatePickerWidth,
+    height: IOS_DATE_PICKER_HEIGHT,
   },
   dateModalDone: {
     alignItems: 'center',

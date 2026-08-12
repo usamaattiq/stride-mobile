@@ -1,10 +1,11 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { notificationsApi, type InboxNotificationDto } from '@/services/api/notificationsApi';
+import { getErrorMessage } from '@/services/api/errorMessage';
 import { handlePingDeepLink } from '@/services/pingDeepLinkRouting';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -59,18 +60,20 @@ export const NotificationsPanel = React.memo(function NotificationsPanel(): Reac
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const [items, setItems] = React.useState<AppNotification[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
       const result = await notificationsApi.listInbox({ limit: 50 });
       setItems(result.items.map((row) => mapInboxItem(row, i18n.language)));
-    } catch {
-      setItems([]);
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err, t('dashboard.notifications.loadFailed')));
     } finally {
       setLoading(false);
     }
-  }, [i18n.language]);
+  }, [i18n.language, t]);
 
   React.useEffect(() => {
     void load();
@@ -101,14 +104,26 @@ export const NotificationsPanel = React.memo(function NotificationsPanel(): Reac
       keyExtractor={notificationKeyExtractor}
       ListHeaderComponent={null}
       ListEmptyComponent={
-        <View style={styles.empty}>
-          <AppText weight="semibold" style={styles.emptyTitle}>
-            {t('dashboard.notifications.emptyTitle')}
-          </AppText>
-          <AppText style={styles.emptySubtitle}>
-            {t('dashboard.notifications.emptySubtitle')}
-          </AppText>
-        </View>
+        loading ? (
+          <View style={styles.empty}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.empty}>
+            <AppText weight="semibold" style={styles.emptyTitle}>
+              {error}
+            </AppText>
+          </View>
+        ) : (
+          <View style={styles.empty}>
+            <AppText weight="semibold" style={styles.emptyTitle}>
+              {t('dashboard.notifications.emptyTitle')}
+            </AppText>
+            <AppText style={styles.emptySubtitle}>
+              {t('dashboard.notifications.emptySubtitle')}
+            </AppText>
+          </View>
+        )
       }
       renderItem={renderItem}
       contentContainerStyle={styles.listContent}

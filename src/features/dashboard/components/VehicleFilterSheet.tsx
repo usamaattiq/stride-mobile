@@ -57,7 +57,7 @@ export function VehicleFilterSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.52}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.57}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>

@@ -358,7 +358,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       <AppBottomSheet
         visible={mapVisible}
         onClose={closeMapPicker}
-        heightRatio={0.72}
+        heightRatio={0.77}
         sheetStyle={styles.mapSheet}
       >
         <View style={styles.sheetGrabber} />

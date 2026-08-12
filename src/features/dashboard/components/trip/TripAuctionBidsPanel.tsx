@@ -11,7 +11,6 @@ import type {
   AuctionOwnerSnapshot,
   AuctionParticipantRank,
 } from '@/services/api/auctionApi.types';
-import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
@@ -37,7 +36,6 @@ export function TripAuctionBidsPanel({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [acting, setActing] = React.useState(false);
-  const [confirmClose, setConfirmClose] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
   const [chatTarget, setChatTarget] = React.useState<AuctionParticipantRank | null>(null);
 
@@ -91,24 +89,16 @@ export function TripAuctionBidsPanel({
     return () => clearInterval(timer);
   }, [applySnapshot, snapshot, tripId]);
 
-  const runOwnerAction = (action: 'selectNext' | 'close' | 'activate') => {
+  const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);
     setError(null);
-    const request =
-      action === 'selectNext'
-        ? auctionApi.selectNext
-        : action === 'close'
-          ? auctionApi.close
-          : auctionApi.activate;
+    const request = action === 'selectNext' ? auctionApi.selectNext : auctionApi.activate;
     void request(tripId)
       .then((result) => applySnapshot(result))
       .catch((err) =>
         setError(getErrorMessage(err, t('dashboard.listings.detail.auctionBids.actionFailed'))),
       )
-      .finally(() => {
-        setActing(false);
-        setConfirmClose(false);
-      });
+      .finally(() => setActing(false));
   };
 
   if (loading && !snapshot) {
@@ -166,32 +156,26 @@ export function TripAuctionBidsPanel({
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-      <View style={styles.actionsRow}>
-        {snapshot.actions.canActivate ? (
-          <Button
-            label={t('dashboard.listings.detail.auctionBids.activate')}
-            onPress={() => runOwnerAction('activate')}
-            loading={acting}
-            style={styles.actionButton}
-          />
-        ) : null}
-        {snapshot.actions.canSelectNext ? (
-          <Button
-            label={t('dashboard.listings.detail.auctionBids.selectNext')}
-            onPress={() => runOwnerAction('selectNext')}
-            loading={acting}
-            style={styles.actionButton}
-          />
-        ) : null}
-        {snapshot.actions.canClose ? (
-          <Button
-            label={t('dashboard.listings.detail.auctionBids.close')}
-            onPress={() => setConfirmClose(true)}
-            variant="secondary"
-            style={styles.actionButton}
-          />
-        ) : null}
-      </View>
+      {snapshot.actions.canActivate || snapshot.actions.canSelectNext ? (
+        <View style={styles.actionsRow}>
+          {snapshot.actions.canActivate ? (
+            <Button
+              label={t('dashboard.listings.detail.auctionBids.activate')}
+              onPress={() => runOwnerAction('activate')}
+              loading={acting}
+              style={styles.actionButton}
+            />
+          ) : null}
+          {snapshot.actions.canSelectNext ? (
+            <Button
+              label={t('dashboard.listings.detail.auctionBids.selectNext')}
+              onPress={() => runOwnerAction('selectNext')}
+              loading={acting}
+              style={styles.actionButton}
+            />
+          ) : null}
+        </View>
+      ) : null}
 
       {snapshot.ranking.length === 0 ? (
         <View style={styles.emptyCard}>
@@ -237,11 +221,21 @@ export function TripAuctionBidsPanel({
                       isConfirmed
                         ? styles.badgeSuccess
                         : isSelected
-                          ? styles.badgeAccent
+                          ? styles.badgeAwaiting
                           : styles.badgeMuted,
                     ]}
                   >
-                    <AppText weight="semibold" style={styles.badgeText}>
+                    <AppText
+                      weight="semibold"
+                      style={[
+                        styles.badgeText,
+                        isConfirmed
+                          ? styles.badgeTextSuccess
+                          : isSelected
+                            ? styles.badgeTextAwaiting
+                            : styles.badgeTextMuted,
+                      ]}
+                    >
                       {isConfirmed
                         ? t('dashboard.listings.detail.auctionBids.confirmed')
                         : isSelected
@@ -280,19 +274,6 @@ export function TripAuctionBidsPanel({
         counterpartyRole={isPassengerRequest ? 'driver' : 'passenger'}
       />
 
-      <AppDialog
-        visible={confirmClose}
-        title={t('dashboard.listings.detail.auctionBids.closeConfirmTitle')}
-        message={t('dashboard.listings.detail.auctionBids.closeConfirmBody')}
-        confirmAction={{
-          label: t('dashboard.listings.detail.auctionBids.close'),
-          onPress: () => runOwnerAction('close'),
-        }}
-        cancelAction={{
-          label: t('common.cancel'),
-          onPress: () => setConfirmClose(false),
-        }}
-      />
       <OfferVehicleDetailSheet
         visible={vehicleDetail != null}
         vehicle={vehicleDetail}
@@ -382,15 +363,23 @@ const styles = StyleSheet.create({
   badgeSuccess: {
     backgroundColor: colors.accent.green.soft,
   },
-  badgeAccent: {
-    backgroundColor: colors.primarySoft,
+  badgeAwaiting: {
+    backgroundColor: colors.accent.blue.soft,
   },
   badgeMuted: {
     backgroundColor: colors.background.subtle,
   },
   badgeText: {
     fontSize: 11,
-    color: colors.text.primary,
+  },
+  badgeTextSuccess: {
+    color: colors.accent.green.text,
+  },
+  badgeTextAwaiting: {
+    color: colors.accent.blue.text,
+  },
+  badgeTextMuted: {
+    color: colors.text.tertiary,
   },
   errorText: {
     color: colors.primary,

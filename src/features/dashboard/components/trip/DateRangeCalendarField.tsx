@@ -184,7 +184,7 @@ export function DateRangeCalendarField({
         <FontAwesome name="angle-right" size={16} color={colors.text.tertiary} />
       </Pressable>
 
-      <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.72}>
+      <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.77}>
         <View style={styles.sheetContent}>
           <View style={styles.sheetHeader}>
             <AppText weight="bold" style={styles.sheetTitle}>

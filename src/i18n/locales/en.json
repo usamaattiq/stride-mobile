@@ -88,7 +88,7 @@
         "cta": "Continue",
         "skip": "Skip for now",
         "skipConfirmTitle": "Skip verification?",
-        "skipConfirmBody": "You can upload your NIC documents later, but some features may stay limited until you're verified.",
+        "skipConfirmBody": "Users value verified profiles. Verify now so people trust you and send better offers.",
         "skipConfirmConfirm": "Skip for now"
       },
       "security": {
@@ -105,8 +105,8 @@
         "subtitle": "You're all set to grow your transport business.",
         "creditsEarned": "You earned",
         "credits": "{{count}} Credits",
-        "creditsReason": "for your first listing",
-        "dashboard": "Go to Dashboard"
+        "dashboard": "Go to Dashboard",
+        "preparingDashboard": "Preparing dashboard"
       }
     },
     "login": {
@@ -171,9 +171,9 @@
       "History": "History",
       "Settings": "Settings",
       "CreateTrip": "Add trip",
-      "CreateRequest": "Create request",
+      "CreateRequest": "Request",
       "createTripA11y": "Create trip",
-      "createRequestA11y": "Create request"
+      "createRequestA11y": "Request"
     },
     "offers": {
       "title": "My Offers",
@@ -287,7 +287,8 @@
       "title": "Notifications",
       "subtitle": "Updates about offers, bookings, and listings.",
       "emptyTitle": "No notifications",
-      "emptySubtitle": "Updates about offers, bookings, and listings will appear here."
+      "emptySubtitle": "Updates about offers, bookings, and listings will appear here.",
+      "loadFailed": "Couldn't load notifications. Pull to retry."
     },
     "search": {
       "shared": "Shared",
@@ -468,7 +469,7 @@
           "bidderLabel": "Bidder #{{rank}}",
           "amount": "PKR {{amount}}",
           "rank": "Rank {{rank}}",
-          "selected": "Selected",
+          "selected": "Awaiting confirmation",
           "confirmed": "Confirmed"
         },
         "bid": {
@@ -580,7 +581,7 @@
       "notVerified": "Not verified"
     },
     "sections": {
-      "account": "Account",
+      "account": "Profile",
       "preferences": "Preferences",
       "support": "Support"
     },
@@ -863,7 +864,7 @@
       "paymentMethodHint": "Choose how you want to receive payments.",
       "paymentCash": "Cash",
       "paymentOnline": "Online",
-      "paymentBoth": "Both",
+      "paymentBoth": "Cash/Online",
       "durationLabel": "Listing duration",
       "durationValue": "{{count}} hour(s)",
       "durationMinutesOnly": "{{count}} min",
@@ -904,7 +905,10 @@
       "successTitle": "Trip published",
       "successRequestTitle": "Request published",
       "successBody": "Your trip is live. You can manage it from My Listings.",
+      "successRequestBody": "Your request is live. You can manage it from Home.",
       "showMyListings": "Show my listings",
+      "preparingListings": "Opening My Listings",
+      "preparingHome": "Opening Home",
       "noVehiclesTitle": "Add a vehicle first",
       "noVehiclesSubtitle": "You need at least one vehicle before creating a trip."
     }
@@ -922,6 +926,9 @@
     "cta": "Submit & become driver",
     "completeCta": "Submit license",
     "skip": "Skip for now",
+    "skipConfirmTitle": "Skip verification?",
+    "skipConfirmBody": "Users value verified profiles. Verify now so people trust you and send better offers.",
+    "skipConfirmConfirm": "Skip for now",
     "submitFailed": "Couldn't complete driver verification. Please try again.",
     "skipFailed": "Couldn't enter driver mode. Please try again.",
     "successTitle": "You're a driver",

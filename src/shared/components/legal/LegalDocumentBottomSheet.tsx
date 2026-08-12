@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { colors, spacing } from '@/theme';
@@ -29,8 +30,11 @@ export function LegalDocumentBottomSheet({
   sections,
   closeLabel,
   onClose,
-  heightRatio = 0.8,
+  heightRatio = 0.85,
 }: LegalDocumentBottomSheetProps): React.ReactElement {
+  const { currentLanguage } = useLanguage();
+  const isArabic = currentLanguage === 'ar';
+
   return (
     <AppBottomSheet
       visible={visible}
@@ -39,8 +43,11 @@ export function LegalDocumentBottomSheet({
       sheetStyle={styles.sheet}
     >
       <View style={styles.sheetHandle} />
-      <View style={styles.headerRow}>
-        <AppText weight="semibold" style={styles.sheetTitle}>
+      <View style={[styles.headerRow, isArabic && styles.headerRowArabic]}>
+        <AppText
+          weight="semibold"
+          style={[styles.sheetTitle, isArabic && styles.textArabic]}
+        >
           {title}
         </AppText>
         <Pressable
@@ -63,7 +70,10 @@ export function LegalDocumentBottomSheet({
         <AppText style={styles.intro}>{intro}</AppText>
         {sections.map((section) => (
           <View key={section.title} style={styles.section}>
-            <AppText weight="semibold" style={styles.sectionTitle}>
+            <AppText
+              weight="semibold"
+              style={[styles.sectionTitle, isArabic && styles.textArabic]}
+            >
               {section.title}
             </AppText>
             <AppText style={styles.sectionBody}>{section.body}</AppText>
@@ -92,6 +102,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
     marginBottom: spacing.sm,
+  },
+  headerRowArabic: {
+    flexDirection: 'row-reverse',
   },
   sheetTitle: {
     flex: 1,
@@ -130,5 +143,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: colors.text.secondary,
+  },
+  textArabic: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
 });

@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-start',
   },
   pressed: {
     opacity: 0.85,

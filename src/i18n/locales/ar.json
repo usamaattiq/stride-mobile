@@ -88,7 +88,7 @@
         "cta": "متابعة",
         "skip": "تخطي الآن",
         "skipConfirmTitle": "تخطي التحقق؟",
-        "skipConfirmBody": "يمكنك رفع وثائق هويتك لاحقًا، لكن قد تبقى بعض الميزات محدودة حتى يتم التحقق منك.",
+        "skipConfirmBody": "المستخدمون يفضلون الحسابات الموثّقة. أكمل التحقق الآن لزيادة الثقة والحصول على عروض أفضل.",
         "skipConfirmConfirm": "تخطي الآن"
       },
       "security": {
@@ -105,8 +105,8 @@
         "subtitle": "أنت جاهز الآن لتنمية أعمال النقل الخاصة بك.",
         "creditsEarned": "لقد ربحت",
         "credits": "{{count}} نقطة",
-        "creditsReason": "مقابل أول إعلان لك",
-        "dashboard": "الذهاب إلى لوحة التحكم"
+        "dashboard": "الذهاب إلى لوحة التحكم",
+        "preparingDashboard": "جاري تجهيز لوحة التحكم"
       }
     },
     "login": {
@@ -171,9 +171,9 @@
       "History": "السجل",
       "Settings": "الإعدادات",
       "CreateTrip": "إضافة رحلة",
-      "CreateRequest": "إنشاء طلب",
+      "CreateRequest": "طلب",
       "createTripA11y": "إنشاء رحلة",
-      "createRequestA11y": "إنشاء طلب"
+      "createRequestA11y": "طلب"
     },
     "offers": {
       "title": "عروضي",
@@ -287,7 +287,8 @@
       "title": "الإشعارات",
       "subtitle": "تحديثات حول العروض والحجوزات والقوائم.",
       "emptyTitle": "لا توجد إشعارات",
-      "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم."
+      "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم.",
+      "loadFailed": "تعذر تحميل الإشعارات. اسحب لإعادة المحاولة."
     },
     "search": {
       "shared": "مشتركة",
@@ -468,7 +469,7 @@
           "bidderLabel": "مزايد #{{rank}}",
           "amount": "{{amount}} ر.ب",
           "rank": "الترتيب {{rank}}",
-          "selected": "محدد",
+          "selected": "بانتظار التأكيد",
           "confirmed": "مؤكد"
         },
         "bid": {
@@ -580,7 +581,7 @@
       "notVerified": "غير متحقق"
     },
     "sections": {
-      "account": "الحساب",
+      "account": "الملف الشخصي",
       "preferences": "التفضيلات",
       "support": "الدعم"
     },
@@ -863,7 +864,7 @@
       "paymentMethodHint": "اختر كيف تريد استلام المدفوعات.",
       "paymentCash": "نقداً",
       "paymentOnline": "إلكتروني",
-      "paymentBoth": "كلاهما",
+      "paymentBoth": "نقداً/إلكتروني",
       "durationLabel": "مدة الإدراج",
       "durationValue": "{{count}} ساعة",
       "durationMinutesOnly": "{{count}} د",
@@ -904,7 +905,10 @@
       "successTitle": "تم نشر الرحلة",
       "successRequestTitle": "تم نشر الطلب",
       "successBody": "رحلتك متاحة الآن. يمكنك إدارتها من قوائمي.",
+      "successRequestBody": "طلبك متاح الآن. يمكنك إدارته من الرئيسية.",
       "showMyListings": "عرض قوائمي",
+      "preparingListings": "جاري فتح قوائمي",
+      "preparingHome": "جاري فتح الرئيسية",
       "noVehiclesTitle": "أضف مركبة أولاً",
       "noVehiclesSubtitle": "تحتاج إلى مركبة واحدة على الأقل قبل إنشاء رحلة."
     }
@@ -922,6 +926,9 @@
     "cta": "إرسال والتحول إلى سائق",
     "completeCta": "إرسال الرخصة",
     "skip": "تخطّي الآن",
+    "skipConfirmTitle": "تخطي التحقق؟",
+    "skipConfirmBody": "المستخدمون يفضلون الحسابات الموثّقة. أكمل التحقق الآن لزيادة الثقة والحصول على عروض أفضل.",
+    "skipConfirmConfirm": "تخطي الآن",
     "submitFailed": "تعذر إكمال التحقق من السائق. يرجى المحاولة مرة أخرى.",
     "skipFailed": "تعذر الدخول إلى وضع السائق. يرجى المحاولة مرة أخرى.",
     "successTitle": "أنت سائق الآن",

@@ -1,5 +1,6 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -16,12 +17,14 @@ type TripVehicleModeStepProps = {
   onContinue: () => void;
 };
 
+const BUS_IMAGE = require('@/assets/images/bus.png');
+const CAR_IMAGE = require('@/assets/images/sedan.png');
+
 type VehicleModeOption = {
   id: TripVehicleMode;
   title: string;
   description: string;
-  icon: React.ReactNode;
-  selectedIcon: React.ReactNode;
+  image: number;
 };
 
 export function TripVehicleModeStep({
@@ -36,15 +39,13 @@ export function TripVehicleModeStep({
       id: 'shared',
       title: t('trips.create.vehicleModeShared'),
       description: t('trips.create.vehicleModeSharedHint'),
-      icon: <FontAwesome name="users" size={16} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome name="users" size={16} color={colors.primary} />,
+      image: BUS_IMAGE,
     },
     {
       id: 'fullPrivate',
       title: t('trips.create.vehicleModeFullPrivate'),
       description: t('trips.create.vehicleModeFullPrivateHint'),
-      icon: <FontAwesome5 name="car-side" size={15} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome5 name="car-side" size={15} color={colors.primary} />,
+      image: CAR_IMAGE,
     },
   ];
 
@@ -56,39 +57,41 @@ export function TripVehicleModeStep({
           <AppText style={styles.required}> *</AppText>
         </AppText>
 
-        <View style={styles.options}>
+        <View style={styles.tiles}>
           {options.map((option) => {
             const selected = value === option.id;
             return (
               <Pressable
                 key={option.id}
                 onPress={() => onChange(option.id)}
-                style={[styles.optionCard, selected && styles.optionCardSelected]}
+                style={[styles.tile, selected && styles.tileSelected]}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
               >
                 {selected ? (
                   <View style={styles.checkBadge}>
-                    <FontAwesome name="check" size={9} color={colors.white} />
+                    <FontAwesome name="check" size={10} color={colors.white} />
                   </View>
                 ) : null}
 
-                <View style={[styles.optionIcon, selected && styles.optionIconSelected]}>
-                  {selected ? option.selectedIcon : option.icon}
+                <View style={styles.imageWrap}>
+                  <Image
+                    source={option.image}
+                    style={styles.image}
+                    contentFit="contain"
+                  />
                 </View>
 
-                <View style={styles.optionCopy}>
-                  <AppText weight="bold" style={styles.optionTitle}>
-                    {option.title}
-                  </AppText>
-                  <AppText style={styles.optionDescription}>{option.description}</AppText>
-                </View>
+                <AppText weight="bold" style={styles.tileTitle}>
+                  {option.title}
+                </AppText>
+                <AppText style={styles.tileDescription}>{option.description}</AppText>
               </Pressable>
             );
           })}
         </View>
 
-      <Button label={t('common.continue')} onPress={onContinue} disabled={!value} />
+        <Button label={t('common.continue')} onPress={onContinue} disabled={!value} />
       </View>
     </AuthCard>
   );
@@ -106,22 +109,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
   },
-  options: {
+  tiles: {
+    flexDirection: 'row',
     gap: spacing.sm,
   },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  tile: {
+    flex: 1,
+    minHeight: 210,
     borderWidth: 1.5,
     borderColor: colors.border.default,
     borderRadius: radius.lg,
     backgroundColor: colors.white,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
     position: 'relative',
   },
-  optionCardSelected: {
+  tileSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
@@ -129,37 +135,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    zIndex: 1,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.background.subtle,
+  imageWrap: {
+    width: '100%',
+    height: 96,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.xs,
   },
-  optionIconSelected: {
-    backgroundColor: colors.white,
+  image: {
+    width: '100%',
+    height: '100%',
   },
-  optionCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-    paddingRight: spacing.md,
-  },
-  optionTitle: {
+  tileTitle: {
     fontSize: 15,
     color: colors.text.primary,
+    textAlign: 'center',
   },
-  optionDescription: {
+  tileDescription: {
     fontSize: 12,
     lineHeight: 16,
     color: colors.text.secondary,
+    textAlign: 'center',
   },
 });

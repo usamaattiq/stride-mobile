@@ -1,10 +1,14 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { VEHICLE_CLASS_OPTIONS } from '@/features/dashboard/constants/vehicleClasses';
+import {
+  VEHICLE_CLASS_OPTIONS,
+  getVehicleClassImage,
+} from '@/features/dashboard/constants/vehicleClasses';
 import type { VehicleClass } from '@/features/dashboard/types/vehicle.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
@@ -15,17 +19,6 @@ type TripVehicleClassStepProps = {
   value: VehicleClass | null;
   onChange: (value: VehicleClass) => void;
   onContinue: () => void;
-};
-
-const CLASS_ICONS: Record<
-  VehicleClass,
-  React.ComponentProps<typeof FontAwesome5>['name']
-> = {
-  suv: 'car-side',
-  sedan: 'car',
-  bus: 'bus',
-  van: 'shuttle-van',
-  coaster: 'bus',
 };
 
 export function TripVehicleClassStep({
@@ -46,6 +39,7 @@ export function TripVehicleClassStep({
         <View style={styles.options}>
           {VEHICLE_CLASS_OPTIONS.map((option) => {
             const selected = value === option.id;
+            const imageSource = getVehicleClassImage(option.id);
             return (
               <Pressable
                 key={option.id}
@@ -61,12 +55,15 @@ export function TripVehicleClassStep({
                 ) : null}
 
                 <View style={[styles.optionIcon, selected && styles.optionIconSelected]}>
-                  <FontAwesome5
-                    name={CLASS_ICONS[option.id]}
-                    size={13}
-                    color={selected ? colors.primary : colors.text.tertiary}
-                    solid
-                  />
+                  {imageSource ? (
+                    <Image
+                      source={imageSource}
+                      style={styles.optionImage}
+                      contentFit="contain"
+                    />
+                  ) : (
+                    <FontAwesome name="car" size={16} color={colors.primary} />
+                  )}
                 </View>
 
                 <View style={styles.optionCopy}>
@@ -128,15 +125,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
     backgroundColor: colors.background.subtle,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    padding: 2,
   },
   optionIconSelected: {
     backgroundColor: colors.white,
+  },
+  optionImage: {
+    width: '100%',
+    height: '100%',
   },
   optionCopy: {
     flex: 1,
