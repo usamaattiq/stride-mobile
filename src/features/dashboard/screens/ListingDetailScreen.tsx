@@ -41,6 +41,7 @@ import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
+import { getListingStatusBucket } from '../utils/listingFilters';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
@@ -310,6 +311,10 @@ export function ListingDetailScreen(): React.ReactElement {
     setConfirmRemove(true);
   };
 
+  // Hide delete once the listing is past / completed / closed / expired / ended.
+  const canRemoveListing =
+    isOwnListing && trip != null && getListingStatusBucket(trip) === 'live';
+
   return (
     <AuthScaffold
       onBack={goBack}
@@ -322,7 +327,7 @@ export function ListingDetailScreen(): React.ReactElement {
       scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
       refreshControlProps={refreshControlProps}
       headerRight={
-        isOwnListing ? (
+        canRemoveListing ? (
           <Pressable
             onPress={openRemove}
             style={styles.headerRemoveButton}
