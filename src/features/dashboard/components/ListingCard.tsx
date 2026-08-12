@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -15,7 +15,7 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
-import { VEHICLE_CLASS_ICONS, VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
+import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
@@ -107,20 +107,22 @@ function RequestThumbnail({
 }: {
   vehicleClass: VehicleClass | null;
 }): React.ReactElement {
-  const iconName = vehicleClass ? VEHICLE_CLASS_ICONS[vehicleClass] : 'car';
+  const imageSource = getVehicleClassImage(vehicleClass);
 
   return (
-    <LinearGradient
-      colors={['#FFF8F7', '#FEE4E2', '#F9C6C0']}
-      locations={[0, 0.55, 1]}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.95, y: 1 }}
-      style={styles.requestThumb}
-    >
-      <View style={styles.requestThumbIconWell}>
-        <FontAwesome5 name={iconName} size={24} color={colors.primary} solid />
-      </View>
-    </LinearGradient>
+    <View style={styles.requestThumb}>
+      {imageSource ? (
+        <Image
+          source={imageSource}
+          style={styles.requestThumbImage}
+          contentFit="contain"
+        />
+      ) : (
+        <View style={styles.requestThumbFallback}>
+          <FontAwesome name="car" size={22} color={colors.primary} />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -152,10 +154,7 @@ export function ListingCard({
   const fromCity = cityDisplayName(trip.departureCity.label);
   const toCity = cityDisplayName(trip.arrivalCity.label);
   const classLabel = trip.vehicleClass
-    ? t(
-        VEHICLE_CLASS_OPTIONS.find((item) => item.id === trip.vehicleClass)?.labelKey ??
-          'vehicles.classPlaceholder',
-      )
+    ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;
   const seatsLabel =
     trip.vehicleTotalSeats != null
@@ -324,7 +323,10 @@ export function ListingCard({
 
       <View style={styles.mainRow}>
         <Pressable
-          style={styles.thumbnail}
+          style={[
+            styles.thumbnail,
+            isPassengerRequest && !trip.vehiclePhotoUrl && styles.thumbnailRequest,
+          ]}
           disabled={!galleryImages.length}
           onPress={() => setGalleryVisible(true)}
           accessibilityRole={galleryImages.length ? 'button' : undefined}
@@ -585,6 +587,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
   },
+  thumbnailRequest: {
+    backgroundColor: 'transparent',
+  },
   thumbnailImage: {
     width: '100%',
     height: '100%',
@@ -599,19 +604,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
-  requestThumbIconWell: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  requestThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  requestThumbFallback: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
-    shadowColor: '#7F1D1D',
-    shadowOpacity: 0.16,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
   },
   photoBadge: {
     position: 'absolute',
