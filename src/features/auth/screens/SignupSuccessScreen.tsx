@@ -197,9 +197,6 @@ export function SignupSuccessScreen({
               <AppText weight="bold" style={styles.creditsAmount}>
                 {t('auth.signup.success.credits', { count: credits })}
               </AppText>
-              <AppText style={styles.creditsReason}>
-                {t('auth.signup.success.creditsReason')}
-              </AppText>
             </View>
             <FontAwesome5 name="coins" size={46} color="#E8A13A" />
           </View>
@@ -315,11 +312,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     color: colors.text.primary,
-  },
-  creditsReason: {
-    marginTop: spacing.xxs,
-    fontSize: 13,
-    color: colors.text.secondary,
   },
   actions: {
     alignSelf: 'stretch',
