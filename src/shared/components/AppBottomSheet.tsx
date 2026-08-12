@@ -13,9 +13,16 @@ import {
   KeyboardProvider,
   useReanimatedKeyboardAnimation,
 } from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/theme';
+
+/** Floor so 3-button / gesture nav never sits under sheet content when insets lag. */
+const MIN_BOTTOM_INSET = 24;
 
 export type AppBottomSheetProps = {
   visible: boolean;
@@ -42,7 +49,13 @@ function BottomSheetFrame({
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
   const clampedRatio = Math.min(0.95, Math.max(0.4, heightRatio));
   const baseHeight = windowHeight * clampedRatio;
-  const closedPaddingBottom = Math.max(insets.bottom, spacing.sm);
+  const fallbackBottom = initialWindowMetrics?.insets.bottom ?? 0;
+  const closedPaddingBottom = Math.max(
+    insets.bottom,
+    fallbackBottom,
+    MIN_BOTTOM_INSET,
+    spacing.sm,
+  );
   // Leave a little room under the status bar so the sheet never clips off-screen.
   const topReserve = Math.max(insets.top, spacing.md);
 
@@ -53,7 +66,7 @@ function BottomSheetFrame({
       // Sit flush above the keyboard instead of sliding the whole sheet off-screen.
       marginBottom: kb,
       height: Math.min(baseHeight, windowHeight - kb - topReserve),
-      paddingBottom: kb > 0 ? spacing.sm : closedPaddingBottom,
+      paddingBottom: kb > 0 ? Math.max(spacing.sm, MIN_BOTTOM_INSET / 2) : closedPaddingBottom,
     };
   });
 
@@ -76,7 +89,7 @@ export function AppBottomSheet({
   visible,
   onClose,
   children,
-  heightRatio = 0.8,
+  heightRatio = 0.85,
   sheetStyle,
 }: AppBottomSheetProps): React.ReactElement {
   return (
@@ -86,13 +99,16 @@ export function AppBottomSheet({
       animationType="slide"
       onRequestClose={onClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
-      {/* Nested provider so keyboard events work correctly inside RN Modal. */}
-      <KeyboardProvider>
-        <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
-          {children}
-        </BottomSheetFrame>
-      </KeyboardProvider>
+      {/* Modal renders outside the app SafeArea tree — nest a provider so insets work. */}
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <KeyboardProvider>
+          <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
+            {children}
+          </BottomSheetFrame>
+        </KeyboardProvider>
+      </SafeAreaProvider>
     </Modal>
   );
 }

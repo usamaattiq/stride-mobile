@@ -81,7 +81,7 @@ export function VehicleClassPicker({
       </Pressable>
       {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
-      <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.55}>
+      <AppBottomSheet visible={pickerVisible} onClose={closePicker} heightRatio={0.6}>
         <View style={styles.sheetHandle} />
         <AppText weight="semibold" style={styles.sheetTitle}>
           {t('vehicles.classPickerTitle')}

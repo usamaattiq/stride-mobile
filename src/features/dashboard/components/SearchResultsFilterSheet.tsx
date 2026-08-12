@@ -84,7 +84,7 @@ export function SearchResultsFilterSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.61}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.66}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>

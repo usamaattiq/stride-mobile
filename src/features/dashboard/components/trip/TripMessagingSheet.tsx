@@ -299,7 +299,7 @@ export function TripMessagingSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.9}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.95}>
       <View style={styles.root}>
         <View style={styles.header}>
           {counterpartyAvatarUrl ? (

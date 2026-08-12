@@ -574,7 +574,7 @@ export function TripOfferPanel({
       <AppBottomSheet
         visible={requiresVehicle && vehiclePickerOpen}
         onClose={() => setVehiclePickerOpen(false)}
-        heightRatio={0.75}
+        heightRatio={0.8}
       >
         <View style={styles.sheetHeader}>
           <AppText weight="bold" style={styles.sheetTitle}>

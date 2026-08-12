@@ -100,7 +100,7 @@ export function TripFilterSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.7}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.75}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>

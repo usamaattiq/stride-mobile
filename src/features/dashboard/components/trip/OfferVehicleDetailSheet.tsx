@@ -157,7 +157,7 @@ export function OfferVehicleDetailSheet({
 
   return (
     <>
-      <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.88}>
+      <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.93}>
         <View style={styles.header}>
           <AppText weight="bold" style={styles.headerTitle} numberOfLines={1}>
             {vehicle?.title ?? t('vehicles.view.title')}

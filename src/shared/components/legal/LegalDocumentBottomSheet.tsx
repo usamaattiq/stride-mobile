@@ -30,7 +30,7 @@ export function LegalDocumentBottomSheet({
   sections,
   closeLabel,
   onClose,
-  heightRatio = 0.8,
+  heightRatio = 0.85,
 }: LegalDocumentBottomSheetProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const isArabic = currentLanguage === 'ar';
