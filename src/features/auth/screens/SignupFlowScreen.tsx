@@ -71,6 +71,7 @@ export function SignupFlowScreen(): React.ReactElement {
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
+    isLeavingRef.current = true;
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -95,6 +96,10 @@ export function SignupFlowScreen(): React.ReactElement {
   useFocusEffect(
     React.useCallback(() => {
       const onHardwareBack = () => {
+        if (step === 'personal') {
+          leaveFlow();
+          return true;
+        }
         if (goToPreviousStep()) {
           return true;
         }
@@ -103,7 +108,7 @@ export function SignupFlowScreen(): React.ReactElement {
       };
       const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
       return () => sub.remove();
-    }, [goToPreviousStep, leaveFlow]),
+    }, [goToPreviousStep, leaveFlow, step]),
   );
 
   React.useEffect(() => {
@@ -112,10 +117,14 @@ export function SignupFlowScreen(): React.ReactElement {
         return;
       }
       event.preventDefault();
+      if (step === 'personal') {
+        leaveFlow();
+        return;
+      }
       goToPreviousStep();
     });
     return unsubscribe;
-  }, [navigation, step, goToPreviousStep]);
+  }, [navigation, step, goToPreviousStep, leaveFlow]);
 
   const phoneLabel = formatPhoneDisplay(draft.country, draft.phoneDigits);
 
@@ -145,7 +154,8 @@ export function SignupFlowScreen(): React.ReactElement {
                 subtitle: t('auth.signup.security.subtitle'),
               };
 
-  const onBack = step === 'phone' ? leaveFlow : () => goToPreviousStep();
+  const onBack =
+    step === 'personal' ? undefined : step === 'phone' ? leaveFlow : () => goToPreviousStep();
 
   const handleSendOtp = async () => {
     setSendOtpError(null);
