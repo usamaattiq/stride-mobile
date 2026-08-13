@@ -350,6 +350,7 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "نشط",
         "ended": "منتهية",
+        "open": "مفتوح",
         "pending": "قيد الانتظار",
         "status": {
           "live": "مباشر",

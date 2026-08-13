@@ -340,6 +340,12 @@ export function ListingDetailScreen(): React.ReactElement {
       ? t('trips.create.vehicleModeFullPrivate')
       : t('trips.create.vehicleModeShared');
   const locale = i18n.language;
+  const departureWhen = trip.departureOpen
+    ? t('dashboard.listings.card.open')
+    : formatTripDateTime(trip.departureAt, locale);
+  const arrivalWhen = trip.departureOpen
+    ? undefined
+    : formatTripDateTime(trip.arrivalAt, locale);
   const vehicleTitle = trip.vehicleTitle ?? classLabel;
   const description =
     trip.description?.trim() ||
@@ -420,8 +426,8 @@ export function ListingDetailScreen(): React.ReactElement {
               description={description}
               fromCity={fromCity}
               toCity={toCity}
-              departureWhen={formatTripDateTime(trip.departureAt, locale)}
-              arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+              departureWhen={departureWhen}
+              arrivalWhen={arrivalWhen}
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
@@ -475,8 +481,8 @@ export function ListingDetailScreen(): React.ReactElement {
                     description={description}
                     fromCity={fromCity}
                     toCity={toCity}
-                    departureWhen={formatTripDateTime(trip.departureAt, locale)}
-                    arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+                    departureWhen={departureWhen}
+                    arrivalWhen={arrivalWhen}
                     departurePoint={trip.departurePoint}
                     arrivalPoint={trip.arrivalPoint}
                   />

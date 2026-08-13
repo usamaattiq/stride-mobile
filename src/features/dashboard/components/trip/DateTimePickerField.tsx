@@ -24,6 +24,7 @@ type DateTimePickerFieldProps = {
   label: string;
   value: string | null;
   onChange: (isoValue: string, part: 'date' | 'time') => void;
+  onClear?: () => void;
   minimumDate?: Date;
   required?: boolean;
   optional?: boolean;
@@ -68,6 +69,7 @@ export function DateTimePickerField({
   label,
   value,
   onChange,
+  onClear,
   minimumDate,
   required = false,
   optional = false,
@@ -171,6 +173,16 @@ export function DateTimePickerField({
           </AppText>
         </Pressable>
       </View>
+      {onClear && hasValue ? (
+        <Pressable
+          onPress={onClear}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.clear')}
+        >
+          <AppText style={styles.clearText}>{t('common.clear')}</AppText>
+        </Pressable>
+      ) : null}
 
       {pickerMode && Platform.OS === 'android' ? (
         <DateTimePicker
@@ -280,6 +292,10 @@ const styles = StyleSheet.create({
   },
   partPlaceholder: {
     color: colors.text.tertiary,
+  },
+  clearText: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   modalBackdrop: {
     flex: 1,

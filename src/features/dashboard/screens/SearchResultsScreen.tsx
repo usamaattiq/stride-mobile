@@ -28,6 +28,7 @@ import { RequestsEmptyState } from '../components/RequestsEmptyState';
 import { SearchResultsFilterSheet } from '../components/SearchResultsFilterSheet';
 import { SearchRouteMap } from '../components/SearchRouteMap';
 import {
+  getTripAvailabilityWindow,
   localDateRangesOverlap,
   startOfLocalDay,
 } from '../components/trip/dateRangeUtils';
@@ -125,12 +126,9 @@ export function SearchResultsScreen(): React.ReactElement {
 
       const mapped = result.items.map(mapTripDtoToTrip);
       const filtered = mapped.filter((trip) => {
-        const tripStart = startOfLocalDay(new Date(trip.departureAt));
-        const tripEnd = trip.departureUntil
-          ? startOfLocalDay(new Date(trip.departureUntil))
-          : tripStart;
+        const window = getTripAvailabilityWindow(trip);
         return (
-          localDateRangesOverlap(tripStart, tripEnd, searchFrom, searchTo) &&
+          localDateRangesOverlap(window.start, window.end, searchFrom, searchTo) &&
           matchesPriceRange(trip, filters.priceRange)
         );
       });

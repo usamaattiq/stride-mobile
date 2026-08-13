@@ -93,6 +93,11 @@ export function TripDetailsStep({
             timeConfirmed={draft.departureTimeSet}
             required={startDateRequired}
             optional={!startDateRequired}
+            onClear={
+              startDateRequired
+                ? undefined
+                : () => onChange({ departureAt: null, departureTimeSet: false })
+            }
           />
 
           <CitySearchField

@@ -350,6 +350,7 @@
         "priceWithCurrency": "PKR {{price}}",
         "active": "Active",
         "ended": "Ended",
+        "open": "Open",
         "pending": "Pending",
         "status": {
           "live": "Live",

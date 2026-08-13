@@ -26,6 +26,7 @@ export type TripDto = {
   departurePoint: TripLocationPointDto;
   departureAt: string;
   departureUntil: string | null;
+  departureOpen: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
@@ -68,6 +69,7 @@ export type CreateTripPayload = {
   departurePoint: TripLocationPointDto;
   departureAt: string;
   departureUntil?: string | null;
+  departureOpen?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;

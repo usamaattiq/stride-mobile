@@ -20,7 +20,10 @@ import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 
-function formatTripWhen(trip: Trip, locale: string): string {
+function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
+  if (trip.departureOpen) {
+    return openLabel;
+  }
   if (trip.departureUntil) {
     return formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt);
   }
@@ -374,7 +377,7 @@ export function ListingCard({
           <View style={styles.metaRow}>
             <FontAwesome name="calendar" size={11} color={colors.primary} />
             <AppText style={styles.metaText} numberOfLines={1}>
-              {formatTripWhen(trip, i18n.language)}
+              {formatTripWhen(trip, i18n.language, t('dashboard.listings.card.open'))}
             </AppText>
           </View>
 
