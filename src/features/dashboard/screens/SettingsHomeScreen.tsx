@@ -6,6 +6,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
 import { i18n as appI18n } from '@/i18n';
@@ -43,7 +44,7 @@ type SettingsNav = CompositeNavigationProp<
   BottomTabNavigationProp<DashboardTabParamList>
 >;
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.1';
 
 export function SettingsHomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });

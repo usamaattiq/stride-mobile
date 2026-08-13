@@ -215,7 +215,6 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     initialVehicleId,
   );
   const [submitting, setSubmitting] = React.useState(false);
-  const [withdrawing, setWithdrawing] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
   const [confirmDecline, setConfirmDecline] = React.useState(false);
@@ -362,14 +361,12 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     if (!activeOffer) {
       return;
     }
-    setWithdrawing(true);
     setError(null);
     void rfqApi
       .withdrawOffer(tripId, activeOffer.id)
       .then((result) => applySnapshot(result))
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.withdrawFailed'))))
       .finally(() => {
-        setWithdrawing(false);
         setConfirmWithdraw(false);
       });
   };
