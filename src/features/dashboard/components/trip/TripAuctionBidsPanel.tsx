@@ -1,6 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -127,31 +126,21 @@ export function TripAuctionBidsPanel({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <View style={styles.headerCopy}>
-          <AppText weight="bold" style={styles.headerTitle}>
-            {t('dashboard.listings.detail.auctionBids.title')}
-          </AppText>
-          <AppText style={styles.headerMeta}>
-            {snapshot.statusLabel}
-            {' · '}
-            {snapshot.auctionType === 'reverse'
-              ? t('dashboard.listings.detail.bid.lowestWins')
-              : t('dashboard.listings.detail.bid.highestWins')}
-            {' · '}
-            {t('dashboard.listings.detail.auctionBids.currentAmount', {
-              amount: snapshot.currentAmount,
-            })}
-          </AppText>
-        </View>
-        <Pressable
-          onPress={load}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.detail.auctionBids.refresh')}
-        >
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
+      <View style={styles.headerCopy}>
+        <AppText weight="bold" style={styles.headerTitle}>
+          {t('dashboard.listings.detail.auctionBids.title')}
+        </AppText>
+        <AppText style={styles.headerMeta}>
+          {snapshot.statusLabel}
+          {' · '}
+          {snapshot.auctionType === 'reverse'
+            ? t('dashboard.listings.detail.bid.lowestWins')
+            : t('dashboard.listings.detail.bid.highestWins')}
+          {' · '}
+          {t('dashboard.listings.detail.auctionBids.currentAmount', {
+            amount: snapshot.currentAmount,
+          })}
+        </AppText>
       </View>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
@@ -291,12 +280,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
   },
   headerCopy: {
     flex: 1,

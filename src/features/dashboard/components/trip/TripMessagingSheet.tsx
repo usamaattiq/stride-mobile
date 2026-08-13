@@ -231,19 +231,9 @@ export function TripMessagingSheet({
       setMessages((prev) => mergeMessages(prev, payload.messages));
     });
 
-    void chatSocket
-      .joinConversation(tripId, conversationId)
-      .then((result) => {
-        if (cancelled || result.ok) {
-          return;
-        }
-        setError(result.error ?? t('dashboard.listings.detail.contact.chatOpenFailed'));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(t('dashboard.listings.detail.contact.chatOpenFailed'));
-        }
-      });
+    void chatSocket.joinConversation(tripId, conversationId).catch(() => {
+      // REST send/list still work; live ticks may lag until the socket connects.
+    });
 
     void chatApi.markRead(tripId, conversationId).catch(() => undefined);
 

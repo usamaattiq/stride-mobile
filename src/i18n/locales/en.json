@@ -465,7 +465,7 @@
           "selectNext": "Select next bidder",
           "close": "Close auction",
           "closeConfirmTitle": "Close this auction?",
-          "closeConfirmBody": "The auction will stop accepting bids.",
+          "closeConfirmBody": "The auction will stop accepting bids. If there are bids, the leading bidder will be asked to confirm.",
           "bidderLabel": "Bidder #{{rank}}",
           "amount": "PKR {{amount}}",
           "rank": "Rank {{rank}}",

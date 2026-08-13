@@ -447,14 +447,9 @@ export function TripBidPanel({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.detail.bid.title')}
-        </AppText>
-        <Pressable onPress={load} hitSlop={10} accessibilityRole="button">
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
-      </View>
+      <AppText weight="bold" style={styles.title}>
+        {t('dashboard.listings.detail.bid.title')}
+      </AppText>
 
       <View style={styles.statusCard}>
         <AppText weight="semibold" style={styles.statusLabel}>
@@ -666,11 +661,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   title: {
     fontSize: 18,
