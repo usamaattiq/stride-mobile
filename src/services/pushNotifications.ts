@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 
 import { notificationsApi } from '@/services/api/notificationsApi';
@@ -9,42 +9,33 @@ import { profileStore } from '@/store/profileStore';
 
 const ANDROID_CHANNEL_ID = 'default';
 
+/** Expo Go ships truncated notification native code (SDK 53+); skip push APIs there. */
+const isExpoGo =
+  Constants.appOwnership === 'expo' ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 function audienceRoleFromData(data: Record<string, unknown> | undefined): string | null {
   const value = data?.audienceRole;
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const audienceRole = audienceRoleFromData(
-      notification.request.content.data as Record<string, unknown> | undefined,
-    );
-    const currentRole = profileStore.getProfile()?.role;
-    const show = !audienceRole || !currentRole || audienceRole === currentRole;
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async (notification) => {
+      const audienceRole = audienceRoleFromData(
+        notification.request.content.data as Record<string, unknown> | undefined,
+      );
+      const currentRole = profileStore.getProfile()?.role;
+      const show = !audienceRole || !currentRole || audienceRole === currentRole;
 
-    return {
-      shouldShowAlert: show,
-      shouldPlaySound: show,
-      shouldSetBadge: show,
-      shouldShowBanner: show,
-      shouldShowList: show,
-    };
-  },
-});
-
-async function ensureAndroidNotificationChannel(): Promise<void> {
-  if (Platform.OS !== 'android') {
-    return;
-  }
-  // Android 8+ drops pushes that have no channel. Create it before requesting a token.
-  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'Musafir249',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#B42318',
-    sound: 'default',
-    enableVibrate: true,
-    showBadge: true,
+      return {
+        shouldShowAlert: show,
+        shouldPlaySound: show,
+        shouldSetBadge: show,
+        shouldShowBanner: show,
+        shouldShowList: show,
+      };
+    },
   });
 }
 
@@ -57,51 +48,101 @@ function resolveProjectId(): string | undefined {
   return extra?.eas?.projectId;
 }
 
+async function ensureAndroidNotificationChannel(): Promise<void> {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  // Android 8+ drops pushes that have no channel. Create it before requesting a token.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'Musafir249',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#B42318',
+    sound: 'default',
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    enableVibrate: true,
+    showBadge: true,
+  });
+}
+
+/** Avoid PUT spam → Ping rate limits when bootstrap / login fire together. */
+const PUSH_SYNC_TTL_MS = 10 * 60 * 1000;
+let pushSyncInFlight: Promise<void> | null = null;
+let lastSyncedExpoToken: string | null = null;
+let lastSyncedAtMs = 0;
+
+function clearPushSyncCache(): void {
+  lastSyncedExpoToken = null;
+  lastSyncedAtMs = 0;
+}
+
 /**
  * Requests permission, obtains an Expo push token, and registers it with stride-api → Ping.
  * Safe to call multiple times; failures are logged and never thrown to callers.
  */
 export async function registerForPushNotifications(): Promise<void> {
-  try {
-    if (Platform.OS === 'web') {
-      return;
-    }
-
-    await ensureAndroidNotificationChannel();
-
-    const current = await Notifications.getPermissionsAsync();
-    let status = current.status;
-    if (status !== 'granted') {
-      const requested = await Notifications.requestPermissionsAsync();
-      status = requested.status;
-    }
-    if (status !== 'granted') {
-      return;
-    }
-
-    const projectId = resolveProjectId();
-    const tokenResponse = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined,
-    );
-    const token = tokenResponse.data;
-    if (!token) {
-      return;
-    }
-
-    const deviceId = await getDeviceId();
-    await notificationsApi.registerDeviceToken({
-      token,
-      platform: Platform.OS === 'ios' ? 'ios' : 'android',
-      deviceId,
-    });
-    await secureStorage.setPushToken(token);
-  } catch (error) {
-    console.warn('[push] Failed to register device token', error);
+  if (pushSyncInFlight) {
+    await pushSyncInFlight;
+    return;
   }
+
+  pushSyncInFlight = (async () => {
+    try {
+      if (Platform.OS === 'web' || isExpoGo) {
+        return;
+      }
+
+      await ensureAndroidNotificationChannel();
+
+      const current = await Notifications.getPermissionsAsync();
+      let status = current.status;
+      if (status !== 'granted') {
+        const requested = await Notifications.requestPermissionsAsync();
+        status = requested.status;
+      }
+      if (status !== 'granted') {
+        return;
+      }
+
+      const projectId = resolveProjectId();
+      if (!projectId) {
+        console.warn('[push] Missing EAS projectId — cannot fetch Expo push token');
+        return;
+      }
+
+      const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+      const token = tokenResponse.data;
+      if (!token) {
+        return;
+      }
+
+      const now = Date.now();
+      if (token === lastSyncedExpoToken && now - lastSyncedAtMs < PUSH_SYNC_TTL_MS) {
+        return;
+      }
+
+      const deviceId = await getDeviceId();
+      await notificationsApi.registerDeviceToken({
+        token,
+        platform: Platform.OS === 'ios' ? 'ios' : 'android',
+        deviceId,
+      });
+      await secureStorage.setPushToken(token);
+      lastSyncedExpoToken = token;
+      lastSyncedAtMs = Date.now();
+    } catch (error) {
+      console.warn('[push] Failed to register device token', error);
+    }
+  })().finally(() => {
+    pushSyncInFlight = null;
+  });
+
+  await pushSyncInFlight;
 }
 
 /** Unregisters the last known Expo token from Ping via the BFF (call on logout). */
 export async function unregisterPushNotifications(): Promise<void> {
+  clearPushSyncCache();
   try {
     const token = await secureStorage.getPushToken();
     if (!token) {
@@ -160,4 +201,27 @@ export function resolveDeepLinkFromNotificationData(
   }
 
   return null;
+}
+
+/** Re-register only when Expo rotates the native/Expo push token. */
+export function attachPushTokenListener(): () => void {
+  if (isExpoGo) {
+    return () => undefined;
+  }
+  const subscription = Notifications.addPushTokenListener((token) => {
+    const next =
+      token && typeof token === 'object' && 'data' in token && typeof token.data === 'string'
+        ? token.data
+        : null;
+    if (next && next === lastSyncedExpoToken) {
+      return;
+    }
+    if (next) {
+      clearPushSyncCache();
+    }
+    void registerForPushNotifications();
+  });
+  return () => {
+    subscription.remove();
+  };
 }
