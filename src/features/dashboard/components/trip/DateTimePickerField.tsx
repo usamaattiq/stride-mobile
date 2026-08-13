@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -32,6 +33,8 @@ type DateTimePickerFieldProps = {
   mode?: 'date-time' | 'time';
   /** Skip the built-in label — use when a shared heading covers this field. */
   hideLabel?: boolean;
+  /** `search` matches passenger-home fields on a white surface. */
+  variant?: 'default' | 'search';
   /**
    * Whether the time part reflects an explicit user choice — otherwise shows the time
    * placeholder even if `value` already carries a baked-in default time. Defaults to
@@ -75,6 +78,7 @@ export function DateTimePickerField({
   optional = false,
   mode = 'date-time',
   hideLabel = false,
+  variant = 'default',
   timeConfirmed,
 }: DateTimePickerFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
@@ -152,10 +156,17 @@ export function DateTimePickerField({
         {mode === 'date-time' ? (
           <Pressable
             onPress={() => openPicker('date')}
-            style={[styles.part, styles.partDate]}
+            style={[
+              styles.part,
+              styles.partDate,
+              variant === 'search' && styles.partSearch,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={t('trips.create.selectDate')}
           >
+            {variant === 'search' ? (
+              <FontAwesome name="calendar" size={13} color={colors.text.secondary} />
+            ) : null}
             <AppText weight="semibold" style={[styles.partValue, !hasValue && styles.partPlaceholder]}>
               {hasValue ? formatDate(current, locale) : t('trips.create.selectDate')}
             </AppText>
@@ -164,10 +175,17 @@ export function DateTimePickerField({
 
         <Pressable
           onPress={() => openPicker('time')}
-          style={[styles.part, mode === 'date-time' ? styles.partTime : styles.partFull]}
+          style={[
+            styles.part,
+            mode === 'date-time' ? styles.partTime : styles.partFull,
+            variant === 'search' && styles.partSearch,
+          ]}
           accessibilityRole="button"
           accessibilityLabel={t('trips.create.selectTime')}
         >
+          {variant === 'search' ? (
+            <FontAwesome name="clock-o" size={13} color={colors.text.secondary} />
+          ) : null}
           <AppText weight="semibold" style={[styles.partValue, !hasTimeValue && styles.partPlaceholder]}>
             {hasTimeValue ? formatTime(current, locale) : t('trips.create.selectTime')}
           </AppText>
@@ -276,6 +294,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  partSearch: {
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.white,
   },
   partFull: {
     flex: 1,

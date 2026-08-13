@@ -1,18 +1,26 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker';
-import { CitySearchField } from '@/features/dashboard/components/trip/CitySearchField';
+import { resolveCityAndPointFromCoords } from '@/features/auth/utils/geocodedAddressLabel';
+import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
+import { SearchCityPickerModal } from '@/features/dashboard/components/SearchCityPickerModal';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
-import { TripPointField } from '@/features/dashboard/components/trip/TripPointField';
-import type { TripDraft } from '@/features/dashboard/types/trip.types';
+import {
+  parseTripSeats,
+  TripPaymentMethodSection,
+} from '@/features/dashboard/components/trip/TripRfqAuctionStep';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
+import type { TripCity, TripDraft, TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { colors, spacing } from '@/theme';
+import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { colors, radius, spacing } from '@/theme';
 
 type TripDetailsStepProps = {
   draft: TripDraft;
@@ -20,13 +28,29 @@ type TripDetailsStepProps = {
   onContinue: () => void;
 };
 
-function isDetailsComplete(draft: TripDraft): boolean {
+type CityPickerMode = 'departure' | 'arrival' | null;
+
+function isDetailsComplete(draft: TripDraft, isPassenger: boolean): boolean {
   const startDateRequired = draft.vehicleMode === 'shared';
-  return Boolean(
+  const routeOk = Boolean(
     draft.departureCity &&
       draft.arrivalCity &&
       (!startDateRequired || draft.departureAt),
   );
+  if (!routeOk) {
+    return false;
+  }
+  if (draft.vehicleMode !== 'shared') {
+    return true;
+  }
+  if (!draft.paymentMethod) {
+    return false;
+  }
+  if (isPassenger) {
+    const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
+    return Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
+  }
+  return draft.startingPrice.trim().length > 0;
 }
 
 function getArrivalTimeError(draft: TripDraft, t: (key: string) => string): string | null {
@@ -47,43 +71,177 @@ export function TripDetailsStep({
   onContinue,
 }: TripDetailsStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
+  const isPassenger = user.role === 'passenger';
+  const isShared = draft.vehicleMode === 'shared';
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
+  const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
+  const [departureError, setDepartureError] = React.useState<string | null>(null);
+  const [arrivalError, setArrivalError] = React.useState<string | null>(null);
 
   const startDateRequired = draft.vehicleMode === 'shared';
-
   const departureWindowEnd = draft.departureUntil
     ? new Date(draft.departureUntil)
     : draft.departureAt
       ? new Date(draft.departureAt)
       : undefined;
-
   const arrivalTimeError = getArrivalTimeError(draft, t);
-  const canContinue = isDetailsComplete(draft) && !arrivalTimeError;
+  const canContinue = isDetailsComplete(draft, isPassenger) && !arrivalTimeError;
+
+  const applyMapSelection = React.useCallback(
+    async (mode: 'departure' | 'arrival', selection: TripLocationPoint) => {
+      const resolved = await resolveCityAndPointFromCoords(
+        selection.latitude,
+        selection.longitude,
+        selection.label,
+      );
+      const city: TripCity = {
+        id: resolved.cityId,
+        label: cityDisplayName(resolved.cityLabel),
+      };
+      const point: TripLocationPoint = {
+        label: resolved.address,
+        latitude: selection.latitude,
+        longitude: selection.longitude,
+      };
+
+      if (mode === 'departure') {
+        setDepartureError(null);
+        const next: Partial<TripDraft> = { departureCity: city, departurePoint: point };
+        if (draft.arrivalCity?.id === city.id || draft.arrivalCity?.label === city.label) {
+          next.arrivalCity = null;
+          next.arrivalPoint = null;
+        }
+        onChange(next);
+        return;
+      }
+
+      if (draft.departureCity && (draft.departureCity.id === city.id || draft.departureCity.label === city.label)) {
+        setArrivalError(t('dashboard.search.sameCityNotAllowed'));
+        return;
+      }
+      setArrivalError(null);
+      onChange({ arrivalCity: city, arrivalPoint: point });
+    },
+    [draft.arrivalCity?.id, draft.arrivalCity?.label, draft.departureCity, onChange, t],
+  );
+
+  const handleCitySelect = React.useCallback(
+    (city: TripCity) => {
+      if (cityPickerMode === 'arrival') {
+        if (draft.departureCity?.id === city.id) {
+          setArrivalError(t('dashboard.search.sameCityNotAllowed'));
+          return;
+        }
+        setArrivalError(null);
+        onChange({
+          arrivalCity: city,
+          arrivalPoint: draft.arrivalCity?.id === city.id ? draft.arrivalPoint : null,
+        });
+        return;
+      }
+
+      setDepartureError(null);
+      setArrivalError(null);
+      const next: Partial<TripDraft> = {
+        departureCity: city,
+        departurePoint: draft.departureCity?.id === city.id ? draft.departurePoint : null,
+      };
+      if (draft.arrivalCity?.id === city.id) {
+        next.arrivalCity = null;
+        next.arrivalPoint = null;
+      }
+      onChange(next);
+    },
+    [
+      cityPickerMode,
+      draft.arrivalCity?.id,
+      draft.arrivalPoint,
+      draft.departureCity?.id,
+      draft.departurePoint,
+      onChange,
+      t,
+    ],
+  );
+
+  const openMapForMode = React.useCallback(
+    (mode: 'departure' | 'arrival') => {
+      const initial = mode === 'departure' ? draft.departurePoint : draft.arrivalPoint;
+      openMapPickerForSelection((selection) => {
+        void applyMapSelection(mode, selection);
+      }, initial);
+    },
+    [applyMapSelection, draft.arrivalPoint, draft.departurePoint, openMapPickerForSelection],
+  );
 
   return (
     <>
       <AuthCard>
         <View style={styles.form}>
-          <CitySearchField
-            label={t('trips.create.departureCity')}
-            placeholder={t('trips.create.cityPlaceholder')}
-            value={draft.departureCity}
-            onChange={(departureCity) => onChange({ departureCity })}
-            required
-          />
+          <View style={styles.routeBlock}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setDepartureError(null);
+                setCityPickerMode('departure');
+              }}
+              style={({ pressed }) => [
+                styles.field,
+                departureError ? styles.fieldError : null,
+                pressed && styles.pressed,
+              ]}
+            >
+              <FontAwesome name="arrow-up" size={13} color={colors.text.secondary} />
+              <View style={styles.fieldCopy}>
+                <AppText
+                  weight="semibold"
+                  style={[styles.fieldValue, !draft.departureCity && styles.fieldPlaceholder]}
+                  numberOfLines={1}
+                >
+                  {draft.departureCity?.label ?? t('dashboard.search.departure')}
+                </AppText>
+                {draft.departurePoint?.label ? (
+                  <AppText style={styles.fieldAddress} numberOfLines={1}>
+                    {draft.departurePoint.label}
+                  </AppText>
+                ) : null}
+              </View>
+            </Pressable>
+            {departureError ? <AppText style={styles.errorText}>{departureError}</AppText> : null}
 
-          <TripPointField
-            label={t('trips.create.departurePoint')}
-            value={draft.departurePoint}
-            onSelectOnMap={() =>
-              openMapPickerForSelection((selection) => {
-                onChange({ departurePoint: selection });
-              }, draft.departurePoint)
-            }
-            optional
-          />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setArrivalError(null);
+                setCityPickerMode('arrival');
+              }}
+              style={({ pressed }) => [
+                styles.field,
+                arrivalError ? styles.fieldError : null,
+                pressed && styles.pressed,
+              ]}
+            >
+              <FontAwesome name="arrow-down" size={13} color={colors.text.secondary} />
+              <View style={styles.fieldCopy}>
+                <AppText
+                  weight="semibold"
+                  style={[styles.fieldValue, !draft.arrivalCity && styles.fieldPlaceholder]}
+                  numberOfLines={1}
+                >
+                  {draft.arrivalCity?.label ?? t('dashboard.search.arrival')}
+                </AppText>
+                {draft.arrivalPoint?.label ? (
+                  <AppText style={styles.fieldAddress} numberOfLines={1}>
+                    {draft.arrivalPoint.label}
+                  </AppText>
+                ) : null}
+              </View>
+            </Pressable>
+            {arrivalError ? <AppText style={styles.errorText}>{arrivalError}</AppText> : null}
+          </View>
 
           <DateTimePickerField
+            variant="search"
             label={t('trips.create.departureDateTime')}
             value={draft.departureAt}
             onChange={(departureAt, part) =>
@@ -100,26 +258,8 @@ export function TripDetailsStep({
             }
           />
 
-          <CitySearchField
-            label={t('trips.create.arrivalCity')}
-            placeholder={t('trips.create.cityPlaceholder')}
-            value={draft.arrivalCity}
-            onChange={(arrivalCity) => onChange({ arrivalCity })}
-            required
-          />
-
-          <TripPointField
-            label={t('trips.create.arrivalPoint')}
-            value={draft.arrivalPoint}
-            onSelectOnMap={() =>
-              openMapPickerForSelection((selection) => {
-                onChange({ arrivalPoint: selection });
-              }, draft.arrivalPoint)
-            }
-            optional
-          />
-
           <DateTimePickerField
+            variant="search"
             label={t('trips.create.arrivalDateTime')}
             value={draft.arrivalAt}
             onChange={(arrivalAt, part) =>
@@ -129,9 +269,7 @@ export function TripDetailsStep({
             timeConfirmed={draft.arrivalTimeSet}
             optional
           />
-          {arrivalTimeError ? (
-            <AppText style={styles.fieldError}>{arrivalTimeError}</AppText>
-          ) : null}
+          {arrivalTimeError ? <AppText style={styles.errorText}>{arrivalTimeError}</AppText> : null}
 
           <AuthTextField
             label={t('trips.create.description')}
@@ -145,13 +283,51 @@ export function TripDetailsStep({
             maxLength={1000}
           />
 
-          <Button
-            label={t('common.continue')}
-            onPress={onContinue}
-            disabled={!canContinue}
-          />
+          {isShared ? (
+            <>
+              {isPassenger ? (
+                <SeatsStepper
+                  label={t('trips.create.seats')}
+                  required
+                  value={parseTripSeats(draft.seats)}
+                  min={1}
+                  max={50}
+                  onChange={(seats) => onChange({ seats: String(seats) })}
+                />
+              ) : (
+                <AuthTextField
+                  label={t('trips.create.startingPrice')}
+                  required
+                  value={draft.startingPrice}
+                  onChangeText={(startingPrice) => onChange({ startingPrice })}
+                  placeholder={t('trips.create.startingPricePlaceholder')}
+                  keyboardType="decimal-pad"
+                  dense
+                />
+              )}
+              <TripPaymentMethodSection
+                value={draft.paymentMethod}
+                onChange={(paymentMethod) => onChange({ paymentMethod })}
+              />
+            </>
+          ) : null}
+
+          <Button label={t('common.continue')} onPress={onContinue} disabled={!canContinue} />
         </View>
       </AuthCard>
+
+      <SearchCityPickerModal
+        visible={cityPickerMode != null}
+        mode={cityPickerMode ?? 'departure'}
+        value={cityPickerMode === 'arrival' ? draft.arrivalCity : draft.departureCity}
+        excludeCityId={cityPickerMode === 'arrival' ? draft.departureCity?.id : undefined}
+        onClose={() => setCityPickerMode(null)}
+        onSelect={handleCitySelect}
+        onChooseMap={() => {
+          const mode = cityPickerMode ?? 'departure';
+          openMapForMode(mode);
+        }}
+      />
       {mapPickerSheet}
     </>
   );
@@ -161,13 +337,49 @@ const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
   },
+  routeBlock: {
+    gap: 6,
+  },
+  field: {
+    minHeight: 46,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.md - 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  fieldCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  fieldValue: {
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  fieldPlaceholder: {
+    color: colors.text.tertiary,
+  },
+  fieldAddress: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  fieldError: {
+    borderColor: colors.primary,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.primary,
+    paddingHorizontal: spacing.xs,
+  },
+  pressed: {
+    opacity: 0.85,
+  },
   textArea: {
     minHeight: 96,
     paddingTop: spacing.sm,
-  },
-  fieldError: {
-    fontSize: 12,
-    color: colors.primary,
-    marginTop: -spacing.xs,
   },
 });

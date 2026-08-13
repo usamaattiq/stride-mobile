@@ -8,6 +8,7 @@ export type MapSearchResult = {
 type GeocodeApiResponse = {
   status: string;
   results?: Array<{
+    place_id?: string;
     formatted_address: string;
     geometry: {
       location: {
@@ -15,14 +16,35 @@ type GeocodeApiResponse = {
         lng: number;
       };
     };
+    address_components?: Array<{
+      long_name: string;
+      types: string[];
+    }>;
   }>;
 };
 
-export async function reverseGeocodeLocation(
+function cityNameFromComponents(
+  components: Array<{ long_name: string; types: string[] }> | undefined,
+): string | null {
+  if (!components?.length) {
+    return null;
+  }
+  const pick = (type: string) =>
+    components.find((component) => component.types.includes(type))?.long_name?.trim();
+  return (
+    pick('locality') ||
+    pick('postal_town') ||
+    pick('administrative_area_level_2') ||
+    pick('administrative_area_level_1') ||
+    null
+  );
+}
+
+export async function reverseGeocodeDetails(
   latitude: number,
   longitude: number,
   apiKey: string,
-): Promise<string | null> {
+): Promise<{ address: string; city: string | null; placeId: string | null } | null> {
   if (!apiKey) {
     return null;
   }
@@ -42,11 +64,29 @@ export async function reverseGeocodeLocation(
       return null;
     }
 
-    const formatted = payload.results[0]?.formatted_address?.trim();
-    return formatted || null;
+    const first = payload.results[0];
+    const address = first?.formatted_address?.trim();
+    if (!address) {
+      return null;
+    }
+
+    return {
+      address,
+      city: cityNameFromComponents(first.address_components),
+      placeId: first.place_id?.trim() || null,
+    };
   } catch {
     return null;
   }
+}
+
+export async function reverseGeocodeLocation(
+  latitude: number,
+  longitude: number,
+  apiKey: string,
+): Promise<string | null> {
+  const details = await reverseGeocodeDetails(latitude, longitude, apiKey);
+  return details?.address ?? null;
 }
 
 export async function searchMapLocations(
