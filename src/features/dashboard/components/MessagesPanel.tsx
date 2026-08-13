@@ -295,6 +295,7 @@ export const MessagesPanel = React.memo(
           visible={activeChat != null}
           onClose={closeChat}
           tripId={activeChat?.tripId ?? ''}
+          existingConversationId={activeChat?.id}
           counterpartyId={activeChat?.counterpartyId}
           counterpartyName={activeChat?.senderName ?? null}
           counterpartyAvatarUrl={activeChat?.avatar.imageUri ?? null}
