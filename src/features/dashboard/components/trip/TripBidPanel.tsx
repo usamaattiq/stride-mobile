@@ -57,6 +57,11 @@ export type TripBidPanelProps = {
     counterpartyName: string | null;
     counterpartyPhone: string | null;
   }) => void;
+  onCanWithdrawChange?: (canWithdraw: boolean) => void;
+};
+
+export type TripBidPanelHandle = {
+  openWithdrawConfirm: () => void;
 };
 
 function formatAmount(amount: number | null | undefined): string {
@@ -111,13 +116,18 @@ function nextBidHint(
     : t('dashboard.listings.detail.bid.amountPlaceholder');
 }
 
-export function TripBidPanel({
-  tripId,
-  isPassengerRequest = false,
-  requiresVehicle = false,
-  initialVehicleId = null,
-  onBidChange,
-}: TripBidPanelProps): React.ReactElement | null {
+export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelProps>(
+  function TripBidPanel(
+    {
+      tripId,
+      isPassengerRequest = false,
+      requiresVehicle = false,
+      initialVehicleId = null,
+      onBidChange,
+      onCanWithdrawChange,
+    },
+    ref,
+  ): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
@@ -238,6 +248,25 @@ export function TripBidPanel({
     }, 5000);
     return () => clearInterval(timer);
   }, [applySnapshot, publicSnapshot?.status, snapshot?.status, tripId]);
+
+  const canWithdraw = Boolean(snapshot?.actions.canWithdraw);
+
+  React.useEffect(() => {
+    onCanWithdrawChange?.(canWithdraw);
+    return () => onCanWithdrawChange?.(false);
+  }, [canWithdraw, onCanWithdrawChange]);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      openWithdrawConfirm: () => {
+        if (canWithdraw) {
+          setConfirmWithdraw(true);
+        }
+      },
+    }),
+    [canWithdraw],
+  );
 
   const placeBid = () => {
     if (requiresVehicle && !selectedVehicleId) {
@@ -546,15 +575,6 @@ export function TripBidPanel({
         </View>
       ) : null}
 
-      {actions.canWithdraw ? (
-        <Button
-          label={t('dashboard.listings.detail.bid.withdraw')}
-          onPress={() => setConfirmWithdraw(true)}
-          variant="secondary"
-          loading={submitting}
-        />
-      ) : null}
-
       {snapshot.participantStatus === 'active' &&
       (snapshot.status === 'live' ||
         snapshot.status === 'awaiting_confirmation' ||
@@ -650,7 +670,7 @@ export function TripBidPanel({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: {

@@ -54,6 +54,11 @@ export type TripOfferPanelProps = {
     counterpartyName: string | null;
     counterpartyPhone: string | null;
   }) => void;
+  onCanWithdrawChange?: (canWithdraw: boolean) => void;
+};
+
+export type TripOfferPanelHandle = {
+  openWithdrawConfirm: () => void;
 };
 
 const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
@@ -182,14 +187,19 @@ export function OfferVehicleSummaryCard({
   return <View style={[styles.vehicleSummary, compact && styles.vehicleSummaryCompact]}>{content}</View>;
 }
 
-export function TripOfferPanel({
-  tripId,
-  vehicleMode,
-  vehicleTotalSeats,
-  requiresVehicle = false,
-  initialVehicleId = null,
-  onOfferChange,
-}: TripOfferPanelProps): React.ReactElement | null {
+export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPanelProps>(
+  function TripOfferPanel(
+    {
+      tripId,
+      vehicleMode,
+      vehicleTotalSeats,
+      requiresVehicle = false,
+      initialVehicleId = null,
+      onOfferChange,
+      onCanWithdrawChange,
+    },
+    ref,
+  ): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
@@ -260,6 +270,28 @@ export function TripOfferPanel({
       setSelectedVehicleId(vehicles[0]!.id);
     }
   }, [requiresVehicle, initialVehicleId, selectedVehicleId, vehicles]);
+
+  const previewOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
+  const canWithdraw = Boolean(
+    snapshot && previewOffer?.status === 'active' && snapshot.actions.canWithdraw,
+  );
+
+  React.useEffect(() => {
+    onCanWithdrawChange?.(canWithdraw);
+    return () => onCanWithdrawChange?.(false);
+  }, [canWithdraw, onCanWithdrawChange]);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      openWithdrawConfirm: () => {
+        if (canWithdraw) {
+          setConfirmWithdraw(true);
+        }
+      },
+    }),
+    [canWithdraw],
+  );
 
   if (loading && !snapshot) {
     return (
@@ -440,16 +472,6 @@ export function TripOfferPanel({
               />
             </View>
           </View>
-        ) : null}
-
-        {hasActionableOffer && activeOffer?.status === 'active' && snapshot.actions.canWithdraw ? (
-          <Button
-            label={t('dashboard.listings.detail.offer.withdraw')}
-            variant="secondary"
-            onPress={() => setConfirmWithdraw(true)}
-            loading={withdrawing}
-            disabled={withdrawing}
-          />
         ) : null}
 
         {hasActionableOffer &&
@@ -663,7 +685,7 @@ export function TripOfferPanel({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: {

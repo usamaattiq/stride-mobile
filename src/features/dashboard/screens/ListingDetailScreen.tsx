@@ -33,9 +33,9 @@ import { colors, radius, spacing } from '@/theme';
 import { ListingCard } from '../components/ListingCard';
 import { formatTripDateTime } from '../components/trip/dateRangeUtils';
 import { TripAuctionBidsPanel } from '../components/trip/TripAuctionBidsPanel';
-import { TripBidPanel } from '../components/trip/TripBidPanel';
+import { TripBidPanel, type TripBidPanelHandle } from '../components/trip/TripBidPanel';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
-import { TripOfferPanel } from '../components/trip/TripOfferPanel';
+import { TripOfferPanel, type TripOfferPanelHandle } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
@@ -73,6 +73,9 @@ export function ListingDetailScreen(): React.ReactElement {
   const [canCloseAuction, setCanCloseAuction] = React.useState(false);
   const [auctionPanelKey, setAuctionPanelKey] = React.useState(0);
   const [responsesCount, setResponsesCount] = React.useState(0);
+  const [canWithdrawOffer, setCanWithdrawOffer] = React.useState(false);
+  const offerPanelRef = React.useRef<TripOfferPanelHandle>(null);
+  const bidPanelRef = React.useRef<TripBidPanelHandle>(null);
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
@@ -372,7 +375,7 @@ export function ListingDetailScreen(): React.ReactElement {
   // Hide delete once the listing is past / completed / closed / expired / ended.
   const canRemoveListing =
     isOwnListing && trip != null && getListingStatusBucket(trip) === 'live';
-  const showHeaderActions = canCloseAuction || canRemoveListing;
+  const showHeaderActions = canCloseAuction || canRemoveListing || canWithdrawOffer;
 
   return (
     <AuthScaffold
@@ -388,6 +391,27 @@ export function ListingDetailScreen(): React.ReactElement {
       headerRight={
         showHeaderActions ? (
           <View style={styles.headerActions}>
+            {canWithdrawOffer ? (
+              <Pressable
+                onPress={() => {
+                  offerPanelRef.current?.openWithdrawConfirm();
+                  bidPanelRef.current?.openWithdrawConfirm();
+                }}
+                style={styles.headerActionButton}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  trip.listingType === 'auction'
+                    ? t('dashboard.listings.detail.bid.withdraw')
+                    : t('dashboard.listings.detail.offer.withdraw')
+                }
+              >
+                <FontAwesome name="undo" size={13} color={colors.white} />
+                <AppText weight="semibold" style={styles.headerActionLabel}>
+                  {t('dashboard.listings.detail.offer.withdrawConfirmAction')}
+                </AppText>
+              </Pressable>
+            ) : null}
             {canCloseAuction ? (
               <Pressable
                 onPress={() => {
@@ -399,7 +423,10 @@ export function ListingDetailScreen(): React.ReactElement {
                 accessibilityRole="button"
                 accessibilityLabel={t('dashboard.listings.detail.auctionBids.close')}
               >
-                <FontAwesome name="stop-circle" size={17} color={colors.white} />
+                <FontAwesome name="stop-circle" size={14} color={colors.white} />
+                <AppText weight="semibold" style={styles.headerActionLabel}>
+                  {t('common.close')}
+                </AppText>
               </Pressable>
             ) : null}
             {canRemoveListing ? (
@@ -433,20 +460,24 @@ export function ListingDetailScreen(): React.ReactElement {
             />
             {trip.listingType === 'auction' ? (
               <TripBidPanel
+                ref={bidPanelRef}
                 tripId={trip.id}
                 isPassengerRequest={trip.vehicleId == null}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
                 onBidChange={handleBidChange}
+                onCanWithdrawChange={setCanWithdrawOffer}
               />
             ) : (
               <TripOfferPanel
+                ref={offerPanelRef}
                 tripId={trip.id}
                 vehicleMode={trip.vehicleMode}
                 vehicleTotalSeats={trip.vehicleTotalSeats}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
                 onOfferChange={handleOfferChange}
+                onCanWithdrawChange={setCanWithdrawOffer}
               />
             )}
           </>
@@ -592,11 +623,18 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   headerActionButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    height: 34,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  headerActionLabel: {
+    color: colors.white,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });
