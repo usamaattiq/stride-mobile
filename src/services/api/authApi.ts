@@ -19,6 +19,9 @@ export const authApi = {
   submitSignup: (payload: SignupSubmitPayload): Promise<AuthSignupResult> =>
     apiRequest({ method: 'POST', url: '/auth/signup/submit', data: payload }),
 
+  checkSignupEmail: (email: string): Promise<{ available: boolean }> =>
+    apiRequest({ method: 'POST', url: '/auth/signup/email/check', data: { email } }),
+
   sendLoginOtp: (phone: PhoneIdentity, purpose: LoginOtpPurpose = 'login'): Promise<{ sent: true }> =>
     apiRequest({ method: 'POST', url: '/auth/login/otp/send', data: { ...phone, purpose } }),
 

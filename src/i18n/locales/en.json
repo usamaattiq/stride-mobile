@@ -53,6 +53,8 @@
         "email": "Email",
         "emailPlaceholder": "name@example.com",
         "emailInvalid": "Enter a valid email address",
+        "emailTaken": "This email is already in use",
+        "emailCheckFailed": "We couldn't check this email. Please try again.",
         "address": "Address",
         "city": "City",
         "country": "Country",

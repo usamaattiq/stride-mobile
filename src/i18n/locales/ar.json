@@ -53,6 +53,8 @@
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
         "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا",
+        "emailTaken": "هذا البريد الإلكتروني مستخدم بالفعل",
+        "emailCheckFailed": "تعذر التحقق من هذا البريد الإلكتروني. حاول مرة أخرى.",
         "address": "العنوان",
         "city": "المدينة",
         "country": "الدولة",
