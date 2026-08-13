@@ -6,6 +6,8 @@ import { notificationsApi } from '@/services/api/notificationsApi';
 import { getDeviceId } from '@/services/deviceId';
 import { secureStorage } from '@/services/storage/secureStorage';
 
+const ANDROID_CHANNEL_ID = 'default';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -15,6 +17,22 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+async function ensureAndroidNotificationChannel(): Promise<void> {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  // Android 8+ drops pushes that have no channel. Create it before requesting a token.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'Musafir249',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#B42318',
+    sound: 'default',
+    enableVibrate: true,
+    showBadge: true,
+  });
+}
 
 function resolveProjectId(): string | undefined {
   const eas = Constants.easConfig?.projectId;
@@ -34,6 +52,8 @@ export async function registerForPushNotifications(): Promise<void> {
     if (Platform.OS === 'web') {
       return;
     }
+
+    await ensureAndroidNotificationChannel();
 
     const current = await Notifications.getPermissionsAsync();
     let status = current.status;

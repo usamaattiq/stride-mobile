@@ -50,7 +50,8 @@
         "android.permission.USE_FINGERPRINT",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.silveraxisltd.musafir249"
+      "package": "com.silveraxisltd.musafir249",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
