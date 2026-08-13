@@ -474,7 +474,9 @@
           "amount": "{{amount}} ر.ب",
           "rank": "الترتيب {{rank}}",
           "selected": "بانتظار التأكيد",
-          "confirmed": "مؤكد"
+          "confirmed": "مؤكد",
+          "seatsOffered": "{{count}} مقاعد معروضة",
+          "whatsapp": "واتساب"
         },
         "bid": {
           "title": "قدّم مزايدتك",

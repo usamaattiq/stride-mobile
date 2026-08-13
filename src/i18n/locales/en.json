@@ -474,7 +474,9 @@
           "amount": "PKR {{amount}}",
           "rank": "Rank {{rank}}",
           "selected": "Awaiting confirmation",
-          "confirmed": "Confirmed"
+          "confirmed": "Confirmed",
+          "seatsOffered": "{{count}} seats offered",
+          "whatsapp": "WhatsApp"
         },
         "bid": {
           "title": "Place your bid",

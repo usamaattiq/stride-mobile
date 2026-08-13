@@ -50,6 +50,10 @@ type VehicleListItemProps = {
   onPress: () => void;
   onRemovePress?: () => void;
   selected?: boolean;
+  /** Skip the list gradient; parent supplies the wash. */
+  embedded?: boolean;
+  /** Shorter row: photo, title, seats. Extra fields open on press. */
+  compact?: boolean;
 };
 
 export function VehicleListItem({
@@ -57,6 +61,8 @@ export function VehicleListItem({
   onPress,
   onRemovePress,
   selected = false,
+  embedded = false,
+  compact = false,
 }: VehicleListItemProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const classLabel = t(
@@ -73,34 +79,38 @@ export function VehicleListItem({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.item, selected && styles.itemSelected]}
+      style={[styles.item, selected && styles.itemSelected, embedded && styles.itemEmbedded]}
       accessibilityRole="button"
       accessibilityLabel={vehicle.title}
       accessibilityState={{ selected }}
     >
-      <LinearGradient
-        colors={
-          selected
-            ? ['#FFF7F6', '#FEE4E2', '#FECACA']
-            : ['#FFFFFF', '#FFF7F6', '#FEE4E2']
-        }
-        locations={[0, 0.42, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0.35, y: 0.15 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientWash}
-        pointerEvents="none"
-      />
+      {embedded ? null : (
+        <>
+          <LinearGradient
+            colors={
+              selected
+                ? ['#FFF7F6', '#FEE4E2', '#FECACA']
+                : ['#FFFFFF', '#FFF7F6', '#FEE4E2']
+            }
+            locations={[0, 0.42, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+          <LinearGradient
+            colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0.35, y: 0.15 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientWash}
+            pointerEvents="none"
+          />
+        </>
+      )}
 
-      <View style={styles.mainRow}>
-        <View style={styles.thumbnail}>
+      <View style={[styles.mainRow, compact && styles.mainRowCompact]}>
+        <View style={[styles.thumbnail, compact && styles.thumbnailCompact]}>
           {thumbnailUri ? (
             <Image
               source={{ uri: thumbnailUri }}
@@ -109,10 +119,10 @@ export function VehicleListItem({
             />
           ) : (
             <View style={styles.thumbnailFallback}>
-              <FontAwesome name="car" size={22} color={colors.text.tertiary} />
+              <FontAwesome name="car" size={compact ? 16 : 22} color={colors.text.tertiary} />
             </View>
           )}
-          {photoTotal > 1 ? (
+          {!compact && photoTotal > 1 ? (
             <View style={styles.photoBadge}>
               <FontAwesome name="image" size={9} color={colors.white} />
               <AppText weight="semibold" style={styles.photoBadgeText}>
@@ -128,16 +138,22 @@ export function VehicleListItem({
         <View style={styles.itemBody}>
           <View style={styles.itemTopRow}>
             <View style={styles.titleBlock}>
-              <AppText weight="bold" style={styles.itemTitle} numberOfLines={1}>
+              <AppText weight="bold" style={[styles.itemTitle, compact && styles.itemTitleCompact]} numberOfLines={1}>
                 {vehicle.title}
               </AppText>
-              {subtitle ? (
+              {compact ? (
+                <AppText style={styles.itemSubtitle} numberOfLines={1}>
+                  {t('vehicles.seatsCount', { count: vehicle.totalSeats })}
+                </AppText>
+              ) : subtitle ? (
                 <AppText style={styles.itemSubtitle} numberOfLines={1}>
                   {subtitle}
                 </AppText>
               ) : null}
             </View>
-            {onRemovePress ? (
+            {compact ? (
+              <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
+            ) : onRemovePress ? (
               <Pressable
                 onPress={onRemovePress}
                 style={styles.removeButton}
@@ -154,6 +170,8 @@ export function VehicleListItem({
             ) : null}
           </View>
 
+          {compact ? null : (
+            <>
           <View style={styles.detailsRow}>
             <View style={styles.detailItem}>
               <FontAwesome name="car" size={11} color={colors.primary} />
@@ -183,6 +201,8 @@ export function VehicleListItem({
               </AppText>
             </View>
           </View>
+            </>
+          )}
         </View>
       </View>
     </Pressable>
@@ -276,6 +296,12 @@ const styles = StyleSheet.create({
   itemSelected: {
     borderColor: colors.primary,
   },
+  itemEmbedded: {
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    backgroundColor: 'transparent',
+  },
   gradientWash: {
     position: 'absolute',
     top: 0,
@@ -288,12 +314,21 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.xs,
   },
+  mainRowCompact: {
+    padding: 6,
+    alignItems: 'center',
+  },
   thumbnail: {
     width: 84,
     height: 78,
     borderRadius: radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
+  },
+  thumbnailCompact: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
   },
   thumbnailImage: {
     width: '100%',
@@ -327,7 +362,7 @@ const styles = StyleSheet.create({
   },
   itemTopRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.xs,
   },
   titleBlock: {
@@ -338,6 +373,9 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 15,
     color: colors.text.primary,
+  },
+  itemTitleCompact: {
+    fontSize: 13,
   },
   itemSubtitle: {
     fontSize: 12,

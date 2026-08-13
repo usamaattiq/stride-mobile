@@ -1,7 +1,10 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
+import { VehicleListItem } from '@/features/dashboard/components/VehicleListContent';
+import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { auctionApi } from '@/services/api/auctionApi';
@@ -12,18 +15,47 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { openWhatsAppChat } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
-import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripMessagingSheet } from './TripMessagingSheet';
-import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripAuctionBidsPanelProps = {
   tripId: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
 };
+
+function toListVehicle(vehicle: AuctionBidVehicleSummary): Vehicle {
+  const photoUris =
+    vehicle.photoUrls && vehicle.photoUrls.length > 0
+      ? vehicle.photoUrls
+      : vehicle.photoUrl
+        ? [vehicle.photoUrl]
+        : [];
+  const photoDisplayUris =
+    vehicle.photoDisplayUris && vehicle.photoDisplayUris.length > 0
+      ? vehicle.photoDisplayUris
+      : vehicle.photoViewUrl
+        ? [vehicle.photoViewUrl]
+        : photoUris;
+
+  return {
+    id: vehicle.id,
+    title: vehicle.title,
+    description: vehicle.description ?? '',
+    plateNumber: vehicle.plateNumber,
+    hasAc: vehicle.hasAc ?? false,
+    totalSeats: vehicle.totalSeats,
+    vehicleClass: vehicle.vehicleClass,
+    brand: vehicle.brand ?? '',
+    model: vehicle.model ?? '',
+    year: vehicle.year != null ? String(vehicle.year) : '',
+    photoUris,
+    photoDisplayUris,
+  };
+}
 
 export function TripAuctionBidsPanel({
   tripId,
@@ -41,9 +73,6 @@ export function TripAuctionBidsPanel({
   const whatsappMessage = isPassengerRequest
     ? t('dashboard.listings.detail.contact.messageAsPassenger')
     : t('dashboard.listings.detail.contact.messageAsDriver');
-  const contactTitle = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.driverContact')
-    : t('dashboard.listings.detail.contact.passengerContact');
 
   const applySnapshot = React.useCallback(
     (ownerSnapshot: AuctionOwnerSnapshot) => {
@@ -72,7 +101,7 @@ export function TripAuctionBidsPanel({
   }, [load]);
 
   React.useEffect(() => {
-    if (!snapshot || snapshot.status !== 'live') {
+    if (!snapshot || snapshot.status.replaceAll('_', '-') !== 'live') {
       return undefined;
     }
     const timer = setInterval(() => {
@@ -121,8 +150,10 @@ export function TripAuctionBidsPanel({
     return <View />;
   }
 
+  const auctionStatus = snapshot.status.replaceAll('_', '-');
+  const isLive = auctionStatus === 'live';
   const isAwaiting =
-    snapshot.status === 'awaiting_confirmation' || snapshot.status === 'awaiting_action';
+    auctionStatus === 'awaiting-confirmation' || auctionStatus === 'awaiting-action';
 
   return (
     <View style={styles.root}>
@@ -181,29 +212,28 @@ export function TripAuctionBidsPanel({
             const isSelected = row.participantId === snapshot.selectedParticipantId;
             const isConfirmed = row.participantId === snapshot.confirmedParticipantId;
             const showMessage =
-              snapshot.status === 'live' ||
+              isLive ||
               (isAwaiting && isSelected) ||
               (isConfirmed && Boolean(row.participantPhone));
+            const showWhatsApp = Boolean(row.participantPhone?.trim());
+            const displayName =
+              row.participantName?.trim() ||
+              t('dashboard.listings.detail.auctionBids.bidderLabel', {
+                rank: row.rank,
+              });
+            const initial = displayName.charAt(0).toUpperCase();
 
             return (
-              <View key={row.participantId} style={styles.bidCard}>
-                {row.vehicle ? (
-                  <OfferVehicleSummaryCard
-                    vehicle={row.vehicle}
-                    onPress={() => {
-                      if (row.vehicle) {
-                        setVehicleDetail(row.vehicle);
-                      }
-                    }}
-                  />
-                ) : null}
+              <View
+                key={row.participantId}
+                style={[
+                  styles.bidCard,
+                  isConfirmed && styles.bidCardConfirmed,
+                  isSelected && !isConfirmed && styles.bidCardSelected,
+                  row.rank === 1 && !isSelected && !isConfirmed && styles.bidCardLead,
+                ]}
+              >
                 <View style={styles.bidHeaderRow}>
-                  <AppText weight="semibold" style={styles.bidTitle} numberOfLines={1}>
-                    {row.participantName?.trim() ||
-                      t('dashboard.listings.detail.auctionBids.bidderLabel', {
-                        rank: row.rank,
-                      })}
-                  </AppText>
                   <View
                     style={[
                       styles.badge,
@@ -215,7 +245,7 @@ export function TripAuctionBidsPanel({
                     ]}
                   >
                     <AppText
-                      weight="semibold"
+                      weight="bold"
                       style={[
                         styles.badgeText,
                         isConfirmed
@@ -232,21 +262,86 @@ export function TripAuctionBidsPanel({
                           : t('dashboard.listings.detail.auctionBids.rank', { rank: row.rank })}
                     </AppText>
                   </View>
+                  {showMessage ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+                      onPress={() => setChatTarget(row)}
+                      style={({ pressed }) => [styles.messageChip, pressed && styles.messageChipPressed]}
+                    >
+                      <FontAwesome name="comment" size={11} color={colors.primary} />
+                      <AppText weight="bold" style={styles.messageChipLabel}>
+                        {t('dashboard.listings.detail.contact.message')}
+                      </AppText>
+                    </Pressable>
+                  ) : null}
                 </View>
-                <AppText style={styles.bidAmount}>
-                  {t('dashboard.listings.detail.auctionBids.amount', {
-                    amount: row.peakAmount,
-                  })}
-                </AppText>
 
-                {showMessage ? (
-                  <WhatsAppContactCard
-                    title={contactTitle}
-                    name={row.participantName ?? null}
-                    phone={row.participantPhone}
-                    message={whatsappMessage}
-                    onMessagePress={() => setChatTarget(row)}
-                  />
+                <View style={styles.identityRow}>
+                  <View style={styles.identity}>
+                    <View
+                      style={[
+                        styles.avatar,
+                        isConfirmed && styles.avatarSuccess,
+                        isSelected && !isConfirmed && styles.avatarAwaiting,
+                      ]}
+                    >
+                      <AppText
+                        weight="bold"
+                        style={[
+                          styles.avatarInitial,
+                          isConfirmed && styles.badgeTextSuccess,
+                          isSelected && !isConfirmed && styles.badgeTextAwaiting,
+                        ]}
+                      >
+                        {initial}
+                      </AppText>
+                    </View>
+                    <AppText weight="bold" style={styles.bidTitle} numberOfLines={1}>
+                      {displayName}
+                    </AppText>
+                  </View>
+                  <AppText weight="bold" style={styles.bidAmount} numberOfLines={1}>
+                    {t('dashboard.listings.detail.auctionBids.amount', {
+                      amount: row.peakAmount,
+                    })}
+                  </AppText>
+                </View>
+
+                {row.vehicle ? (
+                  <View style={styles.vehicleChip}>
+                    <VehicleListItem
+                      embedded
+                      compact
+                      vehicle={toListVehicle(row.vehicle)}
+                      onPress={() => {
+                        if (row.vehicle) {
+                          setVehicleDetail(row.vehicle);
+                        }
+                      }}
+                    />
+                  </View>
+                ) : null}
+
+                {showWhatsApp ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('dashboard.listings.detail.contact.whatsappA11y', {
+                      phone: row.participantPhone,
+                    })}
+                    onPress={() => {
+                      const phone = row.participantPhone?.trim();
+                      if (phone) {
+                        void openWhatsAppChat(phone, whatsappMessage).catch(() => undefined);
+                      }
+                    }}
+                    style={({ pressed }) => [styles.whatsappButton, pressed && styles.whatsappButtonPressed]}
+                  >
+                    <FontAwesome5 name="whatsapp" size={16} color="#FFFFFF" />
+                    <AppText weight="bold" style={styles.whatsappLabel}>
+                      {t('dashboard.listings.detail.auctionBids.whatsapp')}
+                    </AppText>
+                  </Pressable>
                 ) : null}
               </View>
             );
@@ -319,41 +414,120 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   bidCard: {
-    backgroundColor: colors.background.subtle,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
+    backgroundColor: '#F3F4F6',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  bidCardLead: {},
+  bidCardSelected: {
+    backgroundColor: colors.accent.blue.soft,
+  },
+  bidCardConfirmed: {
+    backgroundColor: colors.accent.green.soft,
   },
   bidHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  identity: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  avatarAwaiting: {
+    backgroundColor: colors.white,
+  },
+  avatarSuccess: {
+    backgroundColor: colors.white,
+  },
+  avatarInitial: {
+    fontSize: 13,
+    color: colors.primary,
   },
   bidTitle: {
     flex: 1,
+    fontSize: 14,
     color: colors.text.primary,
   },
+  messageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    backgroundColor: colors.white,
+  },
+  messageChipPressed: {
+    opacity: 0.75,
+  },
+  messageChipLabel: {
+    fontSize: 11,
+    color: colors.primary,
+  },
   bidAmount: {
-    color: colors.text.secondary,
+    flexShrink: 0,
+    color: colors.primary,
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  vehicleChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.62)',
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
+  whatsappButton: {
+    minHeight: 40,
+    borderRadius: radius.full,
+    backgroundColor: '#25D366',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  whatsappButtonPressed: {
+    opacity: 0.85,
+  },
+  whatsappLabel: {
+    color: '#FFFFFF',
     fontSize: 14,
   },
   badge: {
     borderRadius: radius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+    backgroundColor: colors.white,
   },
   badgeSuccess: {
-    backgroundColor: colors.accent.green.soft,
+    backgroundColor: colors.white,
   },
   badgeAwaiting: {
-    backgroundColor: colors.accent.blue.soft,
+    backgroundColor: colors.white,
   },
   badgeMuted: {
-    backgroundColor: colors.background.subtle,
+    backgroundColor: colors.white,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 10,
   },
   badgeTextSuccess: {
     color: colors.accent.green.text,
@@ -362,7 +536,7 @@ const styles = StyleSheet.create({
     color: colors.accent.blue.text,
   },
   badgeTextMuted: {
-    color: colors.text.tertiary,
+    color: colors.text.secondary,
   },
   errorText: {
     color: colors.primary,

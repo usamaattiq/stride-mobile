@@ -112,9 +112,13 @@ function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: st
 export function OfferVehicleSummaryCard({
   vehicle,
   onPress,
+  headline,
+  compact = false,
 }: {
   vehicle: RfqOfferVehicleSummary | Vehicle;
   onPress?: () => void;
+  headline?: string;
+  compact?: boolean;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isOfferVehicle = 'photoUrl' in vehicle;
@@ -122,29 +126,29 @@ export function OfferVehicleSummaryCard({
     ? (vehicle.photoViewUrl ?? vehicle.photoUrl)
     : (vehicle.photoDisplayUris?.[0] ?? vehicle.photoUris[0] ?? null);
   const brandModel = [vehicle.brand, vehicle.model].filter(Boolean).join(' ');
-  const subtitle = [brandModel, t('vehicles.seatsCount', { count: vehicle.totalSeats })]
-    .filter(Boolean)
-    .join(' · ');
+  const subtitle = headline
+    ? brandModel
+    : [brandModel, t('vehicles.seatsCount', { count: vehicle.totalSeats })].filter(Boolean).join(' · ');
 
   const content = (
     <>
-      <View style={styles.vehicleThumb}>
+      <View style={[styles.vehicleThumb, compact && styles.vehicleThumbCompact]}>
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.vehicleThumbImage} contentFit="cover" />
         ) : (
-          <FontAwesome name="car" size={18} color={colors.text.tertiary} />
+          <FontAwesome name="car" size={compact ? 14 : 18} color={colors.text.tertiary} />
         )}
       </View>
       <View style={styles.vehicleCopy}>
         <AppText weight="semibold" style={styles.vehicleTitle} numberOfLines={1}>
-          {vehicle.title}
+          {headline ?? vehicle.title}
         </AppText>
         {subtitle ? (
           <AppText style={styles.vehicleSubtitle} numberOfLines={1}>
             {subtitle}
           </AppText>
         ) : null}
-        {vehicle.plateNumber ? (
+        {!compact && vehicle.plateNumber ? (
           <AppText style={styles.vehiclePlate} numberOfLines={1}>
             {vehicle.plateNumber}
           </AppText>
@@ -159,7 +163,11 @@ export function OfferVehicleSummaryCard({
   if (onPress) {
     return (
       <Pressable
-        style={({ pressed }) => [styles.vehicleSummary, pressed && styles.vehicleSummaryPressed]}
+        style={({ pressed }) => [
+          styles.vehicleSummary,
+          compact && styles.vehicleSummaryCompact,
+          pressed && styles.vehicleSummaryPressed,
+        ]}
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={t('dashboard.listings.detail.responses.viewVehicleA11y', {
@@ -171,7 +179,7 @@ export function OfferVehicleSummaryCard({
     );
   }
 
-  return <View style={styles.vehicleSummary}>{content}</View>;
+  return <View style={[styles.vehicleSummary, compact && styles.vehicleSummaryCompact]}>{content}</View>;
 }
 
 export function TripOfferPanel({
@@ -769,6 +777,13 @@ const styles = StyleSheet.create({
   vehicleSummaryPressed: {
     backgroundColor: colors.primarySoft,
   },
+  vehicleSummaryCompact: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    gap: spacing.xs,
+    backgroundColor: 'transparent',
+    borderRadius: radius.sm,
+  },
   vehicleThumb: {
     width: 52,
     height: 52,
@@ -777,6 +792,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
+  },
+  vehicleThumbCompact: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   vehicleThumbImage: {
     width: '100%',
