@@ -5,17 +5,31 @@ import * as Notifications from 'expo-notifications';
 import { notificationsApi } from '@/services/api/notificationsApi';
 import { getDeviceId } from '@/services/deviceId';
 import { secureStorage } from '@/services/storage/secureStorage';
+import { profileStore } from '@/store/profileStore';
 
 const ANDROID_CHANNEL_ID = 'default';
 
+function audienceRoleFromData(data: Record<string, unknown> | undefined): string | null {
+  const value = data?.audienceRole;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const audienceRole = audienceRoleFromData(
+      notification.request.content.data as Record<string, unknown> | undefined,
+    );
+    const currentRole = profileStore.getProfile()?.role;
+    const show = !audienceRole || !currentRole || audienceRole === currentRole;
+
+    return {
+      shouldShowAlert: show,
+      shouldPlaySound: show,
+      shouldSetBadge: show,
+      shouldShowBanner: show,
+      shouldShowList: show,
+    };
+  },
 });
 
 async function ensureAndroidNotificationChannel(): Promise<void> {

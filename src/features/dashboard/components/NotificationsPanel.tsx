@@ -10,6 +10,7 @@ import { handlePingDeepLink } from '@/services/pingDeepLinkRouting';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { AppNotification } from '../types/notifications.types';
 
 function formatRelativeTime(iso: string, locale: string): string {
@@ -58,6 +59,7 @@ function mapInboxItem(item: InboxNotificationDto, locale: string): AppNotificati
 
 export const NotificationsPanel = React.memo(function NotificationsPanel(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const [items, setItems] = React.useState<AppNotification[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -76,8 +78,9 @@ export const NotificationsPanel = React.memo(function NotificationsPanel(): Reac
   }, [i18n.language, t]);
 
   React.useEffect(() => {
+    setItems([]);
     void load();
-  }, [load]);
+  }, [load, user.role]);
 
   const onPress = React.useCallback(async (notification: AppNotification) => {
     if (notification.unread) {
