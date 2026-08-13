@@ -207,9 +207,18 @@ export function TripDetailsStep({
         <View style={styles.form}>
           <View style={styles.routeBlock}>
             <View style={styles.routeSection}>
-              <AppText weight="medium" style={styles.fieldLabel}>
-                {t('trips.create.departure')}
-              </AppText>
+              <View style={styles.labelRow}>
+                <AppText weight="medium" style={[styles.fieldLabel, styles.cityField]}>
+                  {t('trips.create.departure')}
+                  <AppText style={styles.requiredMark}> *</AppText>
+                </AppText>
+                <View style={styles.whenLabelWrap}>
+                  <AppText weight="medium" style={styles.whenLabel} numberOfLines={1}>
+                    {t('trips.create.date')}
+                    {startDateRequired ? <AppText style={styles.requiredMark}> *</AppText> : null}
+                  </AppText>
+                </View>
+              </View>
               <View style={styles.routeRow}>
                 <Pressable
                   accessibilityRole="button"
@@ -242,9 +251,17 @@ export function TripDetailsStep({
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={t('trips.create.departureDateTime')}
+                  accessibilityLabel={
+                    startDateRequired
+                      ? `${t('trips.create.departureDateTime')} *`
+                      : t('trips.create.departureDateTime')
+                  }
                   onPress={() => setDateTimeSheet('departure')}
-                  style={({ pressed }) => [styles.whenChip, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.whenChip,
+                    startDateRequired && !draft.departureAt ? styles.whenChipRequired : null,
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <FontAwesome name="calendar" size={12} color={colors.primary} />
                   <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
@@ -259,9 +276,17 @@ export function TripDetailsStep({
             </View>
 
             <View style={styles.routeSection}>
-              <AppText weight="medium" style={styles.fieldLabel}>
-                {t('trips.create.arrival')}
-              </AppText>
+              <View style={styles.labelRow}>
+                <AppText weight="medium" style={[styles.fieldLabel, styles.cityField]}>
+                  {t('trips.create.arrival')}
+                  <AppText style={styles.requiredMark}> *</AppText>
+                </AppText>
+                <View style={styles.whenLabelWrap}>
+                  <AppText weight="medium" style={styles.whenLabel} numberOfLines={1}>
+                    {t('trips.create.date')}
+                  </AppText>
+                </View>
+              </View>
               <View style={styles.routeRow}>
                 <Pressable
                   accessibilityRole="button"
@@ -380,6 +405,11 @@ export function TripDetailsStep({
             {dateTimeSheet === 'arrival'
               ? t('trips.create.arrivalDateTime')
               : t('trips.create.departureDateTime')}
+            {dateTimeSheet === 'departure' && startDateRequired ? (
+              <AppText style={styles.requiredMark}> *</AppText>
+            ) : (
+              <AppText style={styles.optionalMark}> (optional)</AppText>
+            )}
           </AppText>
           {dateTimeSheet === 'arrival' ? (
             <DateTimePickerField
@@ -432,9 +462,31 @@ const styles = StyleSheet.create({
   routeSection: {
     gap: spacing.xs,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
   fieldLabel: {
     fontSize: 13,
     color: colors.text.primary,
+  },
+  whenLabelWrap: {
+    width: 52,
+    alignItems: 'center',
+  },
+  whenLabel: {
+    fontSize: 11,
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
+  requiredMark: {
+    fontSize: 13,
+    color: colors.primary,
+  },
+  optionalMark: {
+    fontSize: 13,
+    color: colors.text.tertiary,
   },
   routeRow: {
     flexDirection: 'row',
@@ -477,6 +529,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 2,
     gap: 0,
+  },
+  whenChipRequired: {
+    borderColor: colors.primary,
   },
   whenDate: {
     fontSize: 10,

@@ -78,10 +78,8 @@ export function TripPublishSuccessScreen(): React.ReactElement {
       return;
     }
     didNavigateRef.current = true;
-    exitTripCreationToListings(navigation, {
-      screen: isPassenger ? 'Home' : 'MyListings',
-    });
-  }, [isPassenger, navigation]);
+    exitTripCreationToListings(navigation, { screen: 'MyListings' });
+  }, [navigation]);
 
   React.useEffect(() => {
     Animated.sequence([
@@ -150,9 +148,7 @@ export function TripPublishSuccessScreen(): React.ReactElement {
     outputRange: ['0%', '100%'],
   });
 
-  const prepareLabel = t(
-    isPassenger ? 'trips.create.preparingHome' : 'trips.create.preparingListings',
-  );
+  const prepareLabel = t('trips.create.preparingListings');
 
   return (
     <SafeAreaView style={styles.safeArea}>
