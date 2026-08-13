@@ -300,6 +300,7 @@
       "swapCities": "تبديل المغادرة والوصول",
       "today": "اليوم",
       "tomorrow": "غداً",
+      "dateRange": "تواريخ السفر",
       "passengerCount": "راكب",
       "passengerCountValue": "{{count}} ركاب",
       "decreasePassengers": "تقليل عدد الركاب",

@@ -27,6 +27,8 @@ type DateRangeCalendarFieldProps = {
   required?: boolean;
   /** Skip the built-in label — use when a shared heading covers this field. */
   hideLabel?: boolean;
+  /** `onBrand` is for the red passenger search card (white text, no chrome). */
+  variant?: 'default' | 'onBrand';
 };
 
 function formatDay(date: Date, locale: string): string {
@@ -50,6 +52,7 @@ export function DateRangeCalendarField({
   onChange,
   required = false,
   hideLabel = false,
+  variant = 'default',
 }: DateRangeCalendarFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const locale = i18n.language;
@@ -153,8 +156,10 @@ export function DateRangeCalendarField({
     });
   }, [locale]);
 
+  const onBrand = variant === 'onBrand';
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, onBrand && styles.wrapOnBrand]}>
       {!hideLabel ? (
         <>
           <AppText weight="medium" style={styles.label}>
@@ -167,21 +172,31 @@ export function DateRangeCalendarField({
 
       <Pressable
         onPress={openSheet}
-        style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}
+        style={({ pressed }) => [
+          styles.trigger,
+          onBrand && styles.triggerOnBrand,
+          pressed && styles.triggerPressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <FontAwesome name="calendar" size={14} color={colors.primary} />
+        <FontAwesome name="calendar" size={onBrand ? 13 : 14} color={onBrand ? colors.white : colors.primary} />
         <AppText
           weight="semibold"
-          style={[styles.triggerValue, !startDate && styles.triggerPlaceholder]}
+          style={[
+            styles.triggerValue,
+            onBrand && styles.triggerValueOnBrand,
+            !startDate && (onBrand ? styles.triggerPlaceholderOnBrand : styles.triggerPlaceholder),
+          ]}
           numberOfLines={1}
         >
           {startDate && !endDate
             ? `${formatDay(startDate, locale)} → ${t('trips.create.selectDate')}`
             : rangeLabel}
         </AppText>
-        <FontAwesome name="angle-right" size={16} color={colors.text.tertiary} />
+        {onBrand ? null : (
+          <FontAwesome name="angle-right" size={16} color={colors.text.tertiary} />
+        )}
       </Pressable>
 
       <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.77}>
@@ -304,6 +319,10 @@ const styles = StyleSheet.create({
   wrap: {
     gap: spacing.xs,
   },
+  wrapOnBrand: {
+    flex: 1,
+    gap: 0,
+  },
   label: {
     fontSize: 13,
     color: colors.text.primary,
@@ -332,13 +351,26 @@ const styles = StyleSheet.create({
   triggerPressed: {
     opacity: 0.88,
   },
+  triggerOnBrand: {
+    minHeight: 44,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
   triggerValue: {
     flex: 1,
     fontSize: 14,
     color: colors.text.primary,
   },
+  triggerValueOnBrand: {
+    color: colors.white,
+  },
   triggerPlaceholder: {
     color: colors.text.tertiary,
+  },
+  triggerPlaceholderOnBrand: {
+    color: colors.text.onBrandMuted,
   },
   sheetContent: {
     flex: 1,

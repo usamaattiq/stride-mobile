@@ -300,6 +300,7 @@
       "swapCities": "Swap departure and arrival",
       "today": "Today",
       "tomorrow": "Tomorrow",
+      "dateRange": "Travel dates",
       "passengerCount": "Passenger",
       "passengerCountValue": "{{count}} passengers",
       "decreasePassengers": "Decrease passengers",

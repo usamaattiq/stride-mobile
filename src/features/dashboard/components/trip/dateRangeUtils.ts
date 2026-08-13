@@ -14,6 +14,20 @@ export function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
+/** Inclusive local-day overlap of two [start, end] windows. */
+export function localDateRangesOverlap(
+  aStart: Date,
+  aEnd: Date,
+  bStart: Date,
+  bEnd: Date,
+): boolean {
+  const a0 = startOfLocalDay(aStart).getTime();
+  const a1 = startOfLocalDay(aEnd).getTime();
+  const b0 = startOfLocalDay(bStart).getTime();
+  const b1 = startOfLocalDay(bEnd).getTime();
+  return a0 <= b1 && b0 <= a1;
+}
+
 export function parseIsoDate(value: string | null | undefined): Date | null {
   if (!value) {
     return null;
@@ -65,6 +79,9 @@ export function formatDateRangeLabel(
     });
 
   if (start && end) {
+    if (isSameLocalDay(start, end)) {
+      return formatDay(start);
+    }
     return `${formatDay(start)} → ${formatDay(end)}`;
   }
   if (start) {

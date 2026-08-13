@@ -27,7 +27,10 @@ import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { RequestsEmptyState } from '../components/RequestsEmptyState';
 import { SearchResultsFilterSheet } from '../components/SearchResultsFilterSheet';
 import { SearchRouteMap } from '../components/SearchRouteMap';
-import { isSameLocalDay } from '../components/trip/dateRangeUtils';
+import {
+  localDateRangesOverlap,
+  startOfLocalDay,
+} from '../components/trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import {
@@ -76,13 +79,18 @@ export function SearchResultsScreen(): React.ReactElement {
     departureCity,
     arrivalCity,
     departureDateISO,
+    departureUntilISO,
     vehicleMode,
     passengerCount,
   } = route.params;
 
-  const departureDate = React.useMemo(
-    () => new Date(departureDateISO),
+  const searchFrom = React.useMemo(
+    () => startOfLocalDay(new Date(departureDateISO)),
     [departureDateISO],
+  );
+  const searchTo = React.useMemo(
+    () => startOfLocalDay(new Date(departureUntilISO ?? departureDateISO)),
+    [departureDateISO, departureUntilISO],
   );
 
   const [trips, setTrips] = React.useState<Trip[]>([]);
@@ -116,11 +124,16 @@ export function SearchResultsScreen(): React.ReactElement {
       });
 
       const mapped = result.items.map(mapTripDtoToTrip);
-      const filtered = mapped.filter(
-        (trip) =>
-          isSameLocalDay(new Date(trip.departureAt), departureDate) &&
-          matchesPriceRange(trip, filters.priceRange),
-      );
+      const filtered = mapped.filter((trip) => {
+        const tripStart = startOfLocalDay(new Date(trip.departureAt));
+        const tripEnd = trip.departureUntil
+          ? startOfLocalDay(new Date(trip.departureUntil))
+          : tripStart;
+        return (
+          localDateRangesOverlap(tripStart, tripEnd, searchFrom, searchTo) &&
+          matchesPriceRange(trip, filters.priceRange)
+        );
+      });
 
       setTrips(filtered);
       setResultsCount(filtered.length);
@@ -131,7 +144,7 @@ export function SearchResultsScreen(): React.ReactElement {
     } finally {
       setIsLoading(false);
     }
-  }, [arrivalCity.id, departureCity.id, departureDate, filters, passengerCount, vehicleMode]);
+  }, [arrivalCity.id, departureCity.id, filters, passengerCount, searchFrom, searchTo, vehicleMode]);
 
   React.useEffect(() => {
     void loadTrips();

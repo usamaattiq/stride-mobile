@@ -14,6 +14,8 @@ export type SearchResultsParams = {
   departureCity: TripCity;
   arrivalCity: TripCity;
   departureDateISO: string;
+  /** Inclusive end of the search date window. Defaults to departureDateISO when omitted. */
+  departureUntilISO?: string;
   vehicleMode: TripVehicleMode;
   passengerCount: number;
 };
