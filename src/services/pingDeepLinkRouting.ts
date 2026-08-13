@@ -1,67 +1,132 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { CommonActions } from '@react-navigation/native';
 
 import { navigationRef } from '@/navigation/navigationRef';
 import { resolveDeepLinkFromNotificationData } from '@/services/pushNotifications';
 
 const SCHEME = 'musafir249';
+const NAV_RETRY_MS = 80;
+const NAV_RETRY_TIMEOUT_MS = 12_000;
 
-function navigateToListing(tripId: string): void {
+let pendingDeepLink: string | null = null;
+let navRetryTimer: ReturnType<typeof setInterval> | null = null;
+
+function rootRouteName(): string | undefined {
   if (!navigationRef.isReady()) {
-    return;
+    return undefined;
   }
-
-  navigationRef.dispatch(
-    CommonActions.navigate({
-      name: 'Dashboard',
-      params: {
-        screen: 'ListingDetail',
-        params: { tripId },
-      },
-    }),
-  );
+  const state = navigationRef.getRootState();
+  return state?.routes[state.index ?? 0]?.name;
 }
 
-function parsePath(url: string): string[] {
-  // musafir249://listing/abc → host=listing, path=abc  OR path=/listing/abc
-  const withoutScheme = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
-  return withoutScheme.split(/[/?#]/).filter(Boolean);
+function canNavigateInDashboard(): boolean {
+  return rootRouteName() === 'Dashboard';
+}
+
+function stopNavRetry(): void {
+  if (navRetryTimer) {
+    clearInterval(navRetryTimer);
+    navRetryTimer = null;
+  }
+}
+
+function navigateToListing(tripId: string): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'ListingDetail',
+    params: { tripId },
+    initial: false,
+  });
+}
+
+function navigateToNotifications(): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'MainTabs',
+    params: {
+      screen: 'Home',
+      params: {
+        screen: 'HomeMain',
+        params: { panel: 'notifications' },
+      },
+    },
+    initial: false,
+  });
 }
 
 /**
- * Handles `musafir249://listing/<tripId>` and `musafir249://chat/<tripId>/<conversationId>`.
- * Chat taps open the listing detail (messaging sheet lives there).
+ * Handles `musafir249://listing/<tripId>`, `musafir249://chat/<tripId>/...`,
+ * and `musafir249://notifications`.
  */
 export function handlePingDeepLink(url: string): void {
   try {
-    const segments = parsePath(url);
-    if (segments[0] === 'listing' && segments[1]) {
-      navigateToListing(segments[1]);
+    if (!canNavigateInDashboard()) {
+      pendingDeepLink = url;
+      ensureNavRetry();
       return;
     }
-    if (segments[0] === 'chat' && segments[1]) {
-      navigateToListing(segments[1]);
+
+    pendingDeepLink = null;
+    const segments = parsePath(url);
+    const target = segments[0];
+    const tripId = segments[1];
+
+    if (target === 'listing' && tripId) {
+      navigateToListing(tripId);
+      return;
+    }
+    if (target === 'chat' && tripId) {
+      navigateToListing(tripId);
+      return;
+    }
+    if (target === 'notifications') {
+      navigateToNotifications();
     }
   } catch (error) {
     console.warn('[push] Failed to handle deep link', url, error);
   }
 }
 
-/** Subscribe to notification taps + cold-start / linking. Returns unsubscribe. */
-export function subscribePingNotificationRouting(): () => void {
-  const handled = { current: null as string | null };
+/** Opens a queued notification link once Dashboard is on screen. */
+export function flushPendingPingDeepLink(): void {
+  const url = pendingDeepLink;
+  if (!url || !canNavigateInDashboard()) {
+    return;
+  }
+  handlePingDeepLink(url);
+}
 
-  const openFromData = (data: Record<string, unknown> | undefined) => {
-    const deepLink = resolveDeepLinkFromNotificationData(data);
-    if (!deepLink || handled.current === deepLink) {
+function ensureNavRetry(): void {
+  if (navRetryTimer) {
+    return;
+  }
+  const startedAt = Date.now();
+  navRetryTimer = setInterval(() => {
+    if (canNavigateInDashboard()) {
+      stopNavRetry();
+      flushPendingPingDeepLink();
       return;
     }
-    handled.current = deepLink;
-    handlePingDeepLink(deepLink);
-  };
+    if (Date.now() - startedAt > NAV_RETRY_TIMEOUT_MS) {
+      stopNavRetry();
+    }
+  }, NAV_RETRY_MS);
+}
 
+function parsePath(url: string): string[] {
+  const withoutScheme = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+  return withoutScheme.split(/[/?#]/).filter(Boolean);
+}
+
+function openFromData(data: Record<string, unknown> | undefined): void {
+  const deepLink = resolveDeepLinkFromNotificationData(data);
+  if (!deepLink) {
+    return;
+  }
+  handlePingDeepLink(deepLink);
+}
+
+/** Subscribe to notification taps + cold-start / linking. Returns unsubscribe. */
+export function subscribePingNotificationRouting(): () => void {
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
     openFromData(response.notification.request.content.data as Record<string, unknown>);
   });
@@ -73,7 +138,11 @@ export function subscribePingNotificationRouting(): () => void {
   });
 
   void Notifications.getLastNotificationResponseAsync().then((last) => {
-    openFromData(last?.notification.request.content.data as Record<string, unknown> | undefined);
+    if (!last) {
+      return;
+    }
+    openFromData(last.notification.request.content.data as Record<string, unknown> | undefined);
+    void Notifications.clearLastNotificationResponseAsync?.();
   });
 
   void Linking.getInitialURL().then((url) => {
@@ -83,6 +152,7 @@ export function subscribePingNotificationRouting(): () => void {
   });
 
   return () => {
+    stopNavRetry();
     responseSub.remove();
     linkingSub.remove();
   };

@@ -100,9 +100,50 @@ export async function unregisterPushNotifications(): Promise<void> {
   }
 }
 
+function asDeepLink(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function deepLinkFromRecord(record: Record<string, unknown> | undefined): string | null {
+  if (!record) {
+    return null;
+  }
+  return (
+    asDeepLink(record.deepLink) ??
+    asDeepLink(record.deep_link) ??
+    asDeepLink(record.url) ??
+    asDeepLink(record.link)
+  );
+}
+
+/**
+ * Ping / Expo / FCM may put the URL at `deepLink`, nest it, or stringify the payload.
+ */
 export function resolveDeepLinkFromNotificationData(
   data: Record<string, unknown> | undefined,
 ): string | null {
-  const value = data?.deepLink;
-  return typeof value === 'string' && value.length > 0 ? value : null;
+  const direct = deepLinkFromRecord(data);
+  if (direct) {
+    return direct;
+  }
+
+  const nested = data?.data;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    const fromNested = deepLinkFromRecord(nested as Record<string, unknown>);
+    if (fromNested) {
+      return fromNested;
+    }
+  }
+
+  const body = data?.body;
+  if (typeof body === 'string' && body.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(body) as Record<string, unknown>;
+      return deepLinkFromRecord(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }

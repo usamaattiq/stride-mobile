@@ -1,3 +1,3 @@
 export type HomeStackParamList = {
-  HomeMain: undefined;
+  HomeMain: { panel?: 'feed' | 'messages' | 'notifications' } | undefined;
 };
