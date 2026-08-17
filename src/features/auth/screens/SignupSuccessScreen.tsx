@@ -9,6 +9,7 @@ import {
   StyleSheet,
   View,
   type DimensionValue,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +71,7 @@ export function SignupSuccessScreen({
   const prepareProgress = React.useRef(new Animated.Value(0)).current;
   const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
   const didNavigateRef = React.useRef(false);
+  const [trackWidth, setTrackWidth] = React.useState(0);
 
   const goToDashboard = React.useCallback(() => {
     if (didNavigateRef.current) {
@@ -129,9 +131,15 @@ export function SignupSuccessScreen({
     };
   }, [goToDashboard, prepareProgress]);
 
+  const onPrepareLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    setTrackWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+  }, []);
+
   const prepareWidth = prepareProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+    outputRange: [0, Math.max(trackWidth, 1)],
+    extrapolate: 'clamp',
   });
 
   return (
@@ -212,6 +220,7 @@ export function SignupSuccessScreen({
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           <Pressable
+            onLayout={onPrepareLayout}
             style={({ pressed }) => [
               styles.prepareButton,
               pressed && styles.prepareButtonPressed,
@@ -336,8 +345,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     backgroundColor: colors.primary,
     direction: 'ltr',
   },
@@ -345,7 +352,10 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   prepareFill: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   prepareLabel: {
@@ -353,5 +363,7 @@ const styles = StyleSheet.create({
     color: colors.text.inverse,
     textAlign: 'center',
     zIndex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
 });
