@@ -62,6 +62,25 @@ export function toListVehicle(vehicle: OfferVehicleLike): Vehicle {
   };
 }
 
+export function fromListVehicle(vehicle: Vehicle): OfferVehicleLike {
+  const yearParsed = Number(vehicle.year);
+  return {
+    id: vehicle.id,
+    title: vehicle.title,
+    vehicleClass: vehicle.vehicleClass,
+    totalSeats: vehicle.totalSeats,
+    plateNumber: vehicle.plateNumber,
+    brand: vehicle.brand || null,
+    model: vehicle.model || null,
+    photoUrl: vehicle.photoDisplayUris?.[0] ?? vehicle.photoUris[0] ?? null,
+    photoUrls: vehicle.photoUris,
+    photoDisplayUris: vehicle.photoDisplayUris,
+    description: vehicle.description,
+    hasAc: vehicle.hasAc,
+    year: Number.isFinite(yearParsed) ? yearParsed : null,
+  };
+}
+
 export type OfferResponseCardProps = {
   tag: string;
   tagTone?: OfferResponseTagTone;
@@ -119,7 +138,14 @@ export function OfferResponseCard({
       ]}
     >
       <View style={styles.headerRow}>
-        <View style={[styles.badge, tagTone === 'warning' && styles.badgeWarning]}>
+        <View
+          style={[
+            styles.badge,
+            tagTone === 'warning' && styles.badgeWarning,
+            tagTone === 'selected' && styles.badgeSelected,
+            tagTone === 'confirmed' && styles.badgeConfirmed,
+          ]}
+        >
           <AppText
             weight="bold"
             style={[
@@ -315,6 +341,12 @@ const styles = StyleSheet.create({
   },
   badgeWarning: {
     backgroundColor: colors.accent.amber.soft,
+  },
+  badgeSelected: {
+    backgroundColor: colors.white,
+  },
+  badgeConfirmed: {
+    backgroundColor: colors.white,
   },
   badgeText: {
     fontSize: 10,

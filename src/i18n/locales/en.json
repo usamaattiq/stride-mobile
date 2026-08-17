@@ -977,7 +977,8 @@
     "ok": "OK",
     "done": "Done",
     "clear": "Clear",
-    "continue": "Continue"
+    "continue": "Continue",
+    "close": "Close"
   },
   "legal": {
     "common": {

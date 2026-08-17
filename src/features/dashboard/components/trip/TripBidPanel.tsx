@@ -32,7 +32,7 @@ import { colors, radius, spacing } from '@/theme';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { Vehicle } from '../../types/vehicle.types';
-import { OfferResponseCard } from './OfferResponseCard';
+import { fromListVehicle, OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import {
@@ -474,7 +474,9 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
   const hasActiveBid = snapshot.participantStatus === 'active';
   const showPlaceBidForm = actions.canPlaceBid && !hasActiveBid;
   const auctionStatus = snapshot.status.replaceAll('_', '-');
-  const isSelectedBidder = actions.isSelectedParticipant === true;
+  const isSelectedBidder =
+    actions.isSelectedParticipant === true ||
+    auctionStatus === 'awaiting-your-confirmation';
   const isConfirmedBid =
     auctionStatus === 'completed' &&
     Boolean(snapshot.confirmedParticipantId) &&
@@ -591,14 +593,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
           priceLabel={bidPriceLabel}
           showMessage={showBidMessage}
           onMessagePress={() => setChatOpen(true)}
-          vehicle={
-            selectedVehicle
-              ? {
-                  ...selectedVehicle,
-                  photoUrl: selectedVehicle.photoDisplayUris?.[0] ?? selectedVehicle.photoUris[0] ?? null,
-                }
-              : null
-          }
+          vehicle={selectedVehicle ? fromListVehicle(selectedVehicle) : null}
           onVehiclePress={() => {
             if (selectedVehicle) {
               setVehicleDetail(selectedVehicle);

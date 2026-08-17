@@ -47,9 +47,9 @@ type StatusBadgeTone = 'green' | 'blue' | 'amber' | 'muted';
 
 const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   live: 'green',
-  'awaiting-confirmation': 'blue',
+  'awaiting-confirmation': 'amber',
   'offer-submitted': 'amber',
-  'awaiting-your-confirmation': 'blue',
+  'awaiting-your-confirmation': 'amber',
   confirmed: 'green',
   completed: 'blue',
   closed: 'muted',
@@ -59,9 +59,9 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
 const AUCTION_STATUS_TONE: Record<AuctionStatusValue, StatusBadgeTone> = {
   'coming-soon': 'blue',
   live: 'green',
-  'awaiting-confirmation': 'blue',
+  'awaiting-confirmation': 'amber',
   'awaiting-action': 'amber',
-  'awaiting-your-confirmation': 'blue',
+  'awaiting-your-confirmation': 'amber',
   declined: 'muted',
   'timed-out': 'muted',
   completed: 'blue',
@@ -81,7 +81,7 @@ const AUCTION_VARIANT_TONE: Record<
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
   active: 'amber',
-  selected: 'blue',
+  selected: 'amber',
   confirmed: 'green',
   withdrawn: 'muted',
   declined: 'muted',
