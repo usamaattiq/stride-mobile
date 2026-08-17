@@ -27,6 +27,12 @@ export type DashboardRootStackParamList = {
   ManageVehicles: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
-  ListingDetail: { tripId: string; selectVehicleId?: string; viewerIsOwner?: boolean };
+  ListingDetail: {
+    tripId: string;
+    selectVehicleId?: string;
+    viewerIsOwner?: boolean;
+    /** Opens the trip chat sheet after the listing loads. */
+    conversationId?: string;
+  };
   SearchResults: SearchResultsParams;
 };

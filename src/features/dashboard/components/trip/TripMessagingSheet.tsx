@@ -270,6 +270,9 @@ export function TripMessagingSheet({
     if (!visible) {
       chatSocket.disconnect();
     }
+    return () => {
+      chatSocket.disconnect();
+    };
   }, [visible]);
 
   const send = () => {

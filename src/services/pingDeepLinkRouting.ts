@@ -31,10 +31,10 @@ function stopNavRetry(): void {
   }
 }
 
-function navigateToListing(tripId: string): void {
+function navigateToListing(tripId: string, conversationId?: string): void {
   navigationRef.navigate('Dashboard', {
     screen: 'ListingDetail',
-    params: { tripId },
+    params: conversationId ? { tripId, conversationId } : { tripId },
     initial: false,
   });
 }
@@ -54,7 +54,7 @@ function navigateToNotifications(): void {
 }
 
 /**
- * Handles `musafir249://listing/<tripId>`, `musafir249://chat/<tripId>/...`,
+ * Handles `musafir249://listing/<tripId>`, `musafir249://chat/<tripId>/<conversationId>`,
  * and `musafir249://notifications`.
  */
 export function handlePingDeepLink(url: string): void {
@@ -75,7 +75,7 @@ export function handlePingDeepLink(url: string): void {
       return;
     }
     if (target === 'chat' && tripId) {
-      navigateToListing(tripId);
+      navigateToListing(tripId, segments[2]);
       return;
     }
     if (target === 'notifications') {

@@ -21,6 +21,8 @@ import { useResizeMode } from 'react-native-keyboard-controller';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { auctionApi } from '@/services/api/auctionApi';
+import { chatApi } from '@/services/api/chatApi';
+import type { TripConversationInboxItem } from '@/services/api/chatApi.types';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -37,6 +39,7 @@ import { TripBidPanel, type TripBidPanelHandle } from '../components/trip/TripBi
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
 import { TripOfferPanel, type TripOfferPanelHandle } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
+import { TripMessagingSheet } from '../components/trip/TripMessagingSheet';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
@@ -46,6 +49,13 @@ import { getListingStatusBucket } from '../utils/listingFilters';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
+
+type NotificationChatTarget = {
+  conversationId: string;
+  counterpartyName: string | null;
+  counterpartyAvatarUrl?: string | null;
+  counterpartyRole?: TripConversationInboxItem['counterpartyRole'];
+};
 
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
@@ -84,6 +94,9 @@ export function ListingDetailScreen(): React.ReactElement {
   const [canWithdrawOffer, setCanWithdrawOffer] = React.useState(false);
   const offerPanelRef = React.useRef<TripOfferPanelHandle>(null);
   const bidPanelRef = React.useRef<TripBidPanelHandle>(null);
+  const [notificationChat, setNotificationChat] = React.useState<NotificationChatTarget | null>(
+    null,
+  );
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
@@ -185,6 +198,40 @@ export function ListingDetailScreen(): React.ReactElement {
       .finally(() => setLoading(false));
   }, [cached, route.params.tripId, t]);
 
+  const requestedConversationId = route.params.conversationId;
+  React.useEffect(() => {
+    if (!requestedConversationId) {
+      return;
+    }
+    setNotificationChat({
+      conversationId: requestedConversationId,
+      counterpartyName: null,
+    });
+    navigation.setParams({ conversationId: undefined });
+    void chatApi
+      .listInbox()
+      .then((inbox) => {
+        const match = inbox.find((row) => row.id === requestedConversationId);
+        if (!match) {
+          return;
+        }
+        setNotificationChat((current) =>
+          current?.conversationId === requestedConversationId
+            ? {
+                conversationId: match.id,
+                counterpartyName: match.counterpartyName,
+                counterpartyAvatarUrl: match.counterpartyAvatarUrl,
+                counterpartyRole: match.counterpartyRole,
+              }
+            : current,
+        );
+        if (match.viewerIsOwner) {
+          navigation.setParams({ viewerIsOwner: true });
+        }
+      })
+      .catch(() => undefined);
+  }, [navigation, requestedConversationId]);
+
   const reloadTrip = React.useCallback(async () => {
     setLoadError(null);
     const dto = await tripApi.getById(route.params.tripId);
@@ -261,6 +308,19 @@ export function ListingDetailScreen(): React.ReactElement {
   };
 
   const goBack = () => navigation.goBack();
+
+  const notificationChatSheet = (
+    <TripMessagingSheet
+      key={notificationChat?.conversationId ?? 'notification-chat'}
+      visible={notificationChat != null}
+      onClose={() => setNotificationChat(null)}
+      tripId={route.params.tripId}
+      existingConversationId={notificationChat?.conversationId}
+      counterpartyName={notificationChat?.counterpartyName ?? null}
+      counterpartyAvatarUrl={notificationChat?.counterpartyAvatarUrl}
+      counterpartyRole={notificationChat?.counterpartyRole ?? null}
+    />
+  );
 
   const handleOfferChange = React.useCallback(
     (update: {
@@ -345,6 +405,7 @@ export function ListingDetailScreen(): React.ReactElement {
           </AppText>
           <Button label={t('common.ok')} onPress={goBack} />
         </View>
+        {notificationChatSheet}
       </AuthScaffold>
     );
   }
@@ -613,6 +674,7 @@ export function ListingDetailScreen(): React.ReactElement {
           onPress: handleRemove,
         }}
       />
+      {notificationChatSheet}
     </AuthScaffold>
   );
 }
