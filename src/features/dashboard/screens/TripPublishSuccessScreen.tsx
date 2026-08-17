@@ -6,6 +6,7 @@ import {
   BackHandler,
   Easing,
   Platform,
+  Pressable,
   StyleSheet,
   View,
   type DimensionValue,
@@ -31,7 +32,7 @@ import {
 
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 
-const PREPARE_DURATION_MS = 3000;
+const PREPARE_DURATION_MS = 10000;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -210,11 +211,14 @@ export function TripPublishSuccessScreen(): React.ReactElement {
         </Animated.View>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-          <View
-            style={styles.prepareButton}
-            accessibilityRole="progressbar"
+          <Pressable
+            style={({ pressed }) => [
+              styles.prepareButton,
+              pressed && styles.prepareButtonPressed,
+            ]}
+            accessibilityRole="button"
             accessibilityLabel={prepareLabel}
-            accessibilityState={{ busy: true }}
+            onPress={goToListings}
           >
             <Animated.View
               pointerEvents="none"
@@ -231,7 +235,7 @@ export function TripPublishSuccessScreen(): React.ReactElement {
             >
               {prepareLabel}
             </AppText>
-          </View>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -309,6 +313,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
     direction: 'ltr',
+  },
+  prepareButtonPressed: {
+    opacity: 0.88,
   },
   prepareFill: {
     ...StyleSheet.absoluteFillObject,
