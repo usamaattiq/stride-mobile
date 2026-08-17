@@ -47,7 +47,7 @@ function BottomSheetFrame({
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
-  const clampedRatio = Math.min(0.95, Math.max(0.4, heightRatio));
+  const clampedRatio = Math.min(0.95, Math.max(0.22, heightRatio));
   const baseHeight = windowHeight * clampedRatio;
   const fallbackBottom = initialWindowMetrics?.insets.bottom ?? 0;
   const closedPaddingBottom = Math.max(

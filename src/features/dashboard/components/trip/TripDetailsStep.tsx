@@ -264,12 +264,16 @@ export function TripDetailsStep({
                   ]}
                 >
                   <FontAwesome name="calendar" size={12} color={colors.primary} />
-                  <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
-                    {departureWhen.date ?? t('trips.create.date')}
-                  </AppText>
-                  <AppText style={styles.whenTime} numberOfLines={1}>
-                    {departureWhen.time ?? t('trips.create.time')}
-                  </AppText>
+                  {departureWhen.date ? (
+                    <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
+                      {departureWhen.date}
+                    </AppText>
+                  ) : null}
+                  {departureWhen.time ? (
+                    <AppText style={styles.whenTime} numberOfLines={1}>
+                      {departureWhen.time}
+                    </AppText>
+                  ) : null}
                 </Pressable>
               </View>
               {departureError ? <AppText style={styles.errorText}>{departureError}</AppText> : null}
@@ -324,12 +328,16 @@ export function TripDetailsStep({
                   style={({ pressed }) => [styles.whenChip, pressed && styles.pressed]}
                 >
                   <FontAwesome name="calendar" size={12} color={colors.primary} />
-                  <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
-                    {arrivalWhen.date ?? t('trips.create.date')}
-                  </AppText>
-                  <AppText style={styles.whenTime} numberOfLines={1}>
-                    {arrivalWhen.time ?? t('trips.create.time')}
-                  </AppText>
+                  {arrivalWhen.date ? (
+                    <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
+                      {arrivalWhen.date}
+                    </AppText>
+                  ) : null}
+                  {arrivalWhen.time ? (
+                    <AppText style={styles.whenTime} numberOfLines={1}>
+                      {arrivalWhen.time}
+                    </AppText>
+                  ) : null}
                 </Pressable>
               </View>
               {arrivalError ? <AppText style={styles.errorText}>{arrivalError}</AppText> : null}
@@ -398,19 +406,41 @@ export function TripDetailsStep({
       <AppBottomSheet
         visible={dateTimeSheet != null}
         onClose={() => setDateTimeSheet(null)}
-        heightRatio={0.52}
+        heightRatio={0.28}
       >
         <View style={styles.sheetBody}>
-          <AppText weight="bold" style={styles.sheetTitle}>
-            {dateTimeSheet === 'arrival'
-              ? t('trips.create.arrivalDateTime')
-              : t('trips.create.departureDateTime')}
-            {dateTimeSheet === 'departure' && startDateRequired ? (
-              <AppText style={styles.requiredMark}> *</AppText>
-            ) : (
-              <AppText style={styles.optionalMark}> (optional)</AppText>
-            )}
-          </AppText>
+          <View style={styles.sheetHeaderRow}>
+            <AppText weight="bold" style={styles.sheetTitle}>
+              {dateTimeSheet === 'arrival'
+                ? t('trips.create.arrivalDateTime')
+                : t('trips.create.departureDateTime')}
+              {dateTimeSheet === 'departure' && startDateRequired ? (
+                <AppText style={styles.requiredMark}> *</AppText>
+              ) : (
+                <AppText style={styles.optionalMark}> (optional)</AppText>
+              )}
+            </AppText>
+            {dateTimeSheet === 'arrival' && draft.arrivalAt ? (
+              <Pressable
+                onPress={() => onChange({ arrivalAt: null, arrivalTimeSet: false })}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+              >
+                <AppText style={styles.sheetClear}>{t('common.clear')}</AppText>
+              </Pressable>
+            ) : null}
+            {dateTimeSheet === 'departure' && !startDateRequired && draft.departureAt ? (
+              <Pressable
+                onPress={() => onChange({ departureAt: null, departureTimeSet: false })}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+              >
+                <AppText style={styles.sheetClear}>{t('common.clear')}</AppText>
+              </Pressable>
+            ) : null}
+          </View>
           {dateTimeSheet === 'arrival' ? (
             <DateTimePickerField
               variant="search"
@@ -437,14 +467,8 @@ export function TripDetailsStep({
               timeConfirmed={draft.departureTimeSet}
               required={startDateRequired}
               optional={!startDateRequired}
-              onClear={
-                startDateRequired
-                  ? undefined
-                  : () => onChange({ departureAt: null, departureTimeSet: false })
-              }
             />
           )}
-          <Button label={t('common.done')} onPress={() => setDateTimeSheet(null)} />
         </View>
       </AppBottomSheet>
       {mapPickerSheet}
@@ -502,9 +526,20 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     gap: spacing.md,
   },
+  sheetHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
   sheetTitle: {
+    flex: 1,
     fontSize: 17,
     color: colors.text.primary,
+  },
+  sheetClear: {
+    fontSize: 14,
+    color: colors.primary,
   },
   field: {
     minHeight: 46,
