@@ -49,6 +49,14 @@ type DetailTab = 'overview' | 'responses';
 
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
 
+function tabToIndex(tab: DetailTab): number {
+  return tab === 'overview' ? 0 : 1;
+}
+
+function indexToTab(index: number): DetailTab {
+  return index === 0 ? 'overview' : 'responses';
+}
+
 export function ListingDetailScreen(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
@@ -60,7 +68,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const [trip, setTrip] = React.useState<Trip | null>(cached ?? null);
   const [loading, setLoading] = React.useState(!cached);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [tab, setTab] = React.useState<DetailTab>('overview');
+  const [tab, setTab] = React.useState<DetailTab>('responses');
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
@@ -91,7 +99,7 @@ export function ListingDetailScreen(): React.ReactElement {
       if (pageWidth <= 0) {
         return;
       }
-      const index = next === 'overview' ? 0 : 1;
+      const index = tabToIndex(next);
       pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
       if (!animated) {
         scrollX.setValue(index * pageWidth);
@@ -117,7 +125,7 @@ export function ListingDetailScreen(): React.ReactElement {
         return;
       }
       const index = Math.round(offsetX / pageWidth);
-      const nextTab: DetailTab = index === 0 ? 'overview' : 'responses';
+      const nextTab = indexToTab(index);
       setTab((current) => (current === nextTab ? current : nextTab));
     },
     [pageWidth],
@@ -130,18 +138,31 @@ export function ListingDetailScreen(): React.ReactElement {
     [syncTabFromOffset],
   );
 
+  const hasPositionedPagerRef = React.useRef(false);
+
+  React.useEffect(() => {
+    hasPositionedPagerRef.current = false;
+    setTab('responses');
+  }, [route.params.tripId]);
+
   const onPagerLayout = React.useCallback(
     (event: LayoutChangeEvent) => {
       const width = event.nativeEvent.layout.width;
-      if (width <= 0 || width === pageWidth) {
+      if (width <= 0) {
         return;
       }
-      setPageWidth(width);
-      const index = tab === 'overview' ? 0 : 1;
-      scrollX.setValue(index * width);
-      requestAnimationFrame(() => {
-        pagerRef.current?.scrollTo({ x: index * width, animated: false });
-      });
+      const widthChanged = width !== pageWidth;
+      if (widthChanged) {
+        setPageWidth(width);
+      }
+      if (!hasPositionedPagerRef.current || widthChanged) {
+        hasPositionedPagerRef.current = true;
+        const index = tabToIndex(tab);
+        scrollX.setValue(index * width);
+        requestAnimationFrame(() => {
+          pagerRef.current?.scrollTo({ x: index * width, animated: false });
+        });
+      }
     },
     [pageWidth, scrollX, tab],
   );
