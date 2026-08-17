@@ -33,10 +33,10 @@ import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { TripVehicleMode } from '../../types/trip.types';
 import type { Vehicle } from '../../types/vehicle.types';
+import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import { OfferVehicleDetailSheet, type OfferVehicleDetailSource } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
-import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripOfferPanelProps = {
   tripId: string;
@@ -63,6 +63,16 @@ export type TripOfferPanelHandle = {
 
 const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
 
+const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
+  active: 'warning',
+  selected: 'selected',
+  confirmed: 'confirmed',
+  withdrawn: 'muted',
+  declined: 'muted',
+  timed_out: 'muted',
+  lapsed: 'muted',
+};
+
 function latestOfferFromSnapshot(snapshot: RfqResponderSnapshot) {
   return (
     snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ??
@@ -80,38 +90,6 @@ function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {
     counterpartyName: snapshot.ownerName ?? null,
     counterpartyPhone: snapshot.ownerPhone ?? null,
   };
-}
-
-function OfferStatusBadge({ status, label }: { status: RfqOfferStatus; label: string }): React.ReactElement {
-  const isConfirmed = status === 'confirmed';
-  const isOfferSubmitted = status === 'active';
-  const isAwaitingConfirm = status === 'selected';
-  const isTerminal = TERMINAL_STATUSES.includes(status);
-  const bg = isConfirmed
-    ? colors.accent.green.soft
-    : isOfferSubmitted
-      ? colors.accent.amber.soft
-      : isAwaitingConfirm
-        ? colors.accent.blue.soft
-        : isTerminal
-          ? colors.background.subtle
-          : colors.accent.blue.soft;
-  const text = isConfirmed
-    ? colors.accent.green.text
-    : isOfferSubmitted
-      ? colors.accent.amber.text
-      : isAwaitingConfirm
-        ? colors.accent.blue.text
-        : isTerminal
-          ? colors.text.tertiary
-          : colors.accent.blue.text;
-  return (
-    <View style={[styles.badge, { backgroundColor: bg }]}>
-      <AppText weight="semibold" style={[styles.badgeText, { color: text }]}>
-        {label}
-      </AppText>
-    </View>
-  );
 }
 
 export function OfferVehicleSummaryCard({
@@ -316,10 +294,6 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   const whatsappMessage = requiresVehicle
     ? t('dashboard.listings.detail.contact.messageAsDriver')
     : t('dashboard.listings.detail.contact.messageAsPassenger');
-  // Trip creator contact: passenger request → passenger owner; driver listing → driver owner.
-  const creatorContactTitle = requiresVehicle
-    ? t('dashboard.listings.detail.contact.passengerContact')
-    : t('dashboard.listings.detail.contact.driverContact');
   const panelTitle = isConfirmedOffer
     ? t('dashboard.listings.detail.offer.titleConfirmed')
     : t('dashboard.listings.detail.offer.title');
@@ -415,88 +389,68 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     setVehiclePickerOpen(false);
   };
 
+  const ownerPhone = snapshot.ownerPhone?.trim() || null;
+  const canDecideOffer =
+    activeOffer?.status === 'selected' &&
+    (snapshot.actions.canConfirm || snapshot.actions.canDecline);
+  const showOfferMessage =
+    activeOffer != null &&
+    (activeOffer.status === 'active' ||
+      activeOffer.status === 'selected' ||
+      (activeOffer.status === 'confirmed' && Boolean(ownerPhone)));
+  const offerPriceLabel =
+    activeOffer?.price != null
+      ? t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })
+      : '';
+
   return (
     <View style={styles.root}>
-      <View style={styles.card}>
-        <View style={styles.titleRow}>
-          <FontAwesome name="tag" size={14} color={colors.primary} />
-          <AppText weight="bold" style={styles.title}>
-            {panelTitle}
-          </AppText>
-        </View>
+      <View style={styles.titleRow}>
+        <FontAwesome name="tag" size={14} color={colors.primary} />
+        <AppText weight="bold" style={styles.title}>
+          {panelTitle}
+        </AppText>
+      </View>
 
-        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-        {hasActionableOffer && activeOffer ? (
-          <View style={styles.statusBlock}>
-            {activeOffer.vehicle ? (
-              <OfferVehicleSummaryCard
-                vehicle={activeOffer.vehicle}
-                onPress={() => {
-                  if (activeOffer.vehicle) {
-                    setVehicleDetail(activeOffer.vehicle);
-                  }
-                }}
-              />
-            ) : null}
-            <View style={styles.statusRow}>
-              <View style={styles.statusCopy}>
-                {activeOffer.offeredQuantity != null ? (
-                  <AppText style={styles.meta}>
-                    {t('dashboard.listings.detail.responses.seats', {
-                      // Full-private offers hold offeredQuantity=1 (the whole-vehicle
-                      // capacity slot) — show the vehicle's real seat count instead.
-                      count: isFullPrivate
-                        ? (activeOffer.vehicle?.totalSeats ?? vehicleTotalSeats ?? 1)
-                        : Number(activeOffer.offeredQuantity),
-                    })}
-                  </AppText>
-                ) : null}
-                {activeOffer.price != null ? (
-                  <AppText weight="semibold" style={styles.price}>
-                    {t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })}
-                    {!isFullPrivate ? (
-                      <AppText style={styles.priceSuffix}>
-                        {t('dashboard.listings.pricePerSeatSuffix')}
-                      </AppText>
-                    ) : null}
-                  </AppText>
-                ) : null}
-              </View>
-              <OfferStatusBadge
-                status={activeOffer.status}
-                label={t(`dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`)}
-              />
-            </View>
-          </View>
-        ) : null}
+      {hasActionableOffer && activeOffer ? (
+        <OfferResponseCard
+          tag={t(`dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`)}
+          tagTone={TAG_TONE_BY_STATUS[activeOffer.status]}
+          cardTone={
+            activeOffer.status === 'confirmed'
+              ? 'confirmed'
+              : activeOffer.status === 'selected'
+                ? 'selected'
+                : 'default'
+          }
+          name={
+            snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
+          }
+          priceLabel={offerPriceLabel}
+          showMessage={showOfferMessage}
+          onMessagePress={() => setChatOpen(true)}
+          vehicle={activeOffer.vehicle}
+          onVehiclePress={() => {
+            if (activeOffer.vehicle) {
+              setVehicleDetail(activeOffer.vehicle);
+            }
+          }}
+          footer={canDecideOffer ? 'decide' : ownerPhone ? 'whatsapp' : null}
+          rejectLabel={t('dashboard.listings.detail.offer.decline')}
+          acceptLabel={t('dashboard.listings.detail.offer.confirm')}
+          onReject={() => setConfirmDecline(true)}
+          onAccept={confirmOffer}
+          acceptLoading={confirming}
+          actionsDisabled={confirming}
+          whatsappPhone={ownerPhone}
+          whatsappMessage={whatsappMessage}
+        />
+      ) : null}
 
-        {hasActionableOffer &&
-        activeOffer?.status === 'selected' &&
-        (snapshot.actions.canConfirm || snapshot.actions.canDecline) ? (
-          <View style={styles.confirmActions}>
-            {snapshot.actions.canDecline ? (
-              <Button
-                label={t('dashboard.listings.detail.offer.decline')}
-                variant="secondary"
-                onPress={() => setConfirmDecline(true)}
-                disabled={confirming}
-                style={styles.confirmActionButton}
-              />
-            ) : null}
-            {snapshot.actions.canConfirm ? (
-              <Button
-                label={t('dashboard.listings.detail.offer.confirm')}
-                onPress={confirmOffer}
-                loading={confirming}
-                disabled={confirming}
-                style={styles.confirmActionButton}
-              />
-            ) : null}
-          </View>
-        ) : null}
-
-        {!hasActionableOffer && snapshot.actions.canSubmitOffer ? (
+      {!hasActionableOffer && snapshot.actions.canSubmitOffer ? (
+        <View style={styles.card}>
           <View style={styles.form}>
             {requiresVehicle ? (
               <View style={styles.vehiclePicker}>
@@ -573,25 +527,13 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
               disabled={!canSubmit}
             />
           </View>
-        ) : null}
+        </View>
+      ) : null}
 
-        {!hasActionableOffer && !snapshot.actions.canSubmitOffer ? (
+      {!hasActionableOffer && !snapshot.actions.canSubmitOffer ? (
+        <View style={styles.card}>
           <AppText style={styles.closedText}>{t('dashboard.listings.detail.offer.closed')}</AppText>
-        ) : null}
-      </View>
-
-      {activeOffer != null &&
-      (activeOffer.status === 'active' ||
-        activeOffer.status === 'selected' ||
-        (activeOffer.status === 'confirmed' && Boolean(snapshot.ownerPhone))) ? (
-        <WhatsAppContactCard
-          title={creatorContactTitle}
-          icon={requiresVehicle ? 'user' : 'car'}
-          name={snapshot.ownerName ?? null}
-          phone={snapshot.ownerPhone}
-          message={whatsappMessage}
-          onMessagePress={() => setChatOpen(true)}
-        />
+        </View>
       ) : null}
 
       <TripMessagingSheet
@@ -713,48 +655,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     color: colors.primary,
-  },
-  statusBlock: {
-    gap: spacing.sm,
-  },
-  confirmActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  confirmActionButton: {
-    flex: 1,
-    minHeight: 40,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  statusCopy: {
-    gap: 2,
-  },
-  meta: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  price: {
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-  priceSuffix: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  badge: {
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-  badgeText: {
-    fontSize: 11,
   },
   form: {
     gap: spacing.sm,

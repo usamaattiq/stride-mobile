@@ -32,6 +32,7 @@ import { colors, radius, spacing } from '@/theme';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { Vehicle } from '../../types/vehicle.types';
+import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import {
@@ -39,7 +40,6 @@ import {
   type OfferVehicleDetailSource,
 } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
-import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripBidPanelProps = {
   tripId: string;
@@ -473,6 +473,32 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
       : null;
   const hasActiveBid = snapshot.participantStatus === 'active';
   const showPlaceBidForm = actions.canPlaceBid && !hasActiveBid;
+  const auctionStatus = snapshot.status.replaceAll('_', '-');
+  const isSelectedBidder = actions.isSelectedParticipant === true;
+  const isConfirmedBid =
+    auctionStatus === 'completed' &&
+    Boolean(snapshot.confirmedParticipantId) &&
+    isSelectedBidder;
+  const ownerPhone = snapshot.ownerPhone?.trim() || null;
+  const canDecideBid = actions.canConfirm || actions.canDecline;
+  const showBidMessage =
+    hasActiveBid &&
+    (auctionStatus === 'live' ||
+      auctionStatus === 'awaiting-confirmation' ||
+      auctionStatus === 'awaiting-action' ||
+      auctionStatus === 'awaiting-your-confirmation' ||
+      Boolean(ownerPhone));
+  const bidTag = isConfirmedBid
+    ? t('dashboard.listings.detail.auctionBids.confirmed')
+    : isSelectedBidder
+      ? t('dashboard.listings.detail.auctionBids.selected')
+      : snapshot.statusLabel;
+  const bidPriceLabel =
+    snapshot.myPeakAmount != null
+      ? t('dashboard.listings.detail.auctionBids.amount', {
+          amount: formatAmount(snapshot.myPeakAmount),
+        })
+      : '';
 
   return (
     <View style={styles.root}>
@@ -554,42 +580,39 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
         </>
       ) : null}
 
-      {actions.canConfirm || actions.canDecline ? (
-        <View style={styles.actionRow}>
-          {actions.canConfirm ? (
-            <Button
-              label={t('dashboard.listings.detail.bid.confirm')}
-              onPress={() => runAction('confirm')}
-              loading={submitting}
-              style={styles.actionButton}
-            />
-          ) : null}
-          {actions.canDecline ? (
-            <Button
-              label={t('dashboard.listings.detail.bid.decline')}
-              onPress={() => setConfirmDecline(true)}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-          ) : null}
-        </View>
-      ) : null}
-
-      {snapshot.participantStatus === 'active' &&
-      (snapshot.status === 'live' ||
-        snapshot.status === 'awaiting_confirmation' ||
-        snapshot.status === 'awaiting_action' ||
-        Boolean(snapshot.ownerPhone)) ? (
-        <WhatsAppContactCard
-          title={
-            isPassengerRequest
-              ? t('dashboard.listings.detail.contact.passengerContact')
-              : t('dashboard.listings.detail.contact.driverContact')
+      {hasActiveBid ? (
+        <OfferResponseCard
+          tag={bidTag}
+          tagTone={isConfirmedBid ? 'confirmed' : isSelectedBidder ? 'selected' : 'warning'}
+          cardTone={isConfirmedBid ? 'confirmed' : isSelectedBidder ? 'selected' : 'default'}
+          name={
+            snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
           }
-          name={snapshot.ownerName ?? null}
-          phone={snapshot.ownerPhone}
-          message={whatsappMessage}
+          priceLabel={bidPriceLabel}
+          showMessage={showBidMessage}
           onMessagePress={() => setChatOpen(true)}
+          vehicle={
+            selectedVehicle
+              ? {
+                  ...selectedVehicle,
+                  photoUrl: selectedVehicle.photoDisplayUris?.[0] ?? selectedVehicle.photoUris[0] ?? null,
+                }
+              : null
+          }
+          onVehiclePress={() => {
+            if (selectedVehicle) {
+              setVehicleDetail(selectedVehicle);
+            }
+          }}
+          footer={canDecideBid ? 'decide' : ownerPhone ? 'whatsapp' : null}
+          rejectLabel={t('dashboard.listings.detail.bid.decline')}
+          acceptLabel={t('dashboard.listings.detail.bid.confirm')}
+          onReject={() => setConfirmDecline(true)}
+          onAccept={() => runAction('confirm')}
+          acceptLoading={submitting}
+          actionsDisabled={submitting}
+          whatsappPhone={ownerPhone}
+          whatsappMessage={whatsappMessage}
         />
       ) : null}
 
@@ -703,13 +726,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.primary,
     fontSize: 13,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
   },
   vehiclePicker: {
     gap: spacing.xs,

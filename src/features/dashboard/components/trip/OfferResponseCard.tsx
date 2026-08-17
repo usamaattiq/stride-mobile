@@ -75,6 +75,8 @@ export type OfferResponseCardProps = {
   onVehiclePress?: () => void;
   /** Accept/Reject, or WhatsApp in that same footer slot. */
   footer?: 'decide' | 'whatsapp' | null;
+  rejectLabel?: string;
+  acceptLabel?: string;
   onReject?: () => void;
   onAccept?: () => void;
   acceptLoading?: boolean;
@@ -95,6 +97,8 @@ export function OfferResponseCard({
   vehicle,
   onVehiclePress,
   footer = null,
+  rejectLabel,
+  acceptLabel,
   onReject,
   onAccept,
   acceptLoading = false,
@@ -192,14 +196,14 @@ export function OfferResponseCard({
       {footer === 'decide' ? (
         <View style={styles.footerRow}>
           <Button
-            label={t('dashboard.listings.detail.responses.reject')}
+            label={rejectLabel ?? t('dashboard.listings.detail.responses.reject')}
             variant="secondary"
             onPress={onReject}
             disabled={actionsDisabled}
             style={styles.footerButton}
           />
           <Button
-            label={t('dashboard.listings.detail.responses.accept')}
+            label={acceptLabel ?? t('dashboard.listings.detail.responses.accept')}
             onPress={onAccept}
             loading={acceptLoading}
             disabled={actionsDisabled}
