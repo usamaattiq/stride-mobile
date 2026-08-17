@@ -756,7 +756,7 @@
       "title": "العنوان",
       "titlePlaceholder": "مثال: SUV عائلي",
       "description": "الوصف",
-      "descriptionPlaceholder": "وصف مختصر لمركبتك",
+      "descriptionPlaceholder": "وصف مختصر لمركبتك (اختياري)",
       "plateNumber": "رقم اللوحة",
       "plateNumberPlaceholder": "أدخل رقم اللوحة",
       "acTitle": "تكييف الهواء",

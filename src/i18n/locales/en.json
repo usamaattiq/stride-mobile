@@ -756,7 +756,7 @@
       "title": "Title",
       "titlePlaceholder": "e.g. Family SUV",
       "description": "Description",
-      "descriptionPlaceholder": "Brief description of your vehicle",
+      "descriptionPlaceholder": "Brief description of your vehicle (optional)",
       "plateNumber": "Plate number",
       "plateNumberPlaceholder": "Enter plate number",
       "acTitle": "Air conditioning",
