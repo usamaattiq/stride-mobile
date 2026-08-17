@@ -79,7 +79,6 @@ export function WelcomeHero({ enterAnim }: WelcomeHeroProps) {
           variant="onImage"
           left="logo"
           brandName={t('auth.welcome.brandName')}
-          showLanguageSwitcher
           includeSafeArea
           style={styles.topBar}
         />
