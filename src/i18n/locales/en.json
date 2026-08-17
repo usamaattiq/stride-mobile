@@ -627,6 +627,13 @@
       "security": {
         "title": "Security",
         "subtitle": "MPIN and login protection"
+      },
+      "deleteAccount": {
+        "title": "Delete account",
+        "subtitle": "Permanently close this account",
+        "confirm": "This will deactivate your account and hide your listings. You can create a new account with the same number later.",
+        "confirmCta": "Delete",
+        "failed": "Couldn't delete your account. Please try again."
       }
     },
     "settings": {

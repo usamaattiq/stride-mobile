@@ -37,7 +37,7 @@ import type { DashboardRootStackParamList } from '../navigation/dashboardRootTyp
 import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | 'delete-account' | null;
 
 type SettingsNav = CompositeNavigationProp<
   NativeStackNavigationProp<SettingsStackParamList>,
@@ -71,6 +71,8 @@ export function SettingsHomeScreen(): React.ReactElement {
   const [dialog, setDialog] = React.useState<DialogKind>(null);
   const [switchingRole, setSwitchingRole] = React.useState(false);
   const [switchRoleError, setSwitchRoleError] = React.useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = React.useState(false);
+  const [deleteAccountError, setDeleteAccountError] = React.useState<string | null>(null);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
   const currentLanguageLabel = React.useMemo(
@@ -126,6 +128,41 @@ export function SettingsHomeScreen(): React.ReactElement {
       resetDraft();
       resetSession();
       authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    })();
+  };
+
+  const closeDeleteDialog = () => {
+    if (deletingAccount) {
+      return;
+    }
+    setDialog(null);
+    setDeleteAccountError(null);
+  };
+
+  const handleDeleteAccount = () => {
+    if (deletingAccount) {
+      return;
+    }
+
+    setDeletingAccount(true);
+    setDeleteAccountError(null);
+    void (async () => {
+      try {
+        await unregisterPushNotifications();
+        await authApi.deleteAccount();
+        await useAuthStore.getState().signOut();
+        useProfileStore.getState().clearProfile();
+        resetDraft();
+        resetSession();
+        setDialog(null);
+        authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      } catch (error) {
+        setDeleteAccountError(
+          getErrorMessage(error, t('profile.account.deleteAccount.failed')),
+        );
+      } finally {
+        setDeletingAccount(false);
+      }
     })();
   };
 
@@ -209,6 +246,10 @@ export function SettingsHomeScreen(): React.ReactElement {
         break;
       case 'manage-vehicles':
         dashboardRootNavigation?.navigate('ManageVehicles');
+        break;
+      case 'delete-account':
+        setDeleteAccountError(null);
+        setDialog('delete-account');
         break;
       default:
         break;
@@ -324,6 +365,23 @@ export function SettingsHomeScreen(): React.ReactElement {
         confirmAction={{
           label: t('profile.logout.title'),
           onPress: handleLogout,
+        }}
+      />
+
+      <AppDialog
+        visible={dialog === 'delete-account'}
+        icon="trash"
+        title={t('profile.account.deleteAccount.title')}
+        message={
+          deleteAccountError ?? t('profile.account.deleteAccount.confirm')
+        }
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: closeDeleteDialog,
+        }}
+        confirmAction={{
+          label: t('profile.account.deleteAccount.confirmCta'),
+          onPress: handleDeleteAccount,
         }}
       />
     </View>

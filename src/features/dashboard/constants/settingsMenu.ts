@@ -12,7 +12,8 @@ export type SettingsMenuAction =
   | 'manage-vehicles'
   | 'become-driver'
   | 'switch-driver'
-  | 'switch-passenger';
+  | 'switch-passenger'
+  | 'delete-account';
 
 export type SettingsMenuItem = {
   id: string;
@@ -100,6 +101,13 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
         subtitleKey: 'profile.account.security.subtitle',
         icon: 'lock',
         action: 'security',
+      },
+      {
+        id: 'delete-account',
+        titleKey: 'profile.account.deleteAccount.title',
+        subtitleKey: 'profile.account.deleteAccount.subtitle',
+        icon: 'trash',
+        action: 'delete-account',
       },
     ],
   },

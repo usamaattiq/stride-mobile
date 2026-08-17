@@ -56,4 +56,7 @@ export const authApi = {
     apiRequest({ method: 'PATCH', url: '/auth/mpin', data: { currentMpin, newMpin } }),
 
   logout: (): Promise<{ loggedOut: true }> => apiRequest({ method: 'POST', url: '/auth/logout' }),
+
+  deleteAccount: (): Promise<{ deleted: true }> =>
+    apiRequest({ method: 'DELETE', url: '/auth/me' }),
 };
