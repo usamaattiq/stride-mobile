@@ -717,6 +717,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
                 priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
                   amount: row.peakAmount,
                 })}
+                showWinner={row.rank === 1}
               />
             );
           })}

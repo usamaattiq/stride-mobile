@@ -223,6 +223,7 @@ export function TripAuctionBidsPanel({
                 priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
                   amount: row.peakAmount,
                 })}
+                showWinner={row.rank === 1}
                 showMessage={showMessage}
                 onMessagePress={() => setChatTarget(row)}
                 vehicle={row.vehicle}

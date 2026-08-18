@@ -93,6 +93,8 @@ export type OfferResponseCardProps = {
   detailLabel?: string | null;
   showMessage?: boolean;
   onMessagePress?: () => void;
+  /** Trophy on the right of Rank 1. */
+  showWinner?: boolean;
   vehicle?: OfferVehicleLike | null;
   onVehiclePress?: () => void;
   /** Accept/Reject, or WhatsApp in that same footer slot. */
@@ -116,6 +118,7 @@ export function OfferResponseCard({
   detailLabel = null,
   showMessage = false,
   onMessagePress,
+  showWinner = false,
   vehicle,
   onVehiclePress,
   footer = null,
@@ -180,6 +183,14 @@ export function OfferResponseCard({
                 {t('dashboard.listings.detail.contact.message')}
               </AppText>
             </Pressable>
+          ) : null}
+          {showWinner ? (
+            <FontAwesome
+              name="trophy"
+              size={16}
+              color="#E8A13A"
+              accessibilityLabel={t('dashboard.listings.detail.bid.leading')}
+            />
           ) : null}
         </View>
       </View>
