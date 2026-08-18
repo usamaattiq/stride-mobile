@@ -277,7 +277,7 @@ export function MyListingsScreen(): React.ReactElement {
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
-          removeClippedSubviews
+          removeClippedSubviews={false}
           updateCellsBatchingPeriod={50}
           keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl {...refreshControlProps} />}
@@ -344,12 +344,13 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
     paddingTop: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 0,
     paddingBottom: 0,
   },
   filters: {
     gap: spacing.sm,
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   pager: {
     flex: 1,
@@ -360,10 +361,14 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: 8,
     paddingBottom: spacing.huge + spacing.md,
   },
   skeletonList: {
     gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: 8,
     paddingBottom: spacing.md,
   },
   separator: {

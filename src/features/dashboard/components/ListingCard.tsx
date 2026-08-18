@@ -14,6 +14,7 @@ import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
@@ -460,7 +461,7 @@ export function ListingCard({
 
   return (
     <>
-      {item}
+      <View style={styles.shadowGutter}>{item}</View>
       <ImageGalleryModal
         visible={galleryVisible}
         images={galleryImages}
@@ -471,13 +472,13 @@ export function ListingCard({
 }
 
 const styles = StyleSheet.create({
+  shadowGutter: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
   item: {
     borderRadius: radius.md,
-    shadowColor: '#B42318',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    ...cardBackShadow,
   },
   itemInner: {
     borderRadius: radius.md,

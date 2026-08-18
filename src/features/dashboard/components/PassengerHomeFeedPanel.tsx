@@ -175,7 +175,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
         ItemSeparatorComponent={FeedSeparator}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        removeClippedSubviews
+        removeClippedSubviews={false}
         initialNumToRender={PAGE_SIZE}
         windowSize={7}
         refreshControl={<RefreshControl {...refreshControlProps} />}

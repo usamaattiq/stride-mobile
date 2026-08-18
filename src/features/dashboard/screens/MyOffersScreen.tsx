@@ -280,6 +280,7 @@ export function MyOffersScreen(): React.ReactElement {
           ItemSeparatorComponent={ListSeparator}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={false}
           refreshControl={<RefreshControl {...refreshControlProps} />}
         />
       );
@@ -354,11 +355,12 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
     paddingTop: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 0,
     paddingBottom: 0,
   },
   filters: {
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   pager: {
     flex: 1,
@@ -369,10 +371,14 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: 8,
     paddingBottom: spacing.huge + spacing.md,
   },
   skeletonList: {
     gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: 8,
     paddingBottom: spacing.md,
   },
   separator: {

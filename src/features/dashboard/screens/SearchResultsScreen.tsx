@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
-    paddingTop: spacing.sm,
+    paddingTop: 8,
     paddingBottom: spacing.sm,
   },
   cardPad: {

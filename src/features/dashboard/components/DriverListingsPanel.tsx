@@ -395,6 +395,7 @@ const styles = StyleSheet.create({
   pageContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.md,
+    paddingTop: 8,
     paddingBottom: spacing.sm,
   },
   list: {

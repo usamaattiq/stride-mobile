@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { VehicleListItem } from '@/features/dashboard/components/VehicleListContent';
@@ -10,6 +10,7 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { openWhatsAppChat } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 export type OfferResponseCardTone = 'default' | 'selected' | 'confirmed';
 
@@ -264,19 +265,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     padding: spacing.sm,
     gap: spacing.xs,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#111827',
-        shadowOpacity: 0.12,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 0 },
-      },
-      android: {
-        elevation: 4,
-      },
-      default: {},
-    }),
-    boxShadow: '0px 0px 10px rgba(17, 24, 39, 0.12)',
+    ...cardBackShadow,
   },
   headerRow: {
     flexDirection: 'row',
