@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -36,15 +36,20 @@ export function SeatsStepper({
 
   return (
     <View style={styles.seatsWrap}>
-      <AppText weight="medium" style={styles.seatsLabel}>
-        {label}
-        {required ? <AppText style={styles.required}> *</AppText> : null}
-      </AppText>
-      {hint ? (
-        <AppText style={styles.seatsHint} numberOfLines={1}>
-          {hint}
+      <View style={styles.labelRow}>
+        <AppText weight="medium" style={styles.seatsLabel}>
+          {label}
+          {required ? <AppText style={styles.required}> *</AppText> : null}
         </AppText>
-      ) : null}
+        {hint ? (
+          <View style={styles.hintChip}>
+            <FontAwesome name="users" size={9} color={colors.primary} />
+            <AppText weight="bold" style={styles.hintChipLabel} numberOfLines={1}>
+              {hint}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
       <View style={[styles.seatsRow, error ? styles.seatsRowError : null]}>
         <AppText weight="semibold" style={styles.seatsCaption} numberOfLines={1}>
           {t('vehicles.seatsCount', { count: seatCount })}
@@ -104,13 +109,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text.primary,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  hintChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: colors.primarySoft,
+  },
+  hintChipLabel: {
+    fontSize: 11,
+    color: colors.primary,
+  },
   required: {
     fontSize: 13,
     color: colors.primary,
-  },
-  seatsHint: {
-    fontSize: 12,
-    color: colors.text.secondary,
   },
   seatsRow: {
     minHeight: 46,
