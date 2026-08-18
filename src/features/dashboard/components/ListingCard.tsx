@@ -216,12 +216,13 @@ export function ListingCard({
     trip.myBidAmount != null
       ? String(trip.myBidAmount)
       : trip.myOfferPrice?.trim() || null;
-  const price =
-    offerPrice ?? (trip.startingPrice?.trim() || null);
+  const rawPrice = offerPrice ?? (trip.startingPrice?.trim() || null);
+  const price = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
   const isPassengerRequest = trip.vehicleId == null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
-  const showCountdown = !pending && !startsLater && active;
   const isAuction = trip.listingType === 'auction';
+  // Auction remaining time lives next to Place your bid, not on the listing card.
+  const showCountdown = !isAuction && !pending && !startsLater && active;
   const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');

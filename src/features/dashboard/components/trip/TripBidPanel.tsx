@@ -28,7 +28,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
@@ -52,6 +52,9 @@ export type TripBidPanelProps = {
   requiresVehicle?: boolean;
   /** Pre-select this vehicle after returning from add-vehicle flow. */
   initialVehicleId?: string | null;
+  /** Listing window from the trip — used when auction snapshot has no remaining_seconds. */
+  listingStartsAtMs?: number | null;
+  listingExpiresAtMs?: number | null;
   onBidChange?: (update: {
     auctionStatus: AuctionStatusValue;
     auctionStatusLabel: string;
@@ -85,24 +88,66 @@ function formatRemaining(seconds: number, t: TFunction): string {
   return t('dashboard.listings.detail.bid.remainingMinutes', { minutes });
 }
 
+function remainingSecondsUntil(endsAtMs: number | null | undefined, now: number): number | null {
+  if (endsAtMs == null || !Number.isFinite(endsAtMs)) {
+    return null;
+  }
+  const remaining = Math.ceil((endsAtMs - now) / 1000);
+  return remaining > 0 ? remaining : null;
+}
+
+function auctionEndsAtMs(snapshot: {
+  remainingSeconds?: number | null;
+  endsAt?: string | null;
+} | null): number | null {
+  if (!snapshot) {
+    return null;
+  }
+  if (snapshot.endsAt) {
+    const parsed = Date.parse(snapshot.endsAt);
+    if (Number.isFinite(parsed) && parsed > Date.now()) {
+      return parsed;
+    }
+  }
+  if (snapshot.remainingSeconds != null && snapshot.remainingSeconds > 0) {
+    return Date.now() + snapshot.remainingSeconds * 1000;
+  }
+  return null;
+}
+
 function BidHeader({
   remainingSeconds,
   currentAmount,
   auctionType,
+  myBidAmount = null,
+  showMessage = false,
+  onMessagePress,
 }: {
   remainingSeconds: number | null;
   currentAmount: number;
   auctionType: AuctionType;
+  myBidAmount?: number | null;
+  showMessage?: boolean;
+  onMessagePress?: () => void;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const remaining =
     remainingSeconds != null && remainingSeconds > 0
       ? formatRemaining(remainingSeconds, t)
       : null;
+  const endingSoon =
+    remainingSeconds != null && remainingSeconds > 0 && remainingSeconds < 60 * 60;
+  const timerLabel = endingSoon
+    ? t('dashboard.listings.card.endingSoon')
+    : remaining;
   const highestLabel =
     auctionType === 'reverse'
       ? t('dashboard.listings.detail.bid.lowestBid', { amount: formatAmount(currentAmount) })
       : t('dashboard.listings.detail.bid.highestBid', { amount: formatAmount(currentAmount) });
+  const yourBidLabel =
+    myBidAmount != null
+      ? t('dashboard.listings.detail.bid.yourBid', { amount: formatAmount(myBidAmount) })
+      : null;
 
   return (
     <View style={styles.headerBlock}>
@@ -110,13 +155,52 @@ function BidHeader({
         <AppText weight="bold" style={styles.title}>
           {t('dashboard.listings.detail.bid.title')}
         </AppText>
-        {remaining ? (
-          <AppText weight="semibold" style={styles.timerText}>
-            {remaining}
-          </AppText>
+        {timerLabel ? (
+          <View style={[styles.timerChip, endingSoon && styles.timerChipSoon]}>
+            <FontAwesome
+              name="clock-o"
+              size={11}
+              color={endingSoon ? colors.accent.amber.text : colors.accent.green.text}
+            />
+            <AppText
+              weight="semibold"
+              style={[styles.timerText, endingSoon && styles.timerTextSoon]}
+              numberOfLines={1}
+            >
+              {timerLabel}
+            </AppText>
+          </View>
         ) : null}
       </View>
-      <AppText style={styles.highestBid}>{highestLabel}</AppText>
+      <View style={styles.highestBidRow}>
+        <View style={styles.highestBidChip}>
+          <AppText weight="semibold" style={styles.highestBid}>
+            {highestLabel}
+          </AppText>
+        </View>
+        <View style={styles.highestBidRight}>
+          {yourBidLabel ? (
+            <View style={styles.highestBidChip}>
+              <AppText weight="semibold" style={styles.highestBid}>
+                {yourBidLabel}
+              </AppText>
+            </View>
+          ) : null}
+          {showMessage ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+              onPress={onMessagePress}
+              style={({ pressed }) => [styles.headerMessageChip, pressed && styles.headerMessageChipPressed]}
+            >
+              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <AppText weight="bold" style={styles.headerMessageLabel}>
+                {t('dashboard.listings.detail.contact.message')}
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }
@@ -158,6 +242,8 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
       isPassengerRequest = false,
       requiresVehicle = false,
       initialVehicleId = null,
+      listingStartsAtMs = null,
+      listingExpiresAtMs = null,
       onBidChange,
       onCanWithdrawChange,
     },
@@ -180,7 +266,6 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
   const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
   const [chatOpen, setChatOpen] = React.useState(false);
-  const [liveRemaining, setLiveRemaining] = React.useState<number | null>(null);
   const amountTouchedRef = React.useRef(false);
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -290,28 +375,24 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
     return () => clearInterval(timer);
   }, [applySnapshot, publicSnapshot?.status, snapshot?.status, tripId]);
 
-  const sourceRemaining =
-    snapshot?.status === 'live'
-      ? snapshot.remainingSeconds
-      : publicSnapshot?.status === 'live'
-        ? publicSnapshot.remainingSeconds
-        : null;
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
+  const endsAtMs =
+    auctionEndsAtMs(snapshot) ??
+    auctionEndsAtMs(publicSnapshot) ??
+    listingExpiresAtMs ??
+    null;
+  const listingStarted = listingStartsAtMs == null || listingStartsAtMs <= nowMs;
+  const liveRemaining = listingStarted
+    ? remainingSecondsUntil(endsAtMs, nowMs)
+    : null;
 
   React.useEffect(() => {
-    setLiveRemaining(sourceRemaining);
-    if (sourceRemaining == null || sourceRemaining <= 0) {
+    if (endsAtMs == null || endsAtMs <= Date.now()) {
       return undefined;
     }
-    const timer = setInterval(() => {
-      setLiveRemaining((current) => {
-        if (current == null || current <= 0) {
-          return 0;
-        }
-        return current - 1;
-      });
-    }, 1000);
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, [sourceRemaining]);
+  }, [endsAtMs]);
 
   const canWithdraw = Boolean(snapshot?.actions.canWithdraw);
 
@@ -529,13 +610,9 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
     isSelectedBidder;
   const ownerPhone = snapshot.ownerPhone?.trim() || null;
   const canDecideBid = actions.canConfirm || actions.canDecline;
-  const showBidMessage =
-    hasActiveBid &&
-    (auctionStatus === 'live' ||
-      auctionStatus === 'awaiting-confirmation' ||
-      auctionStatus === 'awaiting-action' ||
-      auctionStatus === 'awaiting-your-confirmation' ||
-      Boolean(ownerPhone));
+  const showHeaderMessage =
+    hasActiveBid && (auctionStatus === 'live' || isSelectedBidder);
+  const showOwnerCard = hasActiveBid && (canDecideBid || Boolean(ownerPhone) || isSelectedBidder);
   const bidTag = isConfirmedBid
     ? t('dashboard.listings.detail.auctionBids.confirmed')
     : isSelectedBidder
@@ -550,14 +627,16 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
 
   const ranking = snapshot.ranking ?? [];
   const showRanking = ranking.length > 0;
-  const showOwnerCard = hasActiveBid && (canDecideBid || Boolean(ownerPhone) || isSelectedBidder);
 
   return (
     <View style={styles.root}>
       <BidHeader
-        remainingSeconds={snapshot.status === 'live' ? liveRemaining : null}
+        remainingSeconds={liveRemaining}
         currentAmount={snapshot.currentAmount}
         auctionType={snapshot.auctionType}
+        myBidAmount={snapshot.myPeakAmount}
+        showMessage={showHeaderMessage}
+        onMessagePress={() => setChatOpen(true)}
       />
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
@@ -653,7 +732,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
             snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
           }
           priceLabel={bidPriceLabel}
-          showMessage={showBidMessage}
+          showMessage={false}
           onMessagePress={() => setChatOpen(true)}
           vehicle={selectedVehicle ? fromListVehicle(selectedVehicle) : null}
           onVehiclePress={() => {
@@ -775,14 +854,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  timerText: {
-    fontSize: 13,
-    color: colors.primary,
+  timerChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.green.soft,
     flexShrink: 0,
   },
+  timerChipSoon: {
+    backgroundColor: colors.accent.amber.soft,
+  },
+  timerText: {
+    fontSize: 12,
+    color: colors.accent.green.text,
+  },
+  timerTextSoon: {
+    color: colors.accent.amber.text,
+  },
+  highestBidRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  highestBidRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: spacing.sm,
+  },
+  highestBidChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
   highestBid: {
-    fontSize: 14,
-    color: colors.text.secondary,
+    fontSize: 16,
+    color: colors.primary,
+  },
+  headerMessageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    flexShrink: 0,
+  },
+  headerMessageChipPressed: {
+    opacity: 0.75,
+  },
+  headerMessageLabel: {
+    fontSize: 12,
+    color: colors.primary,
   },
   rankingBlock: {
     gap: spacing.sm,

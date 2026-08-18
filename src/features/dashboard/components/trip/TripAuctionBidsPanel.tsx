@@ -150,11 +150,13 @@ export function TripAuctionBidsPanel({
             {t('dashboard.listings.detail.auctionBids.title')}
           </AppText>
         </View>
-        <AppText style={styles.headerMeta}>
-          {snapshot.auctionType === 'reverse'
-            ? t('dashboard.listings.detail.bid.lowestBid', { amount: snapshot.currentAmount })
-            : t('dashboard.listings.detail.bid.highestBid', { amount: snapshot.currentAmount })}
-        </AppText>
+        <View style={styles.highestBidChip}>
+          <AppText weight="semibold" style={styles.headerMeta}>
+            {snapshot.auctionType === 'reverse'
+              ? t('dashboard.listings.detail.bid.lowestBid', { amount: snapshot.currentAmount })
+              : t('dashboard.listings.detail.bid.highestBid', { amount: snapshot.currentAmount })}
+          </AppText>
+        </View>
       </View>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
@@ -198,7 +200,7 @@ export function TripAuctionBidsPanel({
             const showMessage =
               isLive ||
               (isAwaiting && isSelected) ||
-              (isConfirmed && Boolean(phone));
+              isConfirmed;
             const displayName =
               row.participantName?.trim() ||
               t('dashboard.listings.detail.auctionBids.bidderLabel', {
@@ -279,9 +281,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.text.primary,
   },
+  highestBidChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
   headerMeta: {
-    fontSize: 14,
-    color: colors.text.secondary,
+    fontSize: 16,
+    color: colors.primary,
   },
   actionsRow: {
     flexDirection: 'row',

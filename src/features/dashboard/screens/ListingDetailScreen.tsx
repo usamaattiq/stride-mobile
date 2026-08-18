@@ -46,6 +46,7 @@ import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import { getListingStatusBucket } from '../utils/listingFilters';
+import { getListingExpiresAtMs, getListingStartsAtMs } from '../utils/listingWindow';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
@@ -612,6 +613,8 @@ export function ListingDetailScreen(): React.ReactElement {
                 isPassengerRequest={trip.vehicleId == null}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
+                listingStartsAtMs={getListingStartsAtMs(trip)}
+                listingExpiresAtMs={getListingExpiresAtMs(trip)}
                 onBidChange={handleBidChange}
                 onCanWithdrawChange={setCanWithdrawOffer}
               />
