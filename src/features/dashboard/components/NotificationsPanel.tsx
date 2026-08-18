@@ -40,7 +40,10 @@ function formatRelativeTime(iso: string, locale: string): string {
 function mapInboxItem(item: InboxNotificationDto, locale: string): AppNotification {
   const kindRaw = item.data && typeof item.data.kind === 'string' ? item.data.kind : 'system';
   const kind: AppNotification['kind'] =
-    kindRaw.includes('offer') || kindRaw.includes('bid') || kindRaw.includes('rfq')
+    kindRaw.includes('offer') ||
+    kindRaw.includes('bid') ||
+    kindRaw.includes('rfq') ||
+    kindRaw.includes('auction')
       ? 'offer'
       : kindRaw.includes('confirm') || kindRaw.includes('booking')
         ? 'booking'
