@@ -18,6 +18,7 @@ type SeatsStepperProps = {
   max?: number;
   required?: boolean;
   error?: string;
+  hint?: string;
 };
 
 export function SeatsStepper({
@@ -28,6 +29,7 @@ export function SeatsStepper({
   max = DEFAULT_SEATS_MAX,
   required = false,
   error,
+  hint,
 }: SeatsStepperProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const seatCount = Math.max(min, Math.min(max, value));
@@ -38,6 +40,11 @@ export function SeatsStepper({
         {label}
         {required ? <AppText style={styles.required}> *</AppText> : null}
       </AppText>
+      {hint ? (
+        <AppText style={styles.seatsHint} numberOfLines={1}>
+          {hint}
+        </AppText>
+      ) : null}
       <View style={[styles.seatsRow, error ? styles.seatsRowError : null]}>
         <AppText weight="semibold" style={styles.seatsCaption} numberOfLines={1}>
           {t('vehicles.seatsCount', { count: seatCount })}
@@ -100,6 +107,10 @@ const styles = StyleSheet.create({
   required: {
     fontSize: 13,
     color: colors.primary,
+  },
+  seatsHint: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   seatsRow: {
     minHeight: 46,

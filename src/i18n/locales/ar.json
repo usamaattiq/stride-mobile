@@ -545,6 +545,7 @@
           "selectVehicleTitle": "اختر مركبة",
           "changeVehicle": "تغيير المركبة",
           "seatsLabel": "المقاعد",
+          "seatsRemaining": "{{count}} متبقي",
           "seatsPlaceholder": "عدد المقاعد",
           "pricePerSeatLabel": "السعر لكل مقعد",
           "priceFullVehicleLabel": "سعر المركبة كاملة",

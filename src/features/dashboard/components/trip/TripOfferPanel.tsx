@@ -67,6 +67,17 @@ export type TripOfferPanelHandle = {
 
 const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
 
+function parseQuantity(value: string | null | undefined): number | null {
+  if (value == null || value.trim().length === 0) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return Math.floor(parsed);
+}
+
 const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
   active: 'warning',
   selected: 'selected',
@@ -263,6 +274,21 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     }
   }, [requiresVehicle, initialVehicleId, selectedVehicleId, vehicles]);
 
+  React.useEffect(() => {
+    if (isFullPrivate) {
+      return;
+    }
+    const remaining = parseQuantity(snapshot?.availableQuantity);
+    if (remaining == null) {
+      return;
+    }
+    const cap = Math.max(0, Math.min(vehicleTotalSeats ?? 50, remaining));
+    const current = Number(seats);
+    if (cap >= 1 && Number.isInteger(current) && current > cap) {
+      setSeats(String(cap));
+    }
+  }, [isFullPrivate, seats, snapshot?.availableQuantity, vehicleTotalSeats]);
+
   const previewOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
   const canWithdraw = Boolean(
     snapshot && previewOffer?.status === 'active' && snapshot.actions.canWithdraw,
@@ -317,8 +343,12 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     : t('dashboard.listings.detail.offer.title');
 
   const seatsNumber = Number(seats);
-  const maxSeats = vehicleTotalSeats ?? 50;
-  const seatsValid = isFullPrivate || (Number.isInteger(seatsNumber) && seatsNumber >= 1 && seatsNumber <= maxSeats);
+  const listedSeats = vehicleTotalSeats ?? 50;
+  const remainingSeats = parseQuantity(snapshot.availableQuantity) ?? listedSeats;
+  const maxSeats = Math.max(0, Math.min(listedSeats, remainingSeats));
+  const seatsValid =
+    isFullPrivate ||
+    (maxSeats >= 1 && Number.isInteger(seatsNumber) && seatsNumber >= 1 && seatsNumber <= maxSeats);
   const priceNumber = Number(price);
   const priceValid = price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
   const vehicleValid = !requiresVehicle || Boolean(selectedVehicleId);
@@ -499,10 +529,15 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
             {!isFullPrivate ? (
               <SeatsStepper
                 label={t('dashboard.listings.detail.offer.seatsLabel')}
+                hint={t('dashboard.listings.detail.offer.seatsRemaining', { count: maxSeats })}
                 required
-                value={Number.isInteger(seatsNumber) && seatsNumber >= 1 ? seatsNumber : 1}
+                value={
+                  Number.isInteger(seatsNumber) && seatsNumber >= 1
+                    ? Math.min(seatsNumber, Math.max(1, maxSeats))
+                    : 1
+                }
                 min={1}
-                max={maxSeats}
+                max={Math.max(1, maxSeats)}
                 onChange={(next) => setSeats(String(next))}
               />
             ) : null}

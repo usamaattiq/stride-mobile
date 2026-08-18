@@ -545,6 +545,7 @@
           "selectVehicleTitle": "Select vehicle",
           "changeVehicle": "Change vehicle",
           "seatsLabel": "Seats",
+          "seatsRemaining": "{{count}} remaining",
           "seatsPlaceholder": "Number of seats",
           "pricePerSeatLabel": "Price per seat",
           "priceFullVehicleLabel": "Full vehicle price",
