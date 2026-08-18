@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { VehicleListItem } from '@/features/dashboard/components/VehicleListContent';
@@ -109,7 +109,6 @@ export type OfferResponseCardProps = {
 export function OfferResponseCard({
   tag,
   tagTone = 'muted',
-  cardTone = 'default',
   name,
   verified = false,
   priceLabel,
@@ -133,13 +132,7 @@ export function OfferResponseCard({
   const phone = whatsappPhone?.trim() || null;
 
   return (
-    <View
-      style={[
-        styles.card,
-        cardTone === 'selected' && styles.cardSelected,
-        cardTone === 'confirmed' && styles.cardConfirmed,
-      ]}
-    >
+    <View style={styles.card}>
       <View style={styles.headerRow}>
         <View
           style={[
@@ -193,14 +186,7 @@ export function OfferResponseCard({
       <View style={styles.identityRow}>
         <View style={styles.identity}>
           <View style={styles.avatar}>
-            <AppText
-              weight="bold"
-              style={[
-                styles.avatarInitial,
-                cardTone === 'confirmed' && styles.badgeTextConfirmed,
-                cardTone === 'selected' && styles.badgeTextSelected,
-              ]}
-            >
+            <AppText weight="bold" style={styles.avatarInitial}>
               {initial}
             </AppText>
           </View>
@@ -274,14 +260,23 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#F3F4F6',
     borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
     padding: spacing.sm,
     gap: spacing.xs,
-  },
-  cardSelected: {
-    backgroundColor: colors.accent.amber.soft,
-  },
-  cardConfirmed: {
-    backgroundColor: colors.accent.green.soft,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#111827',
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 0 },
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {},
+    }),
+    boxShadow: '0px 0px 10px rgba(17, 24, 39, 0.12)',
   },
   headerRow: {
     flexDirection: 'row',

@@ -108,6 +108,8 @@ export function ListingDetailScreen(): React.ReactElement {
   // (app default is Android pan, which leaves the focused field covered).
   useResizeMode();
 
+  const pagerPageWidth = pageWidth + spacing.md * 2;
+
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
       setTab(next);
@@ -115,35 +117,35 @@ export function ListingDetailScreen(): React.ReactElement {
         return;
       }
       const index = tabToIndex(next);
-      pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+      pagerRef.current?.scrollTo({ x: index * pagerPageWidth, animated });
       if (!animated) {
-        scrollX.setValue(index * pageWidth);
+        scrollX.setValue(index * pagerPageWidth);
       }
     },
-    [pageWidth, scrollX],
+    [pageWidth, pagerPageWidth, scrollX],
   );
 
   const animatedTabIndex = React.useMemo(() => {
-    if (pageWidth <= 0) {
+    if (pagerPageWidth <= 0) {
       return undefined;
     }
     return scrollX.interpolate({
-      inputRange: [0, pageWidth],
+      inputRange: [0, pagerPageWidth],
       outputRange: [0, 1],
       extrapolate: 'clamp',
     });
-  }, [pageWidth, scrollX]);
+  }, [pagerPageWidth, scrollX]);
 
   const syncTabFromOffset = React.useCallback(
     (offsetX: number) => {
-      if (pageWidth <= 0) {
+      if (pagerPageWidth <= 0) {
         return;
       }
-      const index = Math.round(offsetX / pageWidth);
+      const index = Math.round(offsetX / pagerPageWidth);
       const nextTab = indexToTab(index);
       setTab((current) => (current === nextTab ? current : nextTab));
     },
-    [pageWidth],
+    [pagerPageWidth],
   );
 
   const onPagerScrollEnd = React.useCallback(
@@ -173,9 +175,9 @@ export function ListingDetailScreen(): React.ReactElement {
       if (!hasPositionedPagerRef.current || widthChanged) {
         hasPositionedPagerRef.current = true;
         const index = tabToIndex(tab);
-        scrollX.setValue(index * width);
+        scrollX.setValue(index * (width + spacing.md * 2));
         requestAnimationFrame(() => {
-          pagerRef.current?.scrollTo({ x: index * width, animated: false });
+          pagerRef.current?.scrollTo({ x: index * (width + spacing.md * 2), animated: false });
         });
       }
     },
@@ -587,7 +589,7 @@ export function ListingDetailScreen(): React.ReactElement {
         ) : undefined
       }
     >
-      <View style={styles.content}>
+      <View style={styles.content} onLayout={onPagerLayout}>
         <ListingCard trip={trip} showPhotoCount />
 
         {!isOwnListing ? (
@@ -636,7 +638,7 @@ export function ListingDetailScreen(): React.ReactElement {
               animatedIndex={animatedTabIndex}
             />
 
-            <View style={styles.pager} onLayout={onPagerLayout}>
+            <View style={[styles.pagerBleed, { width: pagerPageWidth }]}>
               <Animated.ScrollView
                 ref={pagerRef}
                 horizontal
@@ -653,7 +655,8 @@ export function ListingDetailScreen(): React.ReactElement {
                 onMomentumScrollEnd={onPagerScrollEnd}
                 scrollEventThrottle={16}
               >
-                <View style={[styles.page, { width: pageWidth }]}>
+                <View style={[styles.page, { width: pagerPageWidth }]}>
+                  <View style={styles.pageInner}>
                   <TripDetailsOverview
                     description={description}
                     fromCity={fromCity}
@@ -663,9 +666,11 @@ export function ListingDetailScreen(): React.ReactElement {
                     departurePoint={trip.departurePoint}
                     arrivalPoint={trip.arrivalPoint}
                   />
+                  </View>
                 </View>
 
-                <View style={[styles.page, { width: pageWidth }]}>
+                <View style={[styles.page, { width: pagerPageWidth }]}>
+                  <View style={styles.pageInner}>
                   {trip.listingType === 'auction' ? (
                     <TripAuctionBidsPanel
                       key={auctionPanelKey}
@@ -686,6 +691,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       onRfqStatusChange={handleOwnerRfqStatusChange}
                     />
                   )}
+                  </View>
                 </View>
               </Animated.ScrollView>
             </View>
@@ -762,11 +768,17 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.xs,
   },
-  pager: {
+  pagerBleed: {
+    marginLeft: -spacing.md,
     overflow: 'hidden',
   },
   page: {
+    overflow: 'visible',
+  },
+  pageInner: {
+    paddingHorizontal: spacing.md,
     gap: spacing.xs,
+    overflow: 'visible',
   },
   headerActions: {
     flexDirection: 'row',
