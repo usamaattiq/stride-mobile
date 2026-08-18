@@ -689,6 +689,7 @@ const styles = StyleSheet.create({
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
+    paddingTop: 2,
   },
   bodyCountdownRow: {
     marginTop: 'auto',
@@ -696,7 +697,7 @@ const styles = StyleSheet.create({
   },
   priceAmount: {
     fontSize: 22,
-    lineHeight: 24,
+    lineHeight: 28,
     color: colors.primary,
   },
   priceSuffix: {
