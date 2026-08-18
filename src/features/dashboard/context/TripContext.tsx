@@ -23,6 +23,7 @@ type TripContextValue = {
   publishDraft: () => Promise<Trip | null>;
   removeTrip: (tripId: string) => Promise<void>;
   getTripById: (tripId: string) => Trip | undefined;
+  patchTrip: (tripId: string, patch: Partial<Trip>) => void;
 };
 
 const TripContext = React.createContext<TripContextValue | null>(null);
@@ -76,6 +77,12 @@ export function TripProvider({
     [trips],
   );
 
+  const patchTrip = React.useCallback((tripId: string, patch: Partial<Trip>) => {
+    setTrips((current) =>
+      current.map((item) => (item.id === tripId ? { ...item, ...patch } : item)),
+    );
+  }, []);
+
   const publishDraft = React.useCallback(async () => {
     const payload = draftToCreateTripPayload(draft);
     if (!payload) {
@@ -113,6 +120,7 @@ export function TripProvider({
       publishDraft,
       removeTrip,
       getTripById,
+      patchTrip,
     }),
     [
       trips,
@@ -127,6 +135,7 @@ export function TripProvider({
       publishDraft,
       removeTrip,
       getTripById,
+      patchTrip,
     ],
   );
 

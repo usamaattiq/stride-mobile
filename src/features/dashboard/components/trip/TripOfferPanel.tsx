@@ -35,6 +35,7 @@ import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { TripVehicleMode } from '../../types/trip.types';
 import type { Vehicle } from '../../types/vehicle.types';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import { OfferVehicleDetailSheet, type OfferVehicleDetailSource } from './OfferVehicleDetailSheet';
@@ -228,6 +229,19 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   React.useEffect(() => {
     load();
   }, [load]);
+
+  React.useEffect(() => {
+    if (!snapshot || isTerminalListingStatus(snapshot.status)) {
+      return undefined;
+    }
+    const timer = setInterval(() => {
+      void rfqApi
+        .getSnapshot(tripId)
+        .then((result) => applySnapshot(result))
+        .catch(() => undefined);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [applySnapshot, snapshot?.status, tripId]);
 
   React.useEffect(() => {
     if (!requiresVehicle) {

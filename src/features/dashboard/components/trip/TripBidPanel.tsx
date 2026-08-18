@@ -34,6 +34,7 @@ import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { Vehicle } from '../../types/vehicle.types';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { fromListVehicle, OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
@@ -237,9 +238,10 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
 
   // Poll while live so countdown / lead status stay fresh without a WS client.
   React.useEffect(() => {
-    const isLive =
-      snapshot?.status === 'live' || publicSnapshot?.status === 'live';
-    if (!isLive) {
+    const isOpen = snapshot != null && !isTerminalListingStatus(snapshot.status);
+    const publicOpen =
+      publicSnapshot != null && !isTerminalListingStatus(publicSnapshot.status);
+    if (!isOpen && !publicOpen) {
       return undefined;
     }
     const timer = setInterval(() => {

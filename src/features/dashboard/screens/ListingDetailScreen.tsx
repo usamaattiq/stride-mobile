@@ -72,7 +72,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
-  const { getTripById, removeTrip, refreshTrips } = useTrips();
+  const { getTripById, patchTrip, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
   const [trip, setTrip] = React.useState<Trip | null>(cached ?? null);
@@ -183,22 +183,40 @@ export function ListingDetailScreen(): React.ReactElement {
   );
 
   React.useEffect(() => {
-    if (cached) {
-      setTrip(cached);
-      setLoading(false);
-      return;
+    const seeded = getTripById(route.params.tripId);
+    if (seeded) {
+      setTrip(seeded);
     }
 
-    setLoading(true);
+    let cancelled = false;
+    setLoading(!seeded);
     setLoadError(null);
     void tripApi
       .getById(route.params.tripId)
-      .then((dto) => setTrip(mapTripDtoToTrip(dto)))
-      .catch((error) => {
-        setLoadError(getErrorMessage(error, t('dashboard.listings.detail.loadFailed')));
+      .then((dto) => {
+        if (!cancelled) {
+          const next = mapTripDtoToTrip(dto);
+          setTrip(next);
+          patchTrip(next.id, next);
+        }
       })
-      .finally(() => setLoading(false));
-  }, [cached, route.params.tripId, t]);
+      .catch((error) => {
+        if (!cancelled && !seeded) {
+          setLoadError(getErrorMessage(error, t('dashboard.listings.detail.loadFailed')));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Only reload when the listing id changes — status polls patch local state in place.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getTripById/patchTrip would retrigger and overwrite live tags
+  }, [route.params.tripId, t]);
 
   const requestedConversationId = route.params.conversationId;
   React.useEffect(() => {
@@ -344,8 +362,15 @@ export function ListingDetailScreen(): React.ReactElement {
             }
           : current,
       );
+      patchTrip(route.params.tripId, {
+        rfqStatus: update.rfqStatus,
+        myOfferStatus: update.myOfferStatus,
+        myOfferPrice: update.myOfferPrice,
+        counterpartyName: update.counterpartyName,
+        counterpartyPhone: update.counterpartyPhone,
+      });
     },
-    [],
+    [patchTrip, route.params.tripId],
   );
 
   const handleBidChange = React.useCallback(
@@ -372,8 +397,46 @@ export function ListingDetailScreen(): React.ReactElement {
             }
           : current,
       );
+      patchTrip(route.params.tripId, {
+        auctionStatus: update.auctionStatus,
+        auctionStatusLabel: update.auctionStatusLabel,
+        auctionStatusVariant: update.auctionStatusVariant,
+        myBidStatus: update.myBidStatus,
+        myBidAmount: update.myBidAmount,
+        counterpartyName: update.counterpartyName,
+        counterpartyPhone: update.counterpartyPhone,
+      });
     },
-    [],
+    [patchTrip, route.params.tripId],
+  );
+
+  const handleOwnerRfqStatusChange = React.useCallback(
+    (rfqStatus: Trip['rfqStatus']) => {
+      setTrip((current) => (current ? { ...current, rfqStatus } : current));
+      patchTrip(route.params.tripId, { rfqStatus });
+    },
+    [patchTrip, route.params.tripId],
+  );
+
+  const handleOwnerAuctionStatusChange = React.useCallback(
+    (update: {
+      auctionStatus: Trip['auctionStatus'];
+      auctionStatusLabel: Trip['auctionStatusLabel'];
+      auctionStatusVariant: Trip['auctionStatusVariant'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              auctionStatus: update.auctionStatus,
+              auctionStatusLabel: update.auctionStatusLabel,
+              auctionStatusVariant: update.auctionStatusVariant,
+            }
+          : current,
+      );
+      patchTrip(route.params.tripId, update);
+    },
+    [patchTrip, route.params.tripId],
   );
 
   if (loading) {
@@ -610,6 +673,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       routeLabel={`${fromCity} → ${toCity}`}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
+                      onAuctionStatusChange={handleOwnerAuctionStatusChange}
                     />
                   ) : (
                     <TripResponsesPanel
@@ -619,6 +683,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       vehicleTotalSeats={trip.vehicleTotalSeats}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
+                      onRfqStatusChange={handleOwnerRfqStatusChange}
                     />
                   )}
                 </View>

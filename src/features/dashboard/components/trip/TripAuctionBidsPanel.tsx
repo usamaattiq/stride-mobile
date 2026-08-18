@@ -16,6 +16,7 @@ import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
@@ -25,6 +26,11 @@ export type TripAuctionBidsPanelProps = {
   routeLabel: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
+  onAuctionStatusChange?: (update: {
+    auctionStatus: AuctionOwnerSnapshot['status'];
+    auctionStatusLabel: string;
+    auctionStatusVariant: AuctionOwnerSnapshot['statusVariant'];
+  }) => void;
 };
 
 export function TripAuctionBidsPanel({
@@ -32,6 +38,7 @@ export function TripAuctionBidsPanel({
   routeLabel,
   isPassengerRequest = false,
   onCountChange,
+  onAuctionStatusChange,
 }: TripAuctionBidsPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
@@ -53,8 +60,13 @@ export function TripAuctionBidsPanel({
     (ownerSnapshot: AuctionOwnerSnapshot) => {
       setSnapshot(ownerSnapshot);
       onCountChange?.(ownerSnapshot.participantCount);
+      onAuctionStatusChange?.({
+        auctionStatus: ownerSnapshot.status,
+        auctionStatusLabel: ownerSnapshot.statusLabel,
+        auctionStatusVariant: ownerSnapshot.statusVariant,
+      });
     },
-    [onCountChange],
+    [onCountChange, onAuctionStatusChange],
   );
 
   const load = React.useCallback(() => {
@@ -76,7 +88,7 @@ export function TripAuctionBidsPanel({
   }, [load]);
 
   React.useEffect(() => {
-    if (!snapshot || snapshot.status.replaceAll('_', '-') !== 'live') {
+    if (!snapshot || isTerminalListingStatus(snapshot.status)) {
       return undefined;
     }
     const timer = setInterval(() => {
@@ -90,7 +102,7 @@ export function TripAuctionBidsPanel({
         .catch(() => undefined);
     }, 5000);
     return () => clearInterval(timer);
-  }, [applySnapshot, snapshot, tripId]);
+  }, [applySnapshot, snapshot?.status, tripId]);
 
   const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);

@@ -14,6 +14,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import type { TripVehicleMode } from '../../types/trip.types';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
@@ -26,6 +27,7 @@ export type TripResponsesPanelProps = {
   /** Passenger request listings receive offers from drivers. */
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
+  onRfqStatusChange?: (status: RfqOwnerSnapshot['status']) => void;
 };
 
 const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
@@ -37,6 +39,13 @@ const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
   timed_out: 'muted',
   lapsed: 'muted',
 };
+
+function ownerListingRfqStatus(snapshot: RfqOwnerSnapshot): RfqOwnerSnapshot['status'] {
+  if (snapshot.status === 'live' && snapshot.offers.some((offer) => offer.status === 'confirmed')) {
+    return 'confirmed';
+  }
+  return snapshot.status;
+}
 
 /** Offers arrive newest-first; keep only the latest response per passenger. */
 function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
@@ -59,6 +68,7 @@ export function TripResponsesPanel({
   vehicleTotalSeats,
   isPassengerRequest = false,
   onCountChange,
+  onRfqStatusChange,
 }: TripResponsesPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
@@ -88,16 +98,38 @@ export function TripResponsesPanel({
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
         const offers = latestOffersByResponder(ownerSnapshot.offers);
-        setSnapshot({ ...ownerSnapshot, offers });
+        const next = { ...ownerSnapshot, offers };
+        setSnapshot(next);
         onCountChange?.(offers.length);
+        onRfqStatusChange?.(ownerListingRfqStatus(next));
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed'))))
       .finally(() => setLoading(false));
-  }, [tripId, t, onCountChange]);
+  }, [tripId, t, onCountChange, onRfqStatusChange]);
 
   React.useEffect(() => {
     load();
   }, [load]);
+
+  React.useEffect(() => {
+    if (!snapshot || isTerminalListingStatus(snapshot.status)) {
+      return undefined;
+    }
+    const timer = setInterval(() => {
+      void rfqApi
+        .getSnapshot(tripId)
+        .then((result) => {
+          const ownerSnapshot = result as RfqOwnerSnapshot;
+          const offers = latestOffersByResponder(ownerSnapshot.offers);
+          const next = { ...ownerSnapshot, offers };
+          setSnapshot(next);
+          onCountChange?.(offers.length);
+          onRfqStatusChange?.(ownerListingRfqStatus(next));
+        })
+        .catch(() => undefined);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
 
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
@@ -114,8 +146,10 @@ export function TripResponsesPanel({
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
         const offers = latestOffersByResponder(ownerSnapshot.offers);
-        setSnapshot({ ...ownerSnapshot, offers });
+        const next = { ...ownerSnapshot, offers };
+        setSnapshot(next);
         onCountChange?.(offers.length);
+        onRfqStatusChange?.(ownerListingRfqStatus(next));
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {
