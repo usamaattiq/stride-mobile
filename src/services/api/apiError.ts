@@ -16,6 +16,7 @@ export type ApiErrorCode =
   | 'OTP_EXPIRED'
   | 'OTP_DELIVERY_FAILED'
   | 'RATE_LIMITED'
+  | 'ACCOUNT_DELETION_BLOCKED'
   | (string & {});
 
 export class ApiError extends Error {

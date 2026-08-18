@@ -10,6 +10,8 @@ import { Button } from './Button';
 export type AppDialogAction = {
   label: string;
   onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
 };
 
 export type AppDialogProps = {
@@ -77,6 +79,8 @@ export function AppDialog({
               onPress={confirmAction.onPress}
               variant="primary"
               style={styles.actionButton}
+              disabled={confirmAction.disabled}
+              loading={confirmAction.loading}
             />
           </View>
         </View>

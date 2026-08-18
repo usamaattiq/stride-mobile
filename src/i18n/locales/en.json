@@ -633,7 +633,12 @@
         "subtitle": "Permanently close this account",
         "confirm": "This will deactivate your account and hide your listings. You can create a new account with the same number later.",
         "confirmCta": "Delete",
-        "failed": "Couldn't delete your account. Please try again."
+        "failed": "Couldn't delete your account. Please try again.",
+        "checking": "Checking whether you can delete this account…",
+        "blockedOwner": "You still have a trip that isn't completed or closed. Finish or close it before deleting your account.",
+        "blockedSender": "You have an active bid or offer. Withdraw it, or wait until that request is completed or closed, before deleting your account.",
+        "blockedBoth": "You still have an open trip and an active bid or offer. Finish, close, or withdraw them before deleting your account.",
+        "blockedGeneric": "You still have open trip activity. Finish or close it before deleting your account."
       }
     },
     "settings": {
