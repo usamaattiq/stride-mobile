@@ -21,46 +21,65 @@ import { useResizeMode } from 'react-native-keyboard-controller';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { auctionApi } from '@/services/api/auctionApi';
+import { chatApi } from '@/services/api/chatApi';
+import type { TripConversationInboxItem } from '@/services/api/chatApi.types';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
 import { formatTripDateTime } from '../components/trip/dateRangeUtils';
 import { TripAuctionBidsPanel } from '../components/trip/TripAuctionBidsPanel';
-import { TripBidPanel } from '../components/trip/TripBidPanel';
+import { TripBidPanel, type TripBidPanelHandle } from '../components/trip/TripBidPanel';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
-import { TripOfferPanel } from '../components/trip/TripOfferPanel';
+import { TripOfferPanel, type TripOfferPanelHandle } from '../components/trip/TripOfferPanel';
 import { TripResponsesPanel } from '../components/trip/TripResponsesPanel';
+import { TripMessagingSheet } from '../components/trip/TripMessagingSheet';
 import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import { getListingStatusBucket } from '../utils/listingFilters';
+import { getListingExpiresAtMs, getListingStartsAtMs } from '../utils/listingWindow';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
 
 type DetailTab = 'overview' | 'responses';
 
+type NotificationChatTarget = {
+  conversationId: string;
+  counterpartyName: string | null;
+  counterpartyAvatarUrl?: string | null;
+  counterpartyRole?: TripConversationInboxItem['counterpartyRole'];
+};
+
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
+
+function tabToIndex(tab: DetailTab): number {
+  return tab === 'overview' ? 0 : 1;
+}
+
+function indexToTab(index: number): DetailTab {
+  return index === 0 ? 'overview' : 'responses';
+}
 
 export function ListingDetailScreen(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
-  const { getTripById, removeTrip, refreshTrips } = useTrips();
+  const { getTripById, patchTrip, removeTrip, refreshTrips } = useTrips();
 
   const cached = getTripById(route.params.tripId);
   const [trip, setTrip] = React.useState<Trip | null>(cached ?? null);
   const [loading, setLoading] = React.useState(!cached);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [tab, setTab] = React.useState<DetailTab>('overview');
+  const [tab, setTab] = React.useState<DetailTab>('responses');
   const [pageWidth, setPageWidth] = React.useState(INITIAL_PAGE_WIDTH);
   const pagerRef = React.useRef<ScrollView>(null);
   const scrollX = React.useRef(new Animated.Value(0)).current;
@@ -73,6 +92,14 @@ export function ListingDetailScreen(): React.ReactElement {
   const [canCloseAuction, setCanCloseAuction] = React.useState(false);
   const [auctionPanelKey, setAuctionPanelKey] = React.useState(0);
   const [responsesCount, setResponsesCount] = React.useState(0);
+  const [canWithdrawOffer, setCanWithdrawOffer] = React.useState(false);
+  const offerPanelRef = React.useRef<TripOfferPanelHandle>(null);
+  const bidPanelRef = React.useRef<TripBidPanelHandle>(null);
+  const [notificationChat, setNotificationChat] = React.useState<NotificationChatTarget | null>(
+    null,
+  );
+  const fromCity = useLocalizedCityName(trip?.departureCity, trip?.departurePoint);
+  const toCity = useLocalizedCityName(trip?.arrivalCity, trip?.arrivalPoint);
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
@@ -82,42 +109,44 @@ export function ListingDetailScreen(): React.ReactElement {
   // (app default is Android pan, which leaves the focused field covered).
   useResizeMode();
 
+  const pagerPageWidth = pageWidth + spacing.md * 2;
+
   const selectTab = React.useCallback(
     (next: DetailTab, animated = true) => {
       setTab(next);
       if (pageWidth <= 0) {
         return;
       }
-      const index = next === 'overview' ? 0 : 1;
-      pagerRef.current?.scrollTo({ x: index * pageWidth, animated });
+      const index = tabToIndex(next);
+      pagerRef.current?.scrollTo({ x: index * pagerPageWidth, animated });
       if (!animated) {
-        scrollX.setValue(index * pageWidth);
+        scrollX.setValue(index * pagerPageWidth);
       }
     },
-    [pageWidth, scrollX],
+    [pageWidth, pagerPageWidth, scrollX],
   );
 
   const animatedTabIndex = React.useMemo(() => {
-    if (pageWidth <= 0) {
+    if (pagerPageWidth <= 0) {
       return undefined;
     }
     return scrollX.interpolate({
-      inputRange: [0, pageWidth],
+      inputRange: [0, pagerPageWidth],
       outputRange: [0, 1],
       extrapolate: 'clamp',
     });
-  }, [pageWidth, scrollX]);
+  }, [pagerPageWidth, scrollX]);
 
   const syncTabFromOffset = React.useCallback(
     (offsetX: number) => {
-      if (pageWidth <= 0) {
+      if (pagerPageWidth <= 0) {
         return;
       }
-      const index = Math.round(offsetX / pageWidth);
-      const nextTab: DetailTab = index === 0 ? 'overview' : 'responses';
+      const index = Math.round(offsetX / pagerPageWidth);
+      const nextTab = indexToTab(index);
       setTab((current) => (current === nextTab ? current : nextTab));
     },
-    [pageWidth],
+    [pagerPageWidth],
   );
 
   const onPagerScrollEnd = React.useCallback(
@@ -127,39 +156,104 @@ export function ListingDetailScreen(): React.ReactElement {
     [syncTabFromOffset],
   );
 
+  const hasPositionedPagerRef = React.useRef(false);
+
+  React.useEffect(() => {
+    hasPositionedPagerRef.current = false;
+    setTab('responses');
+  }, [route.params.tripId]);
+
   const onPagerLayout = React.useCallback(
     (event: LayoutChangeEvent) => {
       const width = event.nativeEvent.layout.width;
-      if (width <= 0 || width === pageWidth) {
+      if (width <= 0) {
         return;
       }
-      setPageWidth(width);
-      const index = tab === 'overview' ? 0 : 1;
-      scrollX.setValue(index * width);
-      requestAnimationFrame(() => {
-        pagerRef.current?.scrollTo({ x: index * width, animated: false });
-      });
+      const widthChanged = width !== pageWidth;
+      if (widthChanged) {
+        setPageWidth(width);
+      }
+      if (!hasPositionedPagerRef.current || widthChanged) {
+        hasPositionedPagerRef.current = true;
+        const index = tabToIndex(tab);
+        scrollX.setValue(index * (width + spacing.md * 2));
+        requestAnimationFrame(() => {
+          pagerRef.current?.scrollTo({ x: index * (width + spacing.md * 2), animated: false });
+        });
+      }
     },
     [pageWidth, scrollX, tab],
   );
 
   React.useEffect(() => {
-    if (cached) {
-      setTrip(cached);
-      setLoading(false);
-      return;
+    const seeded = getTripById(route.params.tripId);
+    if (seeded) {
+      setTrip(seeded);
     }
 
-    setLoading(true);
+    let cancelled = false;
+    setLoading(!seeded);
     setLoadError(null);
     void tripApi
       .getById(route.params.tripId)
-      .then((dto) => setTrip(mapTripDtoToTrip(dto)))
-      .catch((error) => {
-        setLoadError(getErrorMessage(error, t('dashboard.listings.detail.loadFailed')));
+      .then((dto) => {
+        if (!cancelled) {
+          const next = mapTripDtoToTrip(dto);
+          setTrip(next);
+          patchTrip(next.id, next);
+        }
       })
-      .finally(() => setLoading(false));
-  }, [cached, route.params.tripId, t]);
+      .catch((error) => {
+        if (!cancelled && !seeded) {
+          setLoadError(getErrorMessage(error, t('dashboard.listings.detail.loadFailed')));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Only reload when the listing id changes — status polls patch local state in place.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getTripById/patchTrip would retrigger and overwrite live tags
+  }, [route.params.tripId, t]);
+
+  const requestedConversationId = route.params.conversationId;
+  React.useEffect(() => {
+    if (!requestedConversationId) {
+      return;
+    }
+    setNotificationChat({
+      conversationId: requestedConversationId,
+      counterpartyName: null,
+    });
+    navigation.setParams({ conversationId: undefined });
+    void chatApi
+      .listInbox()
+      .then((inbox) => {
+        const match = inbox.find((row) => row.id === requestedConversationId);
+        if (!match) {
+          return;
+        }
+        setNotificationChat((current) =>
+          current?.conversationId === requestedConversationId
+            ? {
+                conversationId: match.id,
+                counterpartyName: match.counterpartyName,
+                counterpartyAvatarUrl: match.counterpartyAvatarUrl,
+                counterpartyRole: match.counterpartyRole,
+              }
+            : current,
+        );
+        if (match.viewerIsOwner) {
+          navigation.setParams({ viewerIsOwner: true });
+        }
+      })
+      .catch(() => undefined);
+  }, [navigation, requestedConversationId]);
 
   const reloadTrip = React.useCallback(async () => {
     setLoadError(null);
@@ -238,6 +332,19 @@ export function ListingDetailScreen(): React.ReactElement {
 
   const goBack = () => navigation.goBack();
 
+  const notificationChatSheet = (
+    <TripMessagingSheet
+      key={notificationChat?.conversationId ?? 'notification-chat'}
+      visible={notificationChat != null}
+      onClose={() => setNotificationChat(null)}
+      tripId={route.params.tripId}
+      existingConversationId={notificationChat?.conversationId}
+      counterpartyName={notificationChat?.counterpartyName ?? null}
+      counterpartyAvatarUrl={notificationChat?.counterpartyAvatarUrl}
+      counterpartyRole={notificationChat?.counterpartyRole ?? null}
+    />
+  );
+
   const handleOfferChange = React.useCallback(
     (update: {
       rfqStatus: Trip['rfqStatus'];
@@ -258,8 +365,15 @@ export function ListingDetailScreen(): React.ReactElement {
             }
           : current,
       );
+      patchTrip(route.params.tripId, {
+        rfqStatus: update.rfqStatus,
+        myOfferStatus: update.myOfferStatus,
+        myOfferPrice: update.myOfferPrice,
+        counterpartyName: update.counterpartyName,
+        counterpartyPhone: update.counterpartyPhone,
+      });
     },
-    [],
+    [patchTrip, route.params.tripId],
   );
 
   const handleBidChange = React.useCallback(
@@ -286,8 +400,46 @@ export function ListingDetailScreen(): React.ReactElement {
             }
           : current,
       );
+      patchTrip(route.params.tripId, {
+        auctionStatus: update.auctionStatus,
+        auctionStatusLabel: update.auctionStatusLabel,
+        auctionStatusVariant: update.auctionStatusVariant,
+        myBidStatus: update.myBidStatus,
+        myBidAmount: update.myBidAmount,
+        counterpartyName: update.counterpartyName,
+        counterpartyPhone: update.counterpartyPhone,
+      });
     },
-    [],
+    [patchTrip, route.params.tripId],
+  );
+
+  const handleOwnerRfqStatusChange = React.useCallback(
+    (rfqStatus: Trip['rfqStatus']) => {
+      setTrip((current) => (current ? { ...current, rfqStatus } : current));
+      patchTrip(route.params.tripId, { rfqStatus });
+    },
+    [patchTrip, route.params.tripId],
+  );
+
+  const handleOwnerAuctionStatusChange = React.useCallback(
+    (update: {
+      auctionStatus: Trip['auctionStatus'];
+      auctionStatusLabel: Trip['auctionStatusLabel'];
+      auctionStatusVariant: Trip['auctionStatusVariant'];
+    }) => {
+      setTrip((current) =>
+        current
+          ? {
+              ...current,
+              auctionStatus: update.auctionStatus,
+              auctionStatusLabel: update.auctionStatusLabel,
+              auctionStatusVariant: update.auctionStatusVariant,
+            }
+          : current,
+      );
+      patchTrip(route.params.tripId, update);
+    },
+    [patchTrip, route.params.tripId],
   );
 
   if (loading) {
@@ -321,14 +473,11 @@ export function ListingDetailScreen(): React.ReactElement {
           </AppText>
           <Button label={t('common.ok')} onPress={goBack} />
         </View>
+        {notificationChatSheet}
       </AuthScaffold>
     );
   }
 
-  const fromCity = cityDisplayName(trip.departureCity.label);
-  const toCity = trip.arrivalCity
-    ? cityDisplayName(trip.arrivalCity.label)
-    : '—';
   const classLabel = trip.vehicleClass
     ? t(
         VEHICLE_CLASS_OPTIONS.find((item) => item.id === trip.vehicleClass)?.labelKey ??
@@ -340,12 +489,18 @@ export function ListingDetailScreen(): React.ReactElement {
       ? t('trips.create.vehicleModeFullPrivate')
       : t('trips.create.vehicleModeShared');
   const locale = i18n.language;
+  const departureWhen = trip.departureOpen
+    ? t('dashboard.listings.card.open')
+    : formatTripDateTime(trip.departureAt, locale);
+  const arrivalWhen = trip.departureOpen
+    ? undefined
+    : formatTripDateTime(trip.arrivalAt, locale);
   const vehicleTitle = trip.vehicleTitle ?? classLabel;
   const description =
     trip.description?.trim() ||
     t('dashboard.listings.detail.descriptionBody', {
       from: fromCity,
-      to: toCity,
+      to: toCity || '—',
       vehicle: vehicleTitle,
       mode: modeLabel,
     });
@@ -366,7 +521,7 @@ export function ListingDetailScreen(): React.ReactElement {
   // Hide delete once the listing is past / completed / closed / expired / ended.
   const canRemoveListing =
     isOwnListing && trip != null && getListingStatusBucket(trip) === 'live';
-  const showHeaderActions = canCloseAuction || canRemoveListing;
+  const showHeaderActions = canCloseAuction || canRemoveListing || canWithdrawOffer;
 
   return (
     <AuthScaffold
@@ -382,6 +537,27 @@ export function ListingDetailScreen(): React.ReactElement {
       headerRight={
         showHeaderActions ? (
           <View style={styles.headerActions}>
+            {canWithdrawOffer ? (
+              <Pressable
+                onPress={() => {
+                  offerPanelRef.current?.openWithdrawConfirm();
+                  bidPanelRef.current?.openWithdrawConfirm();
+                }}
+                style={styles.headerActionButton}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  trip.listingType === 'auction'
+                    ? t('dashboard.listings.detail.bid.withdraw')
+                    : t('dashboard.listings.detail.offer.withdraw')
+                }
+              >
+                <FontAwesome name="undo" size={13} color={colors.white} />
+                <AppText weight="semibold" style={styles.headerActionLabel}>
+                  {t('dashboard.listings.detail.offer.withdrawConfirmAction')}
+                </AppText>
+              </Pressable>
+            ) : null}
             {canCloseAuction ? (
               <Pressable
                 onPress={() => {
@@ -393,7 +569,10 @@ export function ListingDetailScreen(): React.ReactElement {
                 accessibilityRole="button"
                 accessibilityLabel={t('dashboard.listings.detail.auctionBids.close')}
               >
-                <FontAwesome name="stop-circle" size={17} color={colors.white} />
+                <FontAwesome name="stop-circle" size={14} color={colors.white} />
+                <AppText weight="semibold" style={styles.headerActionLabel}>
+                  {t('common.close')}
+                </AppText>
               </Pressable>
             ) : null}
             {canRemoveListing ? (
@@ -411,36 +590,45 @@ export function ListingDetailScreen(): React.ReactElement {
         ) : undefined
       }
     >
-      <View style={styles.content}>
+      <View style={styles.content} onLayout={onPagerLayout}>
         <ListingCard trip={trip} showPhotoCount />
 
         {!isOwnListing ? (
           <>
             <TripDetailsOverview
               description={description}
+              listingVehicle={trip.listingVehicle}
               fromCity={fromCity}
               toCity={toCity}
-              departureWhen={formatTripDateTime(trip.departureAt, locale)}
-              arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+              departureWhen={departureWhen}
+              arrivalWhen={arrivalWhen}
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
             {trip.listingType === 'auction' ? (
               <TripBidPanel
+                ref={bidPanelRef}
                 tripId={trip.id}
+                routeLabel={`${fromCity} → ${toCity}`}
                 isPassengerRequest={trip.vehicleId == null}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
+                listingStartsAtMs={getListingStartsAtMs(trip)}
+                listingExpiresAtMs={getListingExpiresAtMs(trip)}
                 onBidChange={handleBidChange}
+                onCanWithdrawChange={setCanWithdrawOffer}
               />
             ) : (
               <TripOfferPanel
+                ref={offerPanelRef}
                 tripId={trip.id}
+                routeLabel={`${fromCity} → ${toCity}`}
                 vehicleMode={trip.vehicleMode}
                 vehicleTotalSeats={trip.vehicleTotalSeats}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
                 onOfferChange={handleOfferChange}
+                onCanWithdrawChange={setCanWithdrawOffer}
               />
             )}
           </>
@@ -453,7 +641,7 @@ export function ListingDetailScreen(): React.ReactElement {
               animatedIndex={animatedTabIndex}
             />
 
-            <View style={styles.pager} onLayout={onPagerLayout}>
+            <View style={[styles.pagerBleed, { width: pagerPageWidth }]}>
               <Animated.ScrollView
                 ref={pagerRef}
                 horizontal
@@ -470,35 +658,43 @@ export function ListingDetailScreen(): React.ReactElement {
                 onMomentumScrollEnd={onPagerScrollEnd}
                 scrollEventThrottle={16}
               >
-                <View style={[styles.page, { width: pageWidth }]}>
+                <View style={[styles.page, { width: pagerPageWidth }]}>
+                  <View style={styles.pageInner}>
                   <TripDetailsOverview
                     description={description}
                     fromCity={fromCity}
                     toCity={toCity}
-                    departureWhen={formatTripDateTime(trip.departureAt, locale)}
-                    arrivalWhen={formatTripDateTime(trip.arrivalAt, locale)}
+                    departureWhen={departureWhen}
+                    arrivalWhen={arrivalWhen}
                     departurePoint={trip.departurePoint}
                     arrivalPoint={trip.arrivalPoint}
                   />
+                  </View>
                 </View>
 
-                <View style={[styles.page, { width: pageWidth }]}>
+                <View style={[styles.page, { width: pagerPageWidth }]}>
+                  <View style={styles.pageInner}>
                   {trip.listingType === 'auction' ? (
                     <TripAuctionBidsPanel
                       key={auctionPanelKey}
                       tripId={trip.id}
+                      routeLabel={`${fromCity} → ${toCity}`}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
+                      onAuctionStatusChange={handleOwnerAuctionStatusChange}
                     />
                   ) : (
                     <TripResponsesPanel
                       tripId={trip.id}
+                      routeLabel={`${fromCity} → ${toCity}`}
                       vehicleMode={trip.vehicleMode}
                       vehicleTotalSeats={trip.vehicleTotalSeats}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
+                      onRfqStatusChange={handleOwnerRfqStatusChange}
                     />
                   )}
+                  </View>
                 </View>
               </Animated.ScrollView>
             </View>
@@ -555,6 +751,7 @@ export function ListingDetailScreen(): React.ReactElement {
           onPress: handleRemove,
         }}
       />
+      {notificationChatSheet}
     </AuthScaffold>
   );
 }
@@ -574,11 +771,17 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.xs,
   },
-  pager: {
+  pagerBleed: {
+    marginLeft: -spacing.md,
     overflow: 'hidden',
   },
   page: {
+    overflow: 'visible',
+  },
+  pageInner: {
+    paddingHorizontal: spacing.md,
     gap: spacing.xs,
+    overflow: 'visible',
   },
   headerActions: {
     flexDirection: 'row',
@@ -586,11 +789,18 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   headerActionButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    height: 34,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  headerActionLabel: {
+    color: colors.white,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

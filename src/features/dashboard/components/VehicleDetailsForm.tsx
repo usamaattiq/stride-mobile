@@ -88,7 +88,6 @@ export function VehicleDetailsForm({
 
         <AuthTextField
           label={t('vehicles.fields.description')}
-          required
           value={draft.description}
           onChangeText={(value) => onChange({ description: value })}
           onBlur={() => markTouched('description')}

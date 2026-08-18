@@ -32,7 +32,11 @@ function isScheduleComplete(draft: TripDraft): boolean {
   if (draft.startMode === 'instant') {
     return true;
   }
-  return Boolean(draft.scheduledStartAt);
+  if (!draft.scheduledStartAt) {
+    return false;
+  }
+  const startsAt = Date.parse(draft.scheduledStartAt);
+  return Number.isFinite(startsAt) && startsAt > Date.now() + 30_000;
 }
 
 export function TripScheduleStep({
@@ -112,13 +116,18 @@ export function TripScheduleStep({
         </View>
 
         {draft.startMode === 'scheduled' ? (
-          <DateTimePickerField
-            label={t('trips.create.scheduledStart')}
-            value={draft.scheduledStartAt}
-            onChange={(scheduledStartAt) => onChange({ scheduledStartAt })}
-            minimumDate={new Date()}
-            required
-          />
+          <>
+            <DateTimePickerField
+              label={t('trips.create.scheduledStart')}
+              value={draft.scheduledStartAt}
+              onChange={(scheduledStartAt) => onChange({ scheduledStartAt })}
+              minimumDate={new Date()}
+              required
+            />
+            {draft.scheduledStartAt && !isScheduleComplete(draft) ? (
+              <AppText style={styles.scheduleHint}>{t('trips.create.scheduledStartFutureHint')}</AppText>
+            ) : null}
+          </>
         ) : null}
 
         <Button
@@ -217,5 +226,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: colors.text.secondary,
+  },
+  scheduleHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.primary,
   },
 });

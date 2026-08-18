@@ -1,6 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
@@ -13,25 +12,36 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
+import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
-import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripMessagingSheet } from './TripMessagingSheet';
-import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripAuctionBidsPanelProps = {
   tripId: string;
+  routeLabel: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
+  onAuctionStatusChange?: (update: {
+    auctionStatus: AuctionOwnerSnapshot['status'];
+    auctionStatusLabel: string;
+    auctionStatusVariant: AuctionOwnerSnapshot['statusVariant'];
+  }) => void;
 };
 
 export function TripAuctionBidsPanel({
   tripId,
+  routeLabel,
   isPassengerRequest = false,
   onCountChange,
+  onAuctionStatusChange,
 }: TripAuctionBidsPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const [snapshot, setSnapshot] = React.useState<AuctionOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -39,19 +49,24 @@ export function TripAuctionBidsPanel({
   const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
   const [chatTarget, setChatTarget] = React.useState<AuctionParticipantRank | null>(null);
 
-  const whatsappMessage = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.messageAsPassenger')
-    : t('dashboard.listings.detail.contact.messageAsDriver');
-  const contactTitle = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.driverContact')
-    : t('dashboard.listings.detail.contact.passengerContact');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: !isPassengerRequest,
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
 
   const applySnapshot = React.useCallback(
     (ownerSnapshot: AuctionOwnerSnapshot) => {
       setSnapshot(ownerSnapshot);
       onCountChange?.(ownerSnapshot.participantCount);
+      onAuctionStatusChange?.({
+        auctionStatus: ownerSnapshot.status,
+        auctionStatusLabel: ownerSnapshot.statusLabel,
+        auctionStatusVariant: ownerSnapshot.statusVariant,
+      });
     },
-    [onCountChange],
+    [onCountChange, onAuctionStatusChange],
   );
 
   const load = React.useCallback(() => {
@@ -73,7 +88,7 @@ export function TripAuctionBidsPanel({
   }, [load]);
 
   React.useEffect(() => {
-    if (!snapshot || snapshot.status !== 'live') {
+    if (!snapshot || isTerminalListingStatus(snapshot.status)) {
       return undefined;
     }
     const timer = setInterval(() => {
@@ -87,7 +102,7 @@ export function TripAuctionBidsPanel({
         .catch(() => undefined);
     }, 5000);
     return () => clearInterval(timer);
-  }, [applySnapshot, snapshot, tripId]);
+  }, [applySnapshot, snapshot?.status, tripId]);
 
   const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);
@@ -122,36 +137,26 @@ export function TripAuctionBidsPanel({
     return <View />;
   }
 
+  const auctionStatus = snapshot.status.replaceAll('_', '-');
+  const isLive = auctionStatus === 'live';
   const isAwaiting =
-    snapshot.status === 'awaiting_confirmation' || snapshot.status === 'awaiting_action';
+    auctionStatus === 'awaiting-confirmation' || auctionStatus === 'awaiting-action';
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <View style={styles.headerCopy}>
+      <View style={styles.headerCopy}>
+        <View style={styles.titleRow}>
           <AppText weight="bold" style={styles.headerTitle}>
             {t('dashboard.listings.detail.auctionBids.title')}
           </AppText>
-          <AppText style={styles.headerMeta}>
-            {snapshot.statusLabel}
-            {' · '}
+        </View>
+        <View style={styles.highestBidChip}>
+          <AppText weight="semibold" style={styles.headerMeta}>
             {snapshot.auctionType === 'reverse'
-              ? t('dashboard.listings.detail.bid.lowestWins')
-              : t('dashboard.listings.detail.bid.highestWins')}
-            {' · '}
-            {t('dashboard.listings.detail.auctionBids.currentAmount', {
-              amount: snapshot.currentAmount,
-            })}
+              ? t('dashboard.listings.detail.bid.lowestBid', { amount: snapshot.currentAmount })
+              : t('dashboard.listings.detail.bid.highestBid', { amount: snapshot.currentAmount })}
           </AppText>
         </View>
-        <Pressable
-          onPress={load}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.detail.auctionBids.refresh')}
-        >
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
       </View>
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
@@ -191,75 +196,46 @@ export function TripAuctionBidsPanel({
           {snapshot.ranking.map((row) => {
             const isSelected = row.participantId === snapshot.selectedParticipantId;
             const isConfirmed = row.participantId === snapshot.confirmedParticipantId;
+            const phone = row.participantPhone?.trim() || null;
             const showMessage =
-              snapshot.status === 'live' ||
+              isLive ||
               (isAwaiting && isSelected) ||
-              (isConfirmed && Boolean(row.participantPhone));
+              isConfirmed;
+            const displayName =
+              row.participantName?.trim() ||
+              t('dashboard.listings.detail.auctionBids.bidderLabel', {
+                rank: row.rank,
+              });
 
             return (
-              <View key={row.participantId} style={styles.bidCard}>
-                {row.vehicle ? (
-                  <OfferVehicleSummaryCard
-                    vehicle={row.vehicle}
-                    onPress={() => {
-                      if (row.vehicle) {
-                        setVehicleDetail(row.vehicle);
-                      }
-                    }}
-                  />
-                ) : null}
-                <View style={styles.bidHeaderRow}>
-                  <AppText weight="semibold" style={styles.bidTitle} numberOfLines={1}>
-                    {row.participantName?.trim() ||
-                      t('dashboard.listings.detail.auctionBids.bidderLabel', {
-                        rank: row.rank,
-                      })}
-                  </AppText>
-                  <View
-                    style={[
-                      styles.badge,
-                      isConfirmed
-                        ? styles.badgeSuccess
-                        : isSelected
-                          ? styles.badgeAwaiting
-                          : styles.badgeMuted,
-                    ]}
-                  >
-                    <AppText
-                      weight="semibold"
-                      style={[
-                        styles.badgeText,
-                        isConfirmed
-                          ? styles.badgeTextSuccess
-                          : isSelected
-                            ? styles.badgeTextAwaiting
-                            : styles.badgeTextMuted,
-                      ]}
-                    >
-                      {isConfirmed
-                        ? t('dashboard.listings.detail.auctionBids.confirmed')
-                        : isSelected
-                          ? t('dashboard.listings.detail.auctionBids.selected')
-                          : t('dashboard.listings.detail.auctionBids.rank', { rank: row.rank })}
-                    </AppText>
-                  </View>
-                </View>
-                <AppText style={styles.bidAmount}>
-                  {t('dashboard.listings.detail.auctionBids.amount', {
-                    amount: row.peakAmount,
-                  })}
-                </AppText>
-
-                {showMessage ? (
-                  <WhatsAppContactCard
-                    title={contactTitle}
-                    name={row.participantName ?? null}
-                    phone={row.participantPhone}
-                    message={whatsappMessage}
-                    onMessagePress={() => setChatTarget(row)}
-                  />
-                ) : null}
-              </View>
+              <OfferResponseCard
+                key={row.participantId}
+                tag={
+                  isConfirmed
+                    ? t('dashboard.listings.detail.auctionBids.confirmed')
+                    : isSelected
+                      ? t('dashboard.listings.detail.auctionBids.selected')
+                      : t('dashboard.listings.detail.auctionBids.rank', { rank: row.rank })
+                }
+                tagTone={isConfirmed ? 'confirmed' : isSelected ? 'selected' : 'muted'}
+                cardTone={isConfirmed ? 'confirmed' : isSelected ? 'selected' : 'default'}
+                name={displayName}
+                priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
+                  amount: row.peakAmount,
+                })}
+                showWinner={row.rank === 1}
+                showMessage={showMessage}
+                onMessagePress={() => setChatTarget(row)}
+                vehicle={row.vehicle}
+                onVehiclePress={() => {
+                  if (row.vehicle) {
+                    setVehicleDetail(row.vehicle);
+                  }
+                }}
+                footer={phone ? 'whatsapp' : null}
+                whatsappPhone={phone}
+                whatsappMessage={whatsappMessage}
+              />
             );
           })}
         </View>
@@ -292,23 +268,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
   headerCopy: {
     flex: 1,
-    gap: spacing.xs,
+    gap: 4,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 18,
     color: colors.text.primary,
   },
+  highestBidChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
   headerMeta: {
-    fontSize: 13,
-    color: colors.text.secondary,
+    fontSize: 16,
+    color: colors.primary,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -334,52 +319,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.sm,
-  },
-  bidCard: {
-    backgroundColor: colors.background.subtle,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  bidHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  bidTitle: {
-    flex: 1,
-    color: colors.text.primary,
-  },
-  bidAmount: {
-    color: colors.text.secondary,
-    fontSize: 14,
-  },
-  badge: {
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-  },
-  badgeSuccess: {
-    backgroundColor: colors.accent.green.soft,
-  },
-  badgeAwaiting: {
-    backgroundColor: colors.accent.blue.soft,
-  },
-  badgeMuted: {
-    backgroundColor: colors.background.subtle,
-  },
-  badgeText: {
-    fontSize: 11,
-  },
-  badgeTextSuccess: {
-    color: colors.accent.green.text,
-  },
-  badgeTextAwaiting: {
-    color: colors.accent.blue.text,
-  },
-  badgeTextMuted: {
-    color: colors.text.tertiary,
   },
   errorText: {
     color: colors.primary,

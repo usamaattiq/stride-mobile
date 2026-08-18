@@ -5,21 +5,37 @@ import * as Notifications from 'expo-notifications';
 import { notificationsApi } from '@/services/api/notificationsApi';
 import { getDeviceId } from '@/services/deviceId';
 import { secureStorage } from '@/services/storage/secureStorage';
+import { profileStore } from '@/store/profileStore';
+
+const ANDROID_CHANNEL_ID = 'default';
 
 /** Expo Go ships truncated notification native code (SDK 53+); skip push APIs there. */
 const isExpoGo =
   Constants.appOwnership === 'expo' ||
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
+function audienceRoleFromData(data: Record<string, unknown> | undefined): string | null {
+  const value = data?.audienceRole;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
 if (!isExpoGo) {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async (notification) => {
+      const audienceRole = audienceRoleFromData(
+        notification.request.content.data as Record<string, unknown> | undefined,
+      );
+      const currentRole = profileStore.getProfile()?.role;
+      const show = !audienceRole || !currentRole || audienceRole === currentRole;
+
+      return {
+        shouldShowAlert: show,
+        shouldPlaySound: show,
+        shouldSetBadge: show,
+        shouldShowBanner: show,
+        shouldShowList: show,
+      };
+    },
   });
 }
 
@@ -32,14 +48,17 @@ function resolveProjectId(): string | undefined {
   return extra?.eas?.projectId;
 }
 
-async function ensureAndroidDefaultChannel(): Promise<void> {
+async function ensureAndroidNotificationChannel(): Promise<void> {
   if (Platform.OS !== 'android') {
     return;
   }
-  await Notifications.setNotificationChannelAsync('default', {
+  // Android 8+ drops pushes that have no channel. Create it before requesting a token.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: 'Musafir249',
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#B42318',
+    sound: 'default',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     enableVibrate: true,
     showBadge: true,
@@ -73,7 +92,7 @@ export async function registerForPushNotifications(): Promise<void> {
         return;
       }
 
-      await ensureAndroidDefaultChannel();
+      await ensureAndroidNotificationChannel();
 
       const current = await Notifications.getPermissionsAsync();
       let status = current.status;
@@ -136,11 +155,52 @@ export async function unregisterPushNotifications(): Promise<void> {
   }
 }
 
+function asDeepLink(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function deepLinkFromRecord(record: Record<string, unknown> | undefined): string | null {
+  if (!record) {
+    return null;
+  }
+  return (
+    asDeepLink(record.deepLink) ??
+    asDeepLink(record.deep_link) ??
+    asDeepLink(record.url) ??
+    asDeepLink(record.link)
+  );
+}
+
+/**
+ * Ping / Expo / FCM may put the URL at `deepLink`, nest it, or stringify the payload.
+ */
 export function resolveDeepLinkFromNotificationData(
   data: Record<string, unknown> | undefined,
 ): string | null {
-  const value = data?.deepLink;
-  return typeof value === 'string' && value.length > 0 ? value : null;
+  const direct = deepLinkFromRecord(data);
+  if (direct) {
+    return direct;
+  }
+
+  const nested = data?.data;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    const fromNested = deepLinkFromRecord(nested as Record<string, unknown>);
+    if (fromNested) {
+      return fromNested;
+    }
+  }
+
+  const body = data?.body;
+  if (typeof body === 'string' && body.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(body) as Record<string, unknown>;
+      return deepLinkFromRecord(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 /** Re-register only when Expo rotates the native/Expo push token. */

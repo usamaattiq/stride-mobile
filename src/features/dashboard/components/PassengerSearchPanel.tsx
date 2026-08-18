@@ -1,15 +1,11 @@
 import React from 'react';
 import {
-  Dimensions,
-  Modal,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,17 +17,19 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
-const IOS_DATE_PICKER_HEIGHT = 216;
-const iosDatePickerWidth = Dimensions.get('window').width;
-
+import { DateRangeCalendarField } from './trip/DateRangeCalendarField';
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { SearchCityPickerModal } from './SearchCityPickerModal';
 import { SegmentControl } from './SegmentControl';
-import { isSameLocalDay, startOfLocalDay } from './trip/dateRangeUtils';
+import {
+  applyLocalDateToIso,
+  isSameLocalDay,
+  parseIsoDate,
+  startOfLocalDay,
+} from './trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import { mapTripDtoToTrip } from '../utils/trip.mapper';
@@ -50,19 +48,11 @@ function addDays(base: Date, days: number): Date {
   return next;
 }
 
-function formatSearchDate(date: Date, locale: string): string {
-  return date.toLocaleDateString(withLatinDigitsLocale(locale), {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function resolveQuickDate(date: Date, today: Date): QuickDate {
-  if (isSameLocalDay(date, today)) {
+function resolveQuickDate(start: Date, end: Date, today: Date): QuickDate {
+  if (isSameLocalDay(start, end) && isSameLocalDay(start, today)) {
     return 'today';
   }
-  if (isSameLocalDay(date, addDays(today, 1))) {
+  if (isSameLocalDay(start, end) && isSameLocalDay(start, addDays(today, 1))) {
     return 'tomorrow';
   }
   return 'custom';
@@ -81,17 +71,16 @@ function pickRandomTrips(trips: Trip[], count: number): Trip[] {
 }
 
 export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): React.ReactElement {
-  const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
 
   const [vehicleMode, setVehicleMode] = React.useState<TripVehicleMode>('shared');
   const [departureCity, setDepartureCity] = React.useState<TripCity | null>(null);
   const [arrivalCity, setArrivalCity] = React.useState<TripCity | null>(null);
-  const [departureDate, setDepartureDate] = React.useState(() => startOfLocalDay(new Date()));
+  const [departureStart, setDepartureStart] = React.useState(() => startOfLocalDay(new Date()));
+  const [departureEnd, setDepartureEnd] = React.useState(() => startOfLocalDay(new Date()));
   const [passengerCount, setPassengerCount] = React.useState(1);
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-  const [draftDate, setDraftDate] = React.useState(() => departureDate);
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
   const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
@@ -100,7 +89,9 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
   const [featuredError, setFeaturedError] = React.useState<string | null>(null);
 
   const today = startOfLocalDay(new Date());
-  const quickDate = resolveQuickDate(departureDate, today);
+  const quickDate = resolveQuickDate(departureStart, departureEnd, today);
+  const departureStartIso = applyLocalDateToIso(null, departureStart, 9);
+  const departureEndIso = applyLocalDateToIso(null, departureEnd, 18);
 
   const loadFeaturedTrips = React.useCallback(async () => {
     setIsLoadingFeatured(true);
@@ -159,7 +150,8 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     navigation.navigate('SearchResults', {
       departureCity,
       arrivalCity,
-      departureDateISO: startOfLocalDay(departureDate).toISOString(),
+      departureDateISO: startOfLocalDay(departureStart).toISOString(),
+      departureUntilISO: startOfLocalDay(departureEnd).toISOString(),
       vehicleMode,
       passengerCount,
     });
@@ -170,30 +162,6 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
     setArrivalError(null);
     setDepartureCity(arrivalCity);
     setArrivalCity(departureCity);
-  };
-
-  const handleDatePickerChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      if (event.type === 'dismissed' || !selected) {
-        return;
-      }
-      setDepartureDate(startOfLocalDay(selected));
-      return;
-    }
-    if (selected) {
-      setDraftDate(selected);
-    }
-  };
-
-  const openDatePicker = () => {
-    setDraftDate(departureDate);
-    setShowDatePicker(true);
-  };
-
-  const handleDatePickerDone = () => {
-    setShowDatePicker(false);
-    setDepartureDate(startOfLocalDay(draftDate));
   };
 
   const handleCityPickerClose = React.useCallback(() => {
@@ -307,20 +275,31 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         </View>
 
         <View style={styles.field}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={openDatePicker}
-            style={({ pressed }) => [styles.dateMainPress, pressed && styles.pressed]}
-          >
-            <FontAwesome name="calendar" size={13} color={colors.white} />
-            <AppText weight="semibold" style={styles.fieldValue}>
-              {formatSearchDate(departureDate, i18n.language)}
-            </AppText>
-          </Pressable>
+          <DateRangeCalendarField
+            hideLabel
+            variant="onBrand"
+            label={t('dashboard.search.dateRange')}
+            startIso={departureStartIso}
+            endIso={departureEndIso}
+            onChange={({ startIso, endIso }) => {
+              const start = parseIsoDate(startIso);
+              const end = parseIsoDate(endIso);
+              if (!start) {
+                setDepartureStart(today);
+                setDepartureEnd(today);
+                return;
+              }
+              setDepartureStart(startOfLocalDay(start));
+              setDepartureEnd(startOfLocalDay(end ?? start));
+            }}
+          />
           <View style={styles.quickDateRow}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setDepartureDate(today)}
+              onPress={() => {
+                setDepartureStart(today);
+                setDepartureEnd(today);
+              }}
               hitSlop={6}
             >
               <AppText
@@ -335,7 +314,11 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setDepartureDate(addDays(today, 1))}
+              onPress={() => {
+                const tomorrow = addDays(today, 1);
+                setDepartureStart(tomorrow);
+                setDepartureEnd(tomorrow);
+              }}
               hitSlop={6}
             >
               <AppText
@@ -454,46 +437,6 @@ export const PassengerSearchPanel = React.memo(function PassengerSearchPanel(): 
         onClose={handleCityPickerClose}
         onSelect={handleCityPickerSelect}
       />
-
-      {showDatePicker ? (
-        Platform.OS === 'ios' ? (
-          <Modal transparent animationType="fade" visible onRequestClose={() => setShowDatePicker(false)}>
-            <Pressable style={styles.dateModalBackdrop} onPress={() => setShowDatePicker(false)}>
-              <View style={styles.dateModalCard} onStartShouldSetResponder={() => true}>
-                <View style={styles.dateModalPickerWrap}>
-                  <DateTimePicker
-                    value={draftDate}
-                    mode="date"
-                    minimumDate={today}
-                    onChange={handleDatePickerChange}
-                    display="spinner"
-                    themeVariant="light"
-                    textColor={colors.text.primary}
-                    style={styles.dateModalPicker}
-                  />
-                </View>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleDatePickerDone}
-                  style={styles.dateModalDone}
-                >
-                  <AppText weight="bold" style={styles.dateModalDoneText}>
-                    {t('common.done')}
-                  </AppText>
-                </Pressable>
-              </View>
-            </Pressable>
-          </Modal>
-        ) : (
-          <DateTimePicker
-            value={departureDate}
-            mode="date"
-            minimumDate={today}
-            onChange={handleDatePickerChange}
-            display="default"
-          />
-        )
-      ) : null}
     </View>
   );
 });
@@ -685,33 +628,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
-  },
-  dateModalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  dateModalCard: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingBottom: spacing.lg,
-  },
-  dateModalPickerWrap: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateModalPicker: {
-    width: iosDatePickerWidth,
-    height: IOS_DATE_PICKER_HEIGHT,
-  },
-  dateModalDone: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  dateModalDoneText: {
-    color: colors.primary,
-    fontSize: 16,
   },
 });

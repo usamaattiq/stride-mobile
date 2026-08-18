@@ -4,7 +4,7 @@ import type { LocationGeocodedAddress } from 'expo-location';
 
 import { ENV } from '@/shared/config/env';
 
-import { reverseGeocodeLocation } from './signup-map-geocode';
+import { reverseGeocodeDetails, reverseGeocodeLocation } from './signup-map-geocode';
 
 function normalizeLocationSegment(segment: string): string {
   return segment.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -84,4 +84,47 @@ export async function resolveAddressLabel(latitude: number, longitude: number): 
   }
 
   return coordinateFallbackLabel(latitude, longitude);
+}
+
+export async function resolveCityAndPointFromCoords(
+  latitude: number,
+  longitude: number,
+  fallbackAddress?: string,
+): Promise<{ cityLabel: string; cityId: string; address: string }> {
+  const addressFromCaller = fallbackAddress?.trim() || '';
+
+  try {
+    const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+    const first = places[0];
+    const expoCity = first?.city?.trim() || first?.subregion?.trim() || first?.district?.trim() || '';
+    const expoAddress = first ? formatGeocodedAddressLabel(first) : '';
+    if (expoCity) {
+      return {
+        cityLabel: expoCity,
+        cityId: `geo:${expoCity.toLowerCase()}`,
+        address: addressFromCaller || expoAddress || coordinateFallbackLabel(latitude, longitude),
+      };
+    }
+  } catch {
+    // Fall through to Google.
+  }
+
+  const google = await reverseGeocodeDetails(latitude, longitude, ENV.googleMapsApiKey);
+  const cityLabel = google?.city?.trim() || '';
+  const address =
+    addressFromCaller || google?.address || coordinateFallbackLabel(latitude, longitude);
+  if (cityLabel) {
+    return {
+      cityLabel,
+      cityId: google?.placeId || `geo:${cityLabel.toLowerCase()}`,
+      address,
+    };
+  }
+
+  const firstPart = address.split(',')[0]?.trim() || address;
+  return {
+    cityLabel: firstPart,
+    cityId: google?.placeId || `geo:${latitude.toFixed(4)},${longitude.toFixed(4)}`,
+    address,
+  };
 }

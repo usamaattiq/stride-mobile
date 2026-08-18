@@ -27,11 +27,15 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { Vehicle } from '../../types/vehicle.types';
+import { isTerminalListingStatus } from '../../utils/listingFilters';
+import { fromListVehicle, OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleSummaryCard } from './TripOfferPanel';
 import { TripVehicleSelectStep } from './TripVehicleSelectStep';
 import {
@@ -39,15 +43,18 @@ import {
   type OfferVehicleDetailSource,
 } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
-import { WhatsAppContactCard } from './WhatsAppContactCard';
 
 export type TripBidPanelProps = {
   tripId: string;
+  routeLabel: string;
   isPassengerRequest?: boolean;
   /** When true, driver must pick one of their vehicles before placing a bid. */
   requiresVehicle?: boolean;
   /** Pre-select this vehicle after returning from add-vehicle flow. */
   initialVehicleId?: string | null;
+  /** Listing window from the trip — used when auction snapshot has no remaining_seconds. */
+  listingStartsAtMs?: number | null;
+  listingExpiresAtMs?: number | null;
   onBidChange?: (update: {
     auctionStatus: AuctionStatusValue;
     auctionStatusLabel: string;
@@ -57,6 +64,11 @@ export type TripBidPanelProps = {
     counterpartyName: string | null;
     counterpartyPhone: string | null;
   }) => void;
+  onCanWithdrawChange?: (canWithdraw: boolean) => void;
+};
+
+export type TripBidPanelHandle = {
+  openWithdrawConfirm: () => void;
 };
 
 function formatAmount(amount: number | null | undefined): string {
@@ -76,6 +88,123 @@ function formatRemaining(seconds: number, t: TFunction): string {
   return t('dashboard.listings.detail.bid.remainingMinutes', { minutes });
 }
 
+function remainingSecondsUntil(endsAtMs: number | null | undefined, now: number): number | null {
+  if (endsAtMs == null || !Number.isFinite(endsAtMs)) {
+    return null;
+  }
+  const remaining = Math.ceil((endsAtMs - now) / 1000);
+  return remaining > 0 ? remaining : null;
+}
+
+function auctionEndsAtMs(snapshot: {
+  remainingSeconds?: number | null;
+  endsAt?: string | null;
+} | null): number | null {
+  if (!snapshot) {
+    return null;
+  }
+  if (snapshot.endsAt) {
+    const parsed = Date.parse(snapshot.endsAt);
+    if (Number.isFinite(parsed) && parsed > Date.now()) {
+      return parsed;
+    }
+  }
+  if (snapshot.remainingSeconds != null && snapshot.remainingSeconds > 0) {
+    return Date.now() + snapshot.remainingSeconds * 1000;
+  }
+  return null;
+}
+
+function BidHeader({
+  remainingSeconds,
+  currentAmount,
+  auctionType,
+  myBidAmount = null,
+  showMessage = false,
+  onMessagePress,
+}: {
+  remainingSeconds: number | null;
+  currentAmount: number;
+  auctionType: AuctionType;
+  myBidAmount?: number | null;
+  showMessage?: boolean;
+  onMessagePress?: () => void;
+}): React.ReactElement {
+  const { t } = useTranslation(undefined, { i18n: appI18n });
+  const remaining =
+    remainingSeconds != null && remainingSeconds > 0
+      ? formatRemaining(remainingSeconds, t)
+      : null;
+  const endingSoon =
+    remainingSeconds != null && remainingSeconds > 0 && remainingSeconds < 60 * 60;
+  const timerLabel = endingSoon
+    ? t('dashboard.listings.card.endingSoon')
+    : remaining;
+  const highestLabel =
+    auctionType === 'reverse'
+      ? t('dashboard.listings.detail.bid.lowestBid', { amount: formatAmount(currentAmount) })
+      : t('dashboard.listings.detail.bid.highestBid', { amount: formatAmount(currentAmount) });
+  const yourBidLabel =
+    myBidAmount != null
+      ? t('dashboard.listings.detail.bid.yourBid', { amount: formatAmount(myBidAmount) })
+      : null;
+
+  return (
+    <View style={styles.headerBlock}>
+      <View style={styles.titleRow}>
+        <AppText weight="bold" style={styles.title}>
+          {t('dashboard.listings.detail.bid.title')}
+        </AppText>
+        {timerLabel ? (
+          <View style={[styles.timerChip, endingSoon && styles.timerChipSoon]}>
+            <FontAwesome
+              name="clock-o"
+              size={11}
+              color={endingSoon ? colors.accent.amber.text : colors.accent.green.text}
+            />
+            <AppText
+              weight="semibold"
+              style={[styles.timerText, endingSoon && styles.timerTextSoon]}
+              numberOfLines={1}
+            >
+              {timerLabel}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.highestBidRow}>
+        <View style={styles.highestBidChip}>
+          <AppText weight="semibold" style={styles.highestBid}>
+            {highestLabel}
+          </AppText>
+        </View>
+        <View style={styles.highestBidRight}>
+          {yourBidLabel ? (
+            <View style={styles.highestBidChip}>
+              <AppText weight="semibold" style={styles.highestBid}>
+                {yourBidLabel}
+              </AppText>
+            </View>
+          ) : null}
+          {showMessage ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+              onPress={onMessagePress}
+              style={({ pressed }) => [styles.headerMessageChip, pressed && styles.headerMessageChipPressed]}
+            >
+              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <AppText weight="bold" style={styles.headerMessageLabel}>
+                {t('dashboard.listings.detail.contact.message')}
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function bidUpdateFromSnapshot(snapshot: AuctionParticipantSnapshot) {
   return {
     auctionStatus: snapshot.status,
@@ -86,12 +215,6 @@ function bidUpdateFromSnapshot(snapshot: AuctionParticipantSnapshot) {
     counterpartyName: snapshot.ownerName ?? null,
     counterpartyPhone: snapshot.ownerPhone ?? null,
   };
-}
-
-function winRuleLabel(auctionType: AuctionType, t: TFunction): string {
-  return auctionType === 'reverse'
-    ? t('dashboard.listings.detail.bid.lowestWins')
-    : t('dashboard.listings.detail.bid.highestWins');
 }
 
 function nextBidHint(
@@ -111,14 +234,23 @@ function nextBidHint(
     : t('dashboard.listings.detail.bid.amountPlaceholder');
 }
 
-export function TripBidPanel({
-  tripId,
-  isPassengerRequest = false,
-  requiresVehicle = false,
-  initialVehicleId = null,
-  onBidChange,
-}: TripBidPanelProps): React.ReactElement | null {
+export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelProps>(
+  function TripBidPanel(
+    {
+      tripId,
+      routeLabel,
+      isPassengerRequest = false,
+      requiresVehicle = false,
+      initialVehicleId = null,
+      listingStartsAtMs = null,
+      listingExpiresAtMs = null,
+      onBidChange,
+      onCanWithdrawChange,
+    },
+    ref,
+  ): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
   const { vehicles, isLoading: vehiclesLoading, refreshVehicles, beginAddVehicle } = useVehicles();
@@ -140,9 +272,12 @@ export function TripBidPanel({
     [selectedVehicleId, vehicles],
   );
 
-  const whatsappMessage = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.messageAsDriver')
-    : t('dashboard.listings.detail.contact.messageAsPassenger');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: isPassengerRequest,
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
 
   const applySnapshot = React.useCallback(
     (result: AuctionParticipantSnapshot, options?: { seedAmount?: boolean }) => {
@@ -219,9 +354,10 @@ export function TripBidPanel({
 
   // Poll while live so countdown / lead status stay fresh without a WS client.
   React.useEffect(() => {
-    const isLive =
-      snapshot?.status === 'live' || publicSnapshot?.status === 'live';
-    if (!isLive) {
+    const isOpen = snapshot != null && !isTerminalListingStatus(snapshot.status);
+    const publicOpen =
+      publicSnapshot != null && !isTerminalListingStatus(publicSnapshot.status);
+    if (!isOpen && !publicOpen) {
       return undefined;
     }
     const timer = setInterval(() => {
@@ -238,6 +374,44 @@ export function TripBidPanel({
     }, 5000);
     return () => clearInterval(timer);
   }, [applySnapshot, publicSnapshot?.status, snapshot?.status, tripId]);
+
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
+  const endsAtMs =
+    auctionEndsAtMs(snapshot) ??
+    auctionEndsAtMs(publicSnapshot) ??
+    listingExpiresAtMs ??
+    null;
+  const listingStarted = listingStartsAtMs == null || listingStartsAtMs <= nowMs;
+  const liveRemaining = listingStarted
+    ? remainingSecondsUntil(endsAtMs, nowMs)
+    : null;
+
+  React.useEffect(() => {
+    if (endsAtMs == null || endsAtMs <= Date.now()) {
+      return undefined;
+    }
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [endsAtMs]);
+
+  const canWithdraw = Boolean(snapshot?.actions.canWithdraw);
+
+  React.useEffect(() => {
+    onCanWithdrawChange?.(canWithdraw);
+    return () => onCanWithdrawChange?.(false);
+  }, [canWithdraw, onCanWithdrawChange]);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      openWithdrawConfirm: () => {
+        if (canWithdraw) {
+          setConfirmWithdraw(true);
+        }
+      },
+    }),
+    [canWithdraw],
+  );
 
   const placeBid = () => {
     if (requiresVehicle && !selectedVehicleId) {
@@ -321,27 +495,13 @@ export function TripBidPanel({
   }
 
   if (!snapshot && publicSnapshot) {
-    const remaining =
-      publicSnapshot.remainingSeconds != null
-        ? formatRemaining(publicSnapshot.remainingSeconds, t)
-        : null;
     return (
       <View style={styles.root}>
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.detail.bid.title')}
-        </AppText>
-        <View style={styles.statusCard}>
-          <AppText weight="semibold" style={styles.statusLabel}>
-            {publicSnapshot.statusLabel}
-          </AppText>
-          <AppText style={styles.meta}>{winRuleLabel(publicSnapshot.auctionType, t)}</AppText>
-          <AppText style={styles.meta}>
-            {t('dashboard.listings.detail.bid.currentAmount', {
-              amount: formatAmount(publicSnapshot.currentAmount),
-            })}
-          </AppText>
-          {remaining ? <AppText style={styles.meta}>{remaining}</AppText> : null}
-        </View>
+        <BidHeader
+          remainingSeconds={liveRemaining}
+          currentAmount={publicSnapshot.currentAmount}
+          auctionType={publicSnapshot.auctionType}
+        />
         <AppText style={styles.meta}>{t('dashboard.listings.detail.bid.openHint')}</AppText>
         {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
         {requiresVehicle ? (
@@ -438,46 +598,46 @@ export function TripBidPanel({
   }
 
   const actions = snapshot.actions;
-  const remaining =
-    snapshot.remainingSeconds != null
-      ? formatRemaining(snapshot.remainingSeconds, t)
-      : null;
   const hasActiveBid = snapshot.participantStatus === 'active';
   const showPlaceBidForm = actions.canPlaceBid && !hasActiveBid;
+  const auctionStatus = snapshot.status.replaceAll('_', '-');
+  const isSelectedBidder =
+    actions.isSelectedParticipant === true ||
+    auctionStatus === 'awaiting-your-confirmation';
+  const isConfirmedBid =
+    auctionStatus === 'completed' &&
+    Boolean(snapshot.confirmedParticipantId) &&
+    isSelectedBidder;
+  const ownerPhone = snapshot.ownerPhone?.trim() || null;
+  const canDecideBid = actions.canConfirm || actions.canDecline;
+  const showHeaderMessage =
+    hasActiveBid && (auctionStatus === 'live' || isSelectedBidder);
+  const showOwnerCard = hasActiveBid && (canDecideBid || Boolean(ownerPhone) || isSelectedBidder);
+  const bidTag = isConfirmedBid
+    ? t('dashboard.listings.detail.auctionBids.confirmed')
+    : isSelectedBidder
+      ? t('dashboard.listings.detail.auctionBids.selected')
+      : snapshot.statusLabel;
+  const bidPriceLabel =
+    snapshot.myPeakAmount != null
+      ? t('dashboard.listings.detail.auctionBids.amount', {
+          amount: formatAmount(snapshot.myPeakAmount),
+        })
+      : '';
+
+  const ranking = snapshot.ranking ?? [];
+  const showRanking = ranking.length > 0;
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.detail.bid.title')}
-        </AppText>
-        <Pressable onPress={load} hitSlop={10} accessibilityRole="button">
-          <FontAwesome name="refresh" size={16} color={colors.text.tertiary} />
-        </Pressable>
-      </View>
-
-      <View style={styles.statusCard}>
-        <AppText weight="semibold" style={styles.statusLabel}>
-          {snapshot.statusLabel}
-        </AppText>
-        <AppText style={styles.meta}>{winRuleLabel(snapshot.auctionType, t)}</AppText>
-        <AppText style={styles.meta}>
-          {t('dashboard.listings.detail.bid.currentAmount', {
-            amount: formatAmount(snapshot.currentAmount),
-          })}
-        </AppText>
-        {snapshot.myPeakAmount != null ? (
-          <AppText style={styles.meta}>
-            {t('dashboard.listings.detail.bid.yourBid', {
-              amount: formatAmount(snapshot.myPeakAmount),
-            })}
-            {snapshot.isLeading
-              ? ` · ${t('dashboard.listings.detail.bid.leading')}`
-              : ''}
-          </AppText>
-        ) : null}
-        {remaining ? <AppText style={styles.meta}>{remaining}</AppText> : null}
-      </View>
+      <BidHeader
+        remainingSeconds={liveRemaining}
+        currentAmount={snapshot.currentAmount}
+        auctionType={snapshot.auctionType}
+        myBidAmount={snapshot.myPeakAmount}
+        showMessage={showHeaderMessage}
+        onMessagePress={() => setChatOpen(true)}
+      />
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
@@ -530,51 +690,66 @@ export function TripBidPanel({
         </>
       ) : null}
 
-      {actions.canConfirm || actions.canDecline ? (
-        <View style={styles.actionRow}>
-          {actions.canConfirm ? (
-            <Button
-              label={t('dashboard.listings.detail.bid.confirm')}
-              onPress={() => runAction('confirm')}
-              loading={submitting}
-              style={styles.actionButton}
-            />
-          ) : null}
-          {actions.canDecline ? (
-            <Button
-              label={t('dashboard.listings.detail.bid.decline')}
-              onPress={() => setConfirmDecline(true)}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-          ) : null}
+      {showRanking ? (
+        <View style={styles.rankingBlock}>
+          <AppText weight="bold" style={styles.rankingTitle}>
+            {t('dashboard.listings.detail.bid.liveRanking')}
+          </AppText>
+          {ranking.map((row) => {
+            const isYou =
+              snapshot.myPeakAmount != null &&
+              row.peakAmount === snapshot.myPeakAmount &&
+              ranking.find((entry) => entry.peakAmount === snapshot.myPeakAmount)
+                ?.participantId === row.participantId;
+            return (
+              <OfferResponseCard
+                key={row.participantId}
+                tag={t('dashboard.listings.detail.auctionBids.rank', { rank: row.rank })}
+                tagTone={row.rank === 1 ? 'selected' : 'muted'}
+                name={
+                  isYou
+                    ? t('dashboard.listings.detail.bid.you')
+                    : row.participantName?.trim() ||
+                      t('dashboard.listings.detail.auctionBids.bidderLabel', {
+                        rank: row.rank,
+                      })
+                }
+                priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
+                  amount: row.peakAmount,
+                })}
+                showWinner={row.rank === 1}
+              />
+            );
+          })}
         </View>
       ) : null}
 
-      {actions.canWithdraw ? (
-        <Button
-          label={t('dashboard.listings.detail.bid.withdraw')}
-          onPress={() => setConfirmWithdraw(true)}
-          variant="secondary"
-          loading={submitting}
-        />
-      ) : null}
-
-      {snapshot.participantStatus === 'active' &&
-      (snapshot.status === 'live' ||
-        snapshot.status === 'awaiting_confirmation' ||
-        snapshot.status === 'awaiting_action' ||
-        Boolean(snapshot.ownerPhone)) ? (
-        <WhatsAppContactCard
-          title={
-            isPassengerRequest
-              ? t('dashboard.listings.detail.contact.passengerContact')
-              : t('dashboard.listings.detail.contact.driverContact')
+      {showOwnerCard ? (
+        <OfferResponseCard
+          tag={bidTag}
+          tagTone={isConfirmedBid ? 'confirmed' : isSelectedBidder ? 'selected' : 'warning'}
+          cardTone={isConfirmedBid ? 'confirmed' : isSelectedBidder ? 'selected' : 'default'}
+          name={
+            snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
           }
-          name={snapshot.ownerName ?? null}
-          phone={snapshot.ownerPhone}
-          message={whatsappMessage}
+          priceLabel={bidPriceLabel}
+          showMessage={false}
           onMessagePress={() => setChatOpen(true)}
+          vehicle={selectedVehicle ? fromListVehicle(selectedVehicle) : null}
+          onVehiclePress={() => {
+            if (selectedVehicle) {
+              setVehicleDetail(selectedVehicle);
+            }
+          }}
+          footer={canDecideBid ? 'decide' : ownerPhone ? 'whatsapp' : null}
+          rejectLabel={t('dashboard.listings.detail.bid.decline')}
+          acceptLabel={t('dashboard.listings.detail.bid.confirm')}
+          onReject={() => setConfirmDecline(true)}
+          onAccept={() => runAction('confirm')}
+          acceptLoading={submitting}
+          actionsDisabled={submitting}
+          whatsappPhone={ownerPhone}
+          whatsappMessage={whatsappMessage}
         />
       ) : null}
 
@@ -655,7 +830,7 @@ export function TripBidPanel({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: {
@@ -667,24 +842,89 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   title: {
+    flex: 1,
     fontSize: 18,
     color: colors.text.primary,
   },
-  statusCard: {
-    backgroundColor: colors.background.subtle,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.xs,
+  headerBlock: {
+    gap: 4,
   },
-  statusLabel: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  timerChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.green.soft,
+    flexShrink: 0,
+  },
+  timerChipSoon: {
+    backgroundColor: colors.accent.amber.soft,
+  },
+  timerText: {
+    fontSize: 12,
+    color: colors.accent.green.text,
+  },
+  timerTextSoon: {
+    color: colors.accent.amber.text,
+  },
+  highestBidRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  highestBidRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: spacing.sm,
+  },
+  highestBidChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+  },
+  highestBid: {
+    fontSize: 16,
     color: colors.primary,
+  },
+  headerMessageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryMuted,
+    flexShrink: 0,
+  },
+  headerMessageChipPressed: {
+    opacity: 0.75,
+  },
+  headerMessageLabel: {
+    fontSize: 12,
+    color: colors.primary,
+  },
+  rankingBlock: {
+    gap: spacing.sm,
+  },
+  rankingTitle: {
     fontSize: 15,
+    color: colors.text.primary,
   },
   meta: {
     color: colors.text.secondary,
@@ -693,13 +933,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.primary,
     fontSize: 13,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
   },
   vehiclePicker: {
     gap: spacing.xs,

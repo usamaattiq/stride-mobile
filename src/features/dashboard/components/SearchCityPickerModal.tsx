@@ -26,6 +26,7 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { ENV } from '@/shared/config/env';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { searchCities } from '@/shared/utils/city-search';
+import { enrichSelectedCity } from '@/shared/utils/localized-city-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 type SearchCityPickerModalProps = {
@@ -34,8 +35,11 @@ type SearchCityPickerModalProps = {
   value: TripCity | null;
   /** City id that cannot be selected (e.g. departure when picking arrival). */
   excludeCityId?: string | null;
+  /** `light` matches trip-create (white chrome). Default is passenger-home brand. */
+  appearance?: 'brand' | 'light';
   onClose: () => void;
   onSelect: (city: TripCity) => void;
+  onChooseMap?: () => void;
 };
 
 const OPEN_MS = 180;
@@ -91,7 +95,7 @@ const CityRow = React.memo(function CityRow({
         style={[styles.cityLabel, selected && styles.cityLabelSelected]}
         numberOfLines={2}
       >
-        {city.label}
+        {cityDisplayName(city.label)}
       </AppText>
       {selected ? <FontAwesome name="check" size={14} color={colors.primary} /> : null}
     </Pressable>
@@ -103,8 +107,10 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   mode,
   value,
   excludeCityId = null,
+  appearance = 'brand',
   onClose,
   onSelect,
+  onChooseMap,
 }: SearchCityPickerModalProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
@@ -119,12 +125,15 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   ).current;
   const closingRef = React.useRef(false);
   const pendingSelectRef = React.useRef<TripCity | null>(null);
+  const pendingMapRef = React.useRef(false);
   const onCloseRef = React.useRef(onClose);
   const onSelectRef = React.useRef(onSelect);
+  const onChooseMapRef = React.useRef(onChooseMap);
   const searchGenRef = React.useRef(0);
 
   onCloseRef.current = onClose;
   onSelectRef.current = onSelect;
+  onChooseMapRef.current = onChooseMap;
 
   const [rendered, setRendered] = React.useState(visible);
   const [query, setQuery] = React.useState('');
@@ -133,6 +142,9 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   const [showEmpty, setShowEmpty] = React.useState(false);
 
   const selectedId = value?.id ?? null;
+  const isLight = appearance === 'light';
+  const chromeIcon = isLight ? colors.text.primary : colors.white;
+  const chromeMuted = isLight ? colors.text.tertiary : colors.text.onBrandMuted;
   const inputFontFamily = React.useMemo(
     () => getFontFamily(currentLanguage, 'semibold'),
     [currentLanguage],
@@ -153,13 +165,18 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
 
   const finishClose = React.useCallback(() => {
     const selected = pendingSelectRef.current;
+    const openMap = pendingMapRef.current;
     pendingSelectRef.current = null;
+    pendingMapRef.current = false;
     closingRef.current = false;
     setRendered(false);
     if (selected) {
       onSelectRef.current(selected);
     }
     onCloseRef.current();
+    if (openMap) {
+      onChooseMapRef.current?.();
+    }
   }, []);
 
   const runClose = React.useCallback(() => {
@@ -186,6 +203,7 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     if (visible) {
       closingRef.current = false;
       pendingSelectRef.current = null;
+      pendingMapRef.current = false;
       setRendered(true);
       setQuery(value?.label ?? '');
       setRemoteResults([]);
@@ -233,7 +251,7 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     const timer = setTimeout(() => {
       setLoading(true);
       setShowEmpty(false);
-      void searchCities(trimmed, ENV.googleMapsApiKey)
+      void searchCities(trimmed, ENV.googleMapsApiKey, currentLanguage)
         .then((items) => {
           if (searchGenRef.current !== gen) {
             return;
@@ -255,17 +273,19 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
       clearTimeout(timer);
       searchGenRef.current += 1;
     };
-  }, [excludeCityId, query, rendered]);
+  }, [excludeCityId, query, rendered, currentLanguage]);
 
   const handleSelect = React.useCallback(
     (city: TripCity) => {
       if (excludeCityId && city.id === excludeCityId) {
         return;
       }
-      pendingSelectRef.current = { ...city, label: cityDisplayName(city.label) };
-      runClose();
+      void enrichSelectedCity(city, currentLanguage, ENV.googleMapsApiKey).then((enriched) => {
+        pendingSelectRef.current = enriched;
+        runClose();
+      });
     },
-    [excludeCityId, runClose],
+    [currentLanguage, excludeCityId, runClose],
   );
 
   const renderItem = React.useCallback(
@@ -315,50 +335,62 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
       onRequestClose={runClose}
     >
       <View style={styles.root} pointerEvents="box-none">
-        <FocusAwareStatusBar style="light" />
+        <FocusAwareStatusBar style={isLight ? 'dark' : 'light'} />
         <Animated.View
           needsOffscreenAlphaCompositing={false}
           renderToHardwareTextureAndroid
           shouldRasterizeIOS
-          style={[styles.panel, { transform: [{ translateY: panelTranslateY }] }]}
+          style={[
+            styles.panel,
+            isLight && styles.panelLight,
+            { transform: [{ translateY: panelTranslateY }] },
+          ]}
         >
-          <View style={[styles.topBar, { paddingTop: insets.top }]}>
+          <View style={[styles.topBar, isLight && styles.topBarLight, { paddingTop: insets.top }]}>
             <View style={styles.searchBar}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('dashboard.search.back')}
                 onPress={runClose}
                 hitSlop={HIT_SLOP_10}
-                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.backButton,
+                  isLight && styles.backButtonLight,
+                  pressed && styles.pressed,
+                ]}
               >
-                <FontAwesome name="chevron-left" size={16} color={colors.white} />
+                <FontAwesome name="chevron-left" size={16} color={chromeIcon} />
               </Pressable>
 
-              <View style={styles.inputWrap}>
+              <View style={[styles.inputWrap, isLight && styles.inputWrapLight]}>
                 <FontAwesome
                   name={mode === 'departure' ? 'arrow-up' : 'arrow-down'}
                   size={13}
-                  color={colors.white}
+                  color={chromeIcon}
                 />
                 <TextInput
                   ref={inputRef}
                   value={query}
                   onChangeText={setQuery}
                   placeholder={placeholder}
-                  placeholderTextColor={colors.text.onBrandMuted}
+                  placeholderTextColor={chromeMuted}
                   autoCorrect={false}
                   autoCapitalize="words"
                   returnKeyType="search"
-                  style={[styles.input, { fontFamily: inputFontFamily }]}
+                  style={[
+                    styles.input,
+                    isLight && styles.inputLight,
+                    { fontFamily: inputFontFamily },
+                  ]}
                 />
-                {loading ? <ActivityIndicator size="small" color={colors.white} /> : null}
+                {loading ? <ActivityIndicator size="small" color={chromeIcon} /> : null}
                 {query.length > 0 && !loading ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setQuery('')}
                     hitSlop={HIT_SLOP_8}
                   >
-                    <FontAwesome name="times-circle" size={16} color={colors.text.onBrandMuted} />
+                    <FontAwesome name="times-circle" size={16} color={chromeMuted} />
                   </Pressable>
                 ) : null}
               </View>
@@ -366,6 +398,25 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
           </View>
 
           <View style={styles.body}>
+            {onChooseMap ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  pendingMapRef.current = true;
+                  runClose();
+                }}
+                style={({ pressed }) => [styles.mapRow, pressed && styles.pressed]}
+              >
+                <View style={styles.cityIcon}>
+                  <FontAwesome name="map-o" size={14} color={colors.primary} />
+                </View>
+                <AppText weight="semibold" style={styles.mapRowLabel}>
+                  {t('trips.create.selectOnMap')}
+                </AppText>
+                <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
+              </Pressable>
+            ) : null}
+
             <View style={styles.sectionHeader}>
               <AppText weight="semibold" style={styles.sectionTitle}>
                 {sectionTitle}
@@ -404,9 +455,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
+  panelLight: {
+    backgroundColor: colors.white,
+  },
   topBar: {
     backgroundColor: colors.primary,
     paddingBottom: spacing.sm,
+  },
+  topBarLight: {
+    backgroundColor: colors.white,
   },
   searchBar: {
     flexDirection: 'row',
@@ -424,6 +481,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
+  backButtonLight: {
+    backgroundColor: colors.background.subtle,
+  },
   inputWrap: {
     flex: 1,
     minHeight: 48,
@@ -436,11 +496,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  inputWrapLight: {
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+  },
   input: {
     flex: 1,
     fontSize: 15,
     color: colors.white,
     paddingVertical: spacing.xs,
+  },
+  inputLight: {
+    color: colors.text.primary,
   },
   body: {
     flex: 1,
@@ -454,6 +521,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.xs,
+  },
+  mapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.background.subtle,
+  },
+  mapRowLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.primary,
   },
   sectionTitle: {
     fontSize: 13,

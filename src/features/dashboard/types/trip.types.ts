@@ -1,5 +1,5 @@
 import type { AuctionParticipantStatus, AuctionStatusValue } from '@/services/api/auctionApi.types';
-import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqOfferVehicleSummary, RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { VehicleClass } from './vehicle.types';
 
@@ -7,6 +7,14 @@ export type TripVehicleMode = 'shared' | 'fullPrivate';
 export type TripListingType = 'rfq' | 'auction';
 export type TripPaymentMethod = 'cash' | 'online' | 'both';
 export type TripStartMode = 'instant' | 'scheduled';
+
+/** Auctions of 60 minutes or less always go live immediately — no schedule step. */
+export function shouldSkipListingScheduleStep(
+  listingType: TripListingType | null,
+  durationHours: number,
+): boolean {
+  return listingType === 'auction' && durationHours <= 1 + 1e-9;
+}
 
 export type TripCity = {
   id: string;
@@ -58,12 +66,15 @@ export type Trip = {
   vehiclePhotoCount: number;
   vehicleClass: VehicleClass | null;
   vehicleTotalSeats: number | null;
+  listingVehicle: RfqOfferVehicleSummary | null;
   vehicleMode: TripVehicleMode;
   departureCity: TripCity;
   departurePoint: TripLocationPoint;
   departureAt: string;
   /** End of the departure date window, when set. */
   departureUntil: string | null;
+  /** True when the creator skipped a departure time — card shows "Open". */
+  departureOpen: boolean;
   arrivalCity: TripCity;
   arrivalPoint: TripLocationPoint;
   arrivalAt: string;
@@ -180,13 +191,21 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
       longitude: 0,
     } satisfies TripLocationPoint);
 
-  // Private-vehicle bookings can skip the departure date entirely — default to now.
-  const departureAt = draft.departureAt ?? new Date().toISOString();
+  // Private / auction can skip departure — start now and stay "Open" for durationHours.
+  const isPrivate =
+    draft.listingType === 'auction' || draft.vehicleMode === 'fullPrivate';
+  const departureOpen = isPrivate && !draft.departureAt;
+  const now = new Date();
+  const durationMs = draft.durationHours * 60 * 60 * 1000;
+  const departureAt = departureOpen
+    ? now.toISOString()
+    : (draft.departureAt ?? now.toISOString());
+  const departureUntil = departureOpen
+    ? new Date(now.getTime() + durationMs).toISOString()
+    : draft.departureUntil;
 
   // When arrival isn't set, place it after the departure window so API validation passes.
-  const departureWindowEndMs = new Date(
-    draft.departureUntil ?? departureAt,
-  ).getTime();
+  const departureWindowEndMs = new Date(departureUntil ?? departureAt).getTime();
   const arrivalAt =
     draft.arrivalAt ??
     new Date(departureWindowEndMs + 60 * 60 * 1000).toISOString();
@@ -200,11 +219,13 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoCount: 0,
     vehicleClass: draft.vehicleClass,
     vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
+    listingVehicle: null,
     vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
     departureAt,
-    departureUntil: draft.departureUntil,
+    departureUntil,
+    departureOpen,
     arrivalCity: draft.arrivalCity,
     arrivalPoint,
     arrivalAt,

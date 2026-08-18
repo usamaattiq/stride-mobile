@@ -18,8 +18,14 @@ function buildBrowseQuery(params: BrowseTripsParams): string {
   if (params.departureCity) {
     search.set('departureCity', params.departureCity);
   }
+  if (params.departureCityId) {
+    search.set('departureCityId', params.departureCityId);
+  }
   if (params.arrivalCity) {
     search.set('arrivalCity', params.arrivalCity);
+  }
+  if (params.arrivalCityId) {
+    search.set('arrivalCityId', params.arrivalCityId);
   }
   if (params.vehicleMode) {
     search.set('vehicleMode', params.vehicleMode);

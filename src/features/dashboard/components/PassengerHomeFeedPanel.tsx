@@ -14,6 +14,8 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
+import { ENV } from '@/shared/config/env';
+import { toBrowseCityParams } from '@/shared/utils/localized-city-name';
 
 import { FeedPaginationBar } from './FeedPaginationBar';
 import { ListingCard } from './ListingCard';
@@ -62,12 +64,18 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
     }
     setLoadError(null);
     try {
+      const [departure, arrival] = await Promise.all([
+        toBrowseCityParams(filters.departureCity, ENV.googleMapsApiKey),
+        toBrowseCityParams(filters.arrivalCity, ENV.googleMapsApiKey),
+      ]);
       const result = await tripApi.browse({
         q: debouncedQuery || undefined,
         listingType: category === 'all' ? undefined : category,
         paymentMethod: filters.paymentMethod ?? undefined,
-        departureCity: filters.departureCity?.label,
-        arrivalCity: filters.arrivalCity?.label,
+        departureCity: departure.label,
+        departureCityId: departure.id,
+        arrivalCity: arrival.label,
+        arrivalCityId: arrival.id,
         vehicleMode: filters.vehicleMode ?? undefined,
         minSeats: filters.minSeats ?? undefined,
         page,
@@ -167,7 +175,7 @@ export const PassengerHomeFeedPanel = React.memo(function PassengerHomeFeedPanel
         ItemSeparatorComponent={FeedSeparator}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        removeClippedSubviews
+        removeClippedSubviews={false}
         initialNumToRender={PAGE_SIZE}
         windowSize={7}
         refreshControl={<RefreshControl {...refreshControlProps} />}

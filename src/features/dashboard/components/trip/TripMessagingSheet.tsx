@@ -26,6 +26,8 @@ export type TripMessagingSheetProps = {
   visible: boolean;
   onClose: () => void;
   tripId: string;
+  /** When opening from inbox, skip create/open and load this thread directly. */
+  existingConversationId?: string;
   /** Required when the listing owner opens chat. */
   counterpartyId?: string;
   counterpartyName: string | null;
@@ -113,6 +115,7 @@ export function TripMessagingSheet({
   visible,
   onClose,
   tripId,
+  existingConversationId,
   counterpartyId,
   counterpartyName,
   counterpartyAvatarUrl,
@@ -145,6 +148,9 @@ export function TripMessagingSheet({
         ? t('profile.roles.passenger')
         : null;
 
+  const conversationIdRef = React.useRef<string | null>(null);
+  conversationIdRef.current = conversationId;
+
   const refresh = React.useCallback(
     async (activeConversationId: string, opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
@@ -158,7 +164,8 @@ export function TripMessagingSheet({
         setMessages((prev) => mergeMessages(opts?.silent ? prev : [], listed));
         setError(null);
       } catch (err) {
-        if (!opts?.silent) {
+        // Thread already usable (REST send / socket) — don't paint a blocking error.
+        if (!opts?.silent && !conversationIdRef.current) {
           setError(getErrorMessage(err, t('dashboard.listings.detail.contact.chatLoadFailed')));
         }
       } finally {
@@ -169,6 +176,8 @@ export function TripMessagingSheet({
     },
     [t, tripId],
   );
+  const refreshRef = React.useRef(refresh);
+  refreshRef.current = refresh;
 
   React.useEffect(() => {
     if (!visible) {
@@ -184,21 +193,31 @@ export function TripMessagingSheet({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void chatApi
-      .openConversation(tripId, {
-        ...(counterpartyId ? { counterpartyId } : {}),
-        ...(offerId ? { offerId } : {}),
-      })
+
+    const knownId = existingConversationId?.trim();
+    const openPayload = {
+      ...(counterpartyId?.trim() ? { counterpartyId: counterpartyId.trim() } : {}),
+      ...(offerId?.trim() ? { offerId: offerId.trim() } : {}),
+    };
+
+    void (knownId
+      ? Promise.resolve({ id: knownId })
+      : chatApi.openConversation(tripId, openPayload)
+    )
       .then(async (conversation) => {
         if (cancelled) {
           return;
         }
         setConversationId(conversation.id);
-        await refresh(conversation.id);
+        await refreshRef.current(conversation.id);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setLoading(false);
+        if (cancelled) {
+          return;
+        }
+        setLoading(false);
+        // A retry can fail while the first open already loaded the thread.
+        if (!conversationIdRef.current) {
           setError(getErrorMessage(err, t('dashboard.listings.detail.contact.chatOpenFailed')));
         }
       });
@@ -206,7 +225,9 @@ export function TripMessagingSheet({
     return () => {
       cancelled = true;
     };
-  }, [visible, tripId, counterpartyId, offerId, refresh, t]);
+    // Intentionally omit `t` / `refresh` — those identities change often and
+    // would re-POST openConversation, which paints the leftover red error.
+  }, [visible, tripId, existingConversationId, counterpartyId, offerId, t]);
 
   React.useEffect(() => {
     if (!visible || !conversationId) {
@@ -231,19 +252,9 @@ export function TripMessagingSheet({
       setMessages((prev) => mergeMessages(prev, payload.messages));
     });
 
-    void chatSocket
-      .joinConversation(tripId, conversationId)
-      .then((result) => {
-        if (cancelled || result.ok) {
-          return;
-        }
-        setError(result.error ?? t('dashboard.listings.detail.contact.chatOpenFailed'));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(t('dashboard.listings.detail.contact.chatOpenFailed'));
-        }
-      });
+    void chatSocket.joinConversation(tripId, conversationId).catch(() => {
+      // REST send/list still work; live ticks may lag until the socket connects.
+    });
 
     void chatApi.markRead(tripId, conversationId).catch(() => undefined);
 
@@ -259,6 +270,9 @@ export function TripMessagingSheet({
     if (!visible) {
       chatSocket.disconnect();
     }
+    return () => {
+      chatSocket.disconnect();
+    };
   }, [visible]);
 
   const send = () => {

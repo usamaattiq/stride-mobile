@@ -14,6 +14,8 @@ export type SearchResultsParams = {
   departureCity: TripCity;
   arrivalCity: TripCity;
   departureDateISO: string;
+  /** Inclusive end of the search date window. Defaults to departureDateISO when omitted. */
+  departureUntilISO?: string;
   vehicleMode: TripVehicleMode;
   passengerCount: number;
 };
@@ -25,6 +27,12 @@ export type DashboardRootStackParamList = {
   ManageVehicles: undefined;
   VehicleDetails: VehicleDetailsParams;
   VehiclePhotos: VehiclePhotosParams;
-  ListingDetail: { tripId: string; selectVehicleId?: string; viewerIsOwner?: boolean };
+  ListingDetail: {
+    tripId: string;
+    selectVehicleId?: string;
+    viewerIsOwner?: boolean;
+    /** Opens the trip chat sheet after the listing loads. */
+    conversationId?: string;
+  };
   SearchResults: SearchResultsParams;
 };

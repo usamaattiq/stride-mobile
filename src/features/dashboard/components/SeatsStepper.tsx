@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +18,7 @@ type SeatsStepperProps = {
   max?: number;
   required?: boolean;
   error?: string;
+  hint?: string;
 };
 
 export function SeatsStepper({
@@ -28,16 +29,27 @@ export function SeatsStepper({
   max = DEFAULT_SEATS_MAX,
   required = false,
   error,
+  hint,
 }: SeatsStepperProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const seatCount = Math.max(min, Math.min(max, value));
 
   return (
     <View style={styles.seatsWrap}>
-      <AppText weight="medium" style={styles.seatsLabel}>
-        {label}
-        {required ? <AppText style={styles.required}> *</AppText> : null}
-      </AppText>
+      <View style={styles.labelRow}>
+        <AppText weight="medium" style={styles.seatsLabel}>
+          {label}
+          {required ? <AppText style={styles.required}> *</AppText> : null}
+        </AppText>
+        {hint ? (
+          <View style={styles.hintChip}>
+            <FontAwesome name="users" size={9} color={colors.primary} />
+            <AppText weight="bold" style={styles.hintChipLabel} numberOfLines={1}>
+              {hint}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
       <View style={[styles.seatsRow, error ? styles.seatsRowError : null]}>
         <AppText weight="semibold" style={styles.seatsCaption} numberOfLines={1}>
           {t('vehicles.seatsCount', { count: seatCount })}
@@ -96,6 +108,25 @@ const styles = StyleSheet.create({
   seatsLabel: {
     fontSize: 13,
     color: colors.text.primary,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  hintChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: colors.primarySoft,
+  },
+  hintChipLabel: {
+    fontSize: 11,
+    color: colors.primary,
   },
   required: {
     fontSize: 13,

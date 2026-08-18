@@ -12,15 +12,20 @@ type PlacesAutocompleteResponse = {
  * Google Places Autocomplete restricted to cities/localities.
  * Requires Places API + the same key as the map picker.
  */
-export async function searchCities(query: string, apiKey: string): Promise<TripCity[]> {
+export async function searchCities(
+  query: string,
+  apiKey: string,
+  language?: string,
+): Promise<TripCity[]> {
   const trimmed = query.trim();
   if (!trimmed || !apiKey) {
     return [];
   }
 
+  const languageParam = language ? `&language=${encodeURIComponent(language)}` : '';
   const url =
     `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(trimmed)}` +
-    `&types=(cities)&key=${encodeURIComponent(apiKey)}`;
+    `&types=(cities)${languageParam}&key=${encodeURIComponent(apiKey)}`;
 
   const response = await fetch(url);
   if (!response.ok) {

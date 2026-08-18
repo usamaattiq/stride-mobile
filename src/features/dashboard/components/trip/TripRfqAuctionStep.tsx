@@ -96,9 +96,67 @@ function isListingComplete(draft: TripDraft, requirePrice: boolean, requireSeats
   );
 }
 
-function parseTripSeats(value: string): number {
+export function parseTripSeats(value: string): number {
   const seats = Number.parseInt(value.trim(), 10);
   return Number.isInteger(seats) && seats >= 1 ? seats : 1;
+}
+
+export function TripPaymentMethodSection({
+  value,
+  onChange,
+}: {
+  value: TripPaymentMethod | null;
+  onChange: (method: TripPaymentMethod) => void;
+}): React.ReactElement {
+  const { t } = useTranslation(undefined, { i18n: appI18n });
+  const paymentOptions: Array<{
+    id: TripPaymentMethod;
+    title: string;
+    icon: React.ReactNode;
+    selectedIcon: React.ReactNode;
+  }> = [
+    {
+      id: 'cash',
+      title: t('trips.create.paymentCash'),
+      icon: <FontAwesome name="money" size={16} color={colors.text.tertiary} />,
+      selectedIcon: <FontAwesome name="money" size={16} color={colors.primary} />,
+    },
+    {
+      id: 'online',
+      title: t('trips.create.paymentOnline'),
+      icon: <FontAwesome name="credit-card" size={15} color={colors.text.tertiary} />,
+      selectedIcon: <FontAwesome name="credit-card" size={15} color={colors.primary} />,
+    },
+    {
+      id: 'both',
+      title: t('trips.create.paymentBoth'),
+      icon: <FontAwesome name="exchange" size={15} color={colors.text.tertiary} />,
+      selectedIcon: <FontAwesome name="exchange" size={15} color={colors.primary} />,
+    },
+  ];
+
+  return (
+    <View style={styles.section}>
+      <AppText weight="medium" style={styles.sectionLabel}>
+        {t('trips.create.paymentMethodLabel')}
+        <AppText style={styles.required}> *</AppText>
+      </AppText>
+      <View style={styles.cardsRow}>
+        {paymentOptions.map((option) => (
+          <SelectCard
+            key={option.id}
+            compact
+            selected={value === option.id}
+            onPress={() => onChange(option.id)}
+            title={option.title}
+            icon={option.icon}
+            selectedIcon={option.selectedIcon}
+          />
+        ))}
+      </View>
+      <AppText style={styles.helperText}>{t('trips.create.paymentMethodHint')}</AppText>
+    </View>
+  );
 }
 
 export function TripRfqAuctionStep({
@@ -146,32 +204,6 @@ export function TripRfqAuctionStep({
     }
   }, [auctionAllowed, draft.listingType, onChange]);
 
-  const paymentOptions: Array<{
-    id: TripPaymentMethod;
-    title: string;
-    icon: React.ReactNode;
-    selectedIcon: React.ReactNode;
-  }> = [
-    {
-      id: 'cash',
-      title: t('trips.create.paymentCash'),
-      icon: <FontAwesome name="money" size={16} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome name="money" size={16} color={colors.primary} />,
-    },
-    {
-      id: 'online',
-      title: t('trips.create.paymentOnline'),
-      icon: <FontAwesome name="credit-card" size={15} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome name="credit-card" size={15} color={colors.primary} />,
-    },
-    {
-      id: 'both',
-      title: t('trips.create.paymentBoth'),
-      icon: <FontAwesome name="exchange" size={15} color={colors.text.tertiary} />,
-      selectedIcon: <FontAwesome name="exchange" size={15} color={colors.primary} />,
-    },
-  ];
-
   return (
     <AuthCard>
       <View style={styles.form}>
@@ -198,7 +230,6 @@ export function TripRfqAuctionStep({
                 selectedIcon={option.selectedIcon}
               />
             ))}
-            {!auctionAllowed ? <View style={styles.listingCardSpacer} /> : null}
           </View>
         </View>
 
@@ -231,26 +262,10 @@ export function TripRfqAuctionStep({
           />
         )}
 
-        <View style={styles.section}>
-          <AppText weight="medium" style={styles.sectionLabel}>
-            {t('trips.create.paymentMethodLabel')}
-            <AppText style={styles.required}> *</AppText>
-          </AppText>
-          <View style={styles.cardsRow}>
-            {paymentOptions.map((option) => (
-              <SelectCard
-                key={option.id}
-                compact
-                selected={draft.paymentMethod === option.id}
-                onPress={() => onChange({ paymentMethod: option.id })}
-                title={option.title}
-                icon={option.icon}
-                selectedIcon={option.selectedIcon}
-              />
-            ))}
-          </View>
-          <AppText style={styles.helperText}>{t('trips.create.paymentMethodHint')}</AppText>
-        </View>
+        <TripPaymentMethodSection
+          value={draft.paymentMethod}
+          onChange={(paymentMethod) => onChange({ paymentMethod })}
+        />
 
         {draft.listingType === 'auction' ? (
           <DurationSlider

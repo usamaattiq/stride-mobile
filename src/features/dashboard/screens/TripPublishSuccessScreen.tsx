@@ -6,9 +6,11 @@ import {
   BackHandler,
   Easing,
   Platform,
+  Pressable,
   StyleSheet,
   View,
   type DimensionValue,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -31,7 +33,7 @@ import {
 
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 
-const PREPARE_DURATION_MS = 3000;
+const PREPARE_DURATION_MS = 10000;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -72,16 +74,15 @@ export function TripPublishSuccessScreen(): React.ReactElement {
   const prepareProgress = React.useRef(new Animated.Value(0)).current;
   const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
   const didNavigateRef = React.useRef(false);
+  const [trackWidth, setTrackWidth] = React.useState(0);
 
   const goToListings = React.useCallback(() => {
     if (didNavigateRef.current) {
       return;
     }
     didNavigateRef.current = true;
-    exitTripCreationToListings(navigation, {
-      screen: isPassenger ? 'Home' : 'MyListings',
-    });
-  }, [isPassenger, navigation]);
+    exitTripCreationToListings(navigation, { screen: 'MyListings' });
+  }, [navigation]);
 
   React.useEffect(() => {
     Animated.sequence([
@@ -145,14 +146,18 @@ export function TripPublishSuccessScreen(): React.ReactElement {
     }, [goToListings]),
   );
 
+  const onPrepareLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    setTrackWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+  }, []);
+
   const prepareWidth = prepareProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+    outputRange: [0, Math.max(trackWidth, 1)],
+    extrapolate: 'clamp',
   });
 
-  const prepareLabel = t(
-    isPassenger ? 'trips.create.preparingHome' : 'trips.create.preparingListings',
-  );
+  const prepareLabel = t('trips.create.preparingListings');
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -214,11 +219,15 @@ export function TripPublishSuccessScreen(): React.ReactElement {
         </Animated.View>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-          <View
-            style={styles.prepareButton}
-            accessibilityRole="progressbar"
+          <Pressable
+            onLayout={onPrepareLayout}
+            style={({ pressed }) => [
+              styles.prepareButton,
+              pressed && styles.prepareButtonPressed,
+            ]}
+            accessibilityRole="button"
             accessibilityLabel={prepareLabel}
-            accessibilityState={{ busy: true }}
+            onPress={goToListings}
           >
             <Animated.View
               pointerEvents="none"
@@ -235,7 +244,7 @@ export function TripPublishSuccessScreen(): React.ReactElement {
             >
               {prepareLabel}
             </AppText>
-          </View>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -309,13 +318,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     backgroundColor: colors.primary,
     direction: 'ltr',
   },
+  prepareButtonPressed: {
+    opacity: 0.88,
+  },
   prepareFill: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   prepareLabel: {
@@ -323,5 +336,7 @@ const styles = StyleSheet.create({
     color: colors.text.inverse,
     textAlign: 'center',
     zIndex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
 });

@@ -109,10 +109,11 @@ export function TripPreviewStep({
       : null);
   const departureWhen = draft.departureAt
     ? formatTripDateTime(draft.departureAt, locale, '')
-    : undefined;
-  const arrivalWhen = draft.arrivalAt
-    ? formatTripDateTime(draft.arrivalAt, locale, '')
-    : undefined;
+    : t('dashboard.listings.card.open');
+  const arrivalWhen =
+    draft.departureAt && draft.arrivalAt
+      ? formatTripDateTime(draft.arrivalAt, locale, '')
+      : undefined;
 
   return (
     <View style={styles.root}>

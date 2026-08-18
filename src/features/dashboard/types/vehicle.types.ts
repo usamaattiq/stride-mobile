@@ -79,7 +79,6 @@ export function isVehicleDraftComplete(draft: VehicleDraft): boolean {
   return (
     draft.title.trim().length > 0 &&
     draft.title.trim().length <= 120 &&
-    draft.description.trim().length > 0 &&
     draft.description.trim().length <= 1000 &&
     draft.plateNumber.trim().length > 0 &&
     draft.plateNumber.trim().length <= 32 &&

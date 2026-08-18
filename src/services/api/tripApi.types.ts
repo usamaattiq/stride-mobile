@@ -1,5 +1,5 @@
 import type { AuctionParticipantStatus, AuctionStatusValue } from './auctionApi.types';
-import type { RfqOfferStatus, RfqStatusValue } from './rfqApi.types';
+import type { RfqOfferStatus, RfqOfferVehicleSummary, RfqStatusValue } from './rfqApi.types';
 
 export type TripCityDto = {
   id: string;
@@ -17,6 +17,7 @@ export type TripDto = {
   vehicleId: string | null;
   vehicleTitle: string | null;
   vehiclePhotoUrls: string[];
+  listingVehicle?: RfqOfferVehicleSummary | null;
   vehiclePhotoViewUrl?: string | null;
   vehiclePhotoViewUrls?: string[];
   vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
@@ -26,6 +27,7 @@ export type TripDto = {
   departurePoint: TripLocationPointDto;
   departureAt: string;
   departureUntil: string | null;
+  departureOpen: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
@@ -68,6 +70,7 @@ export type CreateTripPayload = {
   departurePoint: TripLocationPointDto;
   departureAt: string;
   departureUntil?: string | null;
+  departureOpen?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
@@ -98,7 +101,9 @@ export type BrowseTripsParams = {
   listingType?: 'rfq' | 'auction';
   paymentMethod?: 'cash' | 'online' | 'both';
   departureCity?: string;
+  departureCityId?: string;
   arrivalCity?: string;
+  arrivalCityId?: string;
   vehicleMode?: 'shared' | 'fullPrivate';
   vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
   minSeats?: number;

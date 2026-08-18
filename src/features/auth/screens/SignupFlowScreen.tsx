@@ -62,12 +62,16 @@ export function SignupFlowScreen(): React.ReactElement {
   const [verifyOtpError, setVerifyOtpError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = React.useState(false);
+  const [emailTakenError, setEmailTakenError] = React.useState<string | null>(null);
+  const [personalError, setPersonalError] = React.useState<string | null>(null);
   // Set when we intentionally leave the flow (e.g. finishing signup), so the
   // `beforeRemove` guard below doesn't hijack it into stepping backward.
   const isLeavingRef = React.useRef(false);
 
   const leaveFlow = React.useCallback(() => {
     Keyboard.dismiss();
+    isLeavingRef.current = true;
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -92,6 +96,10 @@ export function SignupFlowScreen(): React.ReactElement {
   useFocusEffect(
     React.useCallback(() => {
       const onHardwareBack = () => {
+        if (step === 'personal') {
+          leaveFlow();
+          return true;
+        }
         if (goToPreviousStep()) {
           return true;
         }
@@ -100,7 +108,7 @@ export function SignupFlowScreen(): React.ReactElement {
       };
       const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
       return () => sub.remove();
-    }, [goToPreviousStep, leaveFlow]),
+    }, [goToPreviousStep, leaveFlow, step]),
   );
 
   React.useEffect(() => {
@@ -109,10 +117,14 @@ export function SignupFlowScreen(): React.ReactElement {
         return;
       }
       event.preventDefault();
+      if (step === 'personal') {
+        leaveFlow();
+        return;
+      }
       goToPreviousStep();
     });
     return unsubscribe;
-  }, [navigation, step, goToPreviousStep]);
+  }, [navigation, step, goToPreviousStep, leaveFlow]);
 
   const phoneLabel = formatPhoneDisplay(draft.country, draft.phoneDigits);
 
@@ -142,7 +154,8 @@ export function SignupFlowScreen(): React.ReactElement {
                 subtitle: t('auth.signup.security.subtitle'),
               };
 
-  const onBack = step === 'phone' ? leaveFlow : () => goToPreviousStep();
+  const onBack =
+    step === 'personal' ? undefined : step === 'phone' ? leaveFlow : () => goToPreviousStep();
 
   const handleSendOtp = async () => {
     setSendOtpError(null);
@@ -187,6 +200,29 @@ export function SignupFlowScreen(): React.ReactElement {
       setVerifyOtpError(getErrorMessage(error, t('auth.signup.otp.verifyFailed')));
     } finally {
       setVerifyingOtp(false);
+    }
+  };
+
+  const handleContinuePersonal = async () => {
+    setEmailTakenError(null);
+    setPersonalError(null);
+    const email = draft.email.trim();
+    if (!email) {
+      goToStep('documents');
+      return;
+    }
+    setCheckingEmail(true);
+    try {
+      const { available } = await authApi.checkSignupEmail(email);
+      if (!available) {
+        setEmailTakenError(t('auth.signup.personal.emailTaken'));
+        return;
+      }
+      goToStep('documents');
+    } catch (error) {
+      setPersonalError(getErrorMessage(error, t('auth.signup.personal.emailCheckFailed')));
+    } finally {
+      setCheckingEmail(false);
     }
   };
 
@@ -272,11 +308,18 @@ export function SignupFlowScreen(): React.ReactElement {
             locationCoords={draft.locationCoords}
             profilePhotoUri={draft.profilePhotoUri}
             onChangeFullName={(fullName) => patchDraft({ fullName })}
-            onChangeEmail={(email) => patchDraft({ email })}
+            onChangeEmail={(email) => {
+              setEmailTakenError(null);
+              setPersonalError(null);
+              patchDraft({ email });
+            }}
             onChangeAddress={(address) => patchDraft({ address })}
             onChangeLocationCoords={(locationCoords) => patchDraft({ locationCoords })}
             onChangePhoto={(profilePhotoUri) => patchDraft({ profilePhotoUri })}
-            onContinue={() => goToStep('documents')}
+            onContinue={() => void handleContinuePersonal()}
+            checkingEmail={checkingEmail}
+            emailTakenError={emailTakenError}
+            errorMessage={personalError}
           />
         ) : null}
 

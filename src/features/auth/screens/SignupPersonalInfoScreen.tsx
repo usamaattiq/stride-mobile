@@ -21,6 +21,9 @@ type SignupPersonalInfoScreenProps = {
   onChangeLocationCoords: (coords: LocationCoords | null) => void;
   onChangePhoto: (uri: string | null) => void;
   onContinue: () => void;
+  checkingEmail?: boolean;
+  emailTakenError?: string | null;
+  errorMessage?: string | null;
 };
 
 /** Signup step — shared personal info form; heading lives on AuthScaffold. */
@@ -38,6 +41,9 @@ export function SignupPersonalInfoScreen({
   onChangeLocationCoords,
   onChangePhoto,
   onContinue,
+  checkingEmail = false,
+  emailTakenError = null,
+  errorMessage = null,
 }: SignupPersonalInfoScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -56,6 +62,9 @@ export function SignupPersonalInfoScreen({
       onChangePhoto={onChangePhoto}
       onSubmit={onContinue}
       submitLabel={t('auth.signup.personal.cta')}
+      loading={checkingEmail}
+      emailTakenError={emailTakenError}
+      errorMessage={errorMessage}
     />
   );
 }

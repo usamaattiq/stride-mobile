@@ -53,6 +53,8 @@
         "email": "Email",
         "emailPlaceholder": "name@example.com",
         "emailInvalid": "Enter a valid email address",
+        "emailTaken": "This email is already in use",
+        "emailCheckFailed": "We couldn't check this email. Please try again.",
         "address": "Address",
         "city": "City",
         "country": "Country",
@@ -298,6 +300,7 @@
       "swapCities": "Swap departure and arrival",
       "today": "Today",
       "tomorrow": "Tomorrow",
+      "dateRange": "Travel dates",
       "passengerCount": "Passenger",
       "passengerCountValue": "{{count}} passengers",
       "decreasePassengers": "Decrease passengers",
@@ -345,8 +348,9 @@
       "card": {
         "pricePerSeat": "Price per seat",
         "priceWithCurrency": "PKR {{price}}",
-        "active": "Active",
+        "active": "Live",
         "ended": "Ended",
+        "open": "Open",
         "pending": "Pending",
         "status": {
           "live": "Live",
@@ -371,6 +375,7 @@
           "expired": "Expired"
         },
         "notStarted": "Not started yet",
+        "endingSoon": "Ending soon",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",
         "timerMinutesSeconds": "{{minutes}}m {{seconds}}s left",
@@ -381,7 +386,7 @@
         "title": "Listing details",
         "route": "Route",
         "schedule": "Schedule",
-        "vehicle": "Vehicle",
+        "vehicle": "Vehicle details",
         "listing": "Listing",
         "published": "Published",
         "notFound": "This listing could not be found.",
@@ -428,6 +433,7 @@
           "retry": "Try again",
           "emptyTitle": "No responses yet",
           "emptyBody": "Passenger offers for this trip will show up here.",
+          "currentlyNotListed": "Currently not listed",
           "offerLabel": "Response #{{index}}",
           "viewVehicleA11y": "View vehicle details for {{title}}",
           "seats_zero": "{{count}} seats",
@@ -465,12 +471,14 @@
           "selectNext": "Select next bidder",
           "close": "Close auction",
           "closeConfirmTitle": "Close this auction?",
-          "closeConfirmBody": "The auction will stop accepting bids.",
+          "closeConfirmBody": "The auction will stop accepting bids. If there are bids, the leading bidder will be asked to confirm.",
           "bidderLabel": "Bidder #{{rank}}",
-          "amount": "PKR {{amount}}",
+          "amount": "{{amount}}",
           "rank": "Rank {{rank}}",
           "selected": "Awaiting confirmation",
-          "confirmed": "Confirmed"
+          "confirmed": "Confirmed",
+          "seatsOffered": "{{count}} seats offered",
+          "whatsapp": "WhatsApp"
         },
         "bid": {
           "title": "Place your bid",
@@ -492,8 +500,12 @@
           "confirm": "Confirm deal",
           "decline": "Decline",
           "currentAmount": "Current amount PKR {{amount}}",
-          "yourBid": "Your bid PKR {{amount}}",
+          "highestBid": "Highest bid = {{amount}}",
+          "lowestBid": "Lowest bid = {{amount}}",
+          "yourBid": "Your bid = {{amount}}",
           "leading": "Leading",
+          "you": "You",
+          "liveRanking": "Live ranking",
           "remaining": "{{seconds}}s remaining",
           "remainingHours": "{{hours}}h {{minutes}}m left",
           "remainingMinutes": "{{minutes}}m left",
@@ -521,8 +533,8 @@
           "chatOpenFailed": "Couldn't open chat.",
           "chatLoadFailed": "Couldn't load messages.",
           "chatSendFailed": "Couldn't send message.",
-          "messageAsPassenger": "Hi, I'm the passenger for our confirmed Musafir249 trip.",
-          "messageAsDriver": "Hi, I'm the driver for our confirmed Musafir249 trip.",
+          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Request ID: {{requestId}}",
+          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Request ID: {{requestId}}",
           "passengerContact": "Passenger contact",
           "driverContact": "Driver contact"
         },
@@ -538,6 +550,7 @@
           "selectVehicleTitle": "Select vehicle",
           "changeVehicle": "Change vehicle",
           "seatsLabel": "Seats",
+          "seatsRemaining": "{{count}} remaining",
           "seatsPlaceholder": "Number of seats",
           "pricePerSeatLabel": "Price per seat",
           "priceFullVehicleLabel": "Full vehicle price",
@@ -621,6 +634,18 @@
       "security": {
         "title": "Security",
         "subtitle": "MPIN and login protection"
+      },
+      "deleteAccount": {
+        "title": "Delete account",
+        "subtitle": "Permanently close this account",
+        "confirm": "This will deactivate your account and hide your listings. You can create a new account with the same number later.",
+        "confirmCta": "Delete",
+        "failed": "Couldn't delete your account. Please try again.",
+        "checking": "Checking whether you can delete this account…",
+        "blockedOwner": "You still have a trip that isn't completed or closed. Finish or close it before deleting your account.",
+        "blockedSender": "You have an active bid or offer. Withdraw it, or wait until that request is completed or closed, before deleting your account.",
+        "blockedBoth": "You still have an open trip and an active bid or offer. Finish, close, or withdraw them before deleting your account.",
+        "blockedGeneric": "You still have open trip activity. Finish or close it before deleting your account."
       }
     },
     "settings": {
@@ -750,7 +775,7 @@
       "title": "Title",
       "titlePlaceholder": "e.g. Family SUV",
       "description": "Description",
-      "descriptionPlaceholder": "Brief description of your vehicle",
+      "descriptionPlaceholder": "Brief description of your vehicle (optional)",
       "plateNumber": "Plate number",
       "plateNumberPlaceholder": "Enter plate number",
       "acTitle": "Air conditioning",
@@ -882,6 +907,7 @@
       "scheduleChangeLaterTitle": "You can change this later",
       "scheduleChangeLaterBody": "You'll be able to edit the start time before publishing.",
       "scheduledStart": "Start date & time",
+      "scheduledStartFutureHint": "Pick a date and time that is later than now.",
       "previewTitle": "Preview trip",
       "previewSubtitle": "Review everything before publishing",
       "previewRequestTitle": "Preview request",
@@ -971,7 +997,8 @@
     "ok": "OK",
     "done": "Done",
     "clear": "Clear",
-    "continue": "Continue"
+    "continue": "Continue",
+    "close": "Close"
   },
   "legal": {
     "common": {

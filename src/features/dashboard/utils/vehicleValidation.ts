@@ -27,7 +27,6 @@ const LIMITS = {
 type ErrorKey =
   | 'titleRequired'
   | 'titleTooLong'
-  | 'descriptionRequired'
   | 'descriptionTooLong'
   | 'plateRequired'
   | 'plateTooLong'
@@ -59,9 +58,6 @@ export function getVehicleFieldErrorKey(
     }
     case 'description': {
       const value = draft.description.trim();
-      if (!value) {
-        return errorKeyPath('descriptionRequired');
-      }
       if (value.length > LIMITS.description) {
         return errorKeyPath('descriptionTooLong');
       }

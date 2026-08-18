@@ -6,11 +6,14 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { ApiError } from '@/services/api/apiError';
 import { authApi } from '@/services/api/authApi';
+import type { AccountDeletionBlockReason } from '@/services/api/authApi.types';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -36,14 +39,46 @@ import type { DashboardRootStackParamList } from '../navigation/dashboardRootTyp
 import type { DashboardTabParamList } from '../navigation/types';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
 
-type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | null;
+type DialogKind = 'passenger' | 'driver' | 'logout' | 'photo' | 'delete-account' | null;
+
+type DeleteEligibilityState = {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  canDelete: boolean;
+  reasons: AccountDeletionBlockReason[];
+};
+
+const INITIAL_DELETE_ELIGIBILITY: DeleteEligibilityState = {
+  status: 'idle',
+  canDelete: false,
+  reasons: [],
+};
+
+function deletionBlockMessageKey(
+  reasons: AccountDeletionBlockReason[],
+): 'profile.account.deleteAccount.blockedBoth'
+  | 'profile.account.deleteAccount.blockedOwner'
+  | 'profile.account.deleteAccount.blockedSender'
+  | 'profile.account.deleteAccount.blockedGeneric' {
+  const hasOwner = reasons.includes('owner_open_listing');
+  const hasSender = reasons.includes('active_offer_or_bid');
+  if (hasOwner && hasSender) {
+    return 'profile.account.deleteAccount.blockedBoth';
+  }
+  if (hasOwner) {
+    return 'profile.account.deleteAccount.blockedOwner';
+  }
+  if (hasSender) {
+    return 'profile.account.deleteAccount.blockedSender';
+  }
+  return 'profile.account.deleteAccount.blockedGeneric';
+}
 
 type SettingsNav = CompositeNavigationProp<
   NativeStackNavigationProp<SettingsStackParamList>,
   BottomTabNavigationProp<DashboardTabParamList>
 >;
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.2';
 
 export function SettingsHomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -70,6 +105,28 @@ export function SettingsHomeScreen(): React.ReactElement {
   const [dialog, setDialog] = React.useState<DialogKind>(null);
   const [switchingRole, setSwitchingRole] = React.useState(false);
   const [switchRoleError, setSwitchRoleError] = React.useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = React.useState(false);
+  const [deleteAccountError, setDeleteAccountError] = React.useState<string | null>(null);
+  const [deleteEligibility, setDeleteEligibility] = React.useState<DeleteEligibilityState>(
+    INITIAL_DELETE_ELIGIBILITY,
+  );
+  const deleteEligibilityRequestId = React.useRef(0);
+
+  const deleteDialogMessage = React.useMemo(() => {
+    if (deleteAccountError) {
+      return deleteAccountError;
+    }
+    if (deleteEligibility.status === 'loading') {
+      return t('profile.account.deleteAccount.checking');
+    }
+    if (deleteEligibility.status === 'error') {
+      return t('profile.account.deleteAccount.failed');
+    }
+    if (deleteEligibility.canDelete) {
+      return t('profile.account.deleteAccount.confirm');
+    }
+    return t(deletionBlockMessageKey(deleteEligibility.reasons));
+  }, [deleteAccountError, deleteEligibility, t]);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
   const currentLanguageLabel = React.useMemo(
@@ -125,6 +182,77 @@ export function SettingsHomeScreen(): React.ReactElement {
       resetDraft();
       resetSession();
       authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    })();
+  };
+
+  const closeDeleteDialog = () => {
+    if (deletingAccount) {
+      return;
+    }
+    deleteEligibilityRequestId.current += 1;
+    setDialog(null);
+    setDeleteAccountError(null);
+    setDeleteEligibility(INITIAL_DELETE_ELIGIBILITY);
+  };
+
+  const openDeleteDialog = () => {
+    const requestId = deleteEligibilityRequestId.current + 1;
+    deleteEligibilityRequestId.current = requestId;
+    setDeleteAccountError(null);
+    setDeleteEligibility({ status: 'loading', canDelete: false, reasons: [] });
+    setDialog('delete-account');
+    void authApi
+      .getDeletionEligibility()
+      .then((result) => {
+        if (deleteEligibilityRequestId.current !== requestId) {
+          return;
+        }
+        setDeleteEligibility({
+          status: 'ready',
+          canDelete: result.canDelete,
+          reasons: result.reasons,
+        });
+      })
+      .catch(() => {
+        if (deleteEligibilityRequestId.current !== requestId) {
+          return;
+        }
+        setDeleteEligibility({ status: 'error', canDelete: false, reasons: [] });
+      });
+  };
+
+  const handleDeleteAccount = () => {
+    if (deletingAccount || !deleteEligibility.canDelete) {
+      return;
+    }
+
+    setDeletingAccount(true);
+    setDeleteAccountError(null);
+    void (async () => {
+      try {
+        await unregisterPushNotifications();
+        await authApi.deleteAccount();
+        await useAuthStore.getState().signOut();
+        useProfileStore.getState().clearProfile();
+        resetDraft();
+        resetSession();
+        setDialog(null);
+        setDeleteEligibility(INITIAL_DELETE_ELIGIBILITY);
+        authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'ACCOUNT_DELETION_BLOCKED') {
+          const details = error.details as { reasons?: AccountDeletionBlockReason[] } | undefined;
+          const reasons = Array.isArray(details?.reasons) ? details.reasons : [];
+          setDeleteEligibility({ status: 'ready', canDelete: false, reasons });
+          setDeleteAccountError(null);
+        } else {
+          setDeleteAccountError(
+            getErrorMessage(error, t('profile.account.deleteAccount.failed')),
+          );
+        }
+      } finally {
+        setDeletingAccount(false);
+      }
     })();
   };
 
@@ -208,6 +336,9 @@ export function SettingsHomeScreen(): React.ReactElement {
         break;
       case 'manage-vehicles':
         dashboardRootNavigation?.navigate('ManageVehicles');
+        break;
+      case 'delete-account':
+        openDeleteDialog();
         break;
       default:
         break;
@@ -323,6 +454,26 @@ export function SettingsHomeScreen(): React.ReactElement {
         confirmAction={{
           label: t('profile.logout.title'),
           onPress: handleLogout,
+        }}
+      />
+
+      <AppDialog
+        visible={dialog === 'delete-account'}
+        icon="trash"
+        title={t('profile.account.deleteAccount.title')}
+        message={deleteDialogMessage}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: closeDeleteDialog,
+        }}
+        confirmAction={{
+          label: t('profile.account.deleteAccount.confirmCta'),
+          onPress: handleDeleteAccount,
+          disabled:
+            deletingAccount ||
+            !deleteEligibility.canDelete ||
+            deleteEligibility.status !== 'ready',
+          loading: deletingAccount,
         }}
       />
     </View>

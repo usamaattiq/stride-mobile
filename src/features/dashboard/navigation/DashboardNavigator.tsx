@@ -13,6 +13,8 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { colors } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
+import { flushPendingPingDeepLink } from '@/services/pingDeepLinkRouting';
+
 import { CreateTripTabButton } from '../components/CreateTripTabButton';
 import { TripProvider, useTrips } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
@@ -164,10 +166,18 @@ function DashboardRoot(): React.ReactElement {
   );
 }
 
+function DashboardDeepLinkFlush(): null {
+  React.useEffect(() => {
+    flushPendingPingDeepLink();
+  }, []);
+  return null;
+}
+
 export function DashboardNavigator(): React.ReactElement {
   return (
     <VehicleProvider>
       <TripProvider>
+        <DashboardDeepLinkFlush />
         <DashboardRoot />
       </TripProvider>
     </VehicleProvider>

@@ -15,8 +15,9 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { ENV } from '@/shared/config/env';
-import { searchCities } from '@/shared/utils/city-search';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { searchCities } from '@/shared/utils/city-search';
+import { enrichSelectedCity } from '@/shared/utils/localized-city-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 const CITY_RESULT_ROW_HEIGHT = 48;
@@ -88,7 +89,7 @@ export function CitySearchField({
     const timer = setTimeout(() => {
       setLoading(true);
       setShowEmpty(false);
-      void searchCities(trimmed, ENV.googleMapsApiKey)
+      void searchCities(trimmed, ENV.googleMapsApiKey, currentLanguage)
         .then((items) => {
           setResults(items);
           setShowEmpty(items.length === 0);
@@ -97,16 +98,17 @@ export function CitySearchField({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [isFocused, query]);
+  }, [currentLanguage, isFocused, query]);
 
   const handleSelect = (city: TripCity) => {
-    const selected = { ...city, label: cityDisplayName(city.label) };
     skipSearchRef.current = true;
-    setQuery(selected.label);
     setResults([]);
     setShowEmpty(false);
     setIsFocused(false);
-    onChange(selected);
+    void enrichSelectedCity(city, currentLanguage, ENV.googleMapsApiKey).then((selected) => {
+      setQuery(selected.label);
+      onChange(selected);
+    });
   };
 
   const handleEdit = () => {
@@ -192,7 +194,7 @@ export function CitySearchField({
                 accessibilityRole="button"
               >
                 <AppText style={styles.resultText} numberOfLines={2}>
-                  {item.label}
+                  {cityDisplayName(item.label)}
                 </AppText>
               </Pressable>
             ))}

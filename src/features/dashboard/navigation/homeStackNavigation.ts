@@ -129,7 +129,7 @@ export function exitTripCreation(rootNavigation: TripRootNavigation): void {
   }
 }
 
-/** After publish — land on My Listings (drivers) or Home (passengers). */
+/** After publish — land on My Listings. */
 export function exitTripCreationToListings(
   rootNavigation: TripRootNavigation,
   options?: { screen?: 'MyListings' | 'Home' },
