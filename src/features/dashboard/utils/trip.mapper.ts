@@ -15,6 +15,7 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     vehiclePhotoCount: dto.vehiclePhotoUrls.length,
     vehicleClass: dto.vehicleClass,
     vehicleTotalSeats: dto.vehicleTotalSeats,
+    listingVehicle: dto.listingVehicle ?? null,
     vehicleMode: dto.vehicleMode,
     departureCity: dto.departureCity,
     departurePoint: dto.departurePoint,

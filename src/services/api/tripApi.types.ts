@@ -1,5 +1,5 @@
 import type { AuctionParticipantStatus, AuctionStatusValue } from './auctionApi.types';
-import type { RfqOfferStatus, RfqStatusValue } from './rfqApi.types';
+import type { RfqOfferStatus, RfqOfferVehicleSummary, RfqStatusValue } from './rfqApi.types';
 
 export type TripCityDto = {
   id: string;
@@ -17,6 +17,7 @@ export type TripDto = {
   vehicleId: string | null;
   vehicleTitle: string | null;
   vehiclePhotoUrls: string[];
+  listingVehicle?: RfqOfferVehicleSummary | null;
   vehiclePhotoViewUrl?: string | null;
   vehiclePhotoViewUrls?: string[];
   vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;

@@ -386,7 +386,7 @@
         "title": "Listing details",
         "route": "Route",
         "schedule": "Schedule",
-        "vehicle": "Vehicle",
+        "vehicle": "Vehicle details",
         "listing": "Listing",
         "published": "Published",
         "notFound": "This listing could not be found.",

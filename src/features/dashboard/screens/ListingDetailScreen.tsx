@@ -531,6 +531,7 @@ export function ListingDetailScreen(): React.ReactElement {
           <>
             <TripDetailsOverview
               description={description}
+              listingVehicle={trip.listingVehicle}
               fromCity={fromCity}
               toCity={toCity}
               departureWhen={departureWhen}

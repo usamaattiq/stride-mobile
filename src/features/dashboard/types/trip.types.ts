@@ -1,5 +1,5 @@
 import type { AuctionParticipantStatus, AuctionStatusValue } from '@/services/api/auctionApi.types';
-import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
+import type { RfqOfferStatus, RfqOfferVehicleSummary, RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { VehicleClass } from './vehicle.types';
 
@@ -58,6 +58,7 @@ export type Trip = {
   vehiclePhotoCount: number;
   vehicleClass: VehicleClass | null;
   vehicleTotalSeats: number | null;
+  listingVehicle: RfqOfferVehicleSummary | null;
   vehicleMode: TripVehicleMode;
   departureCity: TripCity;
   departurePoint: TripLocationPoint;
@@ -210,6 +211,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoCount: 0,
     vehicleClass: draft.vehicleClass,
     vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
+    listingVehicle: null,
     vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
