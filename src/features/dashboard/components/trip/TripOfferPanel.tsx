@@ -27,8 +27,10 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { TripVehicleMode } from '../../types/trip.types';
@@ -40,6 +42,7 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripOfferPanelProps = {
   tripId: string;
+  routeLabel: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
   /** When true, driver must pick one of their vehicles before sending the offer. */
@@ -165,6 +168,7 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   function TripOfferPanel(
     {
       tripId,
+      routeLabel,
       vehicleMode,
       vehicleTotalSeats,
       requiresVehicle = false,
@@ -175,6 +179,7 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     ref,
   ): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
   const { vehicles, isLoading: vehiclesLoading, refreshVehicles, beginAddVehicle } = useVehicles();
@@ -287,9 +292,12 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   const hasActionableOffer = activeOffer != null && !TERMINAL_STATUSES.includes(activeOffer.status);
   const isConfirmedOffer = activeOffer?.status === 'confirmed';
   // Offering on a passenger request → viewer is the driver; otherwise passenger.
-  const whatsappMessage = requiresVehicle
-    ? t('dashboard.listings.detail.contact.messageAsDriver')
-    : t('dashboard.listings.detail.contact.messageAsPassenger');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: Boolean(requiresVehicle),
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
   const panelTitle = isConfirmedOffer
     ? t('dashboard.listings.detail.offer.titleConfirmed')
     : t('dashboard.listings.detail.offer.title');

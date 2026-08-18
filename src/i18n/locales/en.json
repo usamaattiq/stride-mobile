@@ -528,8 +528,8 @@
           "chatOpenFailed": "Couldn't open chat.",
           "chatLoadFailed": "Couldn't load messages.",
           "chatSendFailed": "Couldn't send message.",
-          "messageAsPassenger": "Hi, I'm the passenger for our confirmed Musafir249 trip.",
-          "messageAsDriver": "Hi, I'm the driver for our confirmed Musafir249 trip.",
+          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Request ID: {{requestId}}",
+          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Request ID: {{requestId}}",
           "passengerContact": "Passenger contact",
           "driverContact": "Driver contact"
         },

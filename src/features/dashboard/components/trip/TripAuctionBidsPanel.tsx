@@ -12,24 +12,29 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripAuctionBidsPanelProps = {
   tripId: string;
+  routeLabel: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
 };
 
 export function TripAuctionBidsPanel({
   tripId,
+  routeLabel,
   isPassengerRequest = false,
   onCountChange,
 }: TripAuctionBidsPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const [snapshot, setSnapshot] = React.useState<AuctionOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -37,9 +42,12 @@ export function TripAuctionBidsPanel({
   const [vehicleDetail, setVehicleDetail] = React.useState<AuctionBidVehicleSummary | null>(null);
   const [chatTarget, setChatTarget] = React.useState<AuctionParticipantRank | null>(null);
 
-  const whatsappMessage = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.messageAsPassenger')
-    : t('dashboard.listings.detail.contact.messageAsDriver');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: !isPassengerRequest,
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
 
   const applySnapshot = React.useCallback(
     (ownerSnapshot: AuctionOwnerSnapshot) => {

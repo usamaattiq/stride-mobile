@@ -9,8 +9,10 @@ import type { RfqOfferStatus, RfqOfferSummary, RfqOfferVehicleSummary, RfqOwnerS
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
 import type { TripVehicleMode } from '../../types/trip.types';
 import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
@@ -18,6 +20,7 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripResponsesPanelProps = {
   tripId: string;
+  routeLabel: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
   /** Passenger request listings receive offers from drivers. */
@@ -51,19 +54,24 @@ function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
 
 export function TripResponsesPanel({
   tripId,
+  routeLabel,
   vehicleMode,
   vehicleTotalSeats,
   isPassengerRequest = false,
   onCountChange,
 }: TripResponsesPanelProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const rejectConfirmBody = isPassengerRequest
     ? t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyDriver')
     : t('dashboard.listings.detail.responses.rejectConfirmBodyNotifyPassenger');
   // Owner messaging the responder: passenger request → owner is passenger; else driver.
-  const whatsappMessage = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.messageAsPassenger')
-    : t('dashboard.listings.detail.contact.messageAsDriver');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: !isPassengerRequest,
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);

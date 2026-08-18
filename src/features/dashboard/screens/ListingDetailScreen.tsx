@@ -543,6 +543,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <TripBidPanel
                 ref={bidPanelRef}
                 tripId={trip.id}
+                routeLabel={`${fromCity} → ${toCity}`}
                 isPassengerRequest={trip.vehicleId == null}
                 requiresVehicle={trip.vehicleId == null}
                 initialVehicleId={route.params.selectVehicleId ?? null}
@@ -553,6 +554,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <TripOfferPanel
                 ref={offerPanelRef}
                 tripId={trip.id}
+                routeLabel={`${fromCity} → ${toCity}`}
                 vehicleMode={trip.vehicleMode}
                 vehicleTotalSeats={trip.vehicleTotalSeats}
                 requiresVehicle={trip.vehicleId == null}
@@ -605,12 +607,14 @@ export function ListingDetailScreen(): React.ReactElement {
                     <TripAuctionBidsPanel
                       key={auctionPanelKey}
                       tripId={trip.id}
+                      routeLabel={`${fromCity} → ${toCity}`}
                       isPassengerRequest={trip.vehicleId == null}
                       onCountChange={setResponsesCount}
                     />
                   ) : (
                     <TripResponsesPanel
                       tripId={trip.id}
+                      routeLabel={`${fromCity} → ${toCity}`}
                       vehicleMode={trip.vehicleMode}
                       vehicleTotalSeats={trip.vehicleTotalSeats}
                       isPassengerRequest={trip.vehicleId == null}

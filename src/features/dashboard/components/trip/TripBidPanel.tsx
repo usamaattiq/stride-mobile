@@ -27,8 +27,10 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
+import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
 import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
 import type { Vehicle } from '../../types/vehicle.types';
@@ -43,6 +45,7 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripBidPanelProps = {
   tripId: string;
+  routeLabel: string;
   isPassengerRequest?: boolean;
   /** When true, driver must pick one of their vehicles before placing a bid. */
   requiresVehicle?: boolean;
@@ -120,6 +123,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
   function TripBidPanel(
     {
       tripId,
+      routeLabel,
       isPassengerRequest = false,
       requiresVehicle = false,
       initialVehicleId = null,
@@ -129,6 +133,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
     ref,
   ): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { user } = useDashboardSession();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
   const { vehicles, isLoading: vehiclesLoading, refreshVehicles, beginAddVehicle } = useVehicles();
@@ -150,9 +155,12 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
     [selectedVehicleId, vehicles],
   );
 
-  const whatsappMessage = isPassengerRequest
-    ? t('dashboard.listings.detail.contact.messageAsDriver')
-    : t('dashboard.listings.detail.contact.messageAsPassenger');
+  const whatsappMessage = buildWhatsAppContactMessage(t, {
+    asDriver: isPassengerRequest,
+    name: user.fullName,
+    route: routeLabel,
+    requestId: tripId,
+  });
 
   const applySnapshot = React.useCallback(
     (result: AuctionParticipantSnapshot, options?: { seedAmount?: boolean }) => {
