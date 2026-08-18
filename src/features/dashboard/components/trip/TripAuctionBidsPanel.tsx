@@ -145,19 +145,15 @@ export function TripAuctionBidsPanel({
   return (
     <View style={styles.root}>
       <View style={styles.headerCopy}>
-        <AppText weight="bold" style={styles.headerTitle}>
-          {t('dashboard.listings.detail.auctionBids.title')}
-        </AppText>
+        <View style={styles.titleRow}>
+          <AppText weight="bold" style={styles.headerTitle}>
+            {t('dashboard.listings.detail.auctionBids.title')}
+          </AppText>
+        </View>
         <AppText style={styles.headerMeta}>
-          {snapshot.statusLabel}
-          {' · '}
           {snapshot.auctionType === 'reverse'
-            ? t('dashboard.listings.detail.bid.lowestWins')
-            : t('dashboard.listings.detail.bid.highestWins')}
-          {' · '}
-          {t('dashboard.listings.detail.auctionBids.currentAmount', {
-            amount: snapshot.currentAmount,
-          })}
+            ? t('dashboard.listings.detail.bid.lowestBid', { amount: snapshot.currentAmount })
+            : t('dashboard.listings.detail.bid.highestBid', { amount: snapshot.currentAmount })}
         </AppText>
       </View>
 
@@ -271,14 +267,20 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     flex: 1,
-    gap: spacing.xs,
+    gap: 4,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 18,
     color: colors.text.primary,
   },
   headerMeta: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.text.secondary,
   },
   actionsRow: {
