@@ -11,16 +11,21 @@ import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
+import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
 
-function formatTripWhen(trip: Trip, locale: string): string {
+function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
+  if (trip.departureOpen) {
+    return openLabel;
+  }
   if (trip.departureUntil) {
     return formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt);
   }
@@ -44,9 +49,9 @@ type StatusBadgeTone = 'green' | 'blue' | 'amber' | 'muted';
 
 const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
   live: 'green',
-  'awaiting-confirmation': 'blue',
+  'awaiting-confirmation': 'amber',
   'offer-submitted': 'amber',
-  'awaiting-your-confirmation': 'blue',
+  'awaiting-your-confirmation': 'amber',
   confirmed: 'green',
   completed: 'blue',
   closed: 'muted',
@@ -56,9 +61,9 @@ const RFQ_STATUS_TONE: Record<RfqStatusValue, StatusBadgeTone> = {
 const AUCTION_STATUS_TONE: Record<AuctionStatusValue, StatusBadgeTone> = {
   'coming-soon': 'blue',
   live: 'green',
-  'awaiting-confirmation': 'blue',
+  'awaiting-confirmation': 'amber',
   'awaiting-action': 'amber',
-  'awaiting-your-confirmation': 'blue',
+  'awaiting-your-confirmation': 'amber',
   declined: 'muted',
   'timed-out': 'muted',
   completed: 'blue',
@@ -78,17 +83,13 @@ const AUCTION_VARIANT_TONE: Record<
 
 const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
   active: 'amber',
-  selected: 'blue',
+  selected: 'amber',
   confirmed: 'green',
   withdrawn: 'muted',
   declined: 'muted',
   timed_out: 'muted',
   lapsed: 'muted',
 };
-
-function getExpiresAt(trip: Trip): number {
-  return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
-}
 
 function formatCountdown(remainingMs: number, t: TFunction): string {
   const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
@@ -144,15 +145,16 @@ export function ListingCard({
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
   const [now, setNow] = React.useState(() => Date.now());
-  const remainingMs = getExpiresAt(trip) - now;
-  const tickMs = remainingMs > 0 && remainingMs < 60 * 60_000 ? 1_000 : 30_000;
+  const startsLater = !pending && isListingNotStartedYet(trip, now);
+  const remainingMs = startsLater ? 0 : getListingExpiresAtMs(trip) - now;
+  const tickMs = startsLater ? 15_000 : 30_000;
   React.useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
   }, [tickMs]);
 
-  const fromCity = cityDisplayName(trip.departureCity.label);
-  const toCity = cityDisplayName(trip.arrivalCity.label);
+  const fromCity = useLocalizedCityName(trip.departureCity, trip.departurePoint);
+  const toCity = useLocalizedCityName(trip.arrivalCity, trip.arrivalPoint);
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;
@@ -167,30 +169,39 @@ export function ListingCard({
         ? t('trips.create.vehicleModeShared')
         : null;
   const active = remainingMs > 0;
-  const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  const endingSoon = active && remainingMs < 60 * 60_000;
+  const timerLabel = !active
+    ? t('dashboard.listings.card.ended')
+    : endingSoon
+      ? t('dashboard.listings.card.endingSoon')
+      : formatCountdown(remainingMs, t);
   // Auctions: use AMS display status/label as-is (never remap participant_status → "Bid active").
   const useAuctionTag = trip.listingType === 'auction' && Boolean(trip.auctionStatus);
   const badgeState = pending
     ? 'pending'
-    : useAuctionTag
+    : startsLater
+      ? 'notStarted'
+      : useAuctionTag
       ? 'auctionStatus'
-      : trip.myOfferStatus
-        ? 'myOfferStatus'
-        : trip.rfqStatus
-          ? 'rfqStatus'
+      : trip.rfqStatus
+        ? 'rfqStatus'
+        : trip.myOfferStatus
+          ? 'myOfferStatus'
           : active
             ? 'active'
             : 'ended';
   const badgeTone = pending
     ? 'muted'
-    : useAuctionTag && trip.auctionStatus
+    : startsLater
+      ? 'muted'
+      : useAuctionTag && trip.auctionStatus
       ? trip.auctionStatusVariant
         ? AUCTION_VARIANT_TONE[trip.auctionStatusVariant]
         : AUCTION_STATUS_TONE[trip.auctionStatus]
-      : trip.myOfferStatus
-        ? OFFER_STATUS_TONE[trip.myOfferStatus]
-        : trip.rfqStatus
-          ? RFQ_STATUS_TONE[trip.rfqStatus]
+      : trip.rfqStatus
+        ? RFQ_STATUS_TONE[trip.rfqStatus]
+        : trip.myOfferStatus
+          ? OFFER_STATUS_TONE[trip.myOfferStatus]
           : active
             ? 'green'
             : 'muted';
@@ -205,12 +216,13 @@ export function ListingCard({
     trip.myBidAmount != null
       ? String(trip.myBidAmount)
       : trip.myOfferPrice?.trim() || null;
-  const price =
-    offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
+  const rawPrice = offerPrice ?? (trip.startingPrice?.trim() || null);
+  const price = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
   const isPassengerRequest = trip.vehicleId == null;
-  // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
-  const showCountdown = pending || active;
+  // Countdown is listing time remaining — hide it until the listing has actually started.
   const isAuction = trip.listingType === 'auction';
+  // Auction remaining time lives next to Place your bid, not on the listing card.
+  const showCountdown = !isAuction && !pending && !startsLater && active;
   const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');
@@ -307,13 +319,15 @@ export function ListingCard({
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'auctionStatus'
+              : badgeState === 'notStarted'
+                ? t('dashboard.listings.card.notStarted')
+                : badgeState === 'auctionStatus'
                 ? trip.auctionStatusLabel?.trim() ||
                   t(`dashboard.listings.card.auctionStatus.${trip.auctionStatus}`)
-                : badgeState === 'myOfferStatus'
-                  ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
-                  : badgeState === 'rfqStatus'
-                    ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                : badgeState === 'rfqStatus'
+                  ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                  : badgeState === 'myOfferStatus'
+                    ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
                     : badgeState === 'active'
                       ? t('dashboard.listings.card.active')
                       : t('dashboard.listings.card.ended')}
@@ -374,7 +388,7 @@ export function ListingCard({
           <View style={styles.metaRow}>
             <FontAwesome name="calendar" size={11} color={colors.primary} />
             <AppText style={styles.metaText} numberOfLines={1}>
-              {formatTripWhen(trip, i18n.language)}
+              {formatTripWhen(trip, i18n.language, t('dashboard.listings.card.open'))}
             </AppText>
           </View>
 
@@ -404,7 +418,7 @@ export function ListingCard({
 
             {price ? (
               <View style={styles.priceBlock}>
-                <AppText weight="bold" style={styles.priceAmount}>
+                <AppText weight="bold" style={styles.priceAmount} numberOfLines={1}>
                   {price}
                 </AppText>
                 {trip.vehicleMode === 'shared' ? (
@@ -448,7 +462,7 @@ export function ListingCard({
 
   return (
     <>
-      {item}
+      <View style={styles.shadowGutter}>{item}</View>
       <ImageGalleryModal
         visible={galleryVisible}
         images={galleryImages}
@@ -459,13 +473,13 @@ export function ListingCard({
 }
 
 const styles = StyleSheet.create({
+  shadowGutter: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
   item: {
     borderRadius: radius.md,
-    shadowColor: '#B42318',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    ...cardBackShadow,
   },
   itemInner: {
     borderRadius: radius.md,
@@ -681,6 +695,8 @@ const styles = StyleSheet.create({
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
+    minWidth: 64,
+    paddingTop: 2,
   },
   bodyCountdownRow: {
     marginTop: 'auto',
@@ -688,7 +704,7 @@ const styles = StyleSheet.create({
   },
   priceAmount: {
     fontSize: 22,
-    lineHeight: 24,
+    lineHeight: 32,
     color: colors.primary,
   },
   priceSuffix: {

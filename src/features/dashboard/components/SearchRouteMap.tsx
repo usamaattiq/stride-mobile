@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { searchMapLocations } from '@/features/auth/utils/signup-map-geocode';
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { ENV, hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, spacing } from '@/theme';
@@ -29,6 +30,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
   onReady,
 }: SearchRouteMapProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [html, setHtml] = React.useState<string | null>(null);
@@ -54,8 +56,8 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
 
       try {
         const [originHits, destinationHits] = await Promise.all([
-          searchMapLocations(departureLabel, ENV.googleMapsApiKey),
-          searchMapLocations(arrivalLabel, ENV.googleMapsApiKey),
+          searchMapLocations(departureLabel, ENV.googleMapsApiKey, currentLanguage),
+          searchMapLocations(arrivalLabel, ENV.googleMapsApiKey, currentLanguage),
         ]);
 
         const origin = originHits[0];
@@ -97,7 +99,7 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
     return () => {
       cancelled = true;
     };
-  }, [arrivalLabel, departureLabel, t]);
+  }, [arrivalLabel, currentLanguage, departureLabel, t]);
 
   return (
     <View style={styles.root}>

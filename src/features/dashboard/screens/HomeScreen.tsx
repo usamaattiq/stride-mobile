@@ -1,6 +1,7 @@
 import React from 'react';
 import { Animated, BackHandler, StyleSheet, View } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,7 +36,15 @@ export function HomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user, setHasUnreadMessages } = useDashboardSession();
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const route = useRoute<RouteProp<HomeStackParamList, 'HomeMain'>>();
   const [panel, setPanel] = React.useState<HomePanel>('feed');
+
+  React.useEffect(() => {
+    const next = route.params?.panel;
+    if (next === 'feed' || next === 'messages' || next === 'notifications') {
+      setPanel(next);
+    }
+  }, [route.params?.panel]);
   const [messageFilter, setMessageFilter] = React.useState<MessageFilter>('all');
   const [animatedMessageIndex, setAnimatedMessageIndex] = React.useState<
     Animated.AnimatedInterpolation<number> | undefined

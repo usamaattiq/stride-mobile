@@ -12,7 +12,10 @@ import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
 import { isSessionRevokedError } from './src/services/api/apiError';
 import { usePingNotificationRouting } from './src/services/pingDeepLinkRouting';
-import { registerForPushNotifications } from './src/services/pushNotifications';
+import {
+  attachPushTokenListener,
+  registerForPushNotifications,
+} from './src/services/pushNotifications';
 import { authStore } from './src/store/authStore';
 import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
@@ -48,6 +51,10 @@ export default function App() {
   const [initialRouteName, setInitialRouteName] = useState<keyof AuthStackParamList | null>(null);
 
   usePingNotificationRouting();
+
+  useEffect(() => {
+    return attachPushTokenListener();
+  }, []);
 
   useEffect(() => {
     let mounted = true;

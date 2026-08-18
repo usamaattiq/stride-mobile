@@ -5,9 +5,11 @@ import {
   Animated,
   Easing,
   Platform,
+  Pressable,
   StyleSheet,
   View,
   type DimensionValue,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +29,7 @@ import {
 } from '@/theme';
 
 const DEFAULT_CREDITS = 50;
-const PREPARE_DURATION_MS = 3000;
+const PREPARE_DURATION_MS = 10000;
 
 /** Decorative celebration confetti (purely visual). */
 const CONFETTI: {
@@ -69,6 +71,15 @@ export function SignupSuccessScreen({
   const prepareProgress = React.useRef(new Animated.Value(0)).current;
   const confettiAnims = React.useRef(CONFETTI.map(() => new Animated.Value(0))).current;
   const didNavigateRef = React.useRef(false);
+  const [trackWidth, setTrackWidth] = React.useState(0);
+
+  const goToDashboard = React.useCallback(() => {
+    if (didNavigateRef.current) {
+      return;
+    }
+    didNavigateRef.current = true;
+    onGoToDashboard();
+  }, [onGoToDashboard]);
 
   React.useEffect(() => {
     Animated.sequence([
@@ -109,21 +120,26 @@ export function SignupSuccessScreen({
     });
 
     animation.start(({ finished }) => {
-      if (!finished || didNavigateRef.current) {
+      if (!finished) {
         return;
       }
-      didNavigateRef.current = true;
-      onGoToDashboard();
+      goToDashboard();
     });
 
     return () => {
       animation.stop();
     };
-  }, [onGoToDashboard, prepareProgress]);
+  }, [goToDashboard, prepareProgress]);
+
+  const onPrepareLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    setTrackWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+  }, []);
 
   const prepareWidth = prepareProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+    outputRange: [0, Math.max(trackWidth, 1)],
+    extrapolate: 'clamp',
   });
 
   return (
@@ -203,11 +219,15 @@ export function SignupSuccessScreen({
         </Animated.View>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-          <View
-            style={styles.prepareButton}
-            accessibilityRole="progressbar"
+          <Pressable
+            onLayout={onPrepareLayout}
+            style={({ pressed }) => [
+              styles.prepareButton,
+              pressed && styles.prepareButtonPressed,
+            ]}
+            accessibilityRole="button"
             accessibilityLabel={t('auth.signup.success.preparingDashboard')}
-            accessibilityState={{ busy: true }}
+            onPress={goToDashboard}
           >
             <Animated.View
               pointerEvents="none"
@@ -224,7 +244,7 @@ export function SignupSuccessScreen({
             >
               {t('auth.signup.success.preparingDashboard')}
             </AppText>
-          </View>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -325,13 +345,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     backgroundColor: colors.primary,
     direction: 'ltr',
   },
+  prepareButtonPressed: {
+    opacity: 0.88,
+  },
   prepareFill: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
   prepareLabel: {
@@ -339,5 +363,7 @@ const styles = StyleSheet.create({
     color: colors.text.inverse,
     textAlign: 'center',
     zIndex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
 });

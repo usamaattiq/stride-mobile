@@ -5,13 +5,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import type { RfqOfferVehicleSummary } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { useResolvedLocationPointLabel } from '@/shared/hooks/useResolvedLocationPointLabel';
 import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
 
+import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
+
 export type TripDetailsOverviewProps = {
   description?: string | null;
+  listingVehicle?: RfqOfferVehicleSummary | null;
   fromCity?: string | null;
   toCity?: string | null;
   /** When omitted, the departure schedule row is hidden. */
@@ -109,6 +113,7 @@ function LocationPointRow({
 
 export function TripDetailsOverview({
   description,
+  listingVehicle = null,
   fromCity,
   toCity,
   departureWhen,
@@ -118,6 +123,7 @@ export function TripDetailsOverview({
 }: TripDetailsOverviewProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
+  const [vehicleSheetOpen, setVehicleSheetOpen] = React.useState(false);
 
   React.useEffect(() => {
     setDescriptionExpanded(false);
@@ -138,6 +144,23 @@ export function TripDetailsOverview({
 
   return (
     <View style={styles.root}>
+      {listingVehicle ? (
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => setVehicleSheetOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('dashboard.listings.detail.responses.viewVehicleA11y', {
+            title: listingVehicle.title,
+          })}
+        >
+          <SectionHeader
+            icon="car"
+            title={t('dashboard.listings.detail.vehicle')}
+            right={<FontAwesome name="chevron-right" size={14} color={colors.text.tertiary} />}
+          />
+        </Pressable>
+      ) : null}
+
       {description ? (
         <View style={styles.card}>
           <SectionHeader
@@ -257,6 +280,12 @@ export function TripDetailsOverview({
           </View>
         </View>
       ) : null}
+
+      <OfferVehicleDetailSheet
+        visible={vehicleSheetOpen}
+        vehicle={listingVehicle}
+        onClose={() => setVehicleSheetOpen(false)}
+      />
     </View>
   );
 }
@@ -272,6 +301,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     padding: spacing.sm,
     gap: spacing.sm,
+  },
+  cardPressed: {
+    opacity: 0.75,
   },
   cardHeader: {
     flexDirection: 'row',

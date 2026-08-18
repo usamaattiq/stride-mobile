@@ -14,6 +14,38 @@ export function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
+/** Inclusive local-day overlap of two [start, end] windows. */
+export function localDateRangesOverlap(
+  aStart: Date,
+  aEnd: Date,
+  bStart: Date,
+  bEnd: Date,
+): boolean {
+  const a0 = startOfLocalDay(aStart).getTime();
+  const a1 = startOfLocalDay(aEnd).getTime();
+  const b0 = startOfLocalDay(bStart).getTime();
+  const b1 = startOfLocalDay(bEnd).getTime();
+  return a0 <= b1 && b0 <= a1;
+}
+
+/** Window used for search matching: open listings use the publish + durationHours life. */
+export function getTripAvailabilityWindow(trip: {
+  departureOpen: boolean;
+  publishedAt: string;
+  durationHours: number;
+  departureAt: string;
+  departureUntil: string | null;
+}): { start: Date; end: Date } {
+  if (trip.departureOpen) {
+    const start = new Date(trip.publishedAt);
+    const end = new Date(start.getTime() + trip.durationHours * 60 * 60 * 1000);
+    return { start, end };
+  }
+  const start = new Date(trip.departureAt);
+  const end = trip.departureUntil ? new Date(trip.departureUntil) : start;
+  return { start, end };
+}
+
 export function parseIsoDate(value: string | null | undefined): Date | null {
   if (!value) {
     return null;
@@ -65,6 +97,9 @@ export function formatDateRangeLabel(
     });
 
   if (start && end) {
+    if (isSameLocalDay(start, end)) {
+      return formatDay(start);
+    }
     return `${formatDay(start)} → ${formatDay(end)}`;
   }
   if (start) {

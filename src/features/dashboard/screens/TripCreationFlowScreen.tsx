@@ -21,6 +21,7 @@ import type { DashboardRootStackParamList } from '@/features/dashboard/navigatio
 import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
+import { shouldSkipListingScheduleStep, type TripDraft } from '@/features/dashboard/types/trip.types';
 import { spacing } from '@/theme';
 
 type TripCreationStep =
@@ -50,20 +51,38 @@ const PASSENGER_STEP_ORDER: TripCreationStep[] = [
   'preview',
 ];
 
-function stepOrderForRole(isPassenger: boolean): TripCreationStep[] {
-  return isPassenger ? PASSENGER_STEP_ORDER : DRIVER_STEP_ORDER;
+function stepOrderForRole(
+  isPassenger: boolean,
+  vehicleMode: TripDraft['vehicleMode'],
+  listingType: TripDraft['listingType'] = null,
+  durationHours = 24,
+): TripCreationStep[] {
+  const order = isPassenger ? [...PASSENGER_STEP_ORDER] : [...DRIVER_STEP_ORDER];
+  let next = order;
+  if (vehicleMode === 'shared') {
+    next = next.filter((item) => item !== 'listing');
+  }
+  if (shouldSkipListingScheduleStep(listingType, durationHours)) {
+    next = next.filter((item) => item !== 'schedule');
+  }
+  return next;
 }
 
 function firstStepForRole(isPassenger: boolean): TripCreationStep {
-  return stepOrderForRole(isPassenger)[0]!;
+  return stepOrderForRole(isPassenger, null)[0]!;
 }
 
-function stepProgress(step: TripCreationStep, isPassenger: boolean): number {
-  const order = stepOrderForRole(isPassenger);
-  return order.indexOf(step) + 1;
+function stepProgress(
+  step: TripCreationStep,
+  isPassenger: boolean,
+  vehicleMode: TripDraft['vehicleMode'],
+  listingType: TripDraft['listingType'],
+  durationHours: number,
+): number {
+  const order = stepOrderForRole(isPassenger, vehicleMode, listingType, durationHours);
+  const index = order.indexOf(step);
+  return (index >= 0 ? index : 0) + 1;
 }
-
-const TOTAL_STEPS = DRIVER_STEP_ORDER.length;
 
 type Nav = NativeStackNavigationProp<DashboardRootStackParamList, 'TripCreation'>;
 
@@ -126,22 +145,42 @@ export function TripCreationFlowScreen(): React.ReactElement {
   }, []);
 
   const goToNextStep = React.useCallback(() => {
-    const order = stepOrderForRole(isPassenger);
+    const order = stepOrderForRole(
+      isPassenger,
+      draft.vehicleMode,
+      draft.listingType,
+      draft.durationHours,
+    );
     const index = order.indexOf(step);
     if (index < order.length - 1) {
       goToStep(order[index + 1]!);
     }
-  }, [goToStep, isPassenger, step]);
+  }, [draft.durationHours, draft.listingType, draft.vehicleMode, goToStep, isPassenger, step]);
 
   const goToPreviousStep = React.useCallback(() => {
-    const order = stepOrderForRole(isPassenger);
+    const order = stepOrderForRole(
+      isPassenger,
+      draft.vehicleMode,
+      draft.listingType,
+      draft.durationHours,
+    );
     const index = order.indexOf(step);
     if (index > 0) {
       goToStep(order[index - 1]!);
       return true;
     }
     return false;
-  }, [goToStep, isPassenger, step]);
+  }, [draft.durationHours, draft.listingType, draft.vehicleMode, goToStep, isPassenger, step]);
+
+  React.useEffect(() => {
+    if (!shouldSkipListingScheduleStep(draft.listingType, draft.durationHours)) {
+      return;
+    }
+    if (draft.startMode === 'instant' && draft.scheduledStartAt == null) {
+      return;
+    }
+    patchDraft({ startMode: 'instant', scheduledStartAt: null });
+  }, [draft.durationHours, draft.listingType, draft.scheduledStartAt, draft.startMode, patchDraft]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -268,8 +307,21 @@ export function TripCreationFlowScreen(): React.ReactElement {
         subtitle={header.subtitle}
         showLegalFooter={false}
         showLanguageSwitcher={false}
-        stepCount={TOTAL_STEPS}
-        currentStep={stepProgress(step, isPassenger)}
+        stepCount={
+          stepOrderForRole(
+            isPassenger,
+            draft.vehicleMode,
+            draft.listingType,
+            draft.durationHours,
+          ).length
+        }
+        currentStep={stepProgress(
+          step,
+          isPassenger,
+          draft.vehicleMode,
+          draft.listingType,
+          draft.durationHours,
+        )}
         scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
         {step === 'vehicle' ? (
@@ -303,8 +355,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
             onChange={(vehicleMode) =>
               patchDraft({
                 vehicleMode,
-                // Auctions are private-only — drop auction if switching to shared.
-                ...(vehicleMode === 'shared' && draft.listingType === 'auction'
+                ...(vehicleMode === 'shared'
                   ? { listingType: 'rfq', durationHours: 24 }
                   : {}),
               })

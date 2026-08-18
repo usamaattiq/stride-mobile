@@ -24,8 +24,9 @@ function getSocket(): Socket {
 
   socket = io(socketBaseUrl(), {
     path: '/socket.io',
-    // Allow polling fallback when raw websocket is blocked.
+    // Prefer websocket; fall back to long-polling if the proxy blocks Upgrade.
     transports: ['websocket', 'polling'],
+    upgrade: true,
     autoConnect: false,
     reconnection: true,
     reconnectionAttempts: 8,
@@ -60,15 +61,27 @@ function ensureConnected(): Promise<Socket> {
   }
 
   return new Promise((resolve, reject) => {
+    const timeoutMs = 12_000;
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Chat socket timed out'));
+    }, timeoutMs);
+
     const onConnect = () => {
       cleanup();
       resolve(active);
     };
     const onError = (err: Error) => {
+      // First transport (websocket) often fails behind nginx without Upgrade;
+      // wait for polling / reconnect instead of treating that as fatal.
+      if (active.active) {
+        return;
+      }
       cleanup();
       reject(err);
     };
     const cleanup = () => {
+      clearTimeout(timer);
       active.off('connect', onConnect);
       active.off('connect_error', onError);
     };

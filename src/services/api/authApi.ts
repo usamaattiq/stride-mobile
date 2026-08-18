@@ -3,6 +3,7 @@ import type {
   AuthLoginResult,
   AuthSignupResult,
   BecomeDriverPayload,
+  AccountDeletionEligibility,
   LoginOtpPurpose,
   PhoneIdentity,
   SignupSubmitPayload,
@@ -18,6 +19,9 @@ export const authApi = {
 
   submitSignup: (payload: SignupSubmitPayload): Promise<AuthSignupResult> =>
     apiRequest({ method: 'POST', url: '/auth/signup/submit', data: payload }),
+
+  checkSignupEmail: (email: string): Promise<{ available: boolean }> =>
+    apiRequest({ method: 'POST', url: '/auth/signup/email/check', data: { email } }),
 
   sendLoginOtp: (phone: PhoneIdentity, purpose: LoginOtpPurpose = 'login'): Promise<{ sent: true }> =>
     apiRequest({ method: 'POST', url: '/auth/login/otp/send', data: { ...phone, purpose } }),
@@ -53,4 +57,10 @@ export const authApi = {
     apiRequest({ method: 'PATCH', url: '/auth/mpin', data: { currentMpin, newMpin } }),
 
   logout: (): Promise<{ loggedOut: true }> => apiRequest({ method: 'POST', url: '/auth/logout' }),
+
+  getDeletionEligibility: (): Promise<AccountDeletionEligibility> =>
+    apiRequest({ method: 'GET', url: '/auth/me/deletion-eligibility' }),
+
+  deleteAccount: (): Promise<{ deleted: true }> =>
+    apiRequest({ method: 'DELETE', url: '/auth/me' }),
 };

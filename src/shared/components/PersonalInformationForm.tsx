@@ -34,6 +34,8 @@ export type PersonalInformationFormProps = {
   onChangeLocationCoords: (coords: PersonalInformationCoords | null) => void;
   onChangePhoto: (uri: string | null) => void;
   onSubmit: () => void;
+  /** Server-side email conflict (shown under the email field). */
+  emailTakenError?: string | null;
   /** CTA label — e.g. Continue (signup) or Save changes (settings). */
   submitLabel: string;
   /** Hint under the locked mobile field (settings). */
@@ -63,6 +65,7 @@ export function PersonalInformationForm({
   onChangeLocationCoords,
   onChangePhoto,
   onSubmit,
+  emailTakenError = null,
   submitLabel,
   showMobileLockedHint = false,
   submitDisabled = false,
@@ -76,11 +79,14 @@ export function PersonalInformationForm({
 
   const emailIsValid = isValidEmail(email);
   const emailError =
-    email.trim().length > 0 && !emailIsValid ? t('auth.signup.personal.emailInvalid') : undefined;
+    email.trim().length > 0 && !emailIsValid
+      ? t('auth.signup.personal.emailInvalid')
+      : emailTakenError || undefined;
 
   const canSubmit =
     !submitDisabled &&
     !loading &&
+    !emailTakenError &&
     fullName.trim().length > 1 &&
     emailIsValid &&
     (Boolean(locationCoords) || address.trim().length > 0);

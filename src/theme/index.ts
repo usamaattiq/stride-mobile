@@ -12,6 +12,7 @@ import {
 } from './typography';
 
 export { colors, radius, spacing, typography };
+export { cardBackShadow } from './cardShadow';
 export {
   appFontAssets,
   fontFamilies,

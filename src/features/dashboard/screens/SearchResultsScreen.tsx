@@ -19,7 +19,9 @@ import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { ENV } from '@/shared/config/env';
+import { toBrowseCityParams } from '@/shared/utils/localized-city-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
@@ -27,7 +29,11 @@ import { ListingCardSkeleton } from '../components/ListingCardSkeleton';
 import { RequestsEmptyState } from '../components/RequestsEmptyState';
 import { SearchResultsFilterSheet } from '../components/SearchResultsFilterSheet';
 import { SearchRouteMap } from '../components/SearchRouteMap';
-import { isSameLocalDay } from '../components/trip/dateRangeUtils';
+import {
+  getTripAvailabilityWindow,
+  localDateRangesOverlap,
+  startOfLocalDay,
+} from '../components/trip/dateRangeUtils';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
 import type { Trip } from '../types/trip.types';
 import {
@@ -76,13 +82,18 @@ export function SearchResultsScreen(): React.ReactElement {
     departureCity,
     arrivalCity,
     departureDateISO,
+    departureUntilISO,
     vehicleMode,
     passengerCount,
   } = route.params;
 
-  const departureDate = React.useMemo(
-    () => new Date(departureDateISO),
+  const searchFrom = React.useMemo(
+    () => startOfLocalDay(new Date(departureDateISO)),
     [departureDateISO],
+  );
+  const searchTo = React.useMemo(
+    () => startOfLocalDay(new Date(departureUntilISO ?? departureDateISO)),
+    [departureDateISO, departureUntilISO],
   );
 
   const [trips, setTrips] = React.useState<Trip[]>([]);
@@ -95,17 +106,23 @@ export function SearchResultsScreen(): React.ReactElement {
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const filterCount = countActiveSearchResultsFilters(filters);
 
-  const fromLabel = cityDisplayName(departureCity.label);
-  const toLabel = cityDisplayName(arrivalCity.label);
+  const fromLabel = useLocalizedCityName(departureCity);
+  const toLabel = useLocalizedCityName(arrivalCity);
   const routeTitle = `${fromLabel} → ${toLabel}`;
 
   const loadTrips = React.useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
+      const [departure, arrival] = await Promise.all([
+        toBrowseCityParams(departureCity, ENV.googleMapsApiKey),
+        toBrowseCityParams(arrivalCity, ENV.googleMapsApiKey),
+      ]);
       const result = await tripApi.browse({
-        departureCity: departureCity.label,
-        arrivalCity: arrivalCity.label,
+        departureCity: departure.label,
+        departureCityId: departure.id,
+        arrivalCity: arrival.label,
+        arrivalCityId: arrival.id,
         vehicleMode,
         minSeats: passengerCount,
         listingType: filters.listingType ?? undefined,
@@ -116,11 +133,13 @@ export function SearchResultsScreen(): React.ReactElement {
       });
 
       const mapped = result.items.map(mapTripDtoToTrip);
-      const filtered = mapped.filter(
-        (trip) =>
-          isSameLocalDay(new Date(trip.departureAt), departureDate) &&
-          matchesPriceRange(trip, filters.priceRange),
-      );
+      const filtered = mapped.filter((trip) => {
+        const window = getTripAvailabilityWindow(trip);
+        return (
+          localDateRangesOverlap(window.start, window.end, searchFrom, searchTo) &&
+          matchesPriceRange(trip, filters.priceRange)
+        );
+      });
 
       setTrips(filtered);
       setResultsCount(filtered.length);
@@ -131,7 +150,7 @@ export function SearchResultsScreen(): React.ReactElement {
     } finally {
       setIsLoading(false);
     }
-  }, [arrivalCity.id, departureCity.id, departureDate, filters, passengerCount, vehicleMode]);
+  }, [arrivalCity.id, departureCity.id, filters, passengerCount, searchFrom, searchTo, vehicleMode]);
 
   React.useEffect(() => {
     void loadTrips();
@@ -292,7 +311,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
-    paddingTop: spacing.sm,
+    paddingTop: 8,
     paddingBottom: spacing.sm,
   },
   cardPad: {

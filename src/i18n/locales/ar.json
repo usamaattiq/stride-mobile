@@ -53,6 +53,8 @@
         "email": "البريد الإلكتروني",
         "emailPlaceholder": "name@example.com",
         "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا",
+        "emailTaken": "هذا البريد الإلكتروني مستخدم بالفعل",
+        "emailCheckFailed": "تعذر التحقق من هذا البريد الإلكتروني. حاول مرة أخرى.",
         "address": "العنوان",
         "city": "المدينة",
         "country": "الدولة",
@@ -298,6 +300,7 @@
       "swapCities": "تبديل المغادرة والوصول",
       "today": "اليوم",
       "tomorrow": "غداً",
+      "dateRange": "تواريخ السفر",
       "passengerCount": "راكب",
       "passengerCountValue": "{{count}} ركاب",
       "decreasePassengers": "تقليل عدد الركاب",
@@ -345,8 +348,9 @@
       "card": {
         "pricePerSeat": "السعر لكل مقعد",
         "priceWithCurrency": "PKR {{price}}",
-        "active": "نشط",
+        "active": "مباشر",
         "ended": "منتهية",
+        "open": "مفتوح",
         "pending": "قيد الانتظار",
         "status": {
           "live": "مباشر",
@@ -371,6 +375,7 @@
           "expired": "منتهي الصلاحية"
         },
         "notStarted": "لم تبدأ بعد",
+        "endingSoon": "ينتهي قريباً",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",
         "timerMinutesSeconds": "متبقي {{minutes}}د {{seconds}}ث",
@@ -381,7 +386,7 @@
         "title": "تفاصيل القائمة",
         "route": "المسار",
         "schedule": "الجدول",
-        "vehicle": "المركبة",
+        "vehicle": "تفاصيل المركبة",
         "listing": "القائمة",
         "published": "تاريخ النشر",
         "notFound": "تعذر العثور على هذه القائمة.",
@@ -428,6 +433,7 @@
           "retry": "حاول مرة أخرى",
           "emptyTitle": "لا توجد ردود بعد",
           "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
+          "currentlyNotListed": "غير مدرج حالياً",
           "offerLabel": "الرد رقم {{index}}",
           "viewVehicleA11y": "عرض تفاصيل المركبة {{title}}",
           "seats_zero": "لا مقاعد",
@@ -465,12 +471,14 @@
           "selectNext": "اختيار المزايد التالي",
           "close": "إغلاق المزاد",
           "closeConfirmTitle": "إغلاق هذا المزاد؟",
-          "closeConfirmBody": "سيتوقف المزاد عن قبول المزايدات.",
+          "closeConfirmBody": "سيتوقف المزاد عن قبول المزايدات. إن وُجدت مزايدات، سيُطلب من المزايد المتصدر التأكيد.",
           "bidderLabel": "مزايد #{{rank}}",
-          "amount": "{{amount}} ر.ب",
+          "amount": "{{amount}}",
           "rank": "الترتيب {{rank}}",
           "selected": "بانتظار التأكيد",
-          "confirmed": "مؤكد"
+          "confirmed": "مؤكد",
+          "seatsOffered": "{{count}} مقاعد معروضة",
+          "whatsapp": "واتساب"
         },
         "bid": {
           "title": "قدّم مزايدتك",
@@ -492,8 +500,12 @@
           "confirm": "تأكيد الصفقة",
           "decline": "رفض",
           "currentAmount": "المبلغ الحالي {{amount}} ر.ب",
-          "yourBid": "مزايدتك {{amount}} ر.ب",
+          "highestBid": "أعلى مزايدة = {{amount}}",
+          "lowestBid": "أقل مزايدة = {{amount}}",
+          "yourBid": "مزايدتك = {{amount}}",
           "leading": "متقدم",
+          "you": "أنت",
+          "liveRanking": "الترتيب المباشر",
           "remaining": "{{seconds}} ث متبقية",
           "remainingHours": "متبقي {{hours}}س {{minutes}}د",
           "remainingMinutes": "متبقي {{minutes}}د",
@@ -521,8 +533,8 @@
           "chatOpenFailed": "تعذر فتح الدردشة.",
           "chatLoadFailed": "تعذر تحميل الرسائل.",
           "chatSendFailed": "تعذر إرسال الرسالة.",
-          "messageAsPassenger": "مرحباً، أنا الراكب في رحلتنا المؤكدة على Musafir249.",
-          "messageAsDriver": "مرحباً، أنا السائق في رحلتنا المؤكدة على Musafir249.",
+          "messageAsPassenger": "مرحباً، أنا {{name}} الراكب في رحلة {{route}}. رقم الطلب: {{requestId}}",
+          "messageAsDriver": "مرحباً، أنا {{name}} السائق في رحلة {{route}}. رقم الطلب: {{requestId}}",
           "passengerContact": "جهة اتصال الراكب",
           "driverContact": "جهة اتصال السائق"
         },
@@ -538,6 +550,7 @@
           "selectVehicleTitle": "اختر مركبة",
           "changeVehicle": "تغيير المركبة",
           "seatsLabel": "المقاعد",
+          "seatsRemaining": "{{count}} متبقي",
           "seatsPlaceholder": "عدد المقاعد",
           "pricePerSeatLabel": "السعر لكل مقعد",
           "priceFullVehicleLabel": "سعر المركبة كاملة",
@@ -621,6 +634,18 @@
       "security": {
         "title": "الأمان",
         "subtitle": "رمز MPIN وحماية تسجيل الدخول"
+      },
+      "deleteAccount": {
+        "title": "حذف الحساب",
+        "subtitle": "إغلاق هذا الحساب نهائياً",
+        "confirm": "سيتم تعطيل حسابك وإخفاء إعلاناتك. يمكنك إنشاء حساب جديد بنفس الرقم لاحقاً.",
+        "confirmCta": "حذف",
+        "failed": "تعذر حذف الحساب. حاول مرة أخرى.",
+        "checking": "جارٍ التحقق مما إذا كان يمكن حذف هذا الحساب…",
+        "blockedOwner": "لديك رحلة لم تكتمل أو تُغلق بعد. أنهِها أو أغلقها قبل حذف الحساب.",
+        "blockedSender": "لديك عرض أو مزايدة نشطة. اسحبها، أو انتظر حتى تكتمل الطلبية أو تُغلق، قبل حذف الحساب.",
+        "blockedBoth": "لديك رحلة مفتوحة وعرض أو مزايدة نشطة. أنهِها أو أغلقها أو اسحبها قبل حذف الحساب.",
+        "blockedGeneric": "لديك نشاط رحلات مفتوح. أنهِه أو أغلقه قبل حذف الحساب."
       }
     },
     "settings": {
@@ -750,7 +775,7 @@
       "title": "العنوان",
       "titlePlaceholder": "مثال: SUV عائلي",
       "description": "الوصف",
-      "descriptionPlaceholder": "وصف مختصر لمركبتك",
+      "descriptionPlaceholder": "وصف مختصر لمركبتك (اختياري)",
       "plateNumber": "رقم اللوحة",
       "plateNumberPlaceholder": "أدخل رقم اللوحة",
       "acTitle": "تكييف الهواء",
@@ -882,6 +907,7 @@
       "scheduleChangeLaterTitle": "يمكنك تغيير هذا لاحقاً",
       "scheduleChangeLaterBody": "ستتمكن من تعديل وقت البدء قبل النشر.",
       "scheduledStart": "تاريخ ووقت البدء",
+      "scheduledStartFutureHint": "اختر تاريخًا ووقتًا لاحقين.",
       "previewTitle": "معاينة الرحلة",
       "previewSubtitle": "راجع كل شيء قبل النشر",
       "previewRequestTitle": "معاينة الطلب",
@@ -971,7 +997,8 @@
     "ok": "حسنًا",
     "done": "تم",
     "clear": "مسح",
-    "continue": "متابعة"
+    "continue": "متابعة",
+    "close": "إغلاق"
   },
   "legal": {
     "common": {
