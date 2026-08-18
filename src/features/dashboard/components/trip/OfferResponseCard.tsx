@@ -307,6 +307,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     color: colors.primary,
     fontSize: 16,
+    lineHeight: 22,
     letterSpacing: -0.2,
   },
   headerActions: {

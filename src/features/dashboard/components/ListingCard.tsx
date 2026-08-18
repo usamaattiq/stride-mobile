@@ -217,7 +217,7 @@ export function ListingCard({
       ? String(trip.myBidAmount)
       : trip.myOfferPrice?.trim() || null;
   const price =
-    offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
+    offerPrice ?? (trip.startingPrice?.trim() || null);
   const isPassengerRequest = trip.vehicleId == null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
   const showCountdown = !pending && !startsLater && active;
@@ -417,7 +417,7 @@ export function ListingCard({
 
             {price ? (
               <View style={styles.priceBlock}>
-                <AppText weight="bold" style={styles.priceAmount}>
+                <AppText weight="bold" style={styles.priceAmount} numberOfLines={1}>
                   {price}
                 </AppText>
                 {trip.vehicleMode === 'shared' ? (
@@ -694,6 +694,7 @@ const styles = StyleSheet.create({
   priceBlock: {
     alignItems: 'flex-end',
     flexShrink: 0,
+    minWidth: 64,
     paddingTop: 2,
   },
   bodyCountdownRow: {
@@ -702,7 +703,7 @@ const styles = StyleSheet.create({
   },
   priceAmount: {
     fontSize: 22,
-    lineHeight: 28,
+    lineHeight: 32,
     color: colors.primary,
   },
   priceSuffix: {
