@@ -74,11 +74,7 @@ const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
 };
 
 function latestOfferFromSnapshot(snapshot: RfqResponderSnapshot) {
-  return (
-    snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ??
-    snapshot.myOffers[0] ??
-    null
-  );
+  return snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ?? null;
 }
 
 function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {

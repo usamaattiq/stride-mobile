@@ -348,7 +348,7 @@
       "card": {
         "pricePerSeat": "السعر لكل مقعد",
         "priceWithCurrency": "PKR {{price}}",
-        "active": "نشط",
+        "active": "مباشر",
         "ended": "منتهية",
         "open": "مفتوح",
         "pending": "قيد الانتظار",

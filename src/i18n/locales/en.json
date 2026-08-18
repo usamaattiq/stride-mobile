@@ -348,7 +348,7 @@
       "card": {
         "pricePerSeat": "Price per seat",
         "priceWithCurrency": "PKR {{price}}",
-        "active": "Active",
+        "active": "Live",
         "ended": "Ended",
         "open": "Open",
         "pending": "Pending",

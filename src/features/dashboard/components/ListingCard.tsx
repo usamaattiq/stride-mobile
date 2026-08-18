@@ -177,10 +177,10 @@ export function ListingCard({
     ? 'pending'
     : useAuctionTag
       ? 'auctionStatus'
-      : trip.myOfferStatus
-        ? 'myOfferStatus'
-        : trip.rfqStatus
-          ? 'rfqStatus'
+      : trip.rfqStatus
+        ? 'rfqStatus'
+        : trip.myOfferStatus
+          ? 'myOfferStatus'
           : active
             ? 'active'
             : 'ended';
@@ -190,10 +190,10 @@ export function ListingCard({
       ? trip.auctionStatusVariant
         ? AUCTION_VARIANT_TONE[trip.auctionStatusVariant]
         : AUCTION_STATUS_TONE[trip.auctionStatus]
-      : trip.myOfferStatus
-        ? OFFER_STATUS_TONE[trip.myOfferStatus]
-        : trip.rfqStatus
-          ? RFQ_STATUS_TONE[trip.rfqStatus]
+      : trip.rfqStatus
+        ? RFQ_STATUS_TONE[trip.rfqStatus]
+        : trip.myOfferStatus
+          ? OFFER_STATUS_TONE[trip.myOfferStatus]
           : active
             ? 'green'
             : 'muted';
@@ -313,10 +313,10 @@ export function ListingCard({
               : badgeState === 'auctionStatus'
                 ? trip.auctionStatusLabel?.trim() ||
                   t(`dashboard.listings.card.auctionStatus.${trip.auctionStatus}`)
-                : badgeState === 'myOfferStatus'
-                  ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
-                  : badgeState === 'rfqStatus'
-                    ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                : badgeState === 'rfqStatus'
+                  ? t(`dashboard.listings.card.status.${trip.rfqStatus}`)
+                  : badgeState === 'myOfferStatus'
+                    ? t(`dashboard.listings.detail.responses.offerStatus.${trip.myOfferStatus}`)
                     : badgeState === 'active'
                       ? t('dashboard.listings.card.active')
                       : t('dashboard.listings.card.ended')}
