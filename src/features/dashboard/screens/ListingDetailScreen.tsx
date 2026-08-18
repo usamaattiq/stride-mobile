@@ -29,7 +29,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
@@ -97,6 +97,8 @@ export function ListingDetailScreen(): React.ReactElement {
   const [notificationChat, setNotificationChat] = React.useState<NotificationChatTarget | null>(
     null,
   );
+  const fromCity = useLocalizedCityName(trip?.departureCity, trip?.departurePoint);
+  const toCity = useLocalizedCityName(trip?.arrivalCity, trip?.arrivalPoint);
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
@@ -410,10 +412,6 @@ export function ListingDetailScreen(): React.ReactElement {
     );
   }
 
-  const fromCity = cityDisplayName(trip.departureCity.label);
-  const toCity = trip.arrivalCity
-    ? cityDisplayName(trip.arrivalCity.label)
-    : '—';
   const classLabel = trip.vehicleClass
     ? t(
         VEHICLE_CLASS_OPTIONS.find((item) => item.id === trip.vehicleClass)?.labelKey ??
@@ -436,7 +434,7 @@ export function ListingDetailScreen(): React.ReactElement {
     trip.description?.trim() ||
     t('dashboard.listings.detail.descriptionBody', {
       from: fromCity,
-      to: toCity,
+      to: toCity || '—',
       vehicle: vehicleTitle,
       mode: modeLabel,
     });

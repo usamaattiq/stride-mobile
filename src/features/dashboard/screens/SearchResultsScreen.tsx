@@ -19,7 +19,9 @@ import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { ENV } from '@/shared/config/env';
+import { toBrowseCityParams } from '@/shared/utils/localized-city-name';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
@@ -104,17 +106,23 @@ export function SearchResultsScreen(): React.ReactElement {
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
   const filterCount = countActiveSearchResultsFilters(filters);
 
-  const fromLabel = cityDisplayName(departureCity.label);
-  const toLabel = cityDisplayName(arrivalCity.label);
+  const fromLabel = useLocalizedCityName(departureCity);
+  const toLabel = useLocalizedCityName(arrivalCity);
   const routeTitle = `${fromLabel} → ${toLabel}`;
 
   const loadTrips = React.useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
+      const [departure, arrival] = await Promise.all([
+        toBrowseCityParams(departureCity, ENV.googleMapsApiKey),
+        toBrowseCityParams(arrivalCity, ENV.googleMapsApiKey),
+      ]);
       const result = await tripApi.browse({
-        departureCity: departureCity.label,
-        arrivalCity: arrivalCity.label,
+        departureCity: departure.label,
+        departureCityId: departure.id,
+        arrivalCity: arrival.label,
+        arrivalCityId: arrival.id,
         vehicleMode,
         minSeats: passengerCount,
         listingType: filters.listingType ?? undefined,

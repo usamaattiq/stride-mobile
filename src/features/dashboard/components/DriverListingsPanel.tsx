@@ -20,7 +20,7 @@ import { tripApi } from '@/services/api/tripApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { citiesReferToSamePlace } from '@/shared/utils/localized-city-name';
 import { colors, spacing } from '@/theme';
 
 import { ListingCard } from './ListingCard';
@@ -69,18 +69,10 @@ function matchesFilters(trip: Trip, filters: TripBrowseFilters): boolean {
   if (filters.minSeats != null && (trip.vehicleTotalSeats ?? 0) < filters.minSeats) {
     return false;
   }
-  if (
-    filters.departureCity &&
-    cityDisplayName(trip.departureCity.label).toLowerCase() !==
-      cityDisplayName(filters.departureCity.label).toLowerCase()
-  ) {
+  if (filters.departureCity && !citiesReferToSamePlace(trip.departureCity, filters.departureCity)) {
     return false;
   }
-  if (
-    filters.arrivalCity &&
-    cityDisplayName(trip.arrivalCity.label).toLowerCase() !==
-      cityDisplayName(filters.arrivalCity.label).toLowerCase()
-  ) {
+  if (filters.arrivalCity && !citiesReferToSamePlace(trip.arrivalCity, filters.arrivalCity)) {
     return false;
   }
   return true;

@@ -11,7 +11,7 @@ import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
@@ -154,8 +154,8 @@ export function ListingCard({
     return () => clearInterval(id);
   }, [tickMs]);
 
-  const fromCity = cityDisplayName(trip.departureCity.label);
-  const toCity = cityDisplayName(trip.arrivalCity.label);
+  const fromCity = useLocalizedCityName(trip.departureCity, trip.departurePoint);
+  const toCity = useLocalizedCityName(trip.arrivalCity, trip.arrivalPoint);
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;

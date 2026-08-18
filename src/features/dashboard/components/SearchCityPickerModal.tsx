@@ -26,6 +26,7 @@ import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { ENV } from '@/shared/config/env';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { searchCities } from '@/shared/utils/city-search';
+import { enrichSelectedCity } from '@/shared/utils/localized-city-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 type SearchCityPickerModalProps = {
@@ -94,7 +95,7 @@ const CityRow = React.memo(function CityRow({
         style={[styles.cityLabel, selected && styles.cityLabelSelected]}
         numberOfLines={2}
       >
-        {city.label}
+        {cityDisplayName(city.label)}
       </AppText>
       {selected ? <FontAwesome name="check" size={14} color={colors.primary} /> : null}
     </Pressable>
@@ -250,7 +251,7 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     const timer = setTimeout(() => {
       setLoading(true);
       setShowEmpty(false);
-      void searchCities(trimmed, ENV.googleMapsApiKey)
+      void searchCities(trimmed, ENV.googleMapsApiKey, currentLanguage)
         .then((items) => {
           if (searchGenRef.current !== gen) {
             return;
@@ -272,17 +273,19 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
       clearTimeout(timer);
       searchGenRef.current += 1;
     };
-  }, [excludeCityId, query, rendered]);
+  }, [excludeCityId, query, rendered, currentLanguage]);
 
   const handleSelect = React.useCallback(
     (city: TripCity) => {
       if (excludeCityId && city.id === excludeCityId) {
         return;
       }
-      pendingSelectRef.current = { ...city, label: cityDisplayName(city.label) };
-      runClose();
+      void enrichSelectedCity(city, currentLanguage, ENV.googleMapsApiKey).then((enriched) => {
+        pendingSelectRef.current = enriched;
+        runClose();
+      });
     },
-    [excludeCityId, runClose],
+    [currentLanguage, excludeCityId, runClose],
   );
 
   const renderItem = React.useCallback(
