@@ -8,6 +8,14 @@ export type TripListingType = 'rfq' | 'auction';
 export type TripPaymentMethod = 'cash' | 'online' | 'both';
 export type TripStartMode = 'instant' | 'scheduled';
 
+/** Auctions of 60 minutes or less always go live immediately — no schedule step. */
+export function shouldSkipListingScheduleStep(
+  listingType: TripListingType | null,
+  durationHours: number,
+): boolean {
+  return listingType === 'auction' && durationHours <= 1 + 1e-9;
+}
+
 export type TripCity = {
   id: string;
   label: string;
