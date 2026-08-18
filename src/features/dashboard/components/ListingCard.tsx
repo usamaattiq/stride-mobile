@@ -148,7 +148,7 @@ export function ListingCard({
 
   const [now, setNow] = React.useState(() => Date.now());
   const remainingMs = getExpiresAt(trip) - now;
-  const tickMs = remainingMs > 0 && remainingMs < 60 * 60_000 ? 1_000 : 30_000;
+  const tickMs = 30_000;
   React.useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
@@ -170,7 +170,12 @@ export function ListingCard({
         ? t('trips.create.vehicleModeShared')
         : null;
   const active = remainingMs > 0;
-  const timerLabel = active ? formatCountdown(remainingMs, t) : t('dashboard.listings.card.ended');
+  const endingSoon = active && remainingMs < 60 * 60_000;
+  const timerLabel = !active
+    ? t('dashboard.listings.card.ended')
+    : endingSoon
+      ? t('dashboard.listings.card.endingSoon')
+      : formatCountdown(remainingMs, t);
   // Auctions: use AMS display status/label as-is (never remap participant_status → "Bid active").
   const useAuctionTag = trip.listingType === 'auction' && Boolean(trip.auctionStatus);
   const badgeState = pending

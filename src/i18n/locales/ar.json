@@ -375,6 +375,7 @@
           "expired": "منتهي الصلاحية"
         },
         "notStarted": "لم تبدأ بعد",
+        "endingSoon": "ينتهي قريباً",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",
         "timerMinutesSeconds": "متبقي {{minutes}}د {{seconds}}ث",

@@ -375,6 +375,7 @@
           "expired": "Expired"
         },
         "notStarted": "Not started yet",
+        "endingSoon": "Ending soon",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",
         "timerMinutesSeconds": "{{minutes}}m {{seconds}}s left",
