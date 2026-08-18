@@ -19,6 +19,7 @@ import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehi
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
+import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
 
 function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
   if (trip.departureOpen) {
@@ -89,10 +90,6 @@ const OFFER_STATUS_TONE: Record<RfqOfferStatus, StatusBadgeTone> = {
   lapsed: 'muted',
 };
 
-function getExpiresAt(trip: Trip): number {
-  return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
-}
-
 function formatCountdown(remainingMs: number, t: TFunction): string {
   const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   const hours = Math.floor(totalSeconds / 3600);
@@ -147,8 +144,9 @@ export function ListingCard({
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
   const [now, setNow] = React.useState(() => Date.now());
-  const remainingMs = getExpiresAt(trip) - now;
-  const tickMs = 30_000;
+  const startsLater = !pending && isListingNotStartedYet(trip, now);
+  const remainingMs = startsLater ? 0 : getListingExpiresAtMs(trip) - now;
+  const tickMs = startsLater ? 15_000 : 30_000;
   React.useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
@@ -180,7 +178,9 @@ export function ListingCard({
   const useAuctionTag = trip.listingType === 'auction' && Boolean(trip.auctionStatus);
   const badgeState = pending
     ? 'pending'
-    : useAuctionTag
+    : startsLater
+      ? 'notStarted'
+      : useAuctionTag
       ? 'auctionStatus'
       : trip.rfqStatus
         ? 'rfqStatus'
@@ -191,7 +191,9 @@ export function ListingCard({
             : 'ended';
   const badgeTone = pending
     ? 'muted'
-    : useAuctionTag && trip.auctionStatus
+    : startsLater
+      ? 'muted'
+      : useAuctionTag && trip.auctionStatus
       ? trip.auctionStatusVariant
         ? AUCTION_VARIANT_TONE[trip.auctionStatusVariant]
         : AUCTION_STATUS_TONE[trip.auctionStatus]
@@ -216,8 +218,8 @@ export function ListingCard({
   const price =
     offerPrice ?? (trip.vehicleId != null ? trip.startingPrice?.trim() || null : null);
   const isPassengerRequest = trip.vehicleId == null;
-  // Keep the left-time badge visible even when a status tag is shown (list + detail cards).
-  const showCountdown = pending || active;
+  // Countdown is listing time remaining — hide it until the listing has actually started.
+  const showCountdown = !pending && !startsLater && active;
   const isAuction = trip.listingType === 'auction';
   const listingLabel = isAuction
       ? t('trips.create.listingAuction')
@@ -315,7 +317,9 @@ export function ListingCard({
           >
             {badgeState === 'pending'
               ? t('dashboard.listings.card.pending')
-              : badgeState === 'auctionStatus'
+              : badgeState === 'notStarted'
+                ? t('dashboard.listings.card.notStarted')
+                : badgeState === 'auctionStatus'
                 ? trip.auctionStatusLabel?.trim() ||
                   t(`dashboard.listings.card.auctionStatus.${trip.auctionStatus}`)
                 : badgeState === 'rfqStatus'

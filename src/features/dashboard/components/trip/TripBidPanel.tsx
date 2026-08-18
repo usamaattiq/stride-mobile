@@ -361,7 +361,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
 
   if (!snapshot && publicSnapshot) {
     const remaining =
-      publicSnapshot.remainingSeconds != null
+      publicSnapshot.status === 'live' && publicSnapshot.remainingSeconds != null
         ? formatRemaining(publicSnapshot.remainingSeconds, t)
         : null;
     return (
@@ -478,7 +478,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
 
   const actions = snapshot.actions;
   const remaining =
-    snapshot.remainingSeconds != null
+    snapshot.status === 'live' && snapshot.remainingSeconds != null
       ? formatRemaining(snapshot.remainingSeconds, t)
       : null;
   const hasActiveBid = snapshot.participantStatus === 'active';

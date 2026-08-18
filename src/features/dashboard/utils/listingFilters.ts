@@ -3,6 +3,7 @@ import type { RfqStatusValue } from '@/services/api/rfqApi.types';
 
 import type { TripListingCategory } from '../types/tripBrowse.types';
 import type { Trip, TripListingType } from '../types/trip.types';
+import { getListingExpiresAtMs } from './listingWindow';
 
 export type ListingStatusFilter = 'all' | 'live' | 'past' | 'completed';
 
@@ -32,7 +33,7 @@ const PAST_AUCTION_STATUSES: ReadonlySet<AuctionStatusValue> = new Set([
 ]);
 
 function getExpiresAt(trip: Trip): number {
-  return new Date(trip.publishedAt).getTime() + trip.durationHours * 60 * 60 * 1000;
+  return getListingExpiresAtMs(trip);
 }
 
 /** Maps a trip into the Live / Past / Completed buckets used by My Listings filters. */

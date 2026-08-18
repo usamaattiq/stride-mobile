@@ -9,6 +9,7 @@ import type { RfqOfferStatus, RfqOfferSummary, RfqOfferVehicleSummary, RfqOwnerS
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { isApiErrorWithCode } from '@/services/api/apiError';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -39,6 +40,14 @@ const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
   timed_out: 'muted',
   lapsed: 'muted',
 };
+
+function isInactiveListingError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : '';
+  if (!/currently not listed|no active listing/i.test(message)) {
+    return false;
+  }
+  return isApiErrorWithCode(error, 'NOT_FOUND') || error instanceof Error;
+}
 
 function ownerListingRfqStatus(snapshot: RfqOwnerSnapshot): RfqOwnerSnapshot['status'] {
   if (snapshot.status === 'live' && snapshot.offers.some((offer) => offer.status === 'confirmed')) {
@@ -102,6 +111,7 @@ export function TripResponsesPanel({
   });
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [notListed, setNotListed] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [actingOfferId, setActingOfferId] = React.useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = React.useState<RfqOfferSummary | null>(null);
@@ -117,11 +127,20 @@ export function TripResponsesPanel({
         const ownerSnapshot = result as RfqOwnerSnapshot;
         const offers = latestOffersByResponder(ownerSnapshot.offers);
         const next = { ...ownerSnapshot, offers };
+        setNotListed(false);
         setSnapshot(next);
         onCountChange?.(offers.length);
         onRfqStatusChange?.(ownerListingRfqStatus(next));
       })
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed'))))
+      .catch((err) => {
+        if (isInactiveListingError(err)) {
+          setNotListed(true);
+          setSnapshot(null);
+          onCountChange?.(0);
+          return;
+        }
+        setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed')));
+      })
       .finally(() => setLoading(false));
   }, [tripId, t, onCountChange, onRfqStatusChange]);
 
@@ -130,7 +149,7 @@ export function TripResponsesPanel({
   }, [load]);
 
   React.useEffect(() => {
-    if (!snapshot || isTerminalListingStatus(snapshot.status)) {
+    if (snapshot && isTerminalListingStatus(snapshot.status)) {
       return undefined;
     }
     const timer = setInterval(() => {
@@ -140,11 +159,18 @@ export function TripResponsesPanel({
           const ownerSnapshot = result as RfqOwnerSnapshot;
           const offers = latestOffersByResponder(ownerSnapshot.offers);
           const next = { ...ownerSnapshot, offers };
+          setNotListed(false);
           setSnapshot(next);
           onCountChange?.(offers.length);
           onRfqStatusChange?.(ownerListingRfqStatus(next));
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          if (isInactiveListingError(err)) {
+            setNotListed(true);
+            setSnapshot(null);
+            onCountChange?.(0);
+          }
+        });
     }, 5000);
     return () => clearInterval(timer);
   }, [onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
@@ -180,6 +206,16 @@ export function TripResponsesPanel({
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (notListed && !snapshot) {
+    return (
+      <View style={styles.centered}>
+        <AppText style={styles.mutedText}>
+          {t('dashboard.listings.detail.responses.currentlyNotListed')}
+        </AppText>
       </View>
     );
   }
@@ -318,6 +354,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     color: colors.primary,
+    textAlign: 'center',
+  },
+  mutedText: {
+    fontSize: 14,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   headerTitle: {
