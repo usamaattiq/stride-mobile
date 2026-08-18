@@ -61,6 +61,24 @@ function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
   return latest;
 }
 
+function offeredSeatsLabel(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  vehicleMode: TripVehicleMode,
+  offeredQuantity: string | null,
+  vehicleTotalSeats: number | null,
+): string | null {
+  if (vehicleMode === 'fullPrivate') {
+    return vehicleTotalSeats != null
+      ? t('dashboard.listings.detail.responses.seats', { count: vehicleTotalSeats })
+      : t('trips.create.vehicleModeFullPrivate');
+  }
+  const count = Math.floor(Number(offeredQuantity));
+  if (!Number.isFinite(count) || count < 1) {
+    return null;
+  }
+  return t('dashboard.listings.detail.responses.seats', { count });
+}
+
 export function TripResponsesPanel({
   tripId,
   routeLabel,
@@ -227,6 +245,7 @@ export function TripResponsesPanel({
                 name={displayName}
                 verified={offer.responderIsVerified === true}
                 priceLabel={priceLabel}
+                detailLabel={offeredSeatsLabel(t, vehicleMode, offer.offeredQuantity, vehicleTotalSeats)}
                 showMessage={showMessage}
                 onMessagePress={() => setChatTarget(offer)}
                 vehicle={offer.vehicle}

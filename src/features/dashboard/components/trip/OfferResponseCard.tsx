@@ -88,6 +88,8 @@ export type OfferResponseCardProps = {
   name: string;
   verified?: boolean;
   priceLabel: string;
+  /** Seats (or similar) offered — shown under the name/price row. */
+  detailLabel?: string | null;
   showMessage?: boolean;
   onMessagePress?: () => void;
   vehicle?: OfferVehicleLike | null;
@@ -111,6 +113,7 @@ export function OfferResponseCard({
   name,
   verified = false,
   priceLabel,
+  detailLabel = null,
   showMessage = false,
   onMessagePress,
   vehicle,
@@ -162,19 +165,29 @@ export function OfferResponseCard({
             {tag}
           </AppText>
         </View>
-        {showMessage ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
-            onPress={onMessagePress}
-            style={({ pressed }) => [styles.messageChip, pressed && styles.messageChipPressed]}
-          >
-            <FontAwesome name="comment" size={11} color={colors.primary} />
-            <AppText weight="bold" style={styles.messageChipLabel}>
-              {t('dashboard.listings.detail.contact.message')}
-            </AppText>
-          </Pressable>
-        ) : null}
+        <View style={styles.headerActions}>
+          {detailLabel ? (
+            <View style={styles.seatsChip}>
+              <FontAwesome name="users" size={9} color={colors.primary} />
+              <AppText weight="bold" style={styles.seatsChipLabel} numberOfLines={1}>
+                {detailLabel}
+              </AppText>
+            </View>
+          ) : null}
+          {showMessage ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+              onPress={onMessagePress}
+              style={({ pressed }) => [styles.messageChip, pressed && styles.messageChipPressed]}
+            >
+              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <AppText weight="bold" style={styles.messageChipLabel}>
+                {t('dashboard.listings.detail.contact.message')}
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.identityRow}>
@@ -311,6 +324,24 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 16,
     letterSpacing: -0.2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  seatsChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: colors.white,
+  },
+  seatsChipLabel: {
+    fontSize: 11,
+    color: colors.primary,
   },
   messageChip: {
     flexDirection: 'row',

@@ -78,6 +78,24 @@ function parseQuantity(value: string | null | undefined): number | null {
   return Math.floor(parsed);
 }
 
+function offeredSeatsLabel(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  vehicleMode: TripVehicleMode,
+  offeredQuantity: string | null,
+  vehicleTotalSeats: number | null,
+): string | null {
+  if (vehicleMode === 'fullPrivate') {
+    return vehicleTotalSeats != null
+      ? t('dashboard.listings.detail.responses.seats', { count: vehicleTotalSeats })
+      : t('trips.create.vehicleModeFullPrivate');
+  }
+  const count = parseQuantity(offeredQuantity);
+  if (count == null || count < 1) {
+    return null;
+  }
+  return t('dashboard.listings.detail.responses.seats', { count });
+}
+
 const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
   active: 'warning',
   selected: 'selected',
@@ -477,6 +495,12 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
             snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
           }
           priceLabel={offerPriceLabel}
+          detailLabel={offeredSeatsLabel(
+            t,
+            vehicleMode,
+            activeOffer.offeredQuantity,
+            vehicleTotalSeats,
+          )}
           showMessage={showOfferMessage}
           onMessagePress={() => setChatOpen(true)}
           vehicle={activeOffer.vehicle}
