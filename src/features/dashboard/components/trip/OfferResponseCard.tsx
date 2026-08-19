@@ -178,7 +178,7 @@ export function OfferResponseCard({
               onPress={onMessagePress}
               style={({ pressed }) => [styles.messageChip, pressed && styles.messageChipPressed]}
             >
-              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <FontAwesome name="comment" size={11} color={colors.white} />
               <AppText weight="bold" style={styles.messageChipLabel}>
                 {t('dashboard.listings.detail.contact.message')}
               </AppText>
@@ -343,17 +343,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 4,
-    backgroundColor: colors.white,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    backgroundColor: colors.primary,
   },
   messageChipPressed: {
     opacity: 0.75,
   },
   messageChipLabel: {
     fontSize: 11,
-    color: colors.primary,
+    color: colors.white,
   },
   vehicleChip: {
     backgroundColor: 'rgba(255, 255, 255, 0.62)',

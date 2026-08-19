@@ -178,7 +178,7 @@ function BidHeader({
               onPress={onMessagePress}
               style={({ pressed }) => [styles.headerMessageChip, pressed && styles.headerMessageChipPressed]}
             >
-              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <FontAwesome name="comment" size={11} color={colors.white} />
               <AppText weight="bold" style={styles.headerMessageLabel}>
                 {t('dashboard.listings.detail.contact.message')}
               </AppText>
@@ -959,12 +959,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    borderRadius: radius.full,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
+    backgroundColor: colors.primary,
     flexShrink: 0,
   },
   headerMessageChipPressed: {
@@ -972,7 +970,7 @@ const styles = StyleSheet.create({
   },
   headerMessageLabel: {
     fontSize: 12,
-    color: colors.primary,
+    color: colors.white,
   },
   rankingBlock: {
     gap: spacing.sm,
