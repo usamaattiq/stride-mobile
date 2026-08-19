@@ -809,6 +809,10 @@
       "addPictures": "Add pictures",
       "addPicturesHint": "Select up to 6 photos from your gallery",
       "removePhotoA11y": "Remove photo {{number}}",
+      "cover": "Cover",
+      "coverHint": "Tap a photo to set it as the cover image",
+      "setCoverA11y": "Set photo {{number}} as cover",
+      "coverPhotoA11y": "Cover photo {{number}}",
       "cta": "Save vehicle"
     },
     "errors": {

@@ -17,6 +17,7 @@ type VehiclePhotosFormProps = {
   photoUris: string[];
   onAddPhotos: (uris: string[]) => void;
   onRemovePhoto: (index: number) => void;
+  onSetCoverPhoto: (index: number) => void;
   onSubmit: () => void;
   submitLabel: string;
   submitDisabled?: boolean;
@@ -30,6 +31,7 @@ export function VehiclePhotosForm({
   photoUris,
   onAddPhotos,
   onRemovePhoto,
+  onSetCoverPhoto,
   onSubmit,
   submitLabel,
   submitDisabled = false,
@@ -109,25 +111,53 @@ export function VehiclePhotosForm({
             max: MAX_VEHICLE_PHOTOS,
           })}
         </AppText>
+        {hasPhotos ? (
+          <AppText style={styles.coverHint}>{t('vehicles.photos.coverHint')}</AppText>
+        ) : null}
 
         <View
           style={styles.grid}
           onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
         >
-          {photoUris.map((uri, index) => (
-            <View key={`${uri}-${index}`} style={[styles.gridItem, tileSizeStyle]}>
-              <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
+          {photoUris.map((uri, index) => {
+            const isCover = index === 0;
+            return (
               <Pressable
-                onPress={() => handleRemovePhoto(index)}
-                style={styles.removeBadge}
-                hitSlop={8}
+                key={`${uri}-${index}`}
+                onPress={() => onSetCoverPhoto(index)}
+                style={[
+                  styles.gridItem,
+                  tileSizeStyle,
+                  isCover ? styles.coverTile : null,
+                ]}
                 accessibilityRole="button"
-                accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
+                accessibilityState={{ selected: isCover }}
+                accessibilityLabel={
+                  isCover
+                    ? t('vehicles.photos.coverPhotoA11y', { number: index + 1 })
+                    : t('vehicles.photos.setCoverA11y', { number: index + 1 })
+                }
               >
-                <FontAwesome name="times" size={10} color={colors.white} />
+                <Image source={{ uri }} style={styles.gridImage} contentFit="cover" />
+                {isCover ? (
+                  <View style={styles.coverBadge}>
+                    <AppText weight="semibold" style={styles.coverBadgeText}>
+                      {t('vehicles.photos.cover')}
+                    </AppText>
+                  </View>
+                ) : null}
+                <Pressable
+                  onPress={() => handleRemovePhoto(index)}
+                  style={styles.removeBadge}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('vehicles.photos.removePhotoA11y', { number: index + 1 })}
+                >
+                  <FontAwesome name="times" size={10} color={colors.white} />
+                </Pressable>
               </Pressable>
-            </View>
-          ))}
+            );
+          })}
 
           {canAddMore ? (
             <Pressable
@@ -181,6 +211,11 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: -spacing.xxs,
   },
+  coverHint: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: -spacing.xxs,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -194,6 +229,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.background.subtle,
+  },
+  coverTile: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+  },
+  coverBadge: {
+    position: 'absolute',
+    left: spacing.xxs,
+    bottom: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  coverBadgeText: {
+    fontSize: 10,
+    color: colors.white,
   },
   gridImage: {
     width: '100%',

@@ -62,6 +62,20 @@ export function VehiclePhotosScreen(): React.ReactElement {
     });
   };
 
+  const handleSetCoverPhoto = (index: number) => {
+    if (index <= 0) {
+      return;
+    }
+    setSaveError(null);
+    const next = [...draft.photoUris];
+    const [picked] = next.splice(index, 1);
+    if (!picked) {
+      return;
+    }
+    next.unshift(picked);
+    patchDraft({ photoUris: next });
+  };
+
   const handleRemovePhoto = (index: number) => {
     setSaveError(null);
     patchDraft({ photoUris: draft.photoUris.filter((_, itemIndex) => itemIndex !== index) });
@@ -101,6 +115,7 @@ export function VehiclePhotosScreen(): React.ReactElement {
           photoUris={draft.photoUris}
           onAddPhotos={handleAddPhotos}
           onRemovePhoto={handleRemovePhoto}
+          onSetCoverPhoto={handleSetCoverPhoto}
           onSubmit={handleSubmit}
           submitLabel={t('vehicles.photos.cta')}
           submitDisabled={isSaving}

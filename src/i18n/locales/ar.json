@@ -809,6 +809,10 @@
       "addPictures": "إضافة صور",
       "addPicturesHint": "اختر حتى 6 صور من المعرض",
       "removePhotoA11y": "إزالة الصورة {{number}}",
+      "cover": "الغلاف",
+      "coverHint": "اضغط على صورة لتعيينها كصورة الغلاف",
+      "setCoverA11y": "تعيين الصورة {{number}} كغلاف",
+      "coverPhotoA11y": "صورة الغلاف {{number}}",
       "cta": "حفظ المركبة"
     },
     "errors": {
