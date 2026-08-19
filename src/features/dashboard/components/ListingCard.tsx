@@ -212,11 +212,7 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const offerPrice =
-    trip.myBidAmount != null
-      ? String(trip.myBidAmount)
-      : trip.myOfferPrice?.trim() || null;
-  const rawPrice = offerPrice ?? (trip.startingPrice?.trim() || null);
+  const rawPrice = trip.startingPrice?.trim() || null;
   const stripped = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
   const price = stripped ? formatPriceAmount(stripped) || null : null;
   const isPassengerRequest = trip.vehicleId == null;
