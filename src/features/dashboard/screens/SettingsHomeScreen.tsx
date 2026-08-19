@@ -78,7 +78,7 @@ type SettingsNav = CompositeNavigationProp<
   BottomTabNavigationProp<DashboardTabParamList>
 >;
 
-const APP_VERSION = Constants.expoConfig?.version ?? '1.0.2';
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.4';
 
 export function SettingsHomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
