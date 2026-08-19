@@ -222,8 +222,13 @@ export function ListingCard({
   const isPassengerRequest = trip.vehicleId == null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
   const isAuction = trip.listingType === 'auction';
+  const offerSettled =
+    trip.rfqStatus === 'confirmed' ||
+    trip.rfqStatus === 'completed' ||
+    trip.myOfferStatus === 'confirmed';
   // Auction remaining time lives next to Place your bid, not on the listing card.
-  const showCountdown = !isAuction && !pending && !startsLater && active;
+  const showCountdown =
+    !isAuction && !pending && !startsLater && active && !offerSettled;
   const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');
