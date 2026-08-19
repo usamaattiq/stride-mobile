@@ -36,3 +36,22 @@ export function withLatinDigitsLocale(locale: string): string {
 export function formatLatinNumber(value: number): string {
   return toLatinDigits(value.toLocaleString('en-US'));
 }
+
+/**
+ * Display a PKR amount without trailing `.00` from Decimal/Numeric APIs.
+ * Whole rupees are shown as integers with no grouping (e.g. `1500`).
+ */
+export function formatPriceAmount(value: string | number | null | undefined): string {
+  if (value == null) {
+    return '';
+  }
+  const raw = typeof value === 'number' ? String(value) : value.trim();
+  if (!raw) {
+    return '';
+  }
+  const parsed = Number(raw.replace(/[^\d.-]/g, ''));
+  if (!Number.isFinite(parsed)) {
+    return raw.replace(/\.0+$/, '');
+  }
+  return toLatinDigits(String(Math.round(parsed)));
+}

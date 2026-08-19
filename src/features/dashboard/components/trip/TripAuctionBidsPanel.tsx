@@ -12,6 +12,7 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -153,8 +154,12 @@ export function TripAuctionBidsPanel({
         <View style={styles.highestBidChip}>
           <AppText weight="semibold" style={styles.headerMeta}>
             {snapshot.auctionType === 'reverse'
-              ? t('dashboard.listings.detail.bid.lowestBid', { amount: snapshot.currentAmount })
-              : t('dashboard.listings.detail.bid.highestBid', { amount: snapshot.currentAmount })}
+              ? t('dashboard.listings.detail.bid.lowestBid', {
+                  amount: formatPriceAmount(snapshot.currentAmount),
+                })
+              : t('dashboard.listings.detail.bid.highestBid', {
+                  amount: formatPriceAmount(snapshot.currentAmount),
+                })}
           </AppText>
         </View>
       </View>
@@ -221,7 +226,7 @@ export function TripAuctionBidsPanel({
                 cardTone={isConfirmed ? 'confirmed' : isSelected ? 'selected' : 'default'}
                 name={displayName}
                 priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
-                  amount: row.peakAmount,
+                  amount: formatPriceAmount(row.peakAmount),
                 })}
                 showWinner={row.rank === 1}
                 showMessage={showMessage}

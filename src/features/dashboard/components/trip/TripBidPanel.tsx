@@ -27,6 +27,7 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -75,7 +76,7 @@ function formatAmount(amount: number | null | undefined): string {
   if (amount == null) {
     return '—';
   }
-  return String(amount);
+  return formatPriceAmount(amount);
 }
 
 function formatRemaining(seconds: number, t: TFunction): string {
@@ -715,7 +716,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
                       })
                 }
                 priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
-                  amount: row.peakAmount,
+                  amount: formatPriceAmount(row.peakAmount),
                 })}
                 showWinner={row.rank === 1}
               />

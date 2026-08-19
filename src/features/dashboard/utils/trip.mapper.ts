@@ -1,4 +1,5 @@
 import type { CreateTripPayload, TripDto } from '@/services/api/tripApi.types';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
 
 import { draftToTrip, type Trip, type TripDraft } from '../types/trip.types';
 
@@ -26,7 +27,9 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     arrivalPoint: dto.arrivalPoint,
     arrivalAt: dto.arrivalAt,
     listingType: dto.listingType,
-    startingPrice: dto.startingPrice,
+    startingPrice: dto.startingPrice
+      ? formatPriceAmount(dto.startingPrice) || dto.startingPrice
+      : null,
     paymentMethod: dto.paymentMethod,
     durationHours: dto.durationHours,
     startMode: dto.startMode,
@@ -39,7 +42,9 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     auctionStatusVariant: dto.auctionStatusVariant ?? null,
     auctionRemainingSeconds: dto.auctionRemainingSeconds ?? null,
     myOfferStatus: dto.myOfferStatus ?? null,
-    myOfferPrice: dto.myOfferPrice ?? null,
+    myOfferPrice: dto.myOfferPrice
+      ? formatPriceAmount(dto.myOfferPrice) || dto.myOfferPrice
+      : null,
     myBidStatus: dto.myBidStatus ?? null,
     myBidAmount: dto.myBidAmount ?? null,
     counterpartyName: dto.counterpartyName ?? null,

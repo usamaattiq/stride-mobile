@@ -27,6 +27,7 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -466,7 +467,9 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
       (activeOffer.status === 'confirmed' && Boolean(ownerPhone)));
   const offerPriceLabel =
     activeOffer?.price != null
-      ? t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })
+      ? t('dashboard.listings.card.priceWithCurrency', {
+          price: formatPriceAmount(activeOffer.price),
+        })
       : '';
 
   return (
@@ -585,14 +588,18 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
                 <View style={styles.totalCalcRow}>
                   <AppText style={styles.totalCalc}>
                     {t('dashboard.listings.detail.offer.totalCalc', {
-                      price: t('dashboard.listings.card.priceWithCurrency', { price: priceNumber }),
+                      price: t('dashboard.listings.card.priceWithCurrency', {
+                        price: formatPriceAmount(priceNumber),
+                      }),
                       seats: t('dashboard.listings.detail.responses.seats', {
                         count: effectiveSeats,
                       }),
                     })}
                   </AppText>
                   <AppText weight="bold" style={styles.totalValue}>
-                    {t('dashboard.listings.card.priceWithCurrency', { price: totalPrice })}
+                    {t('dashboard.listings.card.priceWithCurrency', {
+                      price: formatPriceAmount(totalPrice),
+                    })}
                   </AppText>
                 </View>
               </View>
