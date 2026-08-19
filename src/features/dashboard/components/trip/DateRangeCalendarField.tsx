@@ -29,6 +29,17 @@ type DateRangeCalendarFieldProps = {
   hideLabel?: boolean;
   /** `onBrand` is for the red passenger search card (white text, no chrome). */
   variant?: 'default' | 'onBrand';
+  /**
+   * Render only the calendar (no trigger / nested sheet). Use inside a parent
+   * bottom sheet such as trip-create departure.
+   */
+  embedded?: boolean;
+  /** Called after the user confirms a range in embedded mode. */
+  onApply?: () => void;
+  /** Rendered above Clear / Done when the current draft is a single day. */
+  footer?: React.ReactNode;
+  /** Fired as soon as the in-progress selection becomes a multi-day window. */
+  onWindowSelected?: () => void;
 };
 
 function formatDay(date: Date, locale: string): string {
@@ -53,6 +64,10 @@ export function DateRangeCalendarField({
   required = false,
   hideLabel = false,
   variant = 'default',
+  embedded = false,
+  onApply,
+  footer,
+  onWindowSelected,
 }: DateRangeCalendarFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const locale = i18n.language;
@@ -84,36 +99,59 @@ export function DateRangeCalendarField({
     );
   };
 
+  const commitDays = (start: Date | null, end: Date | null) => {
+    if (!start) {
+      onChange({ startIso: null, endIso: null });
+      return;
+    }
+
+    const endDay = end ?? start;
+    const window = !isSameLocalDay(start, endDay);
+    if (window) {
+      onWindowSelected?.();
+    }
+    onChange({
+      startIso: applyLocalDateToIso(window ? null : startIso, start, 9),
+      endIso: applyLocalDateToIso(window ? null : endIso, endDay, 18),
+    });
+  };
+
   const onDayPress = (day: Date) => {
     const selected = startOfLocalDay(day);
 
-    if (!draftStart || (draftStart && draftEnd)) {
-      setDraftStart(selected);
-      setDraftEnd(null);
-      return;
+    let nextStart: Date | null;
+    let nextEnd: Date | null;
+
+    const completeWindow =
+      draftStart != null &&
+      draftEnd != null &&
+      !isSameLocalDay(draftStart, draftEnd);
+
+    if (!draftStart || completeWindow) {
+      nextStart = selected;
+      nextEnd = embedded ? selected : null;
+    } else if (selected.getTime() < draftStart.getTime()) {
+      nextStart = selected;
+      nextEnd = embedded ? selected : null;
+    } else {
+      nextStart = draftStart;
+      nextEnd = selected;
+      if (!isSameLocalDay(draftStart, selected)) {
+        onWindowSelected?.();
+      }
     }
 
-    if (selected.getTime() < draftStart.getTime()) {
-      setDraftStart(selected);
-      setDraftEnd(null);
-      return;
+    setDraftStart(nextStart);
+    setDraftEnd(nextEnd);
+    if (embedded) {
+      commitDays(nextStart, nextEnd);
     }
-
-    setDraftEnd(selected);
   };
 
   const applyRange = () => {
-    if (!draftStart) {
-      onChange({ startIso: null, endIso: null });
-      setOpen(false);
-      return;
-    }
-
-    onChange({
-      startIso: applyLocalDateToIso(startIso, draftStart, 9),
-      endIso: draftEnd ? applyLocalDateToIso(endIso, draftEnd, 18) : null,
-    });
+    commitDays(draftStart, draftEnd);
     setOpen(false);
+    onApply?.();
   };
 
   const clearRange = () => {
@@ -121,6 +159,7 @@ export function DateRangeCalendarField({
     setDraftEnd(null);
     onChange({ startIso: null, endIso: null });
     setOpen(false);
+    onApply?.();
   };
 
   const year = visibleMonth.getFullYear();
@@ -157,6 +196,131 @@ export function DateRangeCalendarField({
   }, [locale]);
 
   const onBrand = variant === 'onBrand';
+  const isMultiDayDraft =
+    draftStart != null && draftEnd != null && !isSameLocalDay(draftStart, draftEnd);
+
+  const calendarBody = (
+    <View style={[styles.sheetContent, embedded && styles.sheetContentEmbedded]}>
+      {embedded ? null : (
+        <View style={styles.sheetHeader}>
+          <AppText weight="bold" style={styles.sheetTitle}>
+            {t('trips.create.departureDateWindow')}
+          </AppText>
+          <View style={styles.sheetSubtitleWrap}>
+            <AppText style={styles.sheetSubtitle} numberOfLines={2}>
+              {draftStart && draftEnd
+                ? `${formatDay(draftStart, locale)} → ${formatDay(draftEnd, locale)}`
+                : draftStart
+                  ? `${formatDay(draftStart, locale)} → ${t('trips.create.selectDate')}`
+                  : t('trips.create.departureWindowHint')}
+            </AppText>
+          </View>
+        </View>
+      )}
+
+      <View style={styles.monthRow}>
+        <Pressable
+          onPress={() => shiftMonth(-1)}
+          style={styles.monthNav}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="angle-left" size={18} color={colors.text.primary} />
+        </Pressable>
+        <AppText weight="semibold" style={styles.monthTitle}>
+          {formatMonthTitle(visibleMonth, locale)}
+        </AppText>
+        <Pressable
+          onPress={() => shiftMonth(1)}
+          style={styles.monthNav}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="angle-right" size={18} color={colors.text.primary} />
+        </Pressable>
+      </View>
+
+      <View style={styles.weekRow}>
+        {weekdayLabels.map((weekday, index) => (
+          <AppText key={`${weekday}-${index}`} style={styles.weekday}>
+            {weekday}
+          </AppText>
+        ))}
+      </View>
+
+      <View style={styles.grid}>
+        {cells.map((day, index) => {
+          if (!day) {
+            return <View key={`empty-${index}`} style={styles.dayCell} />;
+          }
+
+          const inRange =
+            draftStart != null &&
+            draftEnd != null &&
+            day.getTime() >= draftStart.getTime() &&
+            day.getTime() <= draftEnd.getTime();
+          const isStart = draftStart != null && isSameLocalDay(day, draftStart);
+          const isEnd = draftEnd != null && isSameLocalDay(day, draftEnd);
+          const isEdge = isStart || isEnd;
+          const isToday = isSameLocalDay(day, today);
+          const isPast = day.getTime() < today.getTime();
+
+          return (
+            <Pressable
+              key={`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`}
+              disabled={isPast}
+              onPress={() => onDayPress(day)}
+              style={styles.dayCell}
+            >
+              <View
+                style={[
+                  styles.dayInner,
+                  inRange && !isEdge && styles.dayInRange,
+                  isEdge && styles.dayEdge,
+                  isPast && styles.dayPast,
+                ]}
+              >
+                <AppText
+                  weight="medium"
+                  style={[
+                    styles.dayLabel,
+                    isEdge && styles.dayLabelEdge,
+                    isPast && styles.dayLabelPast,
+                    isToday && !isEdge && styles.dayLabelToday,
+                  ]}
+                >
+                  {day.getDate()}
+                </AppText>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {footer && !isMultiDayDraft ? <View style={styles.footer}>{footer}</View> : null}
+
+      {embedded ? null : (
+        <View style={styles.actions}>
+          <Button
+            label={t('common.clear')}
+            onPress={clearRange}
+            variant="secondary"
+            style={styles.actionButton}
+          />
+          <Button
+            label={t('common.done')}
+            onPress={applyRange}
+            disabled={!draftStart}
+            style={styles.actionButton}
+          />
+        </View>
+      )}
+    </View>
+  );
+
+  if (embedded) {
+    return calendarBody;
+  }
 
   return (
     <View style={[styles.wrap, onBrand && styles.wrapOnBrand]}>
@@ -200,116 +364,7 @@ export function DateRangeCalendarField({
       </Pressable>
 
       <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.77}>
-        <View style={styles.sheetContent}>
-          <View style={styles.sheetHeader}>
-            <AppText weight="bold" style={styles.sheetTitle}>
-              {t('trips.create.departureDateWindow')}
-            </AppText>
-            <View style={styles.sheetSubtitleWrap}>
-              <AppText style={styles.sheetSubtitle} numberOfLines={2}>
-                {draftStart && draftEnd
-                  ? `${formatDay(draftStart, locale)} → ${formatDay(draftEnd, locale)}`
-                  : draftStart
-                    ? `${formatDay(draftStart, locale)} → ${t('trips.create.selectDate')}`
-                    : t('trips.create.departureWindowHint')}
-              </AppText>
-            </View>
-          </View>
-
-          <View style={styles.monthRow}>
-            <Pressable
-              onPress={() => shiftMonth(-1)}
-              style={styles.monthNav}
-              hitSlop={8}
-              accessibilityRole="button"
-            >
-              <FontAwesome name="angle-left" size={18} color={colors.text.primary} />
-            </Pressable>
-            <AppText weight="semibold" style={styles.monthTitle}>
-              {formatMonthTitle(visibleMonth, locale)}
-            </AppText>
-            <Pressable
-              onPress={() => shiftMonth(1)}
-              style={styles.monthNav}
-              hitSlop={8}
-              accessibilityRole="button"
-            >
-              <FontAwesome name="angle-right" size={18} color={colors.text.primary} />
-            </Pressable>
-          </View>
-
-          <View style={styles.weekRow}>
-            {weekdayLabels.map((weekday, index) => (
-              <AppText key={`${weekday}-${index}`} style={styles.weekday}>
-                {weekday}
-              </AppText>
-            ))}
-          </View>
-
-          <View style={styles.grid}>
-            {cells.map((day, index) => {
-              if (!day) {
-                return <View key={`empty-${index}`} style={styles.dayCell} />;
-              }
-
-              const inRange =
-                draftStart != null &&
-                draftEnd != null &&
-                day.getTime() >= draftStart.getTime() &&
-                day.getTime() <= draftEnd.getTime();
-              const isStart = draftStart != null && isSameLocalDay(day, draftStart);
-              const isEnd = draftEnd != null && isSameLocalDay(day, draftEnd);
-              const isEdge = isStart || isEnd;
-              const isToday = isSameLocalDay(day, today);
-              const isPast = day.getTime() < today.getTime();
-
-              return (
-                <Pressable
-                  key={`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`}
-                  disabled={isPast}
-                  onPress={() => onDayPress(day)}
-                  style={styles.dayCell}
-                >
-                  <View
-                    style={[
-                      styles.dayInner,
-                      inRange && !isEdge && styles.dayInRange,
-                      isEdge && styles.dayEdge,
-                      isPast && styles.dayPast,
-                    ]}
-                  >
-                    <AppText
-                      weight="medium"
-                      style={[
-                        styles.dayLabel,
-                        isEdge && styles.dayLabelEdge,
-                        isPast && styles.dayLabelPast,
-                        isToday && !isEdge && styles.dayLabelToday,
-                      ]}
-                    >
-                      {day.getDate()}
-                    </AppText>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={styles.actions}>
-            <Button
-              label={t('common.clear')}
-              onPress={clearRange}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-            <Button
-              label={t('common.done')}
-              onPress={applyRange}
-              disabled={!draftStart || !draftEnd}
-              style={styles.actionButton}
-            />
-          </View>
-        </View>
+        {calendarBody}
       </AppBottomSheet>
     </View>
   );
@@ -376,6 +431,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.sm,
     paddingTop: spacing.xs,
+  },
+  sheetContentEmbedded: {
+    flex: 0,
+  },
+  footer: {
+    gap: spacing.sm,
   },
   sheetHeader: {
     gap: 2,

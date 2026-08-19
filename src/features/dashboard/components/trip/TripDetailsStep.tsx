@@ -9,7 +9,12 @@ import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker
 import { resolveCityAndPointFromCoords } from '@/features/auth/utils/geocodedAddressLabel';
 import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import { SearchCityPickerModal } from '@/features/dashboard/components/SearchCityPickerModal';
+import { DateRangeCalendarField } from '@/features/dashboard/components/trip/DateRangeCalendarField';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
+import {
+  formatDateRangeLabel,
+  isMultiDayWindow,
+} from '@/features/dashboard/components/trip/dateRangeUtils';
 import {
   parseTripSeats,
   TripPaymentMethodSection,
@@ -34,11 +39,18 @@ type CityPickerMode = 'departure' | 'arrival' | null;
 
 function formatWhenChip(
   iso: string | null,
+  untilIso: string | null,
   locale: string,
   timeConfirmed: boolean,
 ): { date: string | null; time: string | null } {
   if (!iso) {
     return { date: null, time: null };
+  }
+  if (isMultiDayWindow(iso, untilIso)) {
+    return {
+      date: formatDateRangeLabel(iso, untilIso, locale, ''),
+      time: null,
+    };
   }
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) {
@@ -112,8 +124,14 @@ export function TripDetailsStep({
       : undefined;
   const arrivalTimeError = getArrivalTimeError(draft, t);
   const canContinue = isDetailsComplete(draft, isPassenger) && !arrivalTimeError;
-  const departureWhen = formatWhenChip(draft.departureAt, locale, draft.departureTimeSet);
-  const arrivalWhen = formatWhenChip(draft.arrivalAt, locale, draft.arrivalTimeSet);
+  const privateDepartureWindow = !isShared && isMultiDayWindow(draft.departureAt, draft.departureUntil);
+  const departureWhen = formatWhenChip(
+    draft.departureAt,
+    isShared ? null : draft.departureUntil,
+    locale,
+    draft.departureTimeSet && !privateDepartureWindow,
+  );
+  const arrivalWhen = formatWhenChip(draft.arrivalAt, null, locale, draft.arrivalTimeSet);
 
   const applyMapSelection = React.useCallback(
     async (mode: 'departure' | 'arrival', selection: TripLocationPoint) => {
@@ -259,13 +277,18 @@ export function TripDetailsStep({
                   onPress={() => setDateTimeSheet('departure')}
                   style={({ pressed }) => [
                     styles.whenChip,
+                    privateDepartureWindow ? styles.whenChipWindow : null,
                     startDateRequired && !draft.departureAt ? styles.whenChipRequired : null,
                     pressed && styles.pressed,
                   ]}
                 >
                   <FontAwesome name="calendar" size={12} color={colors.primary} />
                   {departureWhen.date ? (
-                    <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
+                    <AppText
+                      weight="semibold"
+                      style={styles.whenDate}
+                      numberOfLines={privateDepartureWindow ? 2 : 1}
+                    >
                       {departureWhen.date}
                     </AppText>
                   ) : null}
@@ -406,14 +429,16 @@ export function TripDetailsStep({
       <AppBottomSheet
         visible={dateTimeSheet != null}
         onClose={() => setDateTimeSheet(null)}
-        heightRatio={0.28}
+        heightRatio={dateTimeSheet === 'departure' && !isShared ? 0.82 : 0.28}
       >
         <View style={styles.sheetBody}>
           <View style={styles.sheetHeaderRow}>
             <AppText weight="bold" style={styles.sheetTitle}>
               {dateTimeSheet === 'arrival'
                 ? t('trips.create.arrivalDateTime')
-                : t('trips.create.departureDateTime')}
+                : isShared
+                  ? t('trips.create.departureDateTime')
+                  : t('trips.create.departureDateWindow')}
               {dateTimeSheet === 'departure' && startDateRequired ? (
                 <AppText style={styles.requiredMark}> *</AppText>
               ) : (
@@ -432,7 +457,13 @@ export function TripDetailsStep({
             ) : null}
             {dateTimeSheet === 'departure' && !startDateRequired && draft.departureAt ? (
               <Pressable
-                onPress={() => onChange({ departureAt: null, departureTimeSet: false })}
+                onPress={() =>
+                  onChange({
+                    departureAt: null,
+                    departureUntil: null,
+                    departureTimeSet: false,
+                  })
+                }
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.clear')}
@@ -454,7 +485,7 @@ export function TripDetailsStep({
               timeConfirmed={draft.arrivalTimeSet}
               optional
             />
-          ) : (
+          ) : dateTimeSheet === 'departure' && isShared ? (
             <DateTimePickerField
               variant="search"
               hideLabel
@@ -468,7 +499,41 @@ export function TripDetailsStep({
               required={startDateRequired}
               optional={!startDateRequired}
             />
-          )}
+          ) : dateTimeSheet === 'departure' ? (
+            <DateRangeCalendarField
+              embedded
+              hideLabel
+              label={t('trips.create.departureDateWindow')}
+              startIso={draft.departureAt}
+              endIso={draft.departureUntil}
+              onWindowSelected={() => onChange({ departureTimeSet: false })}
+              onChange={({ startIso, endIso }) => {
+                const window = isMultiDayWindow(startIso, endIso);
+                onChange({
+                  departureAt: startIso,
+                  departureUntil: endIso,
+                  departureTimeSet: window ? false : draft.departureTimeSet,
+                });
+              }}
+              footer={
+                draft.departureAt ? (
+                  <DateTimePickerField
+                    variant="search"
+                    hideLabel
+                    mode="time"
+                    label={t('trips.create.selectTime')}
+                    value={draft.departureAt}
+                    onChange={(departureAt) =>
+                      onChange({ departureAt, departureTimeSet: true })
+                    }
+                    minimumDate={new Date()}
+                    timeConfirmed={draft.departureTimeSet}
+                    optional
+                  />
+                ) : null
+              }
+            />
+          ) : null}
         </View>
       </AppBottomSheet>
       {mapPickerSheet}
@@ -564,6 +629,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 2,
     gap: 0,
+  },
+  whenChipWindow: {
+    width: 76,
   },
   whenChipRequired: {
     borderColor: colors.primary,

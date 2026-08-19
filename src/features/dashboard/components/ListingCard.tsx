@@ -18,7 +18,7 @@ import { cardBackShadow } from '@/theme/cardShadow';
 
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
-import { formatDateRangeLabel } from './trip/dateRangeUtils';
+import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
 
@@ -26,7 +26,7 @@ function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
   if (trip.departureOpen) {
     return openLabel;
   }
-  if (trip.departureUntil) {
+  if (trip.departureUntil && isMultiDayWindow(trip.departureAt, trip.departureUntil)) {
     return formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt);
   }
   const date = new Date(trip.departureAt);

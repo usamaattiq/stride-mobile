@@ -81,6 +81,19 @@ export function mondayFirstWeekday(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
 
+/** True when start and end fall on different local calendar days. */
+export function isMultiDayWindow(
+  startIso: string | null | undefined,
+  endIso: string | null | undefined,
+): boolean {
+  const start = parseIsoDate(startIso ?? null);
+  const end = parseIsoDate(endIso ?? null);
+  if (!start || !end) {
+    return false;
+  }
+  return !isSameLocalDay(start, end);
+}
+
 export function formatDateRangeLabel(
   startIso: string | null | undefined,
   endIso: string | null | undefined,

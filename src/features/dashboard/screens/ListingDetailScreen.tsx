@@ -33,7 +33,7 @@ import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { colors, radius, spacing } from '@/theme';
 
 import { ListingCard } from '../components/ListingCard';
-import { formatTripDateTime } from '../components/trip/dateRangeUtils';
+import { formatDateRangeLabel, formatTripDateTime, isMultiDayWindow } from '../components/trip/dateRangeUtils';
 import { TripAuctionBidsPanel } from '../components/trip/TripAuctionBidsPanel';
 import { TripBidPanel, type TripBidPanelHandle } from '../components/trip/TripBidPanel';
 import { TripDetailsOverview } from '../components/trip/TripDetailsOverview';
@@ -491,7 +491,9 @@ export function ListingDetailScreen(): React.ReactElement {
   const locale = i18n.language;
   const departureWhen = trip.departureOpen
     ? t('dashboard.listings.card.open')
-    : formatTripDateTime(trip.departureAt, locale);
+    : isMultiDayWindow(trip.departureAt, trip.departureUntil)
+      ? formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt)
+      : formatTripDateTime(trip.departureAt, locale);
   const arrivalWhen = trip.departureOpen
     ? undefined
     : formatTripDateTime(trip.arrivalAt, locale);

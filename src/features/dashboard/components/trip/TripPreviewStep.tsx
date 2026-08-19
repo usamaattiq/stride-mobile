@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
 import { VEHICLE_CLASS_OPTIONS } from '@/features/dashboard/constants/vehicleClasses';
-import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
+import { formatDateRangeLabel, formatTripDateTime, isMultiDayWindow } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '@/features/dashboard/components/trip/TripDetailsOverview';
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
@@ -107,9 +107,13 @@ export function TripPreviewStep({
           mode: modeLabel ?? t('trips.create.notSpecified'),
         })
       : null);
-  const departureWhen = draft.departureAt
-    ? formatTripDateTime(draft.departureAt, locale, '')
-    : t('dashboard.listings.card.open');
+  const departureWhen = !draft.departureAt
+    ? t('dashboard.listings.card.open')
+    : isMultiDayWindow(draft.departureAt, draft.departureUntil)
+      ? formatDateRangeLabel(draft.departureAt, draft.departureUntil, locale, '')
+      : draft.departureTimeSet
+        ? formatTripDateTime(draft.departureAt, locale, '')
+        : formatDateRangeLabel(draft.departureAt, null, locale, '');
   const arrivalWhen =
     draft.departureAt && draft.arrivalAt
       ? formatTripDateTime(draft.arrivalAt, locale, '')
