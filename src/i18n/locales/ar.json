@@ -175,7 +175,8 @@
       "CreateTrip": "إضافة رحلة",
       "CreateRequest": "طلب",
       "createTripA11y": "إنشاء رحلة",
-      "createRequestA11y": "طلب"
+      "createRequestA11y": "طلب",
+      "tapAgainToExit": "اضغط مرة أخرى للخروج"
     },
     "offers": {
       "title": "عروضي",

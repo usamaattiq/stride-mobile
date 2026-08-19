@@ -168,7 +168,7 @@ export function LoginFlowScreen(): React.ReactElement {
     Keyboard.dismiss();
     isLeavingRef.current = true;
     useLoginFlowStore.getState().reset();
-    navigation.replace('Dashboard');
+    navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
   };
 
   const handlePhoneDigitsChange = (digits: string) => {

@@ -175,7 +175,8 @@
       "CreateTrip": "Add trip",
       "CreateRequest": "Request",
       "createTripA11y": "Create trip",
-      "createRequestA11y": "Request"
+      "createRequestA11y": "Request",
+      "tapAgainToExit": "Tap again to exit"
     },
     "offers": {
       "title": "My Offers",

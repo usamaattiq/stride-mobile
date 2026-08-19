@@ -26,7 +26,7 @@ export function WelcomeRoute(): React.ReactElement {
         navigation.navigate('LoginFlow');
       }}
       onDashboard={() => {
-        navigation.navigate('Dashboard');
+        navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
       }}
     />
   );
