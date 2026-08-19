@@ -483,7 +483,8 @@
           "whatsapp": "واتساب"
         },
         "bid": {
-          "title": "قدّم مزايدتك",
+          "title": "أعلى مزايدة",
+          "titleLowest": "أقل مزايدة",
           "openHint": "أدخل مبلغًا للمشاركة في هذا المزاد.",
           "loadFailed": "تعذر تحميل هذا المزاد.",
           "submitFailed": "تعذر تقديم مزايدتك.",
@@ -504,7 +505,7 @@
           "currentAmount": "المبلغ الحالي {{amount}} ر.ب",
           "highestBid": "أعلى مزايدة = {{amount}}",
           "lowestBid": "أقل مزايدة = {{amount}}",
-          "yourBid": "مزايدتك = {{amount}}",
+          "yourBid": "مزايدتك {{amount}}",
           "leading": "متقدم",
           "you": "أنت",
           "liveRanking": "الترتيب المباشر",

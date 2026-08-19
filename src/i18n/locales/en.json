@@ -483,7 +483,8 @@
           "whatsapp": "WhatsApp"
         },
         "bid": {
-          "title": "Place your bid",
+          "title": "Highest bid",
+          "titleLowest": "Lowest bid",
           "openHint": "Enter an amount to join this auction.",
           "loadFailed": "Couldn't load this auction.",
           "submitFailed": "Couldn't place your bid.",
@@ -504,7 +505,7 @@
           "currentAmount": "Current amount PKR {{amount}}",
           "highestBid": "Highest bid = {{amount}}",
           "lowestBid": "Lowest bid = {{amount}}",
-          "yourBid": "Your bid = {{amount}}",
+          "yourBid": "Your bid {{amount}}",
           "leading": "Leading",
           "you": "You",
           "liveRanking": "Live ranking",

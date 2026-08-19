@@ -30,6 +30,7 @@ import { Button } from '@/shared/components/Button';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { useVehicles } from '../../context/VehicleContext';
@@ -121,6 +122,7 @@ function BidHeader({
   currentAmount,
   auctionType,
   myBidAmount = null,
+  ownerName = null,
   showMessage = false,
   onMessagePress,
 }: {
@@ -128,6 +130,7 @@ function BidHeader({
   currentAmount: number;
   auctionType: AuctionType;
   myBidAmount?: number | null;
+  ownerName?: string | null;
   showMessage?: boolean;
   onMessagePress?: () => void;
 }): React.ReactElement {
@@ -141,20 +144,51 @@ function BidHeader({
   const timerLabel = endingSoon
     ? t('dashboard.listings.card.endingSoon')
     : remaining;
-  const highestLabel =
+  const heading =
     auctionType === 'reverse'
-      ? t('dashboard.listings.detail.bid.lowestBid', { amount: formatAmount(currentAmount) })
-      : t('dashboard.listings.detail.bid.highestBid', { amount: formatAmount(currentAmount) });
+      ? t('dashboard.listings.detail.bid.titleLowest')
+      : t('dashboard.listings.detail.bid.title');
   const yourBidLabel =
     myBidAmount != null
       ? t('dashboard.listings.detail.bid.yourBid', { amount: formatAmount(myBidAmount) })
       : null;
+  const ownerLabel =
+    ownerName?.trim() ||
+    (showMessage ? t('dashboard.listings.detail.contact.fallbackName') : null);
+  const ownerInitial = (ownerLabel ?? '?').charAt(0).toUpperCase();
 
   return (
     <View style={styles.headerBlock}>
+      {ownerLabel || showMessage ? (
+        <View style={styles.ownerTile}>
+          <View style={styles.ownerIdentity}>
+            <View style={styles.ownerAvatar}>
+              <AppText weight="bold" style={styles.ownerAvatarInitial}>
+                {ownerInitial}
+              </AppText>
+            </View>
+            <AppText weight="semibold" style={styles.ownerName} numberOfLines={1}>
+              {ownerLabel ?? t('dashboard.listings.detail.contact.fallbackName')}
+            </AppText>
+          </View>
+          {showMessage ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+              onPress={onMessagePress}
+              style={({ pressed }) => [styles.headerMessageChip, pressed && styles.headerMessageChipPressed]}
+            >
+              <FontAwesome name="comment" size={11} color={colors.primary} />
+              <AppText weight="bold" style={styles.headerMessageLabel}>
+                {t('dashboard.listings.detail.contact.message')}
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
       <View style={styles.titleRow}>
         <AppText weight="bold" style={styles.title}>
-          {t('dashboard.listings.detail.bid.title')}
+          {heading}
         </AppText>
         {timerLabel ? (
           <View style={[styles.timerChip, endingSoon && styles.timerChipSoon]}>
@@ -173,34 +207,17 @@ function BidHeader({
           </View>
         ) : null}
       </View>
-      <View style={styles.highestBidRow}>
-        <View style={styles.highestBidChip}>
-          <AppText weight="semibold" style={styles.highestBid}>
-            {highestLabel}
-          </AppText>
-        </View>
-        <View style={styles.highestBidRight}>
-          {yourBidLabel ? (
-            <View style={styles.highestBidChip}>
-              <AppText weight="semibold" style={styles.highestBid}>
-                {yourBidLabel}
-              </AppText>
-            </View>
-          ) : null}
-          {showMessage ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
-              onPress={onMessagePress}
-              style={({ pressed }) => [styles.headerMessageChip, pressed && styles.headerMessageChipPressed]}
-            >
-              <FontAwesome name="comment" size={11} color={colors.primary} />
-              <AppText weight="bold" style={styles.headerMessageLabel}>
-                {t('dashboard.listings.detail.contact.message')}
-              </AppText>
-            </Pressable>
-          ) : null}
-        </View>
+      <View style={styles.priceRow}>
+        <AppText weight="bold" style={styles.highestBidAmount}>
+          {formatAmount(currentAmount)}
+        </AppText>
+        {yourBidLabel ? (
+          <View style={styles.yourBidChip}>
+            <AppText weight="semibold" style={styles.yourBidChipText} numberOfLines={1}>
+              {yourBidLabel}
+            </AppText>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -611,8 +628,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
     isSelectedBidder;
   const ownerPhone = snapshot.ownerPhone?.trim() || null;
   const canDecideBid = actions.canConfirm || actions.canDecline;
-  const showHeaderMessage =
-    hasActiveBid && (auctionStatus === 'live' || isSelectedBidder);
+  const showHeaderMessage = true;
   const showOwnerCard = hasActiveBid && (canDecideBid || Boolean(ownerPhone) || isSelectedBidder);
   const bidTag = isConfirmedBid
     ? t('dashboard.listings.detail.auctionBids.confirmed')
@@ -636,6 +652,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
         currentAmount={snapshot.currentAmount}
         auctionType={snapshot.auctionType}
         myBidAmount={snapshot.myPeakAmount}
+        ownerName={snapshot.ownerName}
         showMessage={showHeaderMessage}
         onMessagePress={() => setChatOpen(true)}
       />
@@ -734,7 +751,7 @@ export const TripBidPanel = React.forwardRef<TripBidPanelHandle, TripBidPanelPro
             snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
           }
           priceLabel={bidPriceLabel}
-          showMessage={false}
+          showMessage={hasActiveBid || isSelectedBidder}
           onMessagePress={() => setChatOpen(true)}
           vehicle={selectedVehicle ? fromListVehicle(selectedVehicle) : null}
           onVehiclePress={() => {
@@ -849,7 +866,44 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   headerBlock: {
-    gap: 4,
+    gap: spacing.sm,
+  },
+  ownerTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    ...cardBackShadow,
+  },
+  ownerIdentity: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  ownerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+  },
+  ownerAvatarInitial: {
+    fontSize: 15,
+    color: colors.primary,
+  },
+  ownerName: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text.primary,
   },
   titleRow: {
     flexDirection: 'row',
@@ -876,20 +930,20 @@ const styles = StyleSheet.create({
   timerTextSoon: {
     color: colors.accent.amber.text,
   },
-  highestBidRow: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  highestBidRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  highestBidAmount: {
     flexShrink: 0,
-    gap: spacing.sm,
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors.primary,
   },
-  highestBidChip: {
-    alignSelf: 'flex-start',
+  yourBidChip: {
+    flexShrink: 1,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.full,
@@ -897,8 +951,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primaryMuted,
   },
-  highestBid: {
-    fontSize: 16,
+  yourBidChipText: {
+    fontSize: 13,
     color: colors.primary,
   },
   headerMessageChip: {
