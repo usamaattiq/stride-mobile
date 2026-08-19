@@ -132,7 +132,7 @@ export type ListingCardProps = {
   onPress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
-  /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
+  /** Shows "Pending" / "Coming soon" instead of the real active/countdown timer. For the unpublished trip preview. */
   pending?: boolean;
 };
 

@@ -375,7 +375,7 @@
           "closed": "Closed",
           "expired": "Expired"
         },
-        "notStarted": "Not started yet",
+        "notStarted": "Coming soon",
         "endingSoon": "Ending soon",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",

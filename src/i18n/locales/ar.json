@@ -375,7 +375,7 @@
           "closed": "مغلق",
           "expired": "منتهي الصلاحية"
         },
-        "notStarted": "لم تبدأ بعد",
+        "notStarted": "قريبًا",
         "endingSoon": "ينتهي قريباً",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",
