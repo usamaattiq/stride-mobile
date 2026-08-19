@@ -91,29 +91,7 @@
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
         }
       ],
-      [
-        "@react-native-community/datetimepicker",
-        {
-          "android": {
-            "datePicker": {
-              "colorAccent": {
-                "light": "#B42318"
-              },
-              "colorControlActivated": {
-                "light": "#B42318"
-              }
-            },
-            "timePicker": {
-              "numbersSelectorColor": {
-                "light": "#B42318"
-              },
-              "headerBackground": {
-                "light": "#B42318"
-              }
-            }
-          }
-        }
-      ],
+      "@react-native-community/datetimepicker",
       "expo-secure-store",
       [
         "expo-notifications",

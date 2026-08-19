@@ -209,6 +209,7 @@ export function DateTimePickerField({
           minimumDate={minimumDate}
           onChange={handleAndroidChange}
           display="default"
+          design="default"
         />
       ) : null}
 
