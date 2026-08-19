@@ -1,7 +1,7 @@
 import { CommonActions } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 
-import type { DashboardRootStackParamList } from './dashboardRootTypes';
+import type { DashboardRootStackParamList, TripCreationParams } from './dashboardRootTypes';
 import type {
   VehicleFlowReturnTo,
   VehicleRouteParamList,
@@ -102,7 +102,11 @@ export function completeVehicleFlow(
 /**
  * Presents trip creation over the current tab — no tab switch, one smooth push.
  */
-export function openTripCreationFlow(rootNavigation: TripRootNavigation): void {
+export function openTripCreationFlow(
+  rootNavigation: TripRootNavigation,
+  params?: Omit<TripCreationParams, 'flowKey'>,
+): void {
+  const nextParams = { flowKey: Date.now(), ...params };
   const state = rootNavigation.getState();
   const activeRoute = state.routes[state.index];
 
@@ -112,14 +116,14 @@ export function openTripCreationFlow(rootNavigation: TripRootNavigation): void {
         index: 1,
         routes: [
           { name: 'MainTabs' },
-          { name: 'TripCreation', params: { flowKey: Date.now() } },
+          { name: 'TripCreation', params: nextParams },
         ],
       }),
     );
     return;
   }
 
-  rootNavigation.navigate('TripCreation', { flowKey: Date.now() });
+  rootNavigation.navigate('TripCreation', nextParams);
 }
 
 /** Dismisses trip creation and returns to the tab the user was on. */

@@ -31,6 +31,7 @@ import { ListingsEmptyState } from '../components/ListingsEmptyState';
 import { SegmentControl } from '../components/SegmentControl';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
+import { openTripCreationFlow } from '../navigation/homeStackNavigation';
 import type { Trip } from '../types/trip.types';
 import type { TripListingCategory } from '../types/tripBrowse.types';
 import {
@@ -48,7 +49,7 @@ export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const { trips, loadError, refreshTrips } = useTrips();
+  const { trips, loadError, refreshTrips, beginRepostTrip } = useTrips();
   const { refreshControlProps } = usePullToRefresh(refreshTrips);
 
   const [listingCategory, setListingCategory] =
@@ -194,9 +195,13 @@ export function MyListingsScreen(): React.ReactElement {
         onPress={() => {
           navigation.navigate('ListingDetail', { tripId: item.id });
         }}
+        onRepost={() => {
+          beginRepostTrip(item);
+          openTripCreationFlow(navigation, { repost: true });
+        }}
       />
     ),
-    [navigation],
+    [beginRepostTrip, navigation],
   );
 
   const filtersHeader = (

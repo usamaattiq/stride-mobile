@@ -21,6 +21,7 @@ import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
 import type { Trip } from '../types/trip.types';
 import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
+import { canRepostListing } from '../utils/listingFilters';
 
 function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
   if (trip.departureOpen) {
@@ -134,6 +135,8 @@ export type ListingCardProps = {
   showPhotoCount?: boolean;
   /** Shows "Pending" / "Coming soon" instead of the real active/countdown timer. For the unpublished trip preview. */
   pending?: boolean;
+  /** Owner action: open create-trip prefilled from this completed listing. */
+  onRepost?: () => void;
 };
 
 export function ListingCard({
@@ -141,6 +144,7 @@ export function ListingCard({
   onPress,
   showPhotoCount = false,
   pending = false,
+  onRepost,
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
@@ -231,6 +235,7 @@ export function ListingCard({
         : trip.paymentMethod === 'cash'
           ? t('trips.create.paymentCash')
           : t('trips.create.notSpecified');
+  const showRepost = Boolean(onRepost) && !pending && canRepostListing(trip);
 
   const content = (
     <>
@@ -436,6 +441,21 @@ export function ListingCard({
                 </AppText>
               </View>
             </View>
+          ) : showRepost ? (
+            <View style={styles.bodyCountdownRow}>
+              <Pressable
+                onPress={onRepost}
+                hitSlop={6}
+                style={({ pressed }) => [styles.repostChip, pressed && styles.repostChipPressed]}
+                accessibilityRole="button"
+                accessibilityLabel={t('dashboard.listings.card.repost')}
+              >
+                <FontAwesome name="repeat" size={10} color={colors.white} />
+                <AppText weight="semibold" style={styles.repostChipText} numberOfLines={1}>
+                  {t('dashboard.listings.card.repost')}
+                </AppText>
+              </Pressable>
+            </View>
           ) : null}
         </View>
       </View>
@@ -484,6 +504,23 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     backgroundColor: colors.white,
     overflow: 'hidden',
+  },
+  repostChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    flexShrink: 0,
+  },
+  repostChipPressed: {
+    opacity: 0.88,
+  },
+  repostChipText: {
+    fontSize: 11,
+    color: colors.white,
   },
   gradientWash: {
     position: 'absolute',

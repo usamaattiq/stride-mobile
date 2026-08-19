@@ -376,6 +376,7 @@
           "expired": "Expired"
         },
         "notStarted": "Coming soon",
+        "repost": "Repost",
         "endingSoon": "Ending soon",
         "timerHours": "{{hours}}h {{minutes}}m left",
         "timerMinutes": "{{minutes}}m left",

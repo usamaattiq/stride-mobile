@@ -68,6 +68,11 @@ export function isTerminalListingStatus(status: string | null | undefined): bool
   );
 }
 
+/** Owner can repost closed, expired, completed, and other ended listings. */
+export function canRepostListing(trip: Trip, now = Date.now()): boolean {
+  return getListingStatusBucket(trip, now) !== 'live';
+}
+
 export function matchesListingType(trip: Trip, listingType: TripListingType): boolean {
   return trip.listingType === listingType;
 }

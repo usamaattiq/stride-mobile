@@ -376,6 +376,7 @@
           "expired": "منتهي الصلاحية"
         },
         "notStarted": "قريبًا",
+        "repost": "إعادة النشر",
         "endingSoon": "ينتهي قريباً",
         "timerHours": "متبقي {{hours}}س {{minutes}}د",
         "timerMinutes": "متبقي {{minutes}}د",

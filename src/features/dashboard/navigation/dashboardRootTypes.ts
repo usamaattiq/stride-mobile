@@ -8,6 +8,8 @@ export type TripCreationParams = {
   selectVehicleId?: string;
   /** Changes each time the FAB opens a new trip flow — remounts wizard step state. */
   flowKey?: number;
+  /** Open create-trip with a completed listing prefilled (dates empty). */
+  repost?: boolean;
 };
 
 export type SearchResultsParams = {

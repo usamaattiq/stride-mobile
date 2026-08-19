@@ -131,6 +131,27 @@ export function createEmptyTripDraft(): TripDraft {
   };
 }
 
+/** Prefill create-trip from a completed listing. Departure and arrival dates stay empty. */
+export function tripToRepostDraft(trip: Trip): TripDraft {
+  return {
+    ...createEmptyTripDraft(),
+    vehicleId: trip.vehicleId,
+    vehicleClass: trip.vehicleClass,
+    vehicleMode: trip.vehicleMode,
+    departureCity: trip.departureCity,
+    departurePoint: trip.departurePoint,
+    arrivalCity: trip.arrivalCity,
+    arrivalPoint: trip.arrivalPoint,
+    listingType: trip.listingType,
+    startingPrice: trip.startingPrice ?? '',
+    seats: trip.vehicleTotalSeats != null ? String(trip.vehicleTotalSeats) : '1',
+    paymentMethod: trip.paymentMethod,
+    durationHours: trip.durationHours,
+    startMode: trip.startMode,
+    description: trip.description ?? '',
+  };
+}
+
 export function isTripDraftComplete(draft: TripDraft): boolean {
   return draftToTrip(draft, 'preview') !== null;
 }

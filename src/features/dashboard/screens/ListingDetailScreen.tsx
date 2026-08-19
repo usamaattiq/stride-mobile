@@ -44,6 +44,7 @@ import { SegmentControl } from '../components/SegmentControl';
 import { VEHICLE_CLASS_OPTIONS } from '../constants/vehicleClasses';
 import { useTrips } from '../context/TripContext';
 import type { DashboardRootStackParamList } from '../navigation/dashboardRootTypes';
+import { openTripCreationFlow } from '../navigation/homeStackNavigation';
 import type { Trip } from '../types/trip.types';
 import { getListingStatusBucket } from '../utils/listingFilters';
 import { getListingExpiresAtMs, getListingStartsAtMs } from '../utils/listingWindow';
@@ -73,7 +74,7 @@ export function ListingDetailScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList, 'ListingDetail'>>();
   const route = useRoute<RouteProp<DashboardRootStackParamList, 'ListingDetail'>>();
-  const { getTripById, patchTrip, removeTrip, refreshTrips } = useTrips();
+  const { getTripById, patchTrip, removeTrip, refreshTrips, beginRepostTrip } = useTrips();
 
   const cached = getTripById(route.params.tripId);
   const [trip, setTrip] = React.useState<Trip | null>(cached ?? null);
@@ -593,7 +594,18 @@ export function ListingDetailScreen(): React.ReactElement {
       }
     >
       <View style={styles.content} onLayout={onPagerLayout}>
-        <ListingCard trip={trip} showPhotoCount />
+        <ListingCard
+          trip={trip}
+          showPhotoCount
+          onRepost={
+            isOwnListing
+              ? () => {
+                  beginRepostTrip(trip);
+                  openTripCreationFlow(navigation, { repost: true });
+                }
+              : undefined
+          }
+        />
 
         {!isOwnListing ? (
           <>

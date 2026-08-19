@@ -5,6 +5,7 @@ import { useProfileStore } from '@/store/profileStore';
 
 import {
   createEmptyTripDraft,
+  tripToRepostDraft,
   type Trip,
   type TripDraft,
 } from '../types/trip.types';
@@ -17,6 +18,7 @@ type TripContextValue = {
   isPublishing: boolean;
   loadError: string | null;
   beginCreateTrip: () => void;
+  beginRepostTrip: (trip: Trip) => void;
   patchDraft: (partial: Partial<TripDraft>) => void;
   clearDraft: () => void;
   refreshTrips: () => Promise<void>;
@@ -68,6 +70,10 @@ export function TripProvider({
     setDraft(createEmptyTripDraft());
   }, []);
 
+  const beginRepostTrip = React.useCallback((trip: Trip) => {
+    setDraft(tripToRepostDraft(trip));
+  }, []);
+
   const patchDraft = React.useCallback((partial: Partial<TripDraft>) => {
     setDraft((current) => ({ ...current, ...partial }));
   }, []);
@@ -114,6 +120,7 @@ export function TripProvider({
       isPublishing,
       loadError,
       beginCreateTrip,
+      beginRepostTrip,
       patchDraft,
       clearDraft,
       refreshTrips,
@@ -129,6 +136,7 @@ export function TripProvider({
       isPublishing,
       loadError,
       beginCreateTrip,
+      beginRepostTrip,
       patchDraft,
       clearDraft,
       refreshTrips,
