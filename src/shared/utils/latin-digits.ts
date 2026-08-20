@@ -39,7 +39,7 @@ export function formatLatinNumber(value: number): string {
 
 /**
  * Display a PKR amount without trailing `.00` from Decimal/Numeric APIs.
- * Whole rupees are shown as integers with no grouping (e.g. `1500`).
+ * Whole rupees use grouping commas (e.g. `1,500`).
  */
 export function formatPriceAmount(value: string | number | null | undefined): string {
   if (value == null) {
@@ -53,5 +53,5 @@ export function formatPriceAmount(value: string | number | null | undefined): st
   if (!Number.isFinite(parsed)) {
     return raw.replace(/\.0+$/, '');
   }
-  return toLatinDigits(String(Math.round(parsed)));
+  return formatLatinNumber(Math.round(parsed));
 }
