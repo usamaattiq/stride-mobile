@@ -573,6 +573,7 @@
           "seatsPlaceholder": "عدد المقاعد",
           "pricePerSeatLabel": "السعر لكل مقعد",
           "priceFullVehicleLabel": "سعر المركبة كاملة",
+          "priceOfferLabel": "سعرك",
           "pricePlaceholder": "أدخل السعر الذي تعرضه",
           "totalLabel": "السعر الإجمالي",
           "totalCalc": "{{price}} × {{seats}}",

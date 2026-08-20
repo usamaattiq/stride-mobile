@@ -573,6 +573,7 @@
           "seatsPlaceholder": "Number of seats",
           "pricePerSeatLabel": "Price per seat",
           "priceFullVehicleLabel": "Full vehicle price",
+          "priceOfferLabel": "Your price",
           "pricePlaceholder": "Enter the price you're offering",
           "totalLabel": "Total price",
           "totalCalc": "{{price}} × {{seats}}",
