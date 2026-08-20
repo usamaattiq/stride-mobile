@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { I18nManager, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
@@ -258,24 +258,10 @@ export function ListingCard({
     <View />
   );
 
+  const isRtl = I18nManager.isRTL;
+
   const content = (
     <>
-      <LinearGradient
-        colors={['#FFFFFF', '#FFF7F6', '#FEE4E2']}
-        locations={[0, 0.42, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0.35, y: 0.15 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientWash}
-        pointerEvents="none"
-      />
 
       <View style={styles.topRow}>
         <View style={styles.topBadges}>
@@ -490,6 +476,18 @@ export function ListingCard({
     </>
   );
 
+  const cardInner = (
+    <LinearGradient
+      colors={['#FFFFFF', '#FFFBFB', '#FFF4F2', '#FEE8E6', '#FED7D3']}
+      locations={[0, 0.28, 0.52, 0.78, 1]}
+      start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+      end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
+      style={styles.itemInner}
+    >
+      {content}
+    </LinearGradient>
+  );
+
   const item = onPress ? (
     <Pressable
       onPress={onPress}
@@ -497,12 +495,10 @@ export function ListingCard({
       accessibilityRole="button"
       accessibilityLabel={`${fromCity} to ${toCity}`}
     >
-      <View style={styles.itemInner}>{content}</View>
+      {cardInner}
     </Pressable>
   ) : (
-    <View style={styles.item}>
-      <View style={styles.itemInner}>{content}</View>
-    </View>
+    <View style={styles.item}>{cardInner}</View>
   );
 
   return (
@@ -530,7 +526,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
-    backgroundColor: colors.white,
     overflow: 'hidden',
   },
   repostChip: {
@@ -549,13 +544,6 @@ const styles = StyleSheet.create({
   repostChipText: {
     fontSize: 11,
     color: colors.white,
-  },
-  gradientWash: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '58%',
   },
   topRow: {
     flexDirection: 'row',
