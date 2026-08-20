@@ -7,6 +7,49 @@ export type TripVehicleMode = 'shared' | 'fullPrivate';
 export type TripListingType = 'rfq' | 'auction';
 export type TripPaymentMethod = 'cash' | 'online' | 'both';
 export type TripStartMode = 'instant' | 'scheduled';
+export type TripRouteType = 'land' | 'sea' | 'air';
+export type TripLuggageOption = 'handCarry' | 'checked';
+export type TripLuggageType = 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other';
+
+export function isSeaOrAirRoute(routeType: TripRouteType | null): boolean {
+  return routeType === 'sea' || routeType === 'air';
+}
+
+export function terminalToCity(label: string, kind: 'port' | 'airport'): TripCity {
+  const trimmed = label.trim();
+  return { id: `${kind}:${trimmed.toLowerCase()}`, label: trimmed };
+}
+
+export function terminalToPoint(label: string): TripLocationPoint {
+  const trimmed = label.trim();
+  return { label: trimmed, latitude: 0, longitude: 0 };
+}
+
+export function formatLuggageSummary(draft: TripDraft): string | null {
+  if (draft.luggageOption === 'handCarry') {
+    return 'Luggage: hand carry / none';
+  }
+  if (draft.luggageOption !== 'checked') {
+    return null;
+  }
+  const typeLabel = draft.luggageType ?? 'luggage';
+  const dims = [draft.luggageLength, draft.luggageWidth]
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const weight = draft.luggageWeight.trim();
+  const parts = [`Luggage: ${typeLabel}`];
+  if (dims.length > 0) {
+    parts.push(`Dimensions: ${dims.join(' × ')} cm`);
+  }
+  if (weight) {
+    parts.push(`Weight: ${weight} kg`);
+  }
+  return parts.join('\n');
+}
+
+export function composeTripDescription(draft: TripDraft): string {
+  return [draft.description.trim(), formatLuggageSummary(draft)].filter(Boolean).join('\n\n');
+}
 
 /** Auctions of 60 minutes or less always go live immediately — no schedule step. */
 export function shouldSkipListingScheduleStep(
@@ -31,6 +74,13 @@ export type TripDraft = {
   vehicleId: string | null;
   /** Passenger requests pick a class instead of a concrete vehicle. */
   vehicleClass: VehicleClass | null;
+  /** Passenger requests choose land, sea, or air first. Drivers stay on land. */
+  routeType: TripRouteType | null;
+  luggageOption: TripLuggageOption | null;
+  luggageType: TripLuggageType | null;
+  luggageLength: string;
+  luggageWidth: string;
+  luggageWeight: string;
   vehicleMode: TripVehicleMode | null;
   departureCity: TripCity | null;
   departurePoint: TripLocationPoint | null;
@@ -112,6 +162,12 @@ export function createEmptyTripDraft(): TripDraft {
   return {
     vehicleId: null,
     vehicleClass: null,
+    routeType: null,
+    luggageOption: null,
+    luggageType: null,
+    luggageLength: '',
+    luggageWidth: '',
+    luggageWeight: '',
     vehicleMode: null,
     departureCity: null,
     departurePoint: null,
@@ -139,6 +195,7 @@ export function tripToRepostDraft(trip: Trip): TripDraft {
     ...createEmptyTripDraft(),
     vehicleId: trip.vehicleId,
     vehicleClass: trip.vehicleClass,
+    routeType: 'land',
     vehicleMode: trip.vehicleMode,
     departureCity: trip.departureCity,
     departurePoint: trip.departurePoint,
@@ -163,13 +220,37 @@ export function canPublishTripDraft(draft: TripDraft): boolean {
   return isTripDraftComplete(draft);
 }
 
+export function isLuggageComplete(draft: TripDraft): boolean {
+  if (!isSeaOrAirRoute(draft.routeType)) {
+    return true;
+  }
+  if (draft.luggageOption === 'handCarry') {
+    return true;
+  }
+  if (draft.luggageOption !== 'checked') {
+    return false;
+  }
+  const length = Number.parseFloat(draft.luggageLength.trim());
+  const width = Number.parseFloat(draft.luggageWidth.trim());
+  const weight = Number.parseFloat(draft.luggageWeight.trim());
+  const dimsOk =
+    Number.isFinite(length) &&
+    length > 0 &&
+    Number.isFinite(width) &&
+    width > 0 &&
+    Number.isFinite(weight) &&
+    weight > 0;
+  return Boolean(draft.luggageType) && dimsOk;
+}
+
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   const departureRequired = draft.vehicleMode === 'shared';
   const hasVehicle = Boolean(draft.vehicleId);
   const hasVehicleClass = Boolean(draft.vehicleClass);
+  const seaOrAir = isSeaOrAirRoute(draft.routeType);
 
   if (
-    (!hasVehicle && !hasVehicleClass) ||
+    (!hasVehicle && !hasVehicleClass && !seaOrAir) ||
     !draft.vehicleMode ||
     !draft.departureCity ||
     (departureRequired && !draft.departureAt) ||
@@ -178,6 +259,10 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     !draft.paymentMethod ||
     !draft.startMode
   ) {
+    return null;
+  }
+
+  if (seaOrAir && !isLuggageComplete(draft)) {
     return null;
   }
 
@@ -194,7 +279,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   const seatsParsed = Number.parseInt(draft.seats.trim(), 10);
   const seatsValid =
     Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
-  if (hasVehicleClass && !hasVehicle && !seatsValid) {
+  if (((hasVehicleClass && !hasVehicle) || seaOrAir) && !seatsValid) {
     return null;
   }
 
@@ -241,7 +326,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehiclePhotoUrls: [],
     vehiclePhotoCount: 0,
     vehicleClass: draft.vehicleClass,
-    vehicleTotalSeats: hasVehicleClass && !hasVehicle ? seatsParsed : null,
+    vehicleTotalSeats: (hasVehicleClass && !hasVehicle) || seaOrAir ? seatsParsed : null,
     listingVehicle: null,
     vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
@@ -259,7 +344,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     durationHours: draft.durationHours,
     startMode: draft.startMode,
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
-    description: draft.description.trim() || null,
+    description: composeTripDescription(draft) || null,
     publishedAt: new Date().toISOString(),
     rfqStatus: null,
     auctionStatus: null,

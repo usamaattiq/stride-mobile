@@ -8,9 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { CITY_RESULTS_MAX_HEIGHT } from '@/features/dashboard/components/trip/CitySearchField';
 import { TripDetailsStep } from '@/features/dashboard/components/trip/TripDetailsStep';
+import { TripLuggageStep } from '@/features/dashboard/components/trip/TripLuggageStep';
 import { TripPreviewStep } from '@/features/dashboard/components/trip/TripPreviewStep';
 import { TripRfqAuctionStep } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
+import { TripRouteTypeStep } from '@/features/dashboard/components/trip/TripRouteTypeStep';
 import { TripScheduleStep } from '@/features/dashboard/components/trip/TripScheduleStep';
+import { TripSeaAirDetailsStep } from '@/features/dashboard/components/trip/TripSeaAirDetailsStep';
 import { TripVehicleClassStep } from '@/features/dashboard/components/trip/TripVehicleClassStep';
 import { TripVehicleModeStep } from '@/features/dashboard/components/trip/TripVehicleModeStep';
 import { TripVehicleSelectStep } from '@/features/dashboard/components/trip/TripVehicleSelectStep';
@@ -21,13 +24,20 @@ import type { DashboardRootStackParamList } from '@/features/dashboard/navigatio
 import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
-import { shouldSkipListingScheduleStep, type TripDraft } from '@/features/dashboard/types/trip.types';
+import {
+  isSeaOrAirRoute,
+  shouldSkipListingScheduleStep,
+  type TripDraft,
+  type TripRouteType,
+} from '@/features/dashboard/types/trip.types';
 import { spacing } from '@/theme';
 
 type TripCreationStep =
+  | 'routeType'
   | 'vehicle'
   | 'vehicleMode'
   | 'details'
+  | 'luggage'
   | 'listing'
   | 'schedule'
   | 'preview';
@@ -41,12 +51,20 @@ const DRIVER_STEP_ORDER: TripCreationStep[] = [
   'preview',
 ];
 
-/** Passengers pick shared vs private first, then vehicle class (SUV, sedan, …). */
-const PASSENGER_STEP_ORDER: TripCreationStep[] = [
+const PASSENGER_LAND_STEP_ORDER: TripCreationStep[] = [
+  'routeType',
   'vehicleMode',
   'vehicle',
   'details',
   'listing',
+  'schedule',
+  'preview',
+];
+
+const PASSENGER_SEA_AIR_STEP_ORDER: TripCreationStep[] = [
+  'routeType',
+  'details',
+  'luggage',
   'schedule',
   'preview',
 ];
@@ -56,9 +74,24 @@ function stepOrderForRole(
   vehicleMode: TripDraft['vehicleMode'],
   listingType: TripDraft['listingType'] = null,
   durationHours = 24,
+  routeType: TripDraft['routeType'] = null,
 ): TripCreationStep[] {
-  const order = isPassenger ? [...PASSENGER_STEP_ORDER] : [...DRIVER_STEP_ORDER];
-  let next = order;
+  if (!isPassenger) {
+    let next = [...DRIVER_STEP_ORDER];
+    if (vehicleMode === 'shared') {
+      next = next.filter((item) => item !== 'listing');
+    }
+    if (shouldSkipListingScheduleStep(listingType, durationHours)) {
+      next = next.filter((item) => item !== 'schedule');
+    }
+    return next;
+  }
+
+  if (isSeaOrAirRoute(routeType)) {
+    return [...PASSENGER_SEA_AIR_STEP_ORDER];
+  }
+
+  let next = [...PASSENGER_LAND_STEP_ORDER];
   if (vehicleMode === 'shared') {
     next = next.filter((item) => item !== 'listing');
   }
@@ -78,10 +111,29 @@ function stepProgress(
   vehicleMode: TripDraft['vehicleMode'],
   listingType: TripDraft['listingType'],
   durationHours: number,
+  routeType: TripDraft['routeType'],
 ): number {
-  const order = stepOrderForRole(isPassenger, vehicleMode, listingType, durationHours);
+  const order = stepOrderForRole(
+    isPassenger,
+    vehicleMode,
+    listingType,
+    durationHours,
+    routeType,
+  );
   const index = order.indexOf(step);
   return (index >= 0 ? index : 0) + 1;
+}
+
+function seaAirDefaults(): Partial<TripDraft> {
+  return {
+    vehicleMode: 'shared',
+    listingType: 'rfq',
+    durationHours: 24,
+    startMode: null,
+    scheduledStartAt: null,
+    vehicleClass: null,
+    vehicleId: null,
+  };
 }
 
 type Nav = NativeStackNavigationProp<DashboardRootStackParamList, 'TripCreation'>;
@@ -125,7 +177,6 @@ export function TripCreationFlowScreen(): React.ReactElement {
     if (!selectVehicleId || isPassenger) {
       return;
     }
-    // Refresh vehicle list so the newly added vehicle is available in state.
     void refreshVehicles().catch(() => undefined).finally(() => {
       patchDraft({ vehicleId: selectVehicleId, vehicleClass: null });
       setStep('vehicleMode');
@@ -150,12 +201,21 @@ export function TripCreationFlowScreen(): React.ReactElement {
       draft.vehicleMode,
       draft.listingType,
       draft.durationHours,
+      draft.routeType,
     );
     const index = order.indexOf(step);
     if (index < order.length - 1) {
       goToStep(order[index + 1]!);
     }
-  }, [draft.durationHours, draft.listingType, draft.vehicleMode, goToStep, isPassenger, step]);
+  }, [
+    draft.durationHours,
+    draft.listingType,
+    draft.routeType,
+    draft.vehicleMode,
+    goToStep,
+    isPassenger,
+    step,
+  ]);
 
   const goToPreviousStep = React.useCallback(() => {
     const order = stepOrderForRole(
@@ -163,6 +223,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
       draft.vehicleMode,
       draft.listingType,
       draft.durationHours,
+      draft.routeType,
     );
     const index = order.indexOf(step);
     if (index > 0) {
@@ -170,7 +231,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
       return true;
     }
     return false;
-  }, [draft.durationHours, draft.listingType, draft.vehicleMode, goToStep, isPassenger, step]);
+  }, [
+    draft.durationHours,
+    draft.listingType,
+    draft.routeType,
+    draft.vehicleMode,
+    goToStep,
+    isPassenger,
+    step,
+  ]);
 
   React.useEffect(() => {
     if (!shouldSkipListingScheduleStep(draft.listingType, draft.durationHours)) {
@@ -246,8 +315,44 @@ export function TripCreationFlowScreen(): React.ReactElement {
     });
   };
 
+  const handleRouteTypeChange = (routeType: TripRouteType) => {
+    const previous = draft.routeType;
+    const switchingKind =
+      previous !== routeType &&
+      (isSeaOrAirRoute(previous) || isSeaOrAirRoute(routeType));
+
+    if (isSeaOrAirRoute(routeType)) {
+      patchDraft({
+        routeType,
+        ...seaAirDefaults(),
+        ...(switchingKind
+          ? {
+              departureCity: null,
+              departurePoint: null,
+              arrivalCity: null,
+              arrivalPoint: null,
+            }
+          : {}),
+      });
+      return;
+    }
+    patchDraft({
+      routeType,
+      luggageOption: null,
+      luggageType: null,
+      luggageLength: '',
+      luggageWidth: '',
+      luggageWeight: '',
+    });
+  };
+
   const header = React.useMemo(() => {
     switch (step) {
+      case 'routeType':
+        return {
+          title: t('trips.create.routeTypeTitle'),
+          subtitle: t('trips.create.routeTypeSubtitle'),
+        };
       case 'vehicle':
         return isPassenger
           ? {
@@ -266,7 +371,14 @@ export function TripCreationFlowScreen(): React.ReactElement {
       case 'details':
         return {
           title: t('trips.create.detailsTitle'),
-          subtitle: t('trips.create.detailsSubtitle'),
+          subtitle: isSeaOrAirRoute(draft.routeType)
+            ? t('trips.create.detailsSeaAirSubtitle')
+            : t('trips.create.detailsSubtitle'),
+        };
+      case 'luggage':
+        return {
+          title: t('trips.create.luggageTitle'),
+          subtitle: t('trips.create.luggageSubtitle'),
         };
       case 'listing':
         return {
@@ -291,9 +403,16 @@ export function TripCreationFlowScreen(): React.ReactElement {
       default:
         return { title: t('trips.create.flowTitle'), subtitle: undefined };
     }
-  }, [isPassenger, step, t]);
+  }, [draft.routeType, isPassenger, step, t]);
 
   const selectedVehicle = draft.vehicleId ? getVehicleById(draft.vehicleId) : undefined;
+  const currentOrder = stepOrderForRole(
+    isPassenger,
+    draft.vehicleMode,
+    draft.listingType,
+    draft.durationHours,
+    draft.routeType,
+  );
 
   return (
     <>
@@ -307,23 +426,25 @@ export function TripCreationFlowScreen(): React.ReactElement {
         subtitle={header.subtitle}
         showLegalFooter={false}
         showLanguageSwitcher={false}
-        stepCount={
-          stepOrderForRole(
-            isPassenger,
-            draft.vehicleMode,
-            draft.listingType,
-            draft.durationHours,
-          ).length
-        }
+        stepCount={currentOrder.length}
         currentStep={stepProgress(
           step,
           isPassenger,
           draft.vehicleMode,
           draft.listingType,
           draft.durationHours,
+          draft.routeType,
         )}
         scrollBottomOffset={step === 'details' ? CITY_RESULTS_MAX_HEIGHT + spacing.md : undefined}
       >
+        {step === 'routeType' ? (
+          <TripRouteTypeStep
+            value={draft.routeType}
+            onChange={handleRouteTypeChange}
+            onContinue={goToNextStep}
+          />
+        ) : null}
+
         {step === 'vehicle' ? (
           isPassenger ? (
             <TripVehicleClassStep
@@ -365,7 +486,15 @@ export function TripCreationFlowScreen(): React.ReactElement {
         ) : null}
 
         {step === 'details' ? (
-          <TripDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+          isSeaOrAirRoute(draft.routeType) ? (
+            <TripSeaAirDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+          ) : (
+            <TripDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+          )
+        ) : null}
+
+        {step === 'luggage' ? (
+          <TripLuggageStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
         ) : null}
 
         {step === 'listing' ? (

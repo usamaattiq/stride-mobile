@@ -29,8 +29,8 @@ type DateTimePickerFieldProps = {
   minimumDate?: Date;
   required?: boolean;
   optional?: boolean;
-  /** 'time' hides the date part — use when the date is already picked elsewhere. */
-  mode?: 'date-time' | 'time';
+  /** 'time' hides the date part — use when the date is already picked elsewhere. 'date' hides the time part. */
+  mode?: 'date-time' | 'time' | 'date';
   /** Skip the built-in label — use when a shared heading covers this field. */
   hideLabel?: boolean;
   /** `search` matches passenger-home fields on a white surface. */
@@ -153,12 +153,12 @@ export function DateTimePickerField({
       ) : null}
 
       <View style={styles.row}>
-        {mode === 'date-time' ? (
+        {mode !== 'time' ? (
           <Pressable
             onPress={() => openPicker('date')}
             style={[
               styles.part,
-              styles.partDate,
+              mode === 'date-time' ? styles.partDate : styles.partFull,
               variant === 'search' && styles.partSearch,
             ]}
             accessibilityRole="button"
@@ -173,23 +173,25 @@ export function DateTimePickerField({
           </Pressable>
         ) : null}
 
-        <Pressable
-          onPress={() => openPicker('time')}
-          style={[
-            styles.part,
-            mode === 'date-time' ? styles.partTime : styles.partFull,
-            variant === 'search' && styles.partSearch,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('trips.create.selectTime')}
-        >
-          {variant === 'search' ? (
-            <FontAwesome name="clock-o" size={13} color={colors.text.secondary} />
-          ) : null}
-          <AppText weight="semibold" style={[styles.partValue, !hasTimeValue && styles.partPlaceholder]}>
-            {hasTimeValue ? formatTime(current, locale) : t('trips.create.selectTime')}
-          </AppText>
-        </Pressable>
+        {mode !== 'date' ? (
+          <Pressable
+            onPress={() => openPicker('time')}
+            style={[
+              styles.part,
+              mode === 'date-time' ? styles.partTime : styles.partFull,
+              variant === 'search' && styles.partSearch,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('trips.create.selectTime')}
+          >
+            {variant === 'search' ? (
+              <FontAwesome name="clock-o" size={13} color={colors.text.secondary} />
+            ) : null}
+            <AppText weight="semibold" style={[styles.partValue, !hasTimeValue && styles.partPlaceholder]}>
+              {hasTimeValue ? formatTime(current, locale) : t('trips.create.selectTime')}
+            </AppText>
+          </Pressable>
+        ) : null}
       </View>
       {onClear && hasValue ? (
         <Pressable

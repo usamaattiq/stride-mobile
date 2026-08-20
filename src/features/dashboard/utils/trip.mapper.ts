@@ -78,6 +78,9 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
     ...(preview.vehicleClass && !preview.vehicleId && preview.vehicleTotalSeats != null
       ? { seats: preview.vehicleTotalSeats }
       : {}),
+    ...(!preview.vehicleId && !preview.vehicleClass && preview.vehicleTotalSeats != null
+      ? { seats: preview.vehicleTotalSeats }
+      : {}),
     paymentMethod: preview.paymentMethod,
     durationHours: preview.durationHours,
     startMode: preview.startMode,

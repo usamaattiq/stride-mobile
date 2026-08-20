@@ -21,9 +21,11 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
+  | 'routeType'
   | 'vehicle'
   | 'vehicleMode'
   | 'details'
+  | 'luggage'
   | 'listing'
   | 'schedule';
 
@@ -91,12 +93,16 @@ export function TripPreviewStep({
         : null;
   const vehicleLabel =
     vehicle?.title ??
-    (draft.vehicleClass
-      ? t(
-          VEHICLE_CLASS_OPTIONS.find((item) => item.id === draft.vehicleClass)?.labelKey ??
-            'vehicles.classPlaceholder',
-        )
-      : t('trips.create.previewVehicle'));
+    (draft.routeType === 'sea'
+      ? t('trips.create.routeTypeSea')
+      : draft.routeType === 'air'
+        ? t('trips.create.routeTypeAir')
+        : draft.vehicleClass
+          ? t(
+              VEHICLE_CLASS_OPTIONS.find((item) => item.id === draft.vehicleClass)?.labelKey ??
+                'vehicles.classPlaceholder',
+            )
+          : t('trips.create.previewVehicle'));
   const description =
     draft.description.trim() ||
     (fromCity && toCity
