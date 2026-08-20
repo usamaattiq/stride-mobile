@@ -23,6 +23,7 @@ export function OfferPhotosStrip({
   const uris = photos?.photoDisplayUris?.length
     ? photos.photoDisplayUris
     : photos?.photoUrls;
+  const objectKeys = photos?.photoUrls;
   if (!uris || uris.length === 0) {
     return null;
   }
@@ -33,26 +34,32 @@ export function OfferPhotosStrip({
         {t("dashboard.listings.detail.offer.photosAttached")}
       </AppText>
       <View style={styles.row}>
-        {uris.map((uri, index) => (
-          <Pressable
-            key={`${uri}-${index}`}
-            onPress={() => setGalleryIndex(index)}
-            style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel={t(
-              "dashboard.listings.detail.offer.photosViewA11y",
-              {
-                number: index + 1,
-              },
-            )}
-          >
-            <Image
-              source={{ uri }}
-              style={styles.tileImage}
-              contentFit="cover"
-            />
-          </Pressable>
-        ))}
+        {uris.map((uri, index) => {
+          const recyclingKey = objectKeys?.[index] ?? `${index}`;
+          return (
+            <Pressable
+              key={recyclingKey}
+              onPress={() => setGalleryIndex(index)}
+              style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={t(
+                "dashboard.listings.detail.offer.photosViewA11y",
+                {
+                  number: index + 1,
+                },
+              )}
+            >
+              <Image
+                source={{ uri }}
+                style={styles.tileImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={recyclingKey}
+                transition={0}
+              />
+            </Pressable>
+          );
+        })}
       </View>
       <ImageGalleryModal
         visible={galleryIndex != null}

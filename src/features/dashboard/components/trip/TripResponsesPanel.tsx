@@ -17,6 +17,7 @@ import { colors, radius, spacing } from '@/theme';
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import type { TripVehicleMode } from '../../types/trip.types';
 import { isTerminalListingStatus } from '../../utils/listingFilters';
+import { reuseOfferSummaries } from '../../utils/reuseMediaViewUrls';
 import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
@@ -152,19 +153,28 @@ export function TripResponsesPanel({
   const [vehicleDetail, setVehicleDetail] = React.useState<RfqOfferVehicleSummary | null>(null);
   const [chatTarget, setChatTarget] = React.useState<RfqOfferSummary | null>(null);
 
+  const applyOwnerSnapshot = React.useCallback(
+    (ownerSnapshot: RfqOwnerSnapshot) => {
+      const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
+      const nextBase = { ...ownerSnapshot, offers };
+      setNotListed(false);
+      setSnapshot((previous) => ({
+        ...nextBase,
+        offers: reuseOfferSummaries(previous?.offers, offers),
+      }));
+      onCountChange?.(offers.length);
+      onRfqStatusChange?.(ownerListingRfqStatus(nextBase));
+    },
+    [isPassengerRequest, onCountChange, onRfqStatusChange],
+  );
+
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
     void rfqApi
       .getSnapshot(tripId)
       .then((result) => {
-        const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
-        const next = { ...ownerSnapshot, offers };
-        setNotListed(false);
-        setSnapshot(next);
-        onCountChange?.(offers.length);
-        onRfqStatusChange?.(ownerListingRfqStatus(next));
+        applyOwnerSnapshot(result as RfqOwnerSnapshot);
       })
       .catch((err) => {
         if (isInactiveListingError(err)) {
@@ -176,7 +186,7 @@ export function TripResponsesPanel({
         setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed')));
       })
       .finally(() => setLoading(false));
-  }, [tripId, t, onCountChange, onRfqStatusChange, isPassengerRequest]);
+  }, [applyOwnerSnapshot, tripId, t, onCountChange]);
 
   React.useEffect(() => {
     load();
@@ -190,13 +200,7 @@ export function TripResponsesPanel({
       void rfqApi
         .getSnapshot(tripId)
         .then((result) => {
-          const ownerSnapshot = result as RfqOwnerSnapshot;
-          const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
-          const next = { ...ownerSnapshot, offers };
-          setNotListed(false);
-          setSnapshot(next);
-          onCountChange?.(offers.length);
-          onRfqStatusChange?.(ownerListingRfqStatus(next));
+          applyOwnerSnapshot(result as RfqOwnerSnapshot);
         })
         .catch((err) => {
           if (isInactiveListingError(err)) {
@@ -207,7 +211,7 @@ export function TripResponsesPanel({
         });
     }, 5000);
     return () => clearInterval(timer);
-  }, [isPassengerRequest, onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
+  }, [applyOwnerSnapshot, onCountChange, snapshot?.status, tripId]);
 
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
@@ -222,12 +226,7 @@ export function TripResponsesPanel({
           : rfqApi.rejectOffer;
     void request(tripId, offerId)
       .then((result) => {
-        const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
-        const next = { ...ownerSnapshot, offers };
-        setSnapshot(next);
-        onCountChange?.(offers.length);
-        onRfqStatusChange?.(ownerListingRfqStatus(next));
+        applyOwnerSnapshot(result as RfqOwnerSnapshot);
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {

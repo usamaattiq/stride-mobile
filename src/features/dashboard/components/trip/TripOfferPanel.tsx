@@ -37,6 +37,7 @@ import type { DashboardRootStackParamList } from "../../navigation/dashboardRoot
 import type { TripVehicleMode } from "../../types/trip.types";
 import type { Vehicle } from "../../types/vehicle.types";
 import { isTerminalListingStatus } from "../../utils/listingFilters";
+import { reuseOfferSummaries } from "../../utils/reuseMediaViewUrls";
 import { uploadOfferPhotos } from "../../utils/offerPhotos";
 import { OfferPhotosPicker } from "./OfferPhotosPicker";
 import {
@@ -181,6 +182,9 @@ export function OfferVehicleSummaryCard({
             source={{ uri: photoUri }}
             style={styles.vehicleThumbImage}
             contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={vehicle.id}
+            transition={0}
           />
         ) : (
           <FontAwesome
@@ -314,7 +318,10 @@ export const TripOfferPanel = React.forwardRef<
   const applySnapshot = React.useCallback(
     (result: RfqSnapshot) => {
       const next = result as RfqResponderSnapshot;
-      setSnapshot(next);
+      setSnapshot((previous) => ({
+        ...next,
+        myOffers: reuseOfferSummaries(previous?.myOffers, next.myOffers),
+      }));
       onOfferChange?.(offerUpdateFromSnapshot(next));
     },
     [onOfferChange],

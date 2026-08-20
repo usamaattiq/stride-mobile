@@ -151,7 +151,14 @@ export function OfferVehicleDetailSheet({
 
   const renderPhoto = ({ item }: ListRenderItemInfo<string>) => (
     <Pressable onPress={() => setGalleryOpen(true)} accessibilityRole="button">
-      <Image source={{ uri: item }} style={{ width, height: HERO_HEIGHT }} contentFit="cover" />
+      <Image
+        source={{ uri: item }}
+        style={{ width, height: HERO_HEIGHT }}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        recyclingKey={item.split('?')[0]}
+        transition={0}
+      />
     </Pressable>
   );
 
@@ -191,7 +198,7 @@ export function OfferVehicleDetailSheet({
               <View style={styles.heroWrap}>
                 <FlatList
                   data={photos}
-                  keyExtractor={(uri, index) => `${uri}-${index}`}
+                  keyExtractor={(uri, index) => `${uri.split('?')[0]}-${index}`}
                   renderItem={renderPhoto}
                   horizontal
                   pagingEnabled

@@ -133,6 +133,8 @@ function RequestThumbnail({
           source={imageSource}
           style={styles.requestThumbImage}
           contentFit="contain"
+          recyclingKey={vehicleClass ?? 'request'}
+          transition={0}
         />
       ) : (
         <View style={styles.requestThumbFallback}>
@@ -380,6 +382,9 @@ export function ListingCard({
               source={{ uri: trip.vehiclePhotoUrl }}
               style={styles.thumbnailImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={trip.id}
+              transition={0}
             />
           ) : isPassengerRequest ? (
             <RequestThumbnail vehicleClass={trip.vehicleClass} routeType={trip.routeType} />

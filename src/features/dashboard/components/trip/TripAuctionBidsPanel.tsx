@@ -18,6 +18,7 @@ import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { isTerminalListingStatus } from '../../utils/listingFilters';
+import { reuseVehicleViewUrls } from '../../utils/reuseMediaViewUrls';
 import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
@@ -59,7 +60,24 @@ export function TripAuctionBidsPanel({
 
   const applySnapshot = React.useCallback(
     (ownerSnapshot: AuctionOwnerSnapshot) => {
-      setSnapshot(ownerSnapshot);
+      setSnapshot((previous) => {
+        const previousById = new Map(
+          (previous?.ranking ?? []).map((row) => [row.participantId, row]),
+        );
+        return {
+          ...ownerSnapshot,
+          ranking: ownerSnapshot.ranking.map((row) => {
+            const prior = previousById.get(row.participantId);
+            if (!prior) {
+              return row;
+            }
+            return {
+              ...row,
+              vehicle: reuseVehicleViewUrls(prior.vehicle, row.vehicle) ?? row.vehicle,
+            };
+          }),
+        };
+      });
       onCountChange?.(ownerSnapshot.participantCount);
       onAuctionStatusChange?.({
         auctionStatus: ownerSnapshot.status,
