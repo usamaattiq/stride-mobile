@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import {
   KeyboardProvider,
   useReanimatedKeyboardAnimation,
@@ -45,10 +45,11 @@ function BottomSheetFrame({
   sheetStyle?: StyleProp<ViewStyle>;
 }): React.ReactElement {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { width, height: windowHeight } = useWindowDimensions();
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  const layoutHeight = useSharedValue(windowHeight);
+  const lastWidthRef = React.useRef(width);
   const clampedRatio = Math.min(0.95, Math.max(0.22, heightRatio));
-  const baseHeight = windowHeight * clampedRatio;
   const fallbackBottom = initialWindowMetrics?.insets.bottom ?? 0;
   const closedPaddingBottom = Math.max(
     insets.bottom,
@@ -59,14 +60,29 @@ function BottomSheetFrame({
   // Leave a little room under the status bar so the sheet never clips off-screen.
   const topReserve = Math.max(insets.top, spacing.md);
 
+  React.useEffect(() => {
+    if (lastWidthRef.current !== width) {
+      lastWidthRef.current = width;
+      layoutHeight.value = windowHeight;
+      return;
+    }
+    // iOS can shrink window height while the keyboard is open — keep the full height.
+    if (windowHeight >= layoutHeight.value) {
+      layoutHeight.value = windowHeight;
+    }
+  }, [layoutHeight, width, windowHeight]);
+
   const animatedSheetStyle = useAnimatedStyle(() => {
-    // keyboardHeight is 0 when closed, -kb when open.
-    const kb = Math.max(0, -keyboardHeight.value);
+    const kb = Math.max(0, Math.abs(keyboardHeight.value));
+    const open = kb > 1;
+    const lift = open ? kb : 0;
+    const fullH = layoutHeight.value;
+    const maxHeight = Math.min(fullH * clampedRatio, fullH - lift - topReserve);
     return {
-      // Sit flush above the keyboard instead of sliding the whole sheet off-screen.
-      marginBottom: kb,
-      height: Math.min(baseHeight, windowHeight - kb - topReserve),
-      paddingBottom: kb > 0 ? Math.max(spacing.sm, MIN_BOTTOM_INSET / 2) : closedPaddingBottom,
+      marginBottom: lift,
+      height: maxHeight,
+      // Keyboard already covers the home indicator — extra padding leaves a hole above it.
+      paddingBottom: open ? 0 : closedPaddingBottom,
     };
   });
 
@@ -84,7 +100,6 @@ function BottomSheetFrame({
     </View>
   );
 }
-
 export function AppBottomSheet({
   visible,
   onClose,
@@ -103,7 +118,7 @@ export function AppBottomSheet({
     >
       {/* Modal renders outside the app SafeArea tree — nest a provider so insets work. */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
-        <KeyboardProvider>
+        <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
           <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
             {children}
           </BottomSheetFrame>
