@@ -15,6 +15,7 @@ import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { formatPriceAmount, withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
+import { getFontFamily } from '@/theme/typography';
 
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
@@ -241,6 +242,21 @@ export function ListingCard({
           ? t('trips.create.paymentCash')
           : t('trips.create.notSpecified');
   const showRepost = Boolean(onRepost) && !pending && canRepostListing(trip);
+  const showFooterRow = showCountdown || showRepost || Boolean(trip.referenceCode);
+  const referenceChip = trip.referenceCode ? (
+    <View
+      style={styles.referenceChip}
+      accessibilityLabel={t('dashboard.listings.card.referenceCodeA11y', {
+        code: trip.referenceCode,
+      })}
+    >
+      <AppText weight="semibold" style={styles.referenceChipText} numberOfLines={1}>
+        {t('dashboard.listings.card.referenceCode', { code: trip.referenceCode })}
+      </AppText>
+    </View>
+  ) : (
+    <View />
+  );
 
   const content = (
     <>
@@ -441,29 +457,32 @@ export function ListingCard({
             ) : null}
           </View>
 
-          {showCountdown ? (
+          {showFooterRow ? (
             <View style={styles.bodyCountdownRow}>
-              <View style={styles.countdownBadge}>
-                <FontAwesome name="clock-o" size={10} color={colors.primary} />
-                <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-                  {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-                </AppText>
-              </View>
-            </View>
-          ) : showRepost ? (
-            <View style={styles.bodyCountdownRow}>
-              <Pressable
-                onPress={onRepost}
-                hitSlop={6}
-                style={({ pressed }) => [styles.repostChip, pressed && styles.repostChipPressed]}
-                accessibilityRole="button"
-                accessibilityLabel={t('dashboard.listings.card.repost')}
-              >
-                <FontAwesome name="repeat" size={10} color={colors.white} />
-                <AppText weight="semibold" style={styles.repostChipText} numberOfLines={1}>
-                  {t('dashboard.listings.card.repost')}
-                </AppText>
-              </Pressable>
+              {referenceChip}
+              {showCountdown ? (
+                <View style={styles.countdownBadge}>
+                  <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                  <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                    {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                  </AppText>
+                </View>
+              ) : showRepost ? (
+                <Pressable
+                  onPress={onRepost}
+                  hitSlop={6}
+                  style={({ pressed }) => [styles.repostChip, pressed && styles.repostChipPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.listings.card.repost')}
+                >
+                  <FontAwesome name="repeat" size={10} color={colors.white} />
+                  <AppText weight="semibold" style={styles.repostChipText} numberOfLines={1}>
+                    {t('dashboard.listings.card.repost')}
+                  </AppText>
+                </Pressable>
+              ) : (
+                <View />
+              )}
             </View>
           ) : null}
         </View>
@@ -632,10 +651,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
+    flexShrink: 0,
   },
   countdownText: {
     fontSize: 11,
     color: colors.primary,
+  },
+  referenceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: '62%',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  referenceChipText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    letterSpacing: 0.2,
+    fontFamily: getFontFamily('en', 'semibold'),
   },
   thumbnail: {
     width: 88,
@@ -743,7 +780,10 @@ const styles = StyleSheet.create({
   },
   bodyCountdownRow: {
     marginTop: 'auto',
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   priceAmount: {
     fontSize: 22,

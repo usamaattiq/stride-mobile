@@ -27,6 +27,7 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     arrivalPoint: dto.arrivalPoint,
     arrivalAt: dto.arrivalAt,
     listingType: dto.listingType,
+    referenceCode: dto.referenceCode ?? null,
     startingPrice: dto.startingPrice
       ? formatPriceAmount(dto.startingPrice) || dto.startingPrice
       : null,

@@ -384,7 +384,9 @@
         "timerMinutes": "{{minutes}}m left",
         "timerMinutesSeconds": "{{minutes}}m {{seconds}}s left",
         "photoCount": "{{current}}/{{total}}",
-        "viewPhotos": "View photos"
+        "viewPhotos": "View photos",
+        "referenceCode": "Ref: {{code}}",
+        "referenceCodeA11y": "Listing {{code}}"
       },
       "detail": {
         "title": "Listing details",

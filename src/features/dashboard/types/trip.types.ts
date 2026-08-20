@@ -79,6 +79,8 @@ export type Trip = {
   arrivalPoint: TripLocationPoint;
   arrivalAt: string;
   listingType: TripListingType;
+  /** Public listing code, e.g. AUC-2026-1234. */
+  referenceCode: string | null;
   startingPrice: string | null;
   paymentMethod: TripPaymentMethod;
   durationHours: number;
@@ -251,6 +253,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     arrivalPoint,
     arrivalAt,
     listingType: draft.listingType,
+    referenceCode: null,
     startingPrice: trimmedPrice || null,
     paymentMethod: draft.paymentMethod,
     durationHours: draft.durationHours,

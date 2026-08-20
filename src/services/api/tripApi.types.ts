@@ -32,6 +32,8 @@ export type TripDto = {
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
   listingType: 'rfq' | 'auction';
+  /** Public listing code, e.g. AUC-2026-1234. */
+  referenceCode: string;
   startingPrice: string | null;
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;

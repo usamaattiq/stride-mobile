@@ -384,7 +384,9 @@
         "timerMinutes": "متبقي {{minutes}}د",
         "timerMinutesSeconds": "متبقي {{minutes}}د {{seconds}}ث",
         "photoCount": "{{current}}/{{total}}",
-        "viewPhotos": "عرض الصور"
+        "viewPhotos": "عرض الصور",
+        "referenceCode": "Ref: {{code}}",
+        "referenceCodeA11y": "القائمة {{code}}"
       },
       "detail": {
         "title": "تفاصيل القائمة",
