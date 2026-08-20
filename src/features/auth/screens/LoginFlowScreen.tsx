@@ -20,7 +20,7 @@ import { AuthScaffold } from '../components/AuthScaffold';
 import { findCountryByCode } from '../constants/countries';
 import type { AuthStackParamList } from '../navigation/types';
 import { formatPhoneDisplay } from '../types/signup.types';
-import { toPhoneIdentity } from '../utils/phone-identity';
+import { normalizeLocalPhoneDigits, toPhoneIdentity } from '../utils/phone-identity';
 import { LoginForgotConfirmMpinScreen } from './LoginForgotConfirmMpinScreen';
 import { LoginForgotNewMpinScreen } from './LoginForgotNewMpinScreen';
 import { LoginMpinScreen } from './LoginMpinScreen';
@@ -89,7 +89,7 @@ export function LoginFlowScreen(): React.ReactElement {
     const matchedCountry = lastPhone ? findCountryByCode(lastPhone.countryCode) : undefined;
     if (lastPhone && matchedCountry) {
       setCountry(matchedCountry);
-      setPhoneDigits(lastPhone.phoneDigits);
+      setPhoneDigits(normalizeLocalPhoneDigits(lastPhone.phoneDigits));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -154,11 +154,7 @@ export function LoginFlowScreen(): React.ReactElement {
     useProfileStore.getState().setProfile(profile);
 
     const devicePrefs = useDevicePrefsStore.getState();
-    await devicePrefs.setLastPhone({
-      phoneDigits,
-      countryCode: country.code,
-      countryCallingCode: country.callingCode,
-    });
+    await devicePrefs.setLastPhone(toPhoneIdentity(country, phoneDigits));
     // Always cache the MPIN so enabling Face ID later in Settings can unlock
     // biometric login on the very next sign-in (not only after a second login).
     await devicePrefs.setCachedMpin(usedMpin);

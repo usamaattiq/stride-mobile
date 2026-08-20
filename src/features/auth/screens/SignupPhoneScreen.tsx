@@ -10,6 +10,7 @@ import { colors, spacing } from '@/theme';
 import { AuthCard } from '../components/AuthCard';
 import { PhoneInput } from '../components/PhoneInput';
 import type { CountryOption } from '../constants/countries';
+import { isLocalPhoneComplete } from '../utils/phone-identity';
 
 type SignupPhoneScreenProps = {
   country: CountryOption;
@@ -31,7 +32,7 @@ export function SignupPhoneScreen({
   errorMessage,
 }: SignupPhoneScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const canContinue = phoneDigits.length >= 10 && !loading;
+  const canContinue = isLocalPhoneComplete(phoneDigits) && !loading;
 
   return (
     <>

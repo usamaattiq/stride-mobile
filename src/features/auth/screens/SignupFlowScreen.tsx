@@ -239,11 +239,7 @@ export function SignupFlowScreen(): React.ReactElement {
       void registerForPushNotifications();
 
       const devicePrefs = useDevicePrefsStore.getState();
-      await devicePrefs.setLastPhone({
-        phoneDigits: draft.phoneDigits,
-        countryCode: draft.country.code,
-        countryCallingCode: draft.country.callingCode,
-      });
+      await devicePrefs.setLastPhone(toPhoneIdentity(draft.country, draft.phoneDigits));
       await devicePrefs.setBiometricEnabled(draft.biometricEnabled);
       // Always cache so Face ID can be enabled later from Settings without
       // requiring a second manual login first.
