@@ -1,25 +1,26 @@
-export type AuctionType = 'forward' | 'reverse';
+export type AuctionType = "forward" | "reverse";
 
 export type AuctionStatusValue =
-  | 'coming-soon'
-  | 'live'
-  | 'awaiting-confirmation'
-  | 'awaiting-action'
-  | 'awaiting-your-confirmation'
-  | 'declined'
-  | 'timed-out'
-  | 'completed'
-  | 'closed'
-  | 'expired';
+  | "coming-soon"
+  | "live"
+  | "awaiting-confirmation"
+  | "awaiting-action"
+  | "awaiting-your-confirmation"
+  | "declined"
+  | "timed-out"
+  | "completed"
+  | "closed"
+  | "expired";
 
-export type AuctionDisplayVariant = 'muted' | 'accent' | 'warning' | 'success';
+export type AuctionDisplayVariant = "muted" | "accent" | "warning" | "success";
 
-export type AuctionParticipantStatus = 'active' | 'withdrawn' | 'declined' | 'timed_out';
+export type AuctionParticipantStatus =
+  "active" | "withdrawn" | "declined" | "timed_out";
 
 export type AuctionBidVehicleSummary = {
   id: string;
   title: string;
-  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
+  vehicleClass: "suv" | "sedan" | "bus" | "van" | "coaster";
   totalSeats: number;
   plateNumber: string;
   brand: string | null;
@@ -73,11 +74,11 @@ type AuctionSnapshotBase = {
 };
 
 export type AuctionPublicSnapshot = AuctionSnapshotBase & {
-  role: 'public';
+  role: "public";
 };
 
 export type AuctionOwnerSnapshot = AuctionSnapshotBase & {
-  role: 'owner';
+  role: "owner";
   platformId: string;
   externalRef: string | null;
   startingAmount: number | null;
@@ -91,7 +92,7 @@ export type AuctionOwnerSnapshot = AuctionSnapshotBase & {
 };
 
 export type AuctionParticipantSnapshot = AuctionSnapshotBase & {
-  role: 'participant';
+  role: "participant";
   platformId: string;
   externalRef: string | null;
   hasParticipated: boolean;
@@ -109,9 +110,7 @@ export type AuctionParticipantSnapshot = AuctionSnapshotBase & {
 };
 
 export type AuctionSnapshot =
-  | AuctionPublicSnapshot
-  | AuctionOwnerSnapshot
-  | AuctionParticipantSnapshot;
+  AuctionPublicSnapshot | AuctionOwnerSnapshot | AuctionParticipantSnapshot;
 
 export type AuctionBidSummary = {
   id: string;
@@ -125,5 +124,6 @@ export type AuctionBidSummary = {
 
 export type PlaceBidPayload = {
   amount: number;
+  /** Required when bidding on a passenger request. */
   vehicleId?: string;
 };

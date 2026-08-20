@@ -54,6 +54,11 @@ export function draftToLuggage(draft: TripDraft): TripLuggage | null {
   };
 }
 
+/** Shared trips (driver or passenger) are RFQ only — auction is full-private. */
+export function isAuctionAllowed(vehicleMode: TripVehicleMode | null): boolean {
+  return vehicleMode === 'fullPrivate';
+}
+
 /** Auctions of 60 minutes or less always go live immediately — no schedule step. */
 export function shouldSkipListingScheduleStep(
   listingType: TripListingType | null,
@@ -258,6 +263,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
   const hasVehicle = Boolean(draft.vehicleId);
   const hasVehicleClass = Boolean(draft.vehicleClass);
   const seaOrAir = isSeaOrAirRoute(draft.routeType);
+  const listingType = isAuctionAllowed(draft.vehicleMode) ? draft.listingType : 'rfq';
 
   if (
     (!hasVehicle && !hasVehicleClass && !seaOrAir) ||
@@ -265,7 +271,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     !draft.departureCity ||
     (departureRequired && !draft.departureAt) ||
     !draft.arrivalCity ||
-    !draft.listingType ||
+    !listingType ||
     !draft.paymentMethod ||
     !draft.startMode
   ) {
@@ -310,8 +316,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     } satisfies TripLocationPoint);
 
   // Private / auction can skip departure — start now and stay "Open" for durationHours.
-  const isPrivate =
-    draft.listingType === 'auction' || draft.vehicleMode === 'fullPrivate';
+  const isPrivate = listingType === 'auction' || draft.vehicleMode === 'fullPrivate';
   const departureOpen = isPrivate && !draft.departureAt;
   const now = new Date();
   const durationMs = draft.durationHours * 60 * 60 * 1000;
@@ -340,7 +345,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     listingVehicle: null,
     routeType: draft.routeType ?? 'land',
     luggage: draftToLuggage(draft),
-    vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
+    vehicleMode: draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
     departureAt,
@@ -349,7 +354,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     arrivalCity: draft.arrivalCity,
     arrivalPoint,
     arrivalAt,
-    listingType: draft.listingType,
+    listingType,
     referenceCode: null,
     startingPrice: trimmedPrice || null,
     paymentMethod: draft.paymentMethod,

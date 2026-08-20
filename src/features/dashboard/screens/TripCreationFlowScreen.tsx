@@ -251,6 +251,16 @@ export function TripCreationFlowScreen(): React.ReactElement {
     patchDraft({ startMode: 'instant', scheduledStartAt: null });
   }, [draft.durationHours, draft.listingType, draft.scheduledStartAt, draft.startMode, patchDraft]);
 
+  React.useEffect(() => {
+    if (draft.vehicleMode !== 'shared') {
+      return;
+    }
+    if (draft.listingType === 'rfq' && draft.durationHours === 24) {
+      return;
+    }
+    patchDraft({ listingType: 'rfq', durationHours: 24 });
+  }, [draft.durationHours, draft.listingType, draft.vehicleMode, patchDraft]);
+
   useFocusEffect(
     React.useCallback(() => {
       const onHardwareBack = () => {

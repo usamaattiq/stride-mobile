@@ -4,7 +4,8 @@ export type UploadPurpose =
   | 'nic_back'
   | 'license_front'
   | 'license_back'
-  | 'vehicle';
+  | 'vehicle'
+  | 'offer_attachment';
 
 export type PresignUploadResult = {
   uploadUrl: string;

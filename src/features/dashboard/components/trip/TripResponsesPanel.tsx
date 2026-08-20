@@ -321,6 +321,7 @@ export function TripResponsesPanel({
                 showMessage={showMessage}
                 onMessagePress={() => setChatTarget(offer)}
                 vehicle={offer.vehicle}
+                photos={offer.photos}
                 onVehiclePress={() => {
                   if (offer.vehicle) {
                     setVehicleDetail(offer.vehicle);

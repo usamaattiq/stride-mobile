@@ -1,25 +1,29 @@
-import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { Pressable, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
-import { VehicleListItem } from '@/features/dashboard/components/VehicleListContent';
-import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
-import { i18n as appI18n } from '@/i18n';
-import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
-import { openWhatsAppChat } from '@/shared/utils/open-whatsapp';
-import { colors, radius, spacing } from '@/theme';
-import { cardBackShadow } from '@/theme/cardShadow';
+import { VehicleListItem } from "@/features/dashboard/components/VehicleListContent";
+import type { Vehicle } from "@/features/dashboard/types/vehicle.types";
+import { i18n as appI18n } from "@/i18n";
+import type { OfferAttachmentPhotos } from "@/services/api/rfqApi.types";
+import { AppText } from "@/shared/components/AppText";
+import { Button } from "@/shared/components/Button";
+import { openWhatsAppChat } from "@/shared/utils/open-whatsapp";
+import { colors, radius, spacing } from "@/theme";
+import { cardBackShadow } from "@/theme/cardShadow";
 
-export type OfferResponseCardTone = 'default' | 'selected' | 'confirmed';
+import { OfferPhotosStrip } from "./OfferPhotosStrip";
 
-export type OfferResponseTagTone = 'muted' | 'warning' | 'selected' | 'confirmed';
+export type OfferResponseCardTone = "default" | "selected" | "confirmed";
+
+export type OfferResponseTagTone =
+  "muted" | "warning" | "selected" | "confirmed";
 
 export type OfferVehicleLike = {
   id: string;
   title: string;
-  vehicleClass: Vehicle['vehicleClass'];
+  vehicleClass: Vehicle["vehicleClass"];
   totalSeats: number;
   plateNumber: string;
   brand: string | null;
@@ -50,14 +54,14 @@ export function toListVehicle(vehicle: OfferVehicleLike): Vehicle {
   return {
     id: vehicle.id,
     title: vehicle.title,
-    description: vehicle.description ?? '',
+    description: vehicle.description ?? "",
     plateNumber: vehicle.plateNumber,
     hasAc: vehicle.hasAc ?? false,
     totalSeats: vehicle.totalSeats,
     vehicleClass: vehicle.vehicleClass,
-    brand: vehicle.brand ?? '',
-    model: vehicle.model ?? '',
-    year: vehicle.year != null ? String(vehicle.year) : '',
+    brand: vehicle.brand ?? "",
+    model: vehicle.model ?? "",
+    year: vehicle.year != null ? String(vehicle.year) : "",
     photoUris,
     photoDisplayUris,
   };
@@ -97,8 +101,10 @@ export type OfferResponseCardProps = {
   showWinner?: boolean;
   vehicle?: OfferVehicleLike | null;
   onVehiclePress?: () => void;
+  /** Photos attached instead of a vehicle on sea/air requests. */
+  photos?: OfferAttachmentPhotos | null;
   /** Accept/Reject, or WhatsApp in that same footer slot. */
-  footer?: 'decide' | 'whatsapp' | null;
+  footer?: "decide" | "whatsapp" | null;
   rejectLabel?: string;
   acceptLabel?: string;
   onReject?: () => void;
@@ -111,7 +117,7 @@ export type OfferResponseCardProps = {
 
 export function OfferResponseCard({
   tag,
-  tagTone = 'muted',
+  tagTone = "muted",
   name,
   verified = false,
   priceLabel,
@@ -121,6 +127,7 @@ export function OfferResponseCard({
   showWinner = false,
   vehicle,
   onVehiclePress,
+  photos,
   footer = null,
   rejectLabel,
   acceptLabel,
@@ -129,10 +136,10 @@ export function OfferResponseCard({
   acceptLoading = false,
   actionsDisabled = false,
   whatsappPhone,
-  whatsappMessage = '',
+  whatsappMessage = "",
 }: OfferResponseCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const initial = name.trim().charAt(0).toUpperCase() || '?';
+  const initial = name.trim().charAt(0).toUpperCase() || "?";
   const phone = whatsappPhone?.trim() || null;
 
   return (
@@ -141,20 +148,20 @@ export function OfferResponseCard({
         <View
           style={[
             styles.badge,
-            tagTone === 'warning' && styles.badgeWarning,
-            tagTone === 'selected' && styles.badgeSelected,
-            tagTone === 'confirmed' && styles.badgeConfirmed,
+            tagTone === "warning" && styles.badgeWarning,
+            tagTone === "selected" && styles.badgeSelected,
+            tagTone === "confirmed" && styles.badgeConfirmed,
           ]}
         >
           <AppText
             weight="bold"
             style={[
               styles.badgeText,
-              tagTone === 'confirmed'
+              tagTone === "confirmed"
                 ? styles.badgeTextConfirmed
-                : tagTone === 'selected'
+                : tagTone === "selected"
                   ? styles.badgeTextSelected
-                  : tagTone === 'warning'
+                  : tagTone === "warning"
                     ? styles.badgeTextWarning
                     : styles.badgeTextMuted,
             ]}
@@ -166,7 +173,11 @@ export function OfferResponseCard({
           {detailLabel ? (
             <View style={styles.seatsChip}>
               <FontAwesome name="users" size={9} color={colors.primary} />
-              <AppText weight="bold" style={styles.seatsChipLabel} numberOfLines={1}>
+              <AppText
+                weight="bold"
+                style={styles.seatsChipLabel}
+                numberOfLines={1}
+              >
                 {detailLabel}
               </AppText>
             </View>
@@ -174,13 +185,18 @@ export function OfferResponseCard({
           {showMessage ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t('dashboard.listings.detail.contact.messageA11y')}
+              accessibilityLabel={t(
+                "dashboard.listings.detail.contact.messageA11y",
+              )}
               onPress={onMessagePress}
-              style={({ pressed }) => [styles.messageChip, pressed && styles.messageChipPressed]}
+              style={({ pressed }) => [
+                styles.messageChip,
+                pressed && styles.messageChipPressed,
+              ]}
             >
               <FontAwesome name="comment" size={11} color={colors.white} />
               <AppText weight="bold" style={styles.messageChipLabel}>
-                {t('dashboard.listings.detail.contact.message')}
+                {t("dashboard.listings.detail.contact.message")}
               </AppText>
             </Pressable>
           ) : null}
@@ -189,7 +205,7 @@ export function OfferResponseCard({
               name="trophy"
               size={16}
               color="#E8A13A"
-              accessibilityLabel={t('dashboard.listings.detail.bid.leading')}
+              accessibilityLabel={t("dashboard.listings.detail.bid.leading")}
             />
           ) : null}
         </View>
@@ -210,7 +226,7 @@ export function OfferResponseCard({
               name="check-circle"
               size={14}
               color="#0095F6"
-              accessibilityLabel={t('profile.verification.verified')}
+              accessibilityLabel={t("profile.verification.verified")}
             />
           ) : null}
         </View>
@@ -230,17 +246,23 @@ export function OfferResponseCard({
         </View>
       ) : null}
 
-      {footer === 'decide' ? (
+      {!vehicle && photos ? <OfferPhotosStrip photos={photos} /> : null}
+
+      {footer === "decide" ? (
         <View style={styles.footerRow}>
           <Button
-            label={rejectLabel ?? t('dashboard.listings.detail.responses.reject')}
+            label={
+              rejectLabel ?? t("dashboard.listings.detail.responses.reject")
+            }
             variant="secondary"
             onPress={onReject}
             disabled={actionsDisabled}
             style={styles.footerButton}
           />
           <Button
-            label={acceptLabel ?? t('dashboard.listings.detail.responses.accept')}
+            label={
+              acceptLabel ?? t("dashboard.listings.detail.responses.accept")
+            }
             onPress={onAccept}
             loading={acceptLoading}
             disabled={actionsDisabled}
@@ -249,18 +271,26 @@ export function OfferResponseCard({
         </View>
       ) : null}
 
-      {footer === 'whatsapp' && phone ? (
+      {footer === "whatsapp" && phone ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('dashboard.listings.detail.contact.whatsappA11y', { phone })}
+          accessibilityLabel={t(
+            "dashboard.listings.detail.contact.whatsappA11y",
+            { phone },
+          )}
           onPress={() => {
-            void openWhatsAppChat(phone, whatsappMessage).catch(() => undefined);
+            void openWhatsAppChat(phone, whatsappMessage).catch(
+              () => undefined,
+            );
           }}
-          style={({ pressed }) => [styles.whatsappButton, pressed && styles.whatsappButtonPressed]}
+          style={({ pressed }) => [
+            styles.whatsappButton,
+            pressed && styles.whatsappButtonPressed,
+          ]}
         >
           <FontAwesome5 name="whatsapp" size={16} color="#FFFFFF" />
           <AppText weight="bold" style={styles.whatsappLabel}>
-            {t('dashboard.listings.detail.auctionBids.whatsapp')}
+            {t("dashboard.listings.detail.auctionBids.whatsapp")}
           </AppText>
         </Pressable>
       ) : null}
@@ -270,7 +300,7 @@ export function OfferResponseCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
@@ -279,30 +309,30 @@ const styles = StyleSheet.create({
     ...cardBackShadow,
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: spacing.xs,
   },
   identityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: spacing.sm,
   },
   identity: {
     flex: 1,
     minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   avatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
   },
   avatarInitial: {
@@ -322,13 +352,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   seatsChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
     borderRadius: radius.full,
     paddingHorizontal: 8,
@@ -340,8 +370,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   messageChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
@@ -356,9 +386,9 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   vehicleChip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.62)',
+    backgroundColor: "rgba(255, 255, 255, 0.62)",
     borderRadius: radius.sm,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   badge: {
     borderRadius: radius.full,
@@ -391,7 +421,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   footerRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.xs,
   },
   footerButton: {
@@ -403,17 +433,17 @@ const styles = StyleSheet.create({
   whatsappButton: {
     minHeight: 40,
     borderRadius: radius.full,
-    backgroundColor: '#25D366',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#25D366",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: spacing.xs,
   },
   whatsappButtonPressed: {
     opacity: 0.85,
   },
   whatsappLabel: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
   },
 });
