@@ -235,6 +235,8 @@
       "categoryAuction": "مزاد",
       "categoryPrivate": "خاص",
       "categoryShared": "مشترك",
+      "routeFilterAll": "كل المسارات",
+      "routeFilterA11y": "تصفية حسب نوع المسار",
       "badgeAuction": "مزاد",
       "badgeRfq": "RFQ",
       "startingPrice": "السعر الابتدائي",
@@ -386,7 +388,8 @@
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "عرض الصور",
         "referenceCode": "Ref: {{code}}",
-        "referenceCodeA11y": "القائمة {{code}}"
+        "referenceCodeA11y": "القائمة {{code}}",
+        "luggageHandCarry": "حقيبة يد"
       },
       "detail": {
         "title": "تفاصيل القائمة",
@@ -408,6 +411,9 @@
         "descriptionBody": "رحلة من {{from}} إلى {{to}} بمركبة {{vehicle}} ({{mode}}). راجع الجدول والتسعير أدناه.",
         "showMore": "عرض المزيد",
         "showLess": "عرض أقل",
+        "luggageDimensions": "الأبعاد",
+        "luggageCm": "سم",
+        "luggageKg": "كجم",
         "openPickupInMaps": "فتح نقطة الالتقاط {{place}} في خرائط Google",
         "openDropoffInMaps": "فتح نقطة التوصيل {{place}} في خرائط Google",
         "paymentTerms": "شروط الدفع",

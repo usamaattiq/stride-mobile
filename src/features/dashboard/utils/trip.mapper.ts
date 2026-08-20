@@ -17,6 +17,16 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     vehicleClass: dto.vehicleClass,
     vehicleTotalSeats: dto.vehicleTotalSeats,
     listingVehicle: dto.listingVehicle ?? null,
+    routeType: dto.routeType ?? 'land',
+    luggage: dto.luggage
+      ? {
+          option: dto.luggage.option,
+          type: dto.luggage.type,
+          lengthCm: dto.luggage.lengthCm,
+          widthCm: dto.luggage.widthCm,
+          weightKg: dto.luggage.weightKg,
+        }
+      : null,
     vehicleMode: dto.vehicleMode,
     departureCity: dto.departureCity,
     departurePoint: dto.departurePoint,
@@ -80,6 +90,16 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
       : {}),
     ...(!preview.vehicleId && !preview.vehicleClass && preview.vehicleTotalSeats != null
       ? { seats: preview.vehicleTotalSeats }
+      : {}),
+    routeType: preview.routeType,
+    ...(preview.luggage
+      ? {
+          luggageOption: preview.luggage.option,
+          luggageType: preview.luggage.type,
+          luggageLengthCm: preview.luggage.lengthCm,
+          luggageWidthCm: preview.luggage.widthCm,
+          luggageWeightKg: preview.luggage.weightKg,
+        }
       : {}),
     paymentMethod: preview.paymentMethod,
     durationHours: preview.durationHours,

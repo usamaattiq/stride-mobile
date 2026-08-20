@@ -131,6 +131,7 @@ export function TripPreviewStep({
 
       <TripDetailsOverview
         description={description}
+        luggage={trip?.luggage ?? null}
         fromCity={fromCity}
         toCity={toCity}
         departureWhen={departureWhen}

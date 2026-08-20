@@ -17,10 +17,11 @@ import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 import { getFontFamily } from '@/theme/typography';
 
+import { ROUTE_TYPE_ICONS, ROUTE_TYPE_LABEL_KEYS } from '../constants/routeTypes';
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
-import type { Trip } from '../types/trip.types';
+import type { Trip, TripRouteType } from '../types/trip.types';
 import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
 import { canRepostListing } from '../utils/listingFilters';
 
@@ -107,9 +108,22 @@ function formatCountdown(remainingMs: number, t: TFunction): string {
 
 function RequestThumbnail({
   vehicleClass,
+  routeType,
 }: {
   vehicleClass: VehicleClass | null;
+  routeType: TripRouteType;
 }): React.ReactElement {
+  // Sea / air requests have no vehicle artwork — fall back to the route medium icon.
+  if (routeType !== 'land') {
+    return (
+      <View style={styles.requestThumb}>
+        <View style={styles.requestThumbFallback}>
+          <FontAwesome name={ROUTE_TYPE_ICONS[routeType]} size={30} color={colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
   const imageSource = getVehicleClassImage(vehicleClass);
 
   return (
@@ -288,6 +302,12 @@ export function ListingCard({
             </AppText>
           </View>
           <View style={styles.topBadge}>
+            <FontAwesome name={ROUTE_TYPE_ICONS[trip.routeType]} size={9} color={colors.primary} />
+            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+              {t(ROUTE_TYPE_LABEL_KEYS[trip.routeType])}
+            </AppText>
+          </View>
+          <View style={styles.topBadge}>
             <FontAwesome name="credit-card" size={9} color={colors.primary} />
             <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
               {paymentLabel}
@@ -362,7 +382,7 @@ export function ListingCard({
               contentFit="cover"
             />
           ) : isPassengerRequest ? (
-            <RequestThumbnail vehicleClass={trip.vehicleClass} />
+            <RequestThumbnail vehicleClass={trip.vehicleClass} routeType={trip.routeType} />
           ) : (
             <View style={styles.thumbnailFallback}>
               <FontAwesome name="car" size={18} color={colors.text.tertiary} />
@@ -417,7 +437,11 @@ export function ListingCard({
               ) : null}
               {classLabel || seatsLabel ? (
                 <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
-                  <FontAwesome name="car" size={11} color={colors.primary} />
+                  <FontAwesome
+                    name={trip.routeType === 'land' ? 'car' : ROUTE_TYPE_ICONS[trip.routeType]}
+                    size={11}
+                    color={colors.primary}
+                  />
                   <AppText style={styles.metaText} numberOfLines={1}>
                     {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
                   </AppText>
@@ -556,8 +580,9 @@ const styles = StyleSheet.create({
   topBadges: {
     flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
     minWidth: 0,
   },
   topBadge: {

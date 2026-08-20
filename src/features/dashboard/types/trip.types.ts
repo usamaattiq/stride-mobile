@@ -25,30 +25,33 @@ export function terminalToPoint(label: string): TripLocationPoint {
   return { label: trimmed, latitude: 0, longitude: 0 };
 }
 
-export function formatLuggageSummary(draft: TripDraft): string | null {
-  if (draft.luggageOption === 'handCarry') {
-    return 'Luggage: hand carry / none';
-  }
-  if (draft.luggageOption !== 'checked') {
-    return null;
-  }
-  const typeLabel = draft.luggageType ?? 'luggage';
-  const dims = [draft.luggageLength, draft.luggageWidth]
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const weight = draft.luggageWeight.trim();
-  const parts = [`Luggage: ${typeLabel}`];
-  if (dims.length > 0) {
-    parts.push(`Dimensions: ${dims.join(' × ')} cm`);
-  }
-  if (weight) {
-    parts.push(`Weight: ${weight} kg`);
-  }
-  return parts.join('\n');
+export type TripLuggage = {
+  option: TripLuggageOption;
+  type: TripLuggageType | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+};
+
+function parseDimension(value: string): number | null {
+  const parsed = Number.parseFloat(value.trim());
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-export function composeTripDescription(draft: TripDraft): string {
-  return [draft.description.trim(), formatLuggageSummary(draft)].filter(Boolean).join('\n\n');
+export function draftToLuggage(draft: TripDraft): TripLuggage | null {
+  if (!isSeaOrAirRoute(draft.routeType) || !draft.luggageOption) {
+    return null;
+  }
+  if (draft.luggageOption === 'handCarry') {
+    return { option: 'handCarry', type: null, lengthCm: null, widthCm: null, weightKg: null };
+  }
+  return {
+    option: 'checked',
+    type: draft.luggageType,
+    lengthCm: parseDimension(draft.luggageLength),
+    widthCm: parseDimension(draft.luggageWidth),
+    weightKg: parseDimension(draft.luggageWeight),
+  };
 }
 
 /** Auctions of 60 minutes or less always go live immediately — no schedule step. */
@@ -117,6 +120,8 @@ export type Trip = {
   vehicleClass: VehicleClass | null;
   vehicleTotalSeats: number | null;
   listingVehicle: RfqOfferVehicleSummary | null;
+  routeType: TripRouteType;
+  luggage: TripLuggage | null;
   vehicleMode: TripVehicleMode;
   departureCity: TripCity;
   departurePoint: TripLocationPoint;
@@ -195,7 +200,12 @@ export function tripToRepostDraft(trip: Trip): TripDraft {
     ...createEmptyTripDraft(),
     vehicleId: trip.vehicleId,
     vehicleClass: trip.vehicleClass,
-    routeType: 'land',
+    routeType: trip.routeType,
+    luggageOption: trip.luggage?.option ?? null,
+    luggageType: trip.luggage?.type ?? null,
+    luggageLength: trip.luggage?.lengthCm != null ? String(trip.luggage.lengthCm) : '',
+    luggageWidth: trip.luggage?.widthCm != null ? String(trip.luggage.widthCm) : '',
+    luggageWeight: trip.luggage?.weightKg != null ? String(trip.luggage.weightKg) : '',
     vehicleMode: trip.vehicleMode,
     departureCity: trip.departureCity,
     departurePoint: trip.departurePoint,
@@ -328,6 +338,8 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     vehicleClass: draft.vehicleClass,
     vehicleTotalSeats: (hasVehicleClass && !hasVehicle) || seaOrAir ? seatsParsed : null,
     listingVehicle: null,
+    routeType: draft.routeType ?? 'land',
+    luggage: draftToLuggage(draft),
     vehicleMode: draft.listingType === 'auction' ? 'fullPrivate' : draft.vehicleMode,
     departureCity: draft.departureCity,
     departurePoint,
@@ -344,7 +356,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     durationHours: draft.durationHours,
     startMode: draft.startMode,
     scheduledStartAt: draft.startMode === 'scheduled' ? draft.scheduledStartAt : null,
-    description: composeTripDescription(draft) || null,
+    description: draft.description.trim() || null,
     publishedAt: new Date().toISOString(),
     rfqStatus: null,
     auctionStatus: null,

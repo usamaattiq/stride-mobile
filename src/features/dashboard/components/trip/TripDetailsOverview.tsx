@@ -3,7 +3,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { TripLocationPoint } from '@/features/dashboard/types/trip.types';
+import { LUGGAGE_TYPE_LABEL_KEYS } from '@/features/dashboard/constants/routeTypes';
+import type { TripLocationPoint, TripLuggage } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import type { RfqOfferVehicleSummary } from '@/services/api/rfqApi.types';
 import { AppText } from '@/shared/components/AppText';
@@ -16,6 +17,8 @@ import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 export type TripDetailsOverviewProps = {
   description?: string | null;
   listingVehicle?: RfqOfferVehicleSummary | null;
+  /** Sea / air passenger requests declare what they are bringing. */
+  luggage?: TripLuggage | null;
   fromCity?: string | null;
   toCity?: string | null;
   /** When omitted, the departure schedule row is hidden. */
@@ -114,6 +117,7 @@ function LocationPointRow({
 export function TripDetailsOverview({
   description,
   listingVehicle = null,
+  luggage = null,
   fromCity,
   toCity,
   departureWhen,
@@ -123,11 +127,16 @@ export function TripDetailsOverview({
 }: TripDetailsOverviewProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [descriptionExpanded, setDescriptionExpanded] = React.useState(false);
+  const [luggageExpanded, setLuggageExpanded] = React.useState(false);
   const [vehicleSheetOpen, setVehicleSheetOpen] = React.useState(false);
 
   React.useEffect(() => {
     setDescriptionExpanded(false);
   }, [description]);
+
+  React.useEffect(() => {
+    setLuggageExpanded(false);
+  }, [luggage]);
 
   const showDetails =
     Boolean(fromCity) ||
@@ -162,33 +171,104 @@ export function TripDetailsOverview({
       ) : null}
 
       {description ? (
-        <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => setDescriptionExpanded((current) => !current)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: descriptionExpanded }}
+          accessibilityLabel={
+            descriptionExpanded
+              ? t('dashboard.listings.detail.showLess')
+              : t('dashboard.listings.detail.showMore')
+          }
+        >
           <SectionHeader
             icon="align-left"
             title={t('dashboard.listings.detail.description')}
             right={
-              <Pressable
-                onPress={() => setDescriptionExpanded((current) => !current)}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  descriptionExpanded
-                    ? t('dashboard.listings.detail.showLess')
-                    : t('dashboard.listings.detail.showMore')
-                }
-              >
-                <FontAwesome
-                  name={descriptionExpanded ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={colors.text.tertiary}
-                />
-              </Pressable>
+              <FontAwesome
+                name={descriptionExpanded ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={colors.text.tertiary}
+              />
             }
           />
           {descriptionExpanded ? (
             <AppText style={styles.descriptionText}>{description}</AppText>
           ) : null}
-        </View>
+        </Pressable>
+      ) : null}
+
+      {luggage ? (
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => setLuggageExpanded((current) => !current)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: luggageExpanded }}
+          accessibilityLabel={
+            luggageExpanded
+              ? t('dashboard.listings.detail.showLess')
+              : t('dashboard.listings.detail.showMore')
+          }
+        >
+          <SectionHeader
+            icon="suitcase"
+            title={t('trips.create.luggageTitle')}
+            right={
+              <FontAwesome
+                name={luggageExpanded ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={colors.text.tertiary}
+              />
+            }
+          />
+          {luggageExpanded ? (
+            <View style={styles.luggageRows}>
+              <View style={styles.luggageRow}>
+                <AppText style={styles.eyebrow}>{t('trips.create.luggageChoiceLabel')}</AppText>
+                <AppText weight="semibold" style={styles.luggageValue}>
+                  {luggage.option === 'handCarry'
+                    ? t('trips.create.luggageHandCarry')
+                    : t('trips.create.luggageChecked')}
+                </AppText>
+              </View>
+
+              {luggage.option === 'checked' ? (
+                <>
+                  {luggage.type ? (
+                    <View style={styles.luggageRow}>
+                      <AppText style={styles.eyebrow}>{t('trips.create.luggageType')}</AppText>
+                      <AppText weight="semibold" style={styles.luggageValue}>
+                        {t(LUGGAGE_TYPE_LABEL_KEYS[luggage.type])}
+                      </AppText>
+                    </View>
+                  ) : null}
+                  {luggage.lengthCm != null || luggage.widthCm != null ? (
+                    <View style={styles.luggageRow}>
+                      <AppText style={styles.eyebrow}>
+                        {t('dashboard.listings.detail.luggageDimensions')}
+                      </AppText>
+                      <AppText weight="semibold" style={styles.luggageValue}>
+                        {[luggage.lengthCm, luggage.widthCm]
+                          .filter((value): value is number => value != null)
+                          .join(' × ')}{' '}
+                        {t('dashboard.listings.detail.luggageCm')}
+                      </AppText>
+                    </View>
+                  ) : null}
+                  {luggage.weightKg != null ? (
+                    <View style={styles.luggageRow}>
+                      <AppText style={styles.eyebrow}>{t('trips.create.luggageWeight')}</AppText>
+                      <AppText weight="semibold" style={styles.luggageValue}>
+                        {luggage.weightKg} {t('dashboard.listings.detail.luggageKg')}
+                      </AppText>
+                    </View>
+                  ) : null}
+                </>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
       ) : null}
 
       {showDetails ? (
@@ -335,6 +415,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: colors.text.secondary,
+  },
+  luggageRows: {
+    gap: spacing.xs,
+  },
+  luggageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  luggageValue: {
+    flexShrink: 1,
+    fontSize: 13,
+    color: colors.text.primary,
+    textAlign: 'right',
   },
   timeline: {
     flexDirection: 'row',

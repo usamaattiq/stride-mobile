@@ -612,6 +612,7 @@ export function ListingDetailScreen(): React.ReactElement {
             <TripDetailsOverview
               description={description}
               listingVehicle={trip.listingVehicle}
+              luggage={trip.luggage}
               fromCity={fromCity}
               toCity={toCity}
               departureWhen={departureWhen}
@@ -676,6 +677,7 @@ export function ListingDetailScreen(): React.ReactElement {
                   <View style={styles.pageInner}>
                   <TripDetailsOverview
                     description={description}
+                    luggage={trip.luggage}
                     fromCity={fromCity}
                     toCity={toCity}
                     departureWhen={departureWhen}

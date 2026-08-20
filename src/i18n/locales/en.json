@@ -235,6 +235,8 @@
       "categoryAuction": "Auction",
       "categoryPrivate": "Private",
       "categoryShared": "Shared",
+      "routeFilterAll": "All routes",
+      "routeFilterA11y": "Filter by route type",
       "badgeAuction": "AUCTION",
       "badgeRfq": "RFQ",
       "startingPrice": "Starting Price",
@@ -386,7 +388,8 @@
         "photoCount": "{{current}}/{{total}}",
         "viewPhotos": "View photos",
         "referenceCode": "Ref: {{code}}",
-        "referenceCodeA11y": "Listing {{code}}"
+        "referenceCodeA11y": "Listing {{code}}",
+        "luggageHandCarry": "Hand carry"
       },
       "detail": {
         "title": "Listing details",
@@ -408,6 +411,9 @@
         "descriptionBody": "Trip from {{from}} to {{to}} with {{vehicle}} ({{mode}}). Review the schedule and pricing details below.",
         "showMore": "Show more",
         "showLess": "Show less",
+        "luggageDimensions": "Dimensions",
+        "luggageCm": "cm",
+        "luggageKg": "kg",
         "openPickupInMaps": "Open pickup point {{place}} in Google Maps",
         "openDropoffInMaps": "Open drop-off point {{place}} in Google Maps",
         "paymentTerms": "Payment Terms",

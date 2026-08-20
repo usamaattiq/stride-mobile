@@ -12,6 +12,14 @@ export type TripLocationPointDto = {
   longitude: number;
 };
 
+export type TripLuggageDto = {
+  option: 'handCarry' | 'checked';
+  type: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+};
+
 export type TripDto = {
   id: string;
   vehicleId: string | null;
@@ -22,6 +30,8 @@ export type TripDto = {
   vehiclePhotoViewUrls?: string[];
   vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
   vehicleTotalSeats: number | null;
+  routeType?: 'land' | 'sea' | 'air';
+  luggage?: TripLuggageDto | null;
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
   departurePoint: TripLocationPointDto;
@@ -81,6 +91,12 @@ export type CreateTripPayload = {
   startingPrice?: string;
   /** Required for passenger requests when vehicleId is omitted. */
   seats?: number;
+  routeType?: 'land' | 'sea' | 'air';
+  luggageOption?: 'handCarry' | 'checked' | null;
+  luggageType?: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  luggageLengthCm?: number | null;
+  luggageWidthCm?: number | null;
+  luggageWeightKg?: number | null;
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
   startMode: 'instant' | 'scheduled';
