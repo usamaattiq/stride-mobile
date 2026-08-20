@@ -316,7 +316,16 @@ export function TripResponsesPanel({
                 name={displayName}
                 verified={offer.responderIsVerified === true}
                 priceLabel={priceLabel}
-                detailLabel={offeredSeatsLabel(t, vehicleMode, offer.offeredQuantity, vehicleTotalSeats)}
+                detailLabel={
+                  isPassengerRequest && vehicleMode === 'shared'
+                    ? null
+                    : offeredSeatsLabel(
+                        t,
+                        vehicleMode,
+                        offer.offeredQuantity,
+                        vehicleTotalSeats,
+                      )
+                }
                 showMessage={showMessage}
                 onMessagePress={() => setChatTarget(offer)}
                 vehicle={offer.vehicle}
