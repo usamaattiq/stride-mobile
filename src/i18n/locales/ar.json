@@ -346,6 +346,8 @@
       "retry": "إعادة المحاولة",
       "startingPrice": "{{price}} / مقعد",
       "pricePerSeatSuffix": "/مقعد",
+      "priceDemandPerSeat": "الطلب/مقعد",
+      "priceDemandFullVehicle": "الطلب للمركبة كاملة",
       "card": {
         "pricePerSeat": "السعر لكل مقعد",
         "priceWithCurrency": "PKR {{price}}",

@@ -430,7 +430,11 @@ export function ListingCard({
                 </AppText>
                 {trip.vehicleMode === 'shared' ? (
                   <AppText style={styles.priceSuffix}>
-                    {t('dashboard.listings.pricePerSeatSuffix')}
+                    {t('dashboard.listings.priceDemandPerSeat')}
+                  </AppText>
+                ) : trip.vehicleMode === 'fullPrivate' ? (
+                  <AppText style={styles.priceSuffix}>
+                    {t('dashboard.listings.priceDemandFullVehicle')}
                   </AppText>
                 ) : null}
               </View>
@@ -735,7 +739,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexShrink: 0,
     minWidth: 64,
-    paddingTop: 2,
+    marginTop: -6,
   },
   bodyCountdownRow: {
     marginTop: 'auto',
@@ -747,7 +751,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   priceSuffix: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.secondary,
+    textAlign: 'right',
+    maxWidth: 110,
+    marginTop: -4,
   },
 });

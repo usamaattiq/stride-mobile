@@ -346,6 +346,8 @@
       "retry": "Try again",
       "startingPrice": "{{price}} / seat",
       "pricePerSeatSuffix": "/seat",
+      "priceDemandPerSeat": "Demand/seat",
+      "priceDemandFullVehicle": "Demand full vehicle",
       "card": {
         "pricePerSeat": "Price per seat",
         "priceWithCurrency": "PKR {{price}}",
