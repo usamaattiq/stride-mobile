@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import {
   applyLocalDateToIso,
+  clampDateWindowEnd,
   daysInMonth,
   formatDateRangeLabel,
   isSameLocalDay,
+  MAX_DATE_WINDOW_DAYS,
   mondayFirstWeekday,
   parseIsoDate,
   startOfLocalDay,
@@ -105,7 +107,7 @@ export function DateRangeCalendarField({
       return;
     }
 
-    const endDay = end ?? start;
+    const endDay = clampDateWindowEnd(start, end ?? start);
     const window = !isSameLocalDay(start, endDay);
     if (window) {
       onWindowSelected?.();
@@ -135,8 +137,8 @@ export function DateRangeCalendarField({
       nextEnd = embedded ? selected : null;
     } else {
       nextStart = draftStart;
-      nextEnd = selected;
-      if (!isSameLocalDay(draftStart, selected)) {
+      nextEnd = clampDateWindowEnd(draftStart, selected);
+      if (!isSameLocalDay(draftStart, nextEnd)) {
         onWindowSelected?.();
       }
     }
@@ -178,6 +180,10 @@ export function DateRangeCalendarField({
   while (cells.length % 7 !== 0) {
     cells.push(null);
   }
+  const weeks: Array<Array<Date | null>> = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
 
   const rangeLabel = formatDateRangeLabel(
     startIso,
@@ -212,7 +218,7 @@ export function DateRangeCalendarField({
                 ? `${formatDay(draftStart, locale)} → ${formatDay(draftEnd, locale)}`
                 : draftStart
                   ? `${formatDay(draftStart, locale)} → ${t('trips.create.selectDate')}`
-                  : t('trips.create.departureWindowHint')}
+                  : t('trips.create.departureWindowHint', { count: MAX_DATE_WINDOW_DAYS })}
             </AppText>
           </View>
         </View>
@@ -249,55 +255,63 @@ export function DateRangeCalendarField({
       </View>
 
       <View style={styles.grid}>
-        {cells.map((day, index) => {
-          if (!day) {
-            return <View key={`empty-${index}`} style={styles.dayCell} />;
-          }
+        {weeks.map((week, weekIndex) => (
+          <View key={`week-${weekIndex}`} style={styles.weekDaysRow}>
+            {week.map((day, index) => {
+              if (!day) {
+                return <View key={`empty-${weekIndex}-${index}`} style={styles.dayCell} />;
+              }
 
-          const inRange =
-            draftStart != null &&
-            draftEnd != null &&
-            day.getTime() >= draftStart.getTime() &&
-            day.getTime() <= draftEnd.getTime();
-          const isStart = draftStart != null && isSameLocalDay(day, draftStart);
-          const isEnd = draftEnd != null && isSameLocalDay(day, draftEnd);
-          const isEdge = isStart || isEnd;
-          const isToday = isSameLocalDay(day, today);
-          const isPast = day.getTime() < today.getTime();
+              const inRange =
+                draftStart != null &&
+                draftEnd != null &&
+                day.getTime() >= draftStart.getTime() &&
+                day.getTime() <= draftEnd.getTime();
+              const isStart = draftStart != null && isSameLocalDay(day, draftStart);
+              const isEnd = draftEnd != null && isSameLocalDay(day, draftEnd);
+              const isEdge = isStart || isEnd;
+              const isToday = isSameLocalDay(day, today);
+              const isPast = day.getTime() < today.getTime();
 
-          return (
-            <Pressable
-              key={`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`}
-              disabled={isPast}
-              onPress={() => onDayPress(day)}
-              style={styles.dayCell}
-            >
-              <View
-                style={[
-                  styles.dayInner,
-                  inRange && !isEdge && styles.dayInRange,
-                  isEdge && styles.dayEdge,
-                  isPast && styles.dayPast,
-                ]}
-              >
-                <AppText
-                  weight="medium"
-                  style={[
-                    styles.dayLabel,
-                    isEdge && styles.dayLabelEdge,
-                    isPast && styles.dayLabelPast,
-                    isToday && !isEdge && styles.dayLabelToday,
-                  ]}
+              return (
+                <Pressable
+                  key={`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`}
+                  disabled={isPast}
+                  onPress={() => onDayPress(day)}
+                  style={styles.dayCell}
                 >
-                  {day.getDate()}
-                </AppText>
-              </View>
-            </Pressable>
-          );
-        })}
+                  <View
+                    style={[
+                      styles.dayInner,
+                      inRange && !isEdge && styles.dayInRange,
+                      isEdge && styles.dayEdge,
+                      isPast && styles.dayPast,
+                    ]}
+                  >
+                    <AppText
+                      weight="medium"
+                      style={[
+                        styles.dayLabel,
+                        isEdge && styles.dayLabelEdge,
+                        isPast && styles.dayLabelPast,
+                        isToday && !isEdge && styles.dayLabelToday,
+                      ]}
+                    >
+                      {day.getDate()}
+                    </AppText>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </View>
 
       {footer && !isMultiDayDraft ? <View style={styles.footer}>{footer}</View> : null}
+
+      <AppText style={styles.maxDaysNote}>
+        {t('trips.create.departureWindowMaxDays', { count: MAX_DATE_WINDOW_DAYS })}
+      </AppText>
 
       {embedded ? null : (
         <View style={styles.actions}>
@@ -330,7 +344,9 @@ export function DateRangeCalendarField({
             {label}
             {required ? <AppText style={styles.required}> *</AppText> : null}
           </AppText>
-          <AppText style={styles.hint}>{t('trips.create.departureWindowHint')}</AppText>
+          <AppText style={styles.hint}>
+            {t('trips.create.departureWindowHint', { count: MAX_DATE_WINDOW_DAYS })}
+          </AppText>
         </>
       ) : null}
 
@@ -482,11 +498,14 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   grid: {
+    gap: 0,
+  },
+  weekDaysRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    width: '100%',
   },
   dayCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -523,6 +542,13 @@ const styles = StyleSheet.create({
   },
   dayLabelToday: {
     color: colors.primary,
+  },
+  maxDaysNote: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
   actions: {
     marginTop: 'auto',

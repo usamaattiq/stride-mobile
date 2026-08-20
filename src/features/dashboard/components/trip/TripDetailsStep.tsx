@@ -14,6 +14,7 @@ import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTi
 import {
   formatDateRangeLabel,
   isMultiDayWindow,
+  MAX_DATE_WINDOW_DAYS,
 } from '@/features/dashboard/components/trip/dateRangeUtils';
 import {
   parseTripSeats,
@@ -410,6 +411,11 @@ export function TripDetailsStep({
             </>
           ) : null}
 
+          {!isShared ? (
+            <AppText style={styles.maxDaysNote}>
+              {t('trips.create.departureWindowMaxDays', { count: MAX_DATE_WINDOW_DAYS })}
+            </AppText>
+          ) : null}
           <Button label={t('common.continue')} onPress={onContinue} disabled={!canContinue} />
         </View>
       </AuthCard>
@@ -576,6 +582,12 @@ const styles = StyleSheet.create({
   optionalMark: {
     fontSize: 13,
     color: colors.text.tertiary,
+  },
+  maxDaysNote: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
   routeRow: {
     flexDirection: 'row',
