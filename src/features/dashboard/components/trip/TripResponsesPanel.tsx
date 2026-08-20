@@ -421,5 +421,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
 });

@@ -794,6 +794,7 @@ const styles = StyleSheet.create({
   },
   pageInner: {
     paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
     gap: spacing.xs,
     overflow: 'visible',
   },
