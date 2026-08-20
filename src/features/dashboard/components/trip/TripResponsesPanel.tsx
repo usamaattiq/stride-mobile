@@ -51,9 +51,12 @@ function isInactiveListingError(error: unknown): boolean {
   return isApiErrorWithCode(error, 'NOT_FOUND') || error instanceof Error;
 }
 
-function ownerListingRfqStatus(snapshot: RfqOwnerSnapshot): RfqOwnerSnapshot['status'] {
+function ownerListingRfqStatus(
+  snapshot: RfqOwnerSnapshot,
+  isPassengerRequest: boolean,
+): RfqOwnerSnapshot['status'] {
   if (snapshot.status === 'live' && snapshot.offers.some((offer) => offer.status === 'confirmed')) {
-    return 'confirmed';
+    return isPassengerRequest ? 'completed' : 'confirmed';
   }
   return snapshot.status;
 }
@@ -163,7 +166,7 @@ export function TripResponsesPanel({
         offers: reuseOfferSummaries(previous?.offers, offers),
       }));
       onCountChange?.(offers.length);
-      onRfqStatusChange?.(ownerListingRfqStatus(nextBase));
+      onRfqStatusChange?.(ownerListingRfqStatus(nextBase, isPassengerRequest));
     },
     [isPassengerRequest, onCountChange, onRfqStatusChange],
   );

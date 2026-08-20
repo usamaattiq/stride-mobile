@@ -468,15 +468,33 @@ export const TripOfferPanel = React.forwardRef<
     price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
   const vehicleValid = !requiresVehicle || Boolean(selectedVehicleId);
   const canSubmit = seatsValid && priceValid && vehicleValid && !submitting;
-  // The driver covers every seat the passenger asked for; only the passenger picks a subset.
+  const passengerRequestedSeats = Math.max(1, vehicleTotalSeats ?? listedSeats);
+  // Passenger shared: per-seat price × min(driver vehicle seats, passenger need).
+  const passengerSharedBillableSeats = (() => {
+    if (!isPassengerRequest || isFullPrivate) {
+      return null;
+    }
+    const driverSeats = selectedVehicle?.totalSeats;
+    if (driverSeats != null && driverSeats >= 1) {
+      return Math.min(driverSeats, passengerRequestedSeats);
+    }
+    if (allowsPhotoAttachments) {
+      return passengerRequestedSeats;
+    }
+    return null;
+  })();
   const coveredSeats = Math.min(50, Math.max(1, maxSeats));
   const effectiveSeats = asksForSeats
     ? seatsNumber
     : isFullPrivate
       ? (vehicleTotalSeats ?? 1)
-      : coveredSeats;
+      : isPassengerRequest
+        ? (passengerSharedBillableSeats ?? 0)
+        : coveredSeats;
+  const pricesPerSeat =
+    asksForSeats || (isPassengerRequest && !isFullPrivate);
   const totalPrice =
-    priceValid && seatsValid && asksForSeats
+    priceValid && seatsValid && pricesPerSeat && effectiveSeats >= 1
       ? priceNumber * effectiveSeats
       : null;
 
@@ -496,8 +514,8 @@ export const TripOfferPanel = React.forwardRef<
           : [];
         await rfqApi.submitOffer(tripId, {
           // Full-private capacity is 1 whole-vehicle slot on the RFQ, not the seat count.
-          seats: isFullPrivate ? 1 : asksForSeats ? seatsNumber : coveredSeats,
-          price: priceNumber,
+          seats: isFullPrivate ? 1 : asksForSeats ? seatsNumber : effectiveSeats,
+          price: totalPrice ?? priceNumber,
           ...(requiresVehicle && selectedVehicleId
             ? { vehicleId: selectedVehicleId }
             : {}),
@@ -730,7 +748,7 @@ export const TripOfferPanel = React.forwardRef<
               label={t(
                 isFullPrivate
                   ? "dashboard.listings.detail.offer.priceFullVehicleLabel"
-                  : asksForSeats
+                  : pricesPerSeat
                     ? "dashboard.listings.detail.offer.pricePerSeatLabel"
                     : "dashboard.listings.detail.offer.priceOfferLabel",
               )}
