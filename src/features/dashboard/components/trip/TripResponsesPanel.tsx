@@ -71,6 +71,39 @@ function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
   return latest;
 }
 
+function parseOfferPrice(price: string | null): number | null {
+  if (price == null) {
+    return null;
+  }
+  const parsed = Number(String(price).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Passenger requests: cheapest on top. Driver listings: highest on top.
+ * Offers without a price stay at the bottom.
+ */
+function visibleOwnerOffers(
+  offers: RfqOfferSummary[],
+  lowestBest: boolean,
+): RfqOfferSummary[] {
+  const latest = latestOffersByResponder(offers);
+  return [...latest].sort((a, b) => {
+    const priceA = parseOfferPrice(a.price);
+    const priceB = parseOfferPrice(b.price);
+    if (priceA == null && priceB == null) {
+      return 0;
+    }
+    if (priceA == null) {
+      return 1;
+    }
+    if (priceB == null) {
+      return -1;
+    }
+    return lowestBest ? priceA - priceB : priceB - priceA;
+  });
+}
+
 function offeredSeatsLabel(
   t: (key: string, options?: Record<string, unknown>) => string,
   vehicleMode: TripVehicleMode,
@@ -126,7 +159,7 @@ export function TripResponsesPanel({
       .getSnapshot(tripId)
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
         const next = { ...ownerSnapshot, offers };
         setNotListed(false);
         setSnapshot(next);
@@ -143,7 +176,7 @@ export function TripResponsesPanel({
         setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed')));
       })
       .finally(() => setLoading(false));
-  }, [tripId, t, onCountChange, onRfqStatusChange]);
+  }, [tripId, t, onCountChange, onRfqStatusChange, isPassengerRequest]);
 
   React.useEffect(() => {
     load();
@@ -158,7 +191,7 @@ export function TripResponsesPanel({
         .getSnapshot(tripId)
         .then((result) => {
           const ownerSnapshot = result as RfqOwnerSnapshot;
-          const offers = latestOffersByResponder(ownerSnapshot.offers);
+          const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
           const next = { ...ownerSnapshot, offers };
           setNotListed(false);
           setSnapshot(next);
@@ -174,7 +207,7 @@ export function TripResponsesPanel({
         });
     }, 5000);
     return () => clearInterval(timer);
-  }, [onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
+  }, [isPassengerRequest, onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
 
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
@@ -190,7 +223,7 @@ export function TripResponsesPanel({
     void request(tripId, offerId)
       .then((result) => {
         const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = latestOffersByResponder(ownerSnapshot.offers);
+        const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
         const next = { ...ownerSnapshot, offers };
         setSnapshot(next);
         onCountChange?.(offers.length);
