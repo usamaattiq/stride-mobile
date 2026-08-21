@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { BrowseTripsParams, CreateTripPayload, PaginatedTripsDto, TripDto } from './tripApi.types';
+import type { BrowseTripsParams, CreateTripPayload, PaginatedTripsDto, TerminalKind, TerminalSearchItemDto, TripDto } from './tripApi.types';
 
 function buildBrowseQuery(params: BrowseTripsParams): string {
   const search = new URLSearchParams();
@@ -60,6 +60,18 @@ export const tripApi = {
 
   create: (payload: CreateTripPayload): Promise<TripDto> =>
     apiRequest({ method: 'POST', url: '/trips', data: payload }),
+
+  searchTerminals: (
+    kind: TerminalKind,
+    q: string,
+    lang?: string,
+  ): Promise<TerminalSearchItemDto[]> => {
+    const search = new URLSearchParams({ kind, q: q.trim() });
+    if (lang) {
+      search.set('lang', lang.startsWith('ar') ? 'ar' : 'en');
+    }
+    return apiRequest({ method: 'GET', url: `/trips/terminals?${search.toString()}` });
+  },
 
   remove: (tripId: string): Promise<{ deleted: true }> =>
     apiRequest({ method: 'DELETE', url: `/trips/${tripId}` }),

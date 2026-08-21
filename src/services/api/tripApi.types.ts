@@ -128,3 +128,14 @@ export type BrowseTripsParams = {
   page?: number;
   limit?: number;
 };
+
+export type TerminalKind = 'airport' | 'seaport';
+
+export type TerminalSearchItemDto = {
+  id: string;
+  code: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+};
+

@@ -6,13 +6,14 @@ import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
+import { TerminalSearchField } from '@/features/dashboard/components/trip/TerminalSearchField';
 import {
   parseTripSeats,
   TripPaymentMethodSection,
 } from '@/features/dashboard/components/trip/TripRfqAuctionStep';
 import type { TripDraft } from '@/features/dashboard/types/trip.types';
-import { terminalToCity, terminalToPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import type { TerminalSearchItemDto } from '@/services/api/tripApi.types';
 import { Button } from '@/shared/components/Button';
 import { spacing } from '@/theme';
 
@@ -27,11 +28,25 @@ function isComplete(draft: TripDraft): boolean {
   const seatsValid = Number.isInteger(seatsParsed) && seatsParsed >= 1 && seatsParsed <= 50;
   return Boolean(
     draft.departureAt &&
-      draft.departureCity?.label.trim() &&
-      draft.arrivalCity?.label.trim() &&
+      draft.departureCity?.id &&
+      draft.arrivalCity?.id &&
       draft.paymentMethod &&
       seatsValid,
   );
+}
+
+function toCityAndPoint(item: TerminalSearchItemDto): {
+  city: NonNullable<TripDraft['departureCity']>;
+  point: NonNullable<TripDraft['departurePoint']>;
+} {
+  return {
+    city: { id: item.id, label: item.label },
+    point: {
+      label: item.label,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    },
+  };
 }
 
 export function TripSeaAirDetailsStep({
@@ -41,36 +56,36 @@ export function TripSeaAirDetailsStep({
 }: TripSeaAirDetailsStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isAir = draft.routeType === 'air';
-  const kind = isAir ? 'airport' : 'port';
+  const kind = isAir ? 'airport' : 'seaport';
   const sameTerminal =
-    Boolean(draft.departureCity?.label.trim()) &&
-    draft.departureCity?.label.trim().toLowerCase() ===
-      draft.arrivalCity?.label.trim().toLowerCase();
+    Boolean(draft.departureCity?.id) && draft.departureCity?.id === draft.arrivalCity?.id;
 
   const canContinue = isComplete(draft) && !sameTerminal;
 
-  const applyDeparture = (label: string) => {
-    const city = terminalToCity(label, kind);
+  const applyDeparture = (item: TerminalSearchItemDto | null) => {
+    if (!item) {
+      onChange({ departureCity: null, departurePoint: null });
+      return;
+    }
+    const mapped = toCityAndPoint(item);
     const next: Partial<TripDraft> = {
-      departureCity: label.trim() ? city : null,
-      departurePoint: label.trim() ? terminalToPoint(label) : null,
+      departureCity: mapped.city,
+      departurePoint: mapped.point,
     };
-    if (
-      draft.arrivalCity &&
-      city.label &&
-      draft.arrivalCity.label.trim().toLowerCase() === city.label.toLowerCase()
-    ) {
+    if (draft.arrivalCity?.id === item.id) {
       next.arrivalCity = null;
       next.arrivalPoint = null;
     }
     onChange(next);
   };
 
-  const applyArrival = (label: string) => {
-    onChange({
-      arrivalCity: label.trim() ? terminalToCity(label, kind) : null,
-      arrivalPoint: label.trim() ? terminalToPoint(label) : null,
-    });
+  const applyArrival = (item: TerminalSearchItemDto | null) => {
+    if (!item) {
+      onChange({ arrivalCity: null, arrivalPoint: null });
+      return;
+    }
+    const mapped = toCityAndPoint(item);
+    onChange({ arrivalCity: mapped.city, arrivalPoint: mapped.point });
   };
 
   return (
@@ -86,36 +101,27 @@ export function TripSeaAirDetailsStep({
           required
         />
 
-        <AuthTextField
-          label={
-            isAir
-              ? t('trips.create.departureAirport')
-              : t('trips.create.departurePort')
-          }
+        <TerminalSearchField
+          kind={kind}
+          label={isAir ? t('trips.create.departureAirport') : t('trips.create.departurePort')}
           required
-          value={draft.departureCity?.label ?? ''}
-          onChangeText={applyDeparture}
+          value={draft.departureCity}
+          onChange={applyDeparture}
           placeholder={
-            isAir
-              ? t('trips.create.airportPlaceholder')
-              : t('trips.create.portPlaceholder')
+            isAir ? t('trips.create.airportPlaceholder') : t('trips.create.portPlaceholder')
           }
-          autoCapitalize="words"
         />
 
-        <AuthTextField
-          label={
-            isAir ? t('trips.create.arrivalAirport') : t('trips.create.arrivalPort')
-          }
+        <TerminalSearchField
+          kind={kind}
+          label={isAir ? t('trips.create.arrivalAirport') : t('trips.create.arrivalPort')}
           required
-          value={draft.arrivalCity?.label ?? ''}
-          onChangeText={applyArrival}
+          value={draft.arrivalCity}
+          onChange={applyArrival}
+          excludeId={draft.departureCity?.id}
           placeholder={
-            isAir
-              ? t('trips.create.airportPlaceholder')
-              : t('trips.create.portPlaceholder')
+            isAir ? t('trips.create.airportPlaceholder') : t('trips.create.portPlaceholder')
           }
-          autoCapitalize="words"
           error={sameTerminal ? t('trips.create.sameTerminalNotAllowed') : undefined}
         />
 
