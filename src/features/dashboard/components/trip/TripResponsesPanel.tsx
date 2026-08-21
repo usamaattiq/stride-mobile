@@ -83,18 +83,37 @@ function parseOfferPrice(price: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function offerSortAmount(
+  offer: RfqOfferSummary,
+  byPerSeat: boolean,
+): number | null {
+  const total = parseOfferPrice(offer.price);
+  if (total == null) {
+    return null;
+  }
+  if (!byPerSeat) {
+    return total;
+  }
+  const seats = Math.floor(Number(offer.offeredQuantity));
+  if (!Number.isFinite(seats) || seats < 1) {
+    return total;
+  }
+  return total / seats;
+}
+
 /**
  * Passenger requests: cheapest on top. Driver listings: highest on top.
- * Offers without a price stay at the bottom.
+ * Shared driver RFQs rank by per-seat price. Offers without a price stay at the bottom.
  */
 function visibleOwnerOffers(
   offers: RfqOfferSummary[],
   lowestBest: boolean,
+  byPerSeat = false,
 ): RfqOfferSummary[] {
   const latest = latestOffersByResponder(offers);
   return [...latest].sort((a, b) => {
-    const priceA = parseOfferPrice(a.price);
-    const priceB = parseOfferPrice(b.price);
+    const priceA = offerSortAmount(a, byPerSeat);
+    const priceB = offerSortAmount(b, byPerSeat);
     if (priceA == null && priceB == null) {
       return 0;
     }
@@ -158,7 +177,11 @@ export function TripResponsesPanel({
 
   const applyOwnerSnapshot = React.useCallback(
     (ownerSnapshot: RfqOwnerSnapshot) => {
-      const offers = visibleOwnerOffers(ownerSnapshot.offers, isPassengerRequest);
+      const offers = visibleOwnerOffers(
+        ownerSnapshot.offers,
+        isPassengerRequest,
+        !isPassengerRequest && vehicleMode === 'shared',
+      );
       const nextBase = { ...ownerSnapshot, offers };
       setNotListed(false);
       setSnapshot((previous) => ({
@@ -168,7 +191,7 @@ export function TripResponsesPanel({
       onCountChange?.(offers.length);
       onRfqStatusChange?.(ownerListingRfqStatus(nextBase, isPassengerRequest));
     },
-    [isPassengerRequest, onCountChange, onRfqStatusChange],
+    [isPassengerRequest, onCountChange, onRfqStatusChange, vehicleMode],
   );
 
   const load = React.useCallback(() => {
