@@ -17,7 +17,7 @@ import { getFontFamily } from '@/theme/typography';
 import { flushPendingPingDeepLink } from '@/services/pingDeepLinkRouting';
 
 import { CreateTripTabButton } from '../components/CreateTripTabButton';
-import { TripProvider, useTrips } from '../context/TripContext';
+import { TripProvider, useBeginCreateTrip } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { CreateTripTabScreen } from '../screens/CreateTripTabScreen';
 import { TripCreationFlowScreen } from '../screens/TripCreationFlowScreen';
@@ -69,7 +69,7 @@ function DashboardTabs(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { beginCreateTrip } = useTrips();
+  const beginCreateTrip = useBeginCreateTrip();
   const rootNavigation = useNavigation<NavigationProp<DashboardRootStackParamList>>();
   const [exitHintVisible, setExitHintVisible] = React.useState(false);
   const lastBackAtRef = React.useRef(0);
@@ -93,7 +93,7 @@ function DashboardTabs(): React.ReactElement {
 
       const tabState = focusedRoot.state;
       if (tabState) {
-        const currentTab = tabState.routes[tabState.index];
+        const currentTab = tabState.routes[tabState.index ?? 0];
         if (nestedStackIndex(currentTab) > 0) {
           return false;
         }

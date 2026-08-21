@@ -30,6 +30,11 @@ type TripContextValue = {
 
 const TripContext = React.createContext<TripContextValue | null>(null);
 
+/** Stable actions so tab chrome is not re-rendered on every draft keystroke. */
+const TripCreateActionsContext = React.createContext<{
+  beginCreateTrip: () => void;
+} | null>(null);
+
 export function TripProvider({
   children,
 }: {
@@ -147,7 +152,16 @@ export function TripProvider({
     ],
   );
 
-  return <TripContext.Provider value={value}>{children}</TripContext.Provider>;
+  const createActions = React.useMemo(
+    () => ({ beginCreateTrip }),
+    [beginCreateTrip],
+  );
+
+  return (
+    <TripCreateActionsContext.Provider value={createActions}>
+      <TripContext.Provider value={value}>{children}</TripContext.Provider>
+    </TripCreateActionsContext.Provider>
+  );
 }
 
 export function useTrips(): TripContextValue {
@@ -156,4 +170,12 @@ export function useTrips(): TripContextValue {
     throw new Error('useTrips must be used within TripProvider');
   }
   return context;
+}
+
+export function useBeginCreateTrip(): () => void {
+  const context = React.useContext(TripCreateActionsContext);
+  if (!context) {
+    throw new Error('useBeginCreateTrip must be used within TripProvider');
+  }
+  return context.beginCreateTrip;
 }
