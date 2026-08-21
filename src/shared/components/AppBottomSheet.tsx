@@ -1,6 +1,8 @@
 import React from 'react';
 import {
+  Keyboard,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -8,11 +10,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import {
-  KeyboardProvider,
-  useReanimatedKeyboardAnimation,
-} from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import {
   initialWindowMetrics,
   SafeAreaProvider,
@@ -46,7 +44,7 @@ function BottomSheetFrame({
 }): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { width, height: windowHeight } = useWindowDimensions();
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  const keyboardHeight = useSharedValue(0);
   const layoutHeight = useSharedValue(windowHeight);
   const lastWidthRef = React.useRef(width);
   const clampedRatio = Math.min(0.95, Math.max(0.22, heightRatio));
@@ -61,6 +59,24 @@ function BottomSheetFrame({
   const topReserve = Math.max(insets.top, spacing.md);
 
   React.useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, (event) => {
+      const next = event.endCoordinates.height;
+      const duration = Math.max(event.duration ?? 0, 1);
+      keyboardHeight.value = withTiming(next, { duration });
+    });
+    const hide = Keyboard.addListener(hideEvent, (event) => {
+      const duration = Math.max(event.duration ?? 0, 1);
+      keyboardHeight.value = withTiming(0, { duration });
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [keyboardHeight]);
+
+  React.useEffect(() => {
     if (lastWidthRef.current !== width) {
       lastWidthRef.current = width;
       layoutHeight.value = windowHeight;
@@ -73,7 +89,7 @@ function BottomSheetFrame({
   }, [layoutHeight, width, windowHeight]);
 
   const animatedSheetStyle = useAnimatedStyle(() => {
-    const kb = Math.max(0, Math.abs(keyboardHeight.value));
+    const kb = Math.max(0, keyboardHeight.value);
     const open = kb > 1;
     const lift = open ? kb : 0;
     const fullH = layoutHeight.value;
@@ -118,11 +134,9 @@ export function AppBottomSheet({
     >
       {/* Modal renders outside the app SafeArea tree — nest a provider so insets work. */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
-        <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
-          <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
-            {children}
-          </BottomSheetFrame>
-        </KeyboardProvider>
+        <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
+          {children}
+        </BottomSheetFrame>
       </SafeAreaProvider>
     </Modal>
   );

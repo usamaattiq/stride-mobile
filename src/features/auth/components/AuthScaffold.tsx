@@ -134,7 +134,7 @@ export function AuthScaffold({
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
-      bottomOffset={scrollBottomOffset ?? spacing.md}
+      {...(scrollBottomOffset != null ? { bottomOffset: scrollBottomOffset } : {})}
       extraKeyboardSpace={extraKeyboardSpace}
       refreshControl={
         refreshControlProps ? <RefreshControl {...refreshControlProps} /> : undefined
