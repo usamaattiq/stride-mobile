@@ -4,7 +4,7 @@ import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { AppText } from '@/shared/components/AppText';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { toLatinDigits } from '@/shared/utils/latin-digits';
-import { colors, getInputFontFamily, isNumericKeyboardType, radius, spacing } from '@/theme';
+import { colors, getFontFamily, getInputFontFamily, isNumericKeyboardType, radius, spacing } from '@/theme';
 
 import { useKeyboardFocusScroll } from './AuthScaffold';
 
@@ -43,6 +43,12 @@ export function AuthTextField({
 
   const displayValue =
     keepLatinDigits && typeof value === 'string' ? toLatinDigits(value) : value;
+  const isEmpty =
+    displayValue == null || String(displayValue).length === 0;
+  // Empty numeric fields still show Arabic placeholders — use Cairo then.
+  const fontFamily = isEmpty
+    ? getFontFamily(currentLanguage, 'regular')
+    : getInputFontFamily(currentLanguage, keyboardType);
 
   return (
     <View style={styles.wrap}>
@@ -69,7 +75,7 @@ export function AuthTextField({
           styles.input,
           dense && styles.inputDense,
           error ? styles.inputError : null,
-          { fontFamily: getInputFontFamily(currentLanguage, keyboardType) },
+          { fontFamily },
           style,
         ]}
       />
