@@ -577,6 +577,7 @@
           "pricePlaceholder": "Enter the price you're offering",
           "totalLabel": "Total price",
           "totalCalc": "{{price}} × {{seats}}",
+          "priceTimesSeatsEquals": "{{price}} × {{seats}} = {{total}}",
           "submit": "Send offer",
           "withdraw": "Withdraw offer",
           "confirm": "Confirm offer",

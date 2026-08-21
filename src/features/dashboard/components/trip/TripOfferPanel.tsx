@@ -42,6 +42,7 @@ import { uploadOfferPhotos } from "../../utils/offerPhotos";
 import { OfferPhotosPicker } from "./OfferPhotosPicker";
 import {
   OfferResponseCard,
+  driverSharedOfferPriceParts,
   type OfferResponseTagTone,
 } from "./OfferResponseCard";
 import { TripVehicleSelectStep } from "./TripVehicleSelectStep";
@@ -624,12 +625,30 @@ export const TripOfferPanel = React.forwardRef<
     (activeOffer.status === "active" ||
       activeOffer.status === "selected" ||
       (activeOffer.status === "confirmed" && Boolean(ownerPhone)));
-  const offerPriceLabel =
-    activeOffer?.price != null
-      ? t("dashboard.listings.card.priceWithCurrency", {
-          price: formatPriceAmount(activeOffer.price),
-        })
+  const sharedParts =
+    !isPassengerRequest &&
+    vehicleMode === "shared" &&
+    activeOffer != null
+      ? driverSharedOfferPriceParts(
+          activeOffer.price,
+          activeOffer.offeredQuantity,
+        )
+      : null;
+  const offerPriceLabel = sharedParts
+    ? sharedParts.perSeatLabel
+    : activeOffer?.price != null
+      ? formatPriceAmount(activeOffer.price)
       : "";
+  const offerPriceSuffix = sharedParts
+    ? t("dashboard.listings.pricePerSeatSuffix")
+    : null;
+  const offerPriceHint = sharedParts
+    ? t("dashboard.listings.detail.offer.priceTimesSeatsEquals", {
+        price: sharedParts.perSeatLabel,
+        seats: String(sharedParts.seats),
+        total: sharedParts.totalLabel,
+      })
+    : null;
 
   return (
     <View style={styles.root}>
@@ -660,6 +679,8 @@ export const TripOfferPanel = React.forwardRef<
             t("dashboard.listings.detail.contact.fallbackName")
           }
           priceLabel={offerPriceLabel}
+          priceSuffix={offerPriceSuffix}
+          priceHint={offerPriceHint}
           detailLabel={
             isDriverOffering
               ? null

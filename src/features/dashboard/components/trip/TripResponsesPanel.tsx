@@ -18,7 +18,7 @@ import { useDashboardSession } from '../../context/DashboardSessionContext';
 import type { TripVehicleMode } from '../../types/trip.types';
 import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { reuseOfferSummaries } from '../../utils/reuseMediaViewUrls';
-import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
+import { OfferResponseCard, driverSharedOfferPriceParts, type OfferResponseTagTone } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
 
@@ -297,12 +297,25 @@ export function TripResponsesPanel({
             const displayName =
               offer.responderName?.trim() ||
               t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 });
-            const priceLabel =
-              offer.price != null
-                ? t('dashboard.listings.card.priceWithCurrency', {
-                    price: formatPriceAmount(offer.price),
-                  })
+            const sharedParts =
+              !isPassengerRequest && vehicleMode === 'shared'
+                ? driverSharedOfferPriceParts(offer.price, offer.offeredQuantity)
+                : null;
+            const priceLabel = sharedParts
+              ? sharedParts.perSeatLabel
+              : offer.price != null
+                ? formatPriceAmount(offer.price)
                 : '';
+            const priceSuffix = sharedParts
+              ? t('dashboard.listings.pricePerSeatSuffix')
+              : null;
+            const priceHint = sharedParts
+              ? t('dashboard.listings.detail.offer.priceTimesSeatsEquals', {
+                  price: sharedParts.perSeatLabel,
+                  seats: String(sharedParts.seats),
+                  total: sharedParts.totalLabel,
+                })
+              : null;
 
             return (
               <OfferResponseCard
@@ -319,6 +332,8 @@ export function TripResponsesPanel({
                 name={displayName}
                 verified={offer.responderIsVerified === true}
                 priceLabel={priceLabel}
+                priceSuffix={priceSuffix}
+                priceHint={priceHint}
                 detailLabel={
                   isPassengerRequest
                     ? null

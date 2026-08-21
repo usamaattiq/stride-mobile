@@ -7,6 +7,7 @@ import { VehicleListItem } from "@/features/dashboard/components/VehicleListCont
 import type { Vehicle } from "@/features/dashboard/types/vehicle.types";
 import { i18n as appI18n } from "@/i18n";
 import type { OfferAttachmentPhotos } from "@/services/api/rfqApi.types";
+import { formatPriceAmount } from "@/shared/utils/latin-digits";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { openWhatsAppChat } from "@/shared/utils/open-whatsapp";
@@ -19,6 +20,33 @@ export type OfferResponseCardTone = "default" | "selected" | "confirmed";
 
 export type OfferResponseTagTone =
   "muted" | "warning" | "selected" | "confirmed";
+
+/** Driver shared RFQ stores the offer as a total; UI shows per-seat. */
+export function driverSharedOfferPriceParts(
+  price: string | null,
+  offeredQuantity: string | null,
+): { perSeatLabel: string; seats: number; totalLabel: string } | null {
+  if (price == null) {
+    return null;
+  }
+  const total = Number(String(price).replace(/[^\d.-]/g, ""));
+  const seats = Math.floor(Number(offeredQuantity));
+  if (!Number.isFinite(total)) {
+    return null;
+  }
+  if (!Number.isFinite(seats) || seats < 1) {
+    return {
+      perSeatLabel: formatPriceAmount(total),
+      seats: 1,
+      totalLabel: formatPriceAmount(total),
+    };
+  }
+  return {
+    perSeatLabel: formatPriceAmount(total / seats),
+    seats,
+    totalLabel: formatPriceAmount(total),
+  };
+}
 
 export type OfferVehicleLike = {
   id: string;
@@ -92,7 +120,12 @@ export type OfferResponseCardProps = {
   cardTone?: OfferResponseCardTone;
   name: string;
   verified?: boolean;
+  /** Main amount (no currency prefix). */
   priceLabel: string;
+  /** Smaller unit next to the amount, e.g. `/seat`. */
+  priceSuffix?: string | null;
+  /** Small line under the amount, e.g. `1,500 × 4 = 6,000`. */
+  priceHint?: string | null;
   /** Seats (or similar) offered — shown under the name/price row. */
   detailLabel?: string | null;
   showMessage?: boolean;
@@ -121,6 +154,8 @@ export function OfferResponseCard({
   name,
   verified = false,
   priceLabel,
+  priceSuffix = null,
+  priceHint = null,
   detailLabel = null,
   showMessage = false,
   onMessagePress,
@@ -230,9 +265,23 @@ export function OfferResponseCard({
             />
           ) : null}
         </View>
-        <AppText weight="bold" style={styles.price} numberOfLines={1}>
-          {priceLabel}
-        </AppText>
+        <View style={styles.priceBlock}>
+          <View style={styles.priceRow}>
+            <AppText weight="bold" style={styles.price} numberOfLines={1}>
+              {priceLabel}
+            </AppText>
+            {priceSuffix ? (
+              <AppText style={styles.priceSuffix} numberOfLines={1}>
+                {priceSuffix}
+              </AppText>
+            ) : null}
+          </View>
+          {priceHint ? (
+            <AppText style={styles.priceHint} numberOfLines={1}>
+              {priceHint}
+            </AppText>
+          ) : null}
+        </View>
       </View>
 
       {vehicle ? (
@@ -316,7 +365,7 @@ const styles = StyleSheet.create({
   },
   identityRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.sm,
   },
@@ -342,14 +391,37 @@ const styles = StyleSheet.create({
   name: {
     flexShrink: 1,
     fontSize: 14,
+    lineHeight: 22,
     color: colors.text.primary,
   },
   price: {
     flexShrink: 0,
     color: colors.primary,
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 22,
     letterSpacing: -0.2,
+  },
+  priceRow: {
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 1,
+  },
+  priceBlock: {
+    flexShrink: 0,
+    alignItems: "flex-end",
+    gap: 1,
+  },
+  priceSuffix: {
+    fontSize: 11,
+    lineHeight: 14,
+    color: colors.primary,
+  },
+  priceHint: {
+    fontSize: 11,
+    lineHeight: 14,
+    color: colors.text.secondary,
+    textAlign: "right",
   },
   headerActions: {
     flexDirection: "row",

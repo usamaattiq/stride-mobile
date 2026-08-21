@@ -577,6 +577,7 @@
           "pricePlaceholder": "أدخل السعر الذي تعرضه",
           "totalLabel": "السعر الإجمالي",
           "totalCalc": "{{price}} × {{seats}}",
+          "priceTimesSeatsEquals": "{{price}} × {{seats}} = {{total}}",
           "submit": "إرسال العرض",
           "withdraw": "سحب العرض",
           "confirm": "تأكيد العرض",
