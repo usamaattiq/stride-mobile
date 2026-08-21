@@ -86,6 +86,8 @@ type AuthScaffoldProps = {
   extraKeyboardSpace?: number;
   /** Optional pull-to-refresh props for the scrollable body. */
   refreshControlProps?: RefreshControlProps;
+  /** Pinned below the scroll body (e.g. auction bid composer). */
+  footer?: React.ReactNode;
 };
 
 export function AuthScaffold({
@@ -110,6 +112,7 @@ export function AuthScaffold({
   scrollBottomOffset,
   extraKeyboardSpace,
   refreshControlProps,
+  footer,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -121,6 +124,8 @@ export function AuthScaffold({
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
 
+  const bodyPad = footer ? spacing.lg : contentBottomPad;
+
   const showTitleInTopBar = centerTitleInTopBar && Boolean(title);
   const showTitleInHeaderCopy = Boolean(title) && !showTitleInTopBar;
 
@@ -129,7 +134,7 @@ export function AuthScaffold({
       style={styles.cardScroll}
       contentContainerStyle={[
         compactHeader ? styles.cardWrapScrollCompact : styles.cardWrapScroll,
-        { paddingBottom: contentBottomPad },
+        { paddingBottom: bodyPad },
         contentWrapStyle,
       ]}
       keyboardShouldPersistTaps="handled"
@@ -146,7 +151,7 @@ export function AuthScaffold({
     <View
       style={[
         compactHeader ? styles.cardWrapStaticCompact : styles.cardWrapStatic,
-        { paddingBottom: contentBottomPad },
+        { paddingBottom: bodyPad },
         contentWrapStyle,
       ]}
     >
@@ -260,6 +265,16 @@ export function AuthScaffold({
 
         <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact, cardWrapStyle]}>
           {body}
+          {footer ? (
+            <View
+              style={[
+                styles.screenFooter,
+                { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+              ]}
+            >
+              {footer}
+            </View>
+          ) : null}
         </View>
 
         {showLegalFooter && !isKeyboardVisible ? (
@@ -413,6 +428,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
+  },
+  screenFooter: {
+    backgroundColor: colors.white,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
   legalFooter: {
     backgroundColor: colors.white,

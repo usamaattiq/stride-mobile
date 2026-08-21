@@ -115,6 +115,8 @@ export function ListingDetailScreen(): React.ReactElement {
   const [canWithdrawOffer, setCanWithdrawOffer] = React.useState(false);
   const offerPanelRef = React.useRef<TripOfferPanelHandle>(null);
   const bidPanelRef = React.useRef<TripBidPanelHandle>(null);
+  const [auctionComposer, setAuctionComposer] =
+    React.useState<React.ReactNode>(null);
   const [notificationChat, setNotificationChat] =
     React.useState<NotificationChatTarget | null>(null);
   const fromCity = useLocalizedCityName(
@@ -582,6 +584,11 @@ export function ListingDetailScreen(): React.ReactElement {
       // Only affects keyboard-open scroll — no permanent empty gap at the bottom.
       scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
       refreshControlProps={refreshControlProps}
+      footer={
+        !isOwnListing && trip?.listingType === "auction"
+          ? auctionComposer
+          : undefined
+      }
       headerRight={
         showHeaderActions ? (
           <View style={styles.headerActions}>
@@ -683,6 +690,8 @@ export function ListingDetailScreen(): React.ReactElement {
                 listingExpiresAtMs={getListingExpiresAtMs(trip)}
                 onBidChange={handleBidChange}
                 onCanWithdrawChange={setCanWithdrawOffer}
+                pinComposer
+                onPinnedComposerChange={setAuctionComposer}
               />
             ) : (
               <TripOfferPanel

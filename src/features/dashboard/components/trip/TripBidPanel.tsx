@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -22,14 +23,14 @@ import type {
   AuctionStatusValue,
   AuctionType,
 } from "@/services/api/auctionApi.types";
-import { AuthTextField } from "@/features/auth/components/AuthTextField";
+import { useLanguage } from "@/i18n/hooks/useLanguage";
 import { AppBottomSheet } from "@/shared/components/AppBottomSheet";
 import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
-import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { formatPriceAmount, toLatinDigits } from "@/shared/utils/latin-digits";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
-import { colors, radius, spacing } from "@/theme";
+import { colors, getInputFontFamily, radius, spacing } from "@/theme";
 import { cardBackShadow } from "@/theme/cardShadow";
 
 import { useDashboardSession } from "../../context/DashboardSessionContext";
@@ -67,6 +68,9 @@ export type TripBidPanelProps = {
     counterpartyPhone: string | null;
   }) => void;
   onCanWithdrawChange?: (canWithdraw: boolean) => void;
+  /** Render the amount field outside this panel (fixed screen footer). */
+  pinComposer?: boolean;
+  onPinnedComposerChange?: (composer: React.ReactNode | null) => void;
 };
 
 export type TripBidPanelHandle = {
@@ -123,6 +127,72 @@ function auctionEndsAtMs(
     return Date.now() + snapshot.remainingSeconds * 1000;
   }
   return null;
+}
+
+function BidComposerBar({
+  amount,
+  onAmountChange,
+  placeholder,
+  submitLabel,
+  submitting,
+  disabled,
+  hint,
+  error,
+  onSubmit,
+}: {
+  amount: string;
+  onAmountChange: (text: string) => void;
+  placeholder: string;
+  submitLabel: string;
+  submitting: boolean;
+  disabled?: boolean;
+  hint?: string | null;
+  error?: string | null;
+  onSubmit: () => void;
+}): React.ReactElement {
+  const { currentLanguage } = useLanguage();
+  const fontFamily = getInputFontFamily(currentLanguage, "number-pad");
+
+  return (
+    <View style={styles.composer}>
+      {hint ? (
+        <AppText style={styles.composerHint} numberOfLines={1}>
+          {hint}
+        </AppText>
+      ) : null}
+      <View style={styles.composerRow}>
+        <TextInput
+          value={toLatinDigits(amount)}
+          onChangeText={(text) => onAmountChange(toLatinDigits(text).replace(/[^\d]/g, ""))}
+          keyboardType="number-pad"
+          placeholder={placeholder}
+          placeholderTextColor={colors.text.tertiary}
+          style={[styles.composerInput, { fontFamily }]}
+          editable={!submitting}
+        />
+        <Pressable
+          onPress={onSubmit}
+          accessibilityRole="button"
+          accessibilityLabel={submitLabel}
+          disabled={disabled || submitting}
+          style={({ pressed }) => [
+            styles.composerSend,
+            (disabled || submitting) && styles.composerSendDisabled,
+            pressed && !disabled && !submitting && styles.composerSendPressed,
+          ]}
+        >
+          {submitting ? (
+            <ActivityIndicator color={colors.white} size="small" />
+          ) : (
+            <AppText weight="bold" style={styles.composerSendLabel}>
+              {submitLabel}
+            </AppText>
+          )}
+        </Pressable>
+      </View>
+      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+    </View>
+  );
 }
 
 function BidHeader({
@@ -294,6 +364,8 @@ export const TripBidPanel = React.forwardRef<
     listingExpiresAtMs = null,
     onBidChange,
     onCanWithdrawChange,
+    pinComposer = false,
+    onPinnedComposerChange,
   },
   ref,
 ): React.ReactElement | null {
@@ -480,7 +552,7 @@ export const TripBidPanel = React.forwardRef<
     [canWithdraw],
   );
 
-  const placeBid = () => {
+  const placeBid = React.useCallback(() => {
     if (requiresVehicle && !selectedVehicleId) {
       setError(t("dashboard.listings.detail.offer.selectVehicle"));
       return;
@@ -500,6 +572,7 @@ export const TripBidPanel = React.forwardRef<
       .then((result) => {
         if (result.role === "participant") {
           amountTouchedRef.current = false;
+          setAmount("");
           applySnapshot(result);
         }
       })
@@ -507,7 +580,59 @@ export const TripBidPanel = React.forwardRef<
         setError(getErrorMessage(err, t("dashboard.listings.detail.bid.submitFailed"))),
       )
       .finally(() => setSubmitting(false));
-  };
+  }, [amount, applySnapshot, requiresVehicle, selectedVehicleId, t, tripId]);
+
+  const publicCanBid =
+    publicSnapshot != null && !isTerminalListingStatus(publicSnapshot.status);
+  const participantCanBid = snapshot?.actions.canPlaceBid === true;
+  const canCompose = publicCanBid || participantCanBid;
+  const composerHint = snapshot
+    ? nextBidHint(snapshot.auctionType, snapshot.minNextAmount, snapshot.currentAmount, t)
+    : publicSnapshot
+      ? nextBidHint(publicSnapshot.auctionType, null, publicSnapshot.currentAmount, t)
+      : t("dashboard.listings.detail.bid.amountPlaceholder");
+  const composerSubmitLabel =
+    snapshot && (snapshot.hasParticipated || snapshot.participantStatus === "active")
+      ? t("dashboard.listings.detail.bid.update")
+      : t("dashboard.listings.detail.bid.submit");
+  const composerDisabled = requiresVehicle && !selectedVehicleId;
+
+  React.useLayoutEffect(() => {
+    if (!pinComposer) {
+      return undefined;
+    }
+    if (!canCompose) {
+      onPinnedComposerChange?.(null);
+      return () => onPinnedComposerChange?.(null);
+    }
+    onPinnedComposerChange?.(
+      <BidComposerBar
+        amount={amount}
+        onAmountChange={handleAmountChange}
+        placeholder={t("dashboard.listings.detail.bid.amountPlaceholder")}
+        hint={composerHint}
+        submitLabel={composerSubmitLabel}
+        submitting={submitting}
+        disabled={composerDisabled}
+        error={error}
+        onSubmit={placeBid}
+      />,
+    );
+    return () => onPinnedComposerChange?.(null);
+  }, [
+    amount,
+    canCompose,
+    composerDisabled,
+    composerHint,
+    composerSubmitLabel,
+    error,
+    handleAmountChange,
+    onPinnedComposerChange,
+    pinComposer,
+    placeBid,
+    submitting,
+    t,
+  ]);
 
   const goAddVehicle = () => {
     setVehiclePickerOpen(false);
@@ -581,7 +706,9 @@ export const TripBidPanel = React.forwardRef<
         <AppText style={styles.meta}>
           {t("dashboard.listings.detail.bid.openHint")}
         </AppText>
-        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+        {error && !pinComposer ? (
+          <AppText style={styles.errorText}>{error}</AppText>
+        ) : null}
         {requiresVehicle ? (
           <View style={styles.vehiclePicker}>
             <AppText weight="semibold" style={styles.vehiclePickerLabel}>
@@ -608,24 +735,24 @@ export const TripBidPanel = React.forwardRef<
             )}
           </View>
         ) : null}
-        <AuthTextField
-          label={t("dashboard.listings.detail.bid.amountLabel")}
-          value={amount}
-          onChangeText={handleAmountChange}
-          keyboardType="number-pad"
-          placeholder={nextBidHint(
-            publicSnapshot.auctionType,
-            null,
-            publicSnapshot.currentAmount,
-            t,
-          )}
-        />
-        <Button
-          label={t("dashboard.listings.detail.bid.submit")}
-          onPress={placeBid}
-          loading={submitting}
-          disabled={requiresVehicle && !selectedVehicleId}
-        />
+        {!pinComposer ? (
+          <BidComposerBar
+            amount={amount}
+            onAmountChange={handleAmountChange}
+            placeholder={t("dashboard.listings.detail.bid.amountPlaceholder")}
+            hint={nextBidHint(
+              publicSnapshot.auctionType,
+              null,
+              publicSnapshot.currentAmount,
+              t,
+            )}
+            submitLabel={t("dashboard.listings.detail.bid.submit")}
+            submitting={submitting}
+            disabled={requiresVehicle && !selectedVehicleId}
+            error={error}
+            onSubmit={placeBid}
+          />
+        ) : null}
         <AppBottomSheet
           visible={requiresVehicle && vehiclePickerOpen}
           onClose={() => setVehiclePickerOpen(false)}
@@ -681,7 +808,8 @@ export const TripBidPanel = React.forwardRef<
 
   const actions = snapshot.actions;
   const hasActiveBid = snapshot.participantStatus === "active";
-  const showPlaceBidForm = actions.canPlaceBid && !hasActiveBid;
+  const showPlaceBidForm = actions.canPlaceBid;
+  const isUpdatingBid = hasActiveBid || snapshot.hasParticipated;
   const auctionStatus = snapshot.status.replaceAll("_", "-");
   const isSelectedBidder =
     actions.isSelectedParticipant === true ||
@@ -722,11 +850,11 @@ export const TripBidPanel = React.forwardRef<
         onMessagePress={() => setChatOpen(true)}
       />
 
-      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+      {error && !pinComposer ? (
+        <AppText style={styles.errorText}>{error}</AppText>
+      ) : null}
 
-      {showPlaceBidForm ? (
-        <>
-          {requiresVehicle ? (
+      {showPlaceBidForm && requiresVehicle ? (
             <View style={styles.vehiclePicker}>
               <AppText weight="semibold" style={styles.vehiclePickerLabel}>
                 {t("dashboard.listings.detail.offer.vehicleLabel")}
@@ -751,26 +879,29 @@ export const TripBidPanel = React.forwardRef<
                 />
               )}
             </View>
-          ) : null}
-          <AuthTextField
-            label={t("dashboard.listings.detail.bid.amountLabel")}
-            value={amount}
-            onChangeText={handleAmountChange}
-            keyboardType="number-pad"
-            placeholder={nextBidHint(
+      ) : null}
+
+      {showPlaceBidForm && !pinComposer ? (
+          <BidComposerBar
+            amount={amount}
+            onAmountChange={handleAmountChange}
+            placeholder={t("dashboard.listings.detail.bid.amountPlaceholder")}
+            hint={nextBidHint(
               snapshot.auctionType,
               snapshot.minNextAmount,
               snapshot.currentAmount,
               t,
             )}
-          />
-          <Button
-            label={t("dashboard.listings.detail.bid.submit")}
-            onPress={placeBid}
-            loading={submitting}
+            submitLabel={
+              isUpdatingBid
+                ? t("dashboard.listings.detail.bid.update")
+                : t("dashboard.listings.detail.bid.submit")
+            }
+            submitting={submitting}
             disabled={requiresVehicle && !selectedVehicleId}
+            error={error}
+            onSubmit={placeBid}
           />
-        </>
       ) : null}
 
       {showRanking ? (
@@ -1093,5 +1224,46 @@ const styles = StyleSheet.create({
   },
   sheetScrollContent: {
     paddingBottom: spacing.lg,
+  },
+  composer: {
+    gap: spacing.xs,
+  },
+  composerHint: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  composerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  composerInput: {
+    flex: 1,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    fontSize: 16,
+    color: colors.text.primary,
+    backgroundColor: colors.white,
+  },
+  composerSend: {
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  composerSendDisabled: {
+    opacity: 0.5,
+  },
+  composerSendPressed: {
+    opacity: 0.8,
+  },
+  composerSendLabel: {
+    fontSize: 14,
+    color: colors.white,
   },
 });
