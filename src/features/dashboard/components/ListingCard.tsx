@@ -182,8 +182,13 @@ export function ListingCard({
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;
+  const isPassengerRequest = trip.vehicleId == null;
+  const hidePassengerPrivateRfqSeats =
+    isPassengerRequest &&
+    trip.listingType === 'rfq' &&
+    trip.vehicleMode === 'fullPrivate';
   const seatsLabel =
-    trip.vehicleTotalSeats != null
+    !hidePassengerPrivateRfqSeats && trip.vehicleTotalSeats != null
       ? t('vehicles.seatsCount', { count: trip.vehicleTotalSeats })
       : null;
   const modeLabel =
@@ -239,7 +244,6 @@ export function ListingCard({
   const rawPrice = trip.startingPrice?.trim() || null;
   const stripped = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
   const price = stripped ? formatPriceAmount(stripped) || null : null;
-  const isPassengerRequest = trip.vehicleId == null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
   const isAuction = trip.listingType === 'auction';
   const offerSettled =

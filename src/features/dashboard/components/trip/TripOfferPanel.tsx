@@ -661,7 +661,7 @@ export const TripOfferPanel = React.forwardRef<
           }
           priceLabel={offerPriceLabel}
           detailLabel={
-            isDriverOffering && !isFullPrivate
+            isDriverOffering
               ? null
               : offeredSeatsLabel(
                   t,

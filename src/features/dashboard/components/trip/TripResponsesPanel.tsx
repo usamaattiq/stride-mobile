@@ -320,7 +320,7 @@ export function TripResponsesPanel({
                 verified={offer.responderIsVerified === true}
                 priceLabel={priceLabel}
                 detailLabel={
-                  isPassengerRequest && vehicleMode === 'shared'
+                  isPassengerRequest
                     ? null
                     : offeredSeatsLabel(
                         t,
