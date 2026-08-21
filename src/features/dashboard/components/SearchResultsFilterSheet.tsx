@@ -18,7 +18,7 @@ import { colors, radius, spacing } from '@/theme';
 import { PriceRangeSlider } from './trip/PriceRangeSlider';
 
 const PRICE_FLOOR = 0;
-const PRICE_CEILING = 50000;
+const PRICE_CEILING = 1000000;
 const PRICE_STEP = 500;
 
 type SearchResultsFilterSheetProps = {

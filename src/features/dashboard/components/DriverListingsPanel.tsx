@@ -61,7 +61,11 @@ function matchesQuery(trip: Trip, query: string): boolean {
 }
 
 function matchesFilters(trip: Trip, filters: TripBrowseFilters): boolean {
-  if (filters.paymentMethod && trip.paymentMethod !== filters.paymentMethod) {
+  if (
+    filters.paymentMethod &&
+    trip.paymentMethod !== filters.paymentMethod &&
+    trip.paymentMethod !== 'both'
+  ) {
     return false;
   }
   if (filters.vehicleMode && trip.vehicleMode !== filters.vehicleMode) {
