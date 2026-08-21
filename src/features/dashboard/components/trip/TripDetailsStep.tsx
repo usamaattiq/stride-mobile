@@ -12,7 +12,6 @@ import { SearchCityPickerModal } from '@/features/dashboard/components/SearchCit
 import { DateRangeCalendarField } from '@/features/dashboard/components/trip/DateRangeCalendarField';
 import { DateTimePickerField } from '@/features/dashboard/components/trip/DateTimePickerField';
 import {
-  formatDateRangeLabel,
   isMultiDayWindow,
   MAX_DATE_WINDOW_DAYS,
 } from '@/features/dashboard/components/trip/dateRangeUtils';
@@ -23,11 +22,9 @@ import {
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type { TripCity, TripDraft, TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
-import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
-import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
 type TripDetailsStepProps = {
@@ -37,34 +34,6 @@ type TripDetailsStepProps = {
 };
 
 type CityPickerMode = 'departure' | 'arrival' | null;
-
-function formatWhenChip(
-  iso: string | null,
-  untilIso: string | null,
-  locale: string,
-  timeConfirmed: boolean,
-): { date: string | null; time: string | null } {
-  if (!iso) {
-    return { date: null, time: null };
-  }
-  if (isMultiDayWindow(iso, untilIso)) {
-    return {
-      date: formatDateRangeLabel(iso, untilIso, locale, ''),
-      time: null,
-    };
-  }
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) {
-    return { date: null, time: null };
-  }
-  const latinLocale = withLatinDigitsLocale(locale);
-  return {
-    date: parsed.toLocaleDateString(latinLocale, { day: 'numeric', month: 'short' }),
-    time: timeConfirmed
-      ? parsed.toLocaleTimeString(latinLocale, { hour: 'numeric', minute: '2-digit' })
-      : null,
-  };
-}
 
 function isDetailsComplete(draft: TripDraft, isPassenger: boolean): boolean {
   const startDateRequired = draft.vehicleMode === 'shared';
@@ -106,14 +75,12 @@ export function TripDetailsStep({
   onChange,
   onContinue,
 }: TripDetailsStepProps): React.ReactElement {
-  const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const locale = i18n.language;
+  const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
   const isPassenger = user.role === 'passenger';
   const isShared = draft.vehicleMode === 'shared';
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
-  const [dateTimeSheet, setDateTimeSheet] = React.useState<CityPickerMode>(null);
   const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
 
@@ -125,14 +92,6 @@ export function TripDetailsStep({
       : undefined;
   const arrivalTimeError = getArrivalTimeError(draft, t);
   const canContinue = isDetailsComplete(draft, isPassenger) && !arrivalTimeError;
-  const privateDepartureWindow = !isShared && isMultiDayWindow(draft.departureAt, draft.departureUntil);
-  const departureWhen = formatWhenChip(
-    draft.departureAt,
-    isShared ? null : draft.departureUntil,
-    locale,
-    draft.departureTimeSet && !privateDepartureWindow,
-  );
-  const arrivalWhen = formatWhenChip(draft.arrivalAt, null, locale, draft.arrivalTimeSet);
 
   const applyMapSelection = React.useCallback(
     async (mode: 'departure' | 'arrival', selection: TripLocationPoint) => {
@@ -226,145 +185,158 @@ export function TripDetailsStep({
         <View style={styles.form}>
           <View style={styles.routeBlock}>
             <View style={styles.routeSection}>
-              <View style={styles.labelRow}>
-                <AppText weight="medium" style={[styles.fieldLabel, styles.cityField]}>
-                  {t('trips.create.departure')}
-                  <AppText style={styles.requiredMark}> *</AppText>
-                </AppText>
-                <View style={styles.whenLabelWrap}>
-                  <AppText weight="medium" style={styles.whenLabel} numberOfLines={1}>
-                    {t('trips.create.date')}
-                    {startDateRequired ? <AppText style={styles.requiredMark}> *</AppText> : null}
+              <AppText weight="medium" style={styles.fieldLabel}>
+                {t('trips.create.departure')}
+                <AppText style={styles.requiredMark}> *</AppText>
+              </AppText>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setDepartureError(null);
+                  setCityPickerMode('departure');
+                }}
+                style={({ pressed }) => [
+                  styles.field,
+                  departureError ? styles.fieldError : null,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <FontAwesome name="arrow-up" size={13} color={colors.text.secondary} />
+                <View style={styles.fieldCopy}>
+                  <AppText
+                    weight="semibold"
+                    style={[styles.fieldValue, !draft.departureCity && styles.fieldPlaceholder]}
+                    numberOfLines={1}
+                  >
+                    {draft.departureCity?.label ?? t('trips.create.cityPlaceholder')}
                   </AppText>
-                </View>
-              </View>
-              <View style={styles.routeRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setDepartureError(null);
-                    setCityPickerMode('departure');
-                  }}
-                  style={({ pressed }) => [
-                    styles.field,
-                    styles.cityField,
-                    departureError ? styles.fieldError : null,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <FontAwesome name="arrow-up" size={13} color={colors.text.secondary} />
-                  <View style={styles.fieldCopy}>
-                    <AppText
-                      weight="semibold"
-                      style={[styles.fieldValue, !draft.departureCity && styles.fieldPlaceholder]}
-                      numberOfLines={1}
-                    >
-                      {draft.departureCity?.label ?? t('trips.create.cityPlaceholder')}
+                  {draft.departurePoint?.label ? (
+                    <AppText style={styles.fieldAddress} numberOfLines={1}>
+                      {draft.departurePoint.label}
                     </AppText>
-                    {draft.departurePoint?.label ? (
-                      <AppText style={styles.fieldAddress} numberOfLines={1}>
-                        {draft.departurePoint.label}
-                      </AppText>
+                  ) : null}
+                </View>
+              </Pressable>
+              {departureError ? <AppText style={styles.errorText}>{departureError}</AppText> : null}
+              {isShared ? (
+                <DateTimePickerField
+                  inline
+                  variant="search"
+                  label={t('trips.create.departureDateTime')}
+                  value={draft.departureAt}
+                  onChange={(departureAt, part) =>
+                    onChange(part === 'time' ? { departureAt, departureTimeSet: true } : { departureAt })
+                  }
+                  onClear={
+                    startDateRequired
+                      ? undefined
+                      : () =>
+                          onChange({
+                            departureAt: null,
+                            departureUntil: null,
+                            departureTimeSet: false,
+                          })
+                  }
+                  minimumDate={new Date()}
+                  timeConfirmed={draft.departureTimeSet}
+                  required={startDateRequired}
+                  optional={!startDateRequired}
+                />
+              ) : (
+                <View style={styles.windowBlock}>
+                  <AppText weight="medium" style={styles.fieldLabel}>
+                    {t('trips.create.departureDateWindow')}
+                  </AppText>
+                  <AppText style={styles.windowHint}>
+                    {t('trips.create.departureWindowHint', { count: MAX_DATE_WINDOW_DAYS })}
+                  </AppText>
+                  <View style={styles.windowRow}>
+                    <View style={styles.windowDate}>
+                      <DateRangeCalendarField
+                        hideLabel
+                        label={t('trips.create.departureDateWindow')}
+                        startIso={draft.departureAt}
+                        endIso={draft.departureUntil}
+                        onWindowSelected={() => onChange({ departureTimeSet: false })}
+                        onChange={({ startIso, endIso }) => {
+                          const window = isMultiDayWindow(startIso, endIso);
+                          onChange({
+                            departureAt: startIso,
+                            departureUntil: endIso,
+                            departureTimeSet: window ? false : draft.departureTimeSet,
+                          });
+                        }}
+                      />
+                    </View>
+                    {!isMultiDayWindow(draft.departureAt, draft.departureUntil) ? (
+                      <View style={styles.windowTime}>
+                        <DateTimePickerField
+                          hideLabel
+                          mode="time"
+                          variant="search"
+                          label={t('trips.create.selectTime')}
+                          value={draft.departureAt}
+                          onChange={(departureAt) =>
+                            onChange({ departureAt, departureTimeSet: true })
+                          }
+                          minimumDate={new Date()}
+                          timeConfirmed={draft.departureTimeSet}
+                          optional
+                        />
+                      </View>
                     ) : null}
                   </View>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    startDateRequired
-                      ? `${t('trips.create.departureDateTime')} *`
-                      : t('trips.create.departureDateTime')
-                  }
-                  onPress={() => setDateTimeSheet('departure')}
-                  style={({ pressed }) => [
-                    styles.whenChip,
-                    privateDepartureWindow ? styles.whenChipWindow : null,
-                    startDateRequired && !draft.departureAt ? styles.whenChipRequired : null,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <FontAwesome name="calendar" size={12} color={colors.primary} />
-                  {departureWhen.date ? (
-                    <AppText
-                      weight="semibold"
-                      style={styles.whenDate}
-                      numberOfLines={privateDepartureWindow ? 2 : 1}
-                    >
-                      {departureWhen.date}
-                    </AppText>
-                  ) : null}
-                  {departureWhen.time ? (
-                    <AppText style={styles.whenTime} numberOfLines={1}>
-                      {departureWhen.time}
-                    </AppText>
-                  ) : null}
-                </Pressable>
-              </View>
-              {departureError ? <AppText style={styles.errorText}>{departureError}</AppText> : null}
+                </View>
+              )}
             </View>
 
             <View style={styles.routeSection}>
-              <View style={styles.labelRow}>
-                <AppText weight="medium" style={[styles.fieldLabel, styles.cityField]}>
-                  {t('trips.create.arrival')}
-                  <AppText style={styles.requiredMark}> *</AppText>
-                </AppText>
-                <View style={styles.whenLabelWrap}>
-                  <AppText weight="medium" style={styles.whenLabel} numberOfLines={1}>
-                    {t('trips.create.date')}
+              <AppText weight="medium" style={styles.fieldLabel}>
+                {t('trips.create.arrival')}
+                <AppText style={styles.requiredMark}> *</AppText>
+              </AppText>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setArrivalError(null);
+                  setCityPickerMode('arrival');
+                }}
+                style={({ pressed }) => [
+                  styles.field,
+                  arrivalError ? styles.fieldError : null,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <FontAwesome name="arrow-down" size={13} color={colors.text.secondary} />
+                <View style={styles.fieldCopy}>
+                  <AppText
+                    weight="semibold"
+                    style={[styles.fieldValue, !draft.arrivalCity && styles.fieldPlaceholder]}
+                    numberOfLines={1}
+                  >
+                    {draft.arrivalCity?.label ?? t('trips.create.cityPlaceholder')}
                   </AppText>
+                  {draft.arrivalPoint?.label ? (
+                    <AppText style={styles.fieldAddress} numberOfLines={1}>
+                      {draft.arrivalPoint.label}
+                    </AppText>
+                  ) : null}
                 </View>
-              </View>
-              <View style={styles.routeRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setArrivalError(null);
-                    setCityPickerMode('arrival');
-                  }}
-                  style={({ pressed }) => [
-                    styles.field,
-                    styles.cityField,
-                    arrivalError ? styles.fieldError : null,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <FontAwesome name="arrow-down" size={13} color={colors.text.secondary} />
-                  <View style={styles.fieldCopy}>
-                    <AppText
-                      weight="semibold"
-                      style={[styles.fieldValue, !draft.arrivalCity && styles.fieldPlaceholder]}
-                      numberOfLines={1}
-                    >
-                      {draft.arrivalCity?.label ?? t('trips.create.cityPlaceholder')}
-                    </AppText>
-                    {draft.arrivalPoint?.label ? (
-                      <AppText style={styles.fieldAddress} numberOfLines={1}>
-                        {draft.arrivalPoint.label}
-                      </AppText>
-                    ) : null}
-                  </View>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t('trips.create.arrivalDateTime')}
-                  onPress={() => setDateTimeSheet('arrival')}
-                  style={({ pressed }) => [styles.whenChip, pressed && styles.pressed]}
-                >
-                  <FontAwesome name="calendar" size={12} color={colors.primary} />
-                  {arrivalWhen.date ? (
-                    <AppText weight="semibold" style={styles.whenDate} numberOfLines={1}>
-                      {arrivalWhen.date}
-                    </AppText>
-                  ) : null}
-                  {arrivalWhen.time ? (
-                    <AppText style={styles.whenTime} numberOfLines={1}>
-                      {arrivalWhen.time}
-                    </AppText>
-                  ) : null}
-                </Pressable>
-              </View>
+              </Pressable>
               {arrivalError ? <AppText style={styles.errorText}>{arrivalError}</AppText> : null}
+              <DateTimePickerField
+                inline
+                variant="search"
+                label={t('trips.create.arrivalDateTime')}
+                value={draft.arrivalAt}
+                onChange={(arrivalAt, part) =>
+                  onChange(part === 'time' ? { arrivalAt, arrivalTimeSet: true } : { arrivalAt })
+                }
+                onClear={() => onChange({ arrivalAt: null, arrivalTimeSet: false })}
+                minimumDate={departureWindowEnd}
+                timeConfirmed={draft.arrivalTimeSet}
+                optional
+              />
             </View>
           </View>
 
@@ -411,11 +383,6 @@ export function TripDetailsStep({
             </>
           ) : null}
 
-          {!isShared ? (
-            <AppText style={styles.maxDaysNote}>
-              {t('trips.create.departureWindowMaxDays', { count: MAX_DATE_WINDOW_DAYS })}
-            </AppText>
-          ) : null}
           <Button label={t('common.continue')} onPress={onContinue} disabled={!canContinue} />
         </View>
       </AuthCard>
@@ -432,116 +399,6 @@ export function TripDetailsStep({
           openMapForMode(mode);
         }}
       />
-      <AppBottomSheet
-        visible={dateTimeSheet != null}
-        onClose={() => setDateTimeSheet(null)}
-        heightRatio={dateTimeSheet === 'departure' && !isShared ? 0.82 : 0.28}
-      >
-        <View style={styles.sheetBody}>
-          <View style={styles.sheetHeaderRow}>
-            <AppText weight="bold" style={styles.sheetTitle}>
-              {dateTimeSheet === 'arrival'
-                ? t('trips.create.arrivalDateTime')
-                : isShared
-                  ? t('trips.create.departureDateTime')
-                  : t('trips.create.departureDateWindow')}
-              {dateTimeSheet === 'departure' && startDateRequired ? (
-                <AppText style={styles.requiredMark}> *</AppText>
-              ) : (
-                <AppText style={styles.optionalMark}> (optional)</AppText>
-              )}
-            </AppText>
-            {dateTimeSheet === 'arrival' && draft.arrivalAt ? (
-              <Pressable
-                onPress={() => onChange({ arrivalAt: null, arrivalTimeSet: false })}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.clear')}
-              >
-                <AppText style={styles.sheetClear}>{t('common.clear')}</AppText>
-              </Pressable>
-            ) : null}
-            {dateTimeSheet === 'departure' && !startDateRequired && draft.departureAt ? (
-              <Pressable
-                onPress={() =>
-                  onChange({
-                    departureAt: null,
-                    departureUntil: null,
-                    departureTimeSet: false,
-                  })
-                }
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.clear')}
-              >
-                <AppText style={styles.sheetClear}>{t('common.clear')}</AppText>
-              </Pressable>
-            ) : null}
-          </View>
-          {dateTimeSheet === 'arrival' ? (
-            <DateTimePickerField
-              variant="search"
-              hideLabel
-              label={t('trips.create.arrivalDateTime')}
-              value={draft.arrivalAt}
-              onChange={(arrivalAt, part) =>
-                onChange(part === 'time' ? { arrivalAt, arrivalTimeSet: true } : { arrivalAt })
-              }
-              minimumDate={departureWindowEnd}
-              timeConfirmed={draft.arrivalTimeSet}
-              optional
-            />
-          ) : dateTimeSheet === 'departure' && isShared ? (
-            <DateTimePickerField
-              variant="search"
-              hideLabel
-              label={t('trips.create.departureDateTime')}
-              value={draft.departureAt}
-              onChange={(departureAt, part) =>
-                onChange(part === 'time' ? { departureAt, departureTimeSet: true } : { departureAt })
-              }
-              minimumDate={new Date()}
-              timeConfirmed={draft.departureTimeSet}
-              required={startDateRequired}
-              optional={!startDateRequired}
-            />
-          ) : dateTimeSheet === 'departure' ? (
-            <DateRangeCalendarField
-              embedded
-              hideLabel
-              label={t('trips.create.departureDateWindow')}
-              startIso={draft.departureAt}
-              endIso={draft.departureUntil}
-              onWindowSelected={() => onChange({ departureTimeSet: false })}
-              onChange={({ startIso, endIso }) => {
-                const window = isMultiDayWindow(startIso, endIso);
-                onChange({
-                  departureAt: startIso,
-                  departureUntil: endIso,
-                  departureTimeSet: window ? false : draft.departureTimeSet,
-                });
-              }}
-              footer={
-                draft.departureAt ? (
-                  <DateTimePickerField
-                    variant="search"
-                    hideLabel
-                    mode="time"
-                    label={t('trips.create.selectTime')}
-                    value={draft.departureAt}
-                    onChange={(departureAt) =>
-                      onChange({ departureAt, departureTimeSet: true })
-                    }
-                    minimumDate={new Date()}
-                    timeConfirmed={draft.departureTimeSet}
-                    optional
-                  />
-                ) : null
-              }
-            />
-          ) : null}
-        </View>
-      </AppBottomSheet>
       {mapPickerSheet}
     </>
   );
@@ -557,66 +414,32 @@ const styles = StyleSheet.create({
   routeSection: {
     gap: spacing.xs,
   },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
   fieldLabel: {
     fontSize: 13,
     color: colors.text.primary,
-  },
-  whenLabelWrap: {
-    width: 52,
-    alignItems: 'center',
-  },
-  whenLabel: {
-    fontSize: 11,
-    color: colors.text.primary,
-    textAlign: 'center',
   },
   requiredMark: {
     fontSize: 13,
     color: colors.primary,
   },
-  optionalMark: {
-    fontSize: 13,
-    color: colors.text.tertiary,
-  },
-  maxDaysNote: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
-  routeRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
+  windowBlock: {
     gap: spacing.xs,
   },
-  cityField: {
+  windowHint: {
+    fontSize: 12,
+    color: colors.text.tertiary,
+  },
+  windowRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  windowDate: {
     flex: 1,
     minWidth: 0,
   },
-  sheetBody: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    gap: spacing.md,
-  },
-  sheetHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  sheetTitle: {
-    flex: 1,
-    fontSize: 17,
-    color: colors.text.primary,
-  },
-  sheetClear: {
-    fontSize: 14,
-    color: colors.primary,
+  windowTime: {
+    width: 124,
   },
   field: {
     minHeight: 46,
@@ -628,33 +451,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  whenChip: {
-    width: 52,
-    minHeight: 46,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
-    gap: 0,
-  },
-  whenChipWindow: {
-    width: 76,
-  },
-  whenChipRequired: {
-    borderColor: colors.primary,
-  },
-  whenDate: {
-    fontSize: 10,
-    color: colors.text.primary,
-  },
-  whenTime: {
-    fontSize: 9,
-    color: colors.text.secondary,
   },
   fieldCopy: {
     flex: 1,
