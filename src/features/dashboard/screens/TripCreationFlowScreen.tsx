@@ -349,10 +349,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     patchDraft({
       routeType,
       luggageOption: null,
-      luggageType: null,
-      luggageLength: '',
-      luggageWidth: '',
-      luggageWeight: '',
+      luggageItems: [],
     });
   };
 

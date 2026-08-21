@@ -7,10 +7,16 @@ import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import type {
   TripDraft,
+  TripLuggageDraftItem,
   TripLuggageOption,
   TripLuggageType,
 } from '@/features/dashboard/types/trip.types';
-import { isLuggageComplete } from '@/features/dashboard/types/trip.types';
+import {
+  emptyLuggageDraftItem,
+  isLuggageComplete,
+  isLuggageDraftItemComplete,
+  MAX_LUGGAGE_ITEMS,
+} from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
@@ -37,26 +43,48 @@ export function TripLuggageStep({
   onContinue,
 }: TripLuggageStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const [typeSheetOpen, setTypeSheetOpen] = React.useState(false);
+  const [typeSheetIndex, setTypeSheetIndex] = React.useState<number | null>(null);
   const hasLuggage = draft.luggageOption === 'checked';
+  const itemsComplete =
+    draft.luggageItems.length > 0 && draft.luggageItems.every(isLuggageDraftItemComplete);
+  const canAddMore = itemsComplete && draft.luggageItems.length < MAX_LUGGAGE_ITEMS;
+
+  const patchItems = (luggageItems: TripLuggageDraftItem[]) => {
+    onChange({ luggageItems });
+  };
 
   const selectOption = (luggageOption: TripLuggageOption) => {
     if (luggageOption === 'handCarry') {
-      onChange({
-        luggageOption,
-        luggageType: null,
-        luggageLength: '',
-        luggageWidth: '',
-        luggageWeight: '',
-      });
+      onChange({ luggageOption, luggageItems: [] });
       return;
     }
-    onChange({ luggageOption });
+    onChange({
+      luggageOption,
+      luggageItems: draft.luggageItems.length > 0 ? draft.luggageItems : [emptyLuggageDraftItem()],
+    });
   };
 
-  const typeLabel = draft.luggageType
-    ? t(`trips.create.luggageType_${draft.luggageType}`)
-    : t('trips.create.luggageTypePlaceholder');
+  const updateItem = (index: number, partial: Partial<TripLuggageDraftItem>) => {
+    patchItems(
+      draft.luggageItems.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...partial } : item,
+      ),
+    );
+  };
+
+  const addItem = () => {
+    if (!canAddMore) {
+      return;
+    }
+    patchItems([...draft.luggageItems, emptyLuggageDraftItem()]);
+  };
+
+  const removeItem = (index: number) => {
+    if (draft.luggageItems.length <= 1) {
+      return;
+    }
+    patchItems(draft.luggageItems.filter((_, itemIndex) => itemIndex !== index));
+  };
 
   return (
     <>
@@ -111,66 +139,97 @@ export function TripLuggageStep({
             </View>
           </Pressable>
 
-          {hasLuggage ? (
-            <View style={styles.fields}>
-              <View style={styles.dropdownWrap}>
-                <AppText weight="medium" style={styles.label}>
-                  {t('trips.create.luggageType')}
-                  <AppText style={styles.required}> *</AppText>
-                </AppText>
-                <Pressable
-                  onPress={() => setTypeSheetOpen(true)}
-                  style={styles.dropdown}
-                  accessibilityRole="button"
-                >
-                  <AppText
-                    weight="semibold"
-                    style={[
-                      styles.dropdownValue,
-                      !draft.luggageType && styles.dropdownPlaceholder,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {typeLabel}
-                  </AppText>
-                  <FontAwesome name="chevron-down" size={12} color={colors.text.secondary} />
-                </Pressable>
-              </View>
+          {hasLuggage
+            ? draft.luggageItems.map((item, index) => {
+                const typeLabel = item.type
+                  ? t(`trips.create.luggageType_${item.type}`)
+                  : t('trips.create.luggageTypePlaceholder');
+                return (
+                  <View key={`luggage-${index}`} style={styles.fields}>
+                    <View style={styles.pieceHeader}>
+                      <AppText weight="semibold" style={styles.pieceTitle}>
+                        {t('trips.create.luggagePiece', { number: index + 1 })}
+                      </AppText>
+                      {draft.luggageItems.length > 1 ? (
+                        <Pressable
+                          onPress={() => removeItem(index)}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('common.remove')}
+                        >
+                          <AppText style={styles.removeText}>{t('common.remove')}</AppText>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                    <View style={styles.dropdownWrap}>
+                      <AppText weight="medium" style={styles.label}>
+                        {t('trips.create.luggageType')}
+                        <AppText style={styles.required}> *</AppText>
+                      </AppText>
+                      <Pressable
+                        onPress={() => setTypeSheetIndex(index)}
+                        style={styles.dropdown}
+                        accessibilityRole="button"
+                      >
+                        <AppText
+                          weight="semibold"
+                          style={[
+                            styles.dropdownValue,
+                            !item.type && styles.dropdownPlaceholder,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {typeLabel}
+                        </AppText>
+                        <FontAwesome name="chevron-down" size={12} color={colors.text.secondary} />
+                      </Pressable>
+                    </View>
 
-              <View style={styles.dimsRow}>
-                <View style={styles.dimField}>
-                  <AuthTextField
-                    label={t('trips.create.luggageLength')}
-                    required
-                    dense
-                    value={draft.luggageLength}
-                    onChangeText={(luggageLength) => onChange({ luggageLength })}
-                    placeholder="cm"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-                <View style={styles.dimField}>
-                  <AuthTextField
-                    label={t('trips.create.luggageWidth')}
-                    required
-                    dense
-                    value={draft.luggageWidth}
-                    onChangeText={(luggageWidth) => onChange({ luggageWidth })}
-                    placeholder="cm"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-              </View>
-              <AuthTextField
-                label={t('trips.create.luggageWeight')}
-                required
-                dense
-                value={draft.luggageWeight}
-                onChangeText={(luggageWeight) => onChange({ luggageWeight })}
-                placeholder="kg"
-                keyboardType="decimal-pad"
-              />
-            </View>
+                    <View style={styles.dimsRow}>
+                      <View style={styles.dimField}>
+                        <AuthTextField
+                          label={t('trips.create.luggageLength')}
+                          required
+                          dense
+                          value={item.length}
+                          onChangeText={(length) => updateItem(index, { length })}
+                          placeholder="cm"
+                          keyboardType="decimal-pad"
+                        />
+                      </View>
+                      <View style={styles.dimField}>
+                        <AuthTextField
+                          label={t('trips.create.luggageWidth')}
+                          required
+                          dense
+                          value={item.width}
+                          onChangeText={(width) => updateItem(index, { width })}
+                          placeholder="cm"
+                          keyboardType="decimal-pad"
+                        />
+                      </View>
+                    </View>
+                    <AuthTextField
+                      label={t('trips.create.luggageWeight')}
+                      required
+                      dense
+                      value={item.weight}
+                      onChangeText={(weight) => updateItem(index, { weight })}
+                      placeholder="kg"
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                );
+              })
+            : null}
+
+          {hasLuggage ? (
+            <Button
+              label={t('trips.create.luggageAddMore')}
+              variant="secondary"
+              onPress={addItem}
+              disabled={!canAddMore}
+            />
           ) : null}
 
           <Button
@@ -181,7 +240,11 @@ export function TripLuggageStep({
         </View>
       </AuthCard>
 
-      <AppBottomSheet visible={typeSheetOpen} onClose={() => setTypeSheetOpen(false)} heightRatio={0.55}>
+      <AppBottomSheet
+        visible={typeSheetIndex != null}
+        onClose={() => setTypeSheetIndex(null)}
+        heightRatio={0.55}
+      >
         <View style={styles.sheetBody}>
           <AppText weight="bold" style={styles.sheetTitle}>
             {t('trips.create.luggageType')}
@@ -192,13 +255,16 @@ export function TripLuggageStep({
             showsVerticalScrollIndicator={false}
           >
             {LUGGAGE_TYPES.map((type) => {
-              const selected = draft.luggageType === type;
+              const selected =
+                typeSheetIndex != null && draft.luggageItems[typeSheetIndex]?.type === type;
               return (
                 <Pressable
                   key={type}
                   onPress={() => {
-                    onChange({ luggageType: type });
-                    setTypeSheetOpen(false);
+                    if (typeSheetIndex != null) {
+                      updateItem(typeSheetIndex, { type });
+                    }
+                    setTypeSheetIndex(null);
                   }}
                   style={[styles.sheetRow, selected && styles.sheetRowSelected]}
                   accessibilityRole="button"
@@ -275,6 +341,22 @@ const styles = StyleSheet.create({
   fields: {
     gap: spacing.sm,
     paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+  },
+  pieceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pieceTitle: {
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  removeText: {
+    fontSize: 13,
+    color: colors.primary,
   },
   dropdownWrap: {
     gap: spacing.xs,

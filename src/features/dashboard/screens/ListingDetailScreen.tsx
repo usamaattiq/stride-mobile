@@ -536,10 +536,10 @@ export function ListingDetailScreen(): React.ReactElement {
           locale,
           trip.departureAt,
         )
-      : formatTripDateTime(trip.departureAt, locale);
-  const arrivalWhen = trip.departureOpen
+      : formatTripDateTime(trip.departureAt, locale, "—", trip.departureTimeSet);
+  const arrivalWhen = trip.arrivalOpen
     ? undefined
-    : formatTripDateTime(trip.arrivalAt, locale);
+    : formatTripDateTime(trip.arrivalAt, locale, "—", trip.arrivalTimeSet);
   const vehicleTitle = trip.vehicleTitle ?? classLabel;
   const description =
     trip.description?.trim() ||

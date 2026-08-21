@@ -25,6 +25,16 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
           lengthCm: dto.luggage.lengthCm,
           widthCm: dto.luggage.widthCm,
           weightKg: dto.luggage.weightKg,
+          items: dto.luggage.items ?? (dto.luggage.option === 'checked'
+            ? [
+                {
+                  type: dto.luggage.type,
+                  lengthCm: dto.luggage.lengthCm,
+                  widthCm: dto.luggage.widthCm,
+                  weightKg: dto.luggage.weightKg,
+                },
+              ]
+            : []),
         }
       : null,
     vehicleMode: dto.vehicleMode,
@@ -33,9 +43,12 @@ export function mapTripDtoToTrip(dto: TripDto): Trip {
     departureAt: dto.departureAt,
     departureUntil: dto.departureUntil ?? null,
     departureOpen: Boolean(dto.departureOpen),
+    departureTimeSet: dto.departureTimeSet !== false,
     arrivalCity: dto.arrivalCity,
     arrivalPoint: dto.arrivalPoint,
     arrivalAt: dto.arrivalAt,
+    arrivalOpen: Boolean(dto.arrivalOpen),
+    arrivalTimeSet: dto.arrivalTimeSet === true,
     listingType: dto.listingType,
     referenceCode: dto.referenceCode ?? null,
     startingPrice: dto.startingPrice
@@ -80,9 +93,12 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
     departureAt: preview.departureAt,
     departureUntil: preview.departureUntil,
     departureOpen: preview.departureOpen,
+    departureTimeSet: preview.departureTimeSet,
     arrivalCity: preview.arrivalCity,
     arrivalPoint: preview.arrivalPoint,
     arrivalAt: preview.arrivalAt,
+    arrivalOpen: preview.arrivalOpen,
+    arrivalTimeSet: preview.arrivalTimeSet,
     listingType: preview.listingType,
     ...(preview.startingPrice ? { startingPrice: preview.startingPrice } : {}),
     ...(preview.vehicleClass && !preview.vehicleId && preview.vehicleTotalSeats != null
@@ -99,6 +115,18 @@ export function draftToCreateTripPayload(draft: TripDraft): CreateTripPayload | 
           luggageLengthCm: preview.luggage.lengthCm,
           luggageWidthCm: preview.luggage.widthCm,
           luggageWeightKg: preview.luggage.weightKg,
+          luggageItems: preview.luggage.items?.length
+            ? preview.luggage.items
+            : preview.luggage.option === 'checked'
+              ? [
+                  {
+                    type: preview.luggage.type,
+                    lengthCm: preview.luggage.lengthCm,
+                    widthCm: preview.luggage.widthCm,
+                    weightKg: preview.luggage.weightKg,
+                  },
+                ]
+              : [],
         }
       : {}),
     paymentMethod: preview.paymentMethod,

@@ -896,6 +896,8 @@
       "luggageHandCarryHint": "Small bag or no checked luggage.",
       "luggageChecked": "I have luggage",
       "luggageCheckedHint": "Add type, size, and weight.",
+      "luggageAddMore": "Add more",
+      "luggagePiece": "Luggage {{number}}",
       "luggageType": "Luggage type",
       "luggageTypePlaceholder": "Select luggage type",
       "luggageType_suitcase": "Suitcase",
@@ -1060,7 +1062,8 @@
     "done": "Done",
     "clear": "Clear",
     "continue": "Continue",
-    "close": "Close"
+    "close": "Close",
+    "remove": "Remove"
   },
   "legal": {
     "common": {

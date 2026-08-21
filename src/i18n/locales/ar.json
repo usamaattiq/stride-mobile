@@ -896,6 +896,8 @@
       "luggageHandCarryHint": "حقيبة صغيرة أو بدون أمتعة مسجلة.",
       "luggageChecked": "لدي أمتعة",
       "luggageCheckedHint": "أضف النوع والحجم والوزن.",
+      "luggageAddMore": "إضافة المزيد",
+      "luggagePiece": "أمتعة {{number}}",
       "luggageType": "نوع الأمتعة",
       "luggageTypePlaceholder": "اختر نوع الأمتعة",
       "luggageType_suitcase": "حقيبة سفر",
@@ -1060,7 +1062,8 @@
     "done": "تم",
     "clear": "مسح",
     "continue": "متابعة",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "remove": "إزالة"
   },
   "legal": {
     "common": {

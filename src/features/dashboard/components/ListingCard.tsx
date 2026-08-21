@@ -41,6 +41,9 @@ function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
     day: 'numeric',
     month: 'short',
   });
+  if (!trip.departureTimeSet) {
+    return day;
+  }
   const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',

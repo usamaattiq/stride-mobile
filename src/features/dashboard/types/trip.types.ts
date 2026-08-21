@@ -25,17 +25,47 @@ export function terminalToPoint(label: string): TripLocationPoint {
   return { label: trimmed, latitude: 0, longitude: 0 };
 }
 
-export type TripLuggage = {
-  option: TripLuggageOption;
+export type TripLuggagePiece = {
   type: TripLuggageType | null;
   lengthCm: number | null;
   widthCm: number | null;
   weightKg: number | null;
 };
 
+export type TripLuggage = {
+  option: TripLuggageOption;
+  type: TripLuggageType | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+  items: TripLuggagePiece[];
+};
+
+export type TripLuggageDraftItem = {
+  type: TripLuggageType | null;
+  length: string;
+  width: string;
+  weight: string;
+};
+
+export const MAX_LUGGAGE_ITEMS = 10;
+
+export function emptyLuggageDraftItem(): TripLuggageDraftItem {
+  return { type: null, length: '', width: '', weight: '' };
+}
+
 function parseDimension(value: string): number | null {
   const parsed = Number.parseFloat(value.trim());
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function isLuggageDraftItemComplete(item: TripLuggageDraftItem): boolean {
+  return (
+    Boolean(item.type) &&
+    parseDimension(item.length) != null &&
+    parseDimension(item.width) != null &&
+    parseDimension(item.weight) != null
+  );
 }
 
 export function draftToLuggage(draft: TripDraft): TripLuggage | null {
@@ -43,14 +73,31 @@ export function draftToLuggage(draft: TripDraft): TripLuggage | null {
     return null;
   }
   if (draft.luggageOption === 'handCarry') {
-    return { option: 'handCarry', type: null, lengthCm: null, widthCm: null, weightKg: null };
+    return {
+      option: 'handCarry',
+      type: null,
+      lengthCm: null,
+      widthCm: null,
+      weightKg: null,
+      items: [],
+    };
   }
+  const items = draft.luggageItems
+    .filter(isLuggageDraftItemComplete)
+    .map((item) => ({
+      type: item.type,
+      lengthCm: parseDimension(item.length),
+      widthCm: parseDimension(item.width),
+      weightKg: parseDimension(item.weight),
+    }));
+  const first = items[0];
   return {
     option: 'checked',
-    type: draft.luggageType,
-    lengthCm: parseDimension(draft.luggageLength),
-    widthCm: parseDimension(draft.luggageWidth),
-    weightKg: parseDimension(draft.luggageWeight),
+    type: first?.type ?? null,
+    lengthCm: first?.lengthCm ?? null,
+    widthCm: first?.widthCm ?? null,
+    weightKg: first?.weightKg ?? null,
+    items,
   };
 }
 
@@ -85,10 +132,7 @@ export type TripDraft = {
   /** Passenger requests choose land, sea, or air first. Drivers stay on land. */
   routeType: TripRouteType | null;
   luggageOption: TripLuggageOption | null;
-  luggageType: TripLuggageType | null;
-  luggageLength: string;
-  luggageWidth: string;
-  luggageWeight: string;
+  luggageItems: TripLuggageDraftItem[];
   vehicleMode: TripVehicleMode | null;
   departureCity: TripCity | null;
   departurePoint: TripLocationPoint | null;
@@ -135,9 +179,13 @@ export type Trip = {
   departureUntil: string | null;
   /** True when the creator skipped a departure time — card shows "Open". */
   departureOpen: boolean;
+  departureTimeSet: boolean;
   arrivalCity: TripCity;
   arrivalPoint: TripLocationPoint;
   arrivalAt: string;
+  /** True when the creator skipped arrival date/time. */
+  arrivalOpen: boolean;
+  arrivalTimeSet: boolean;
   listingType: TripListingType;
   /** Public listing code, e.g. AUC-2026-1234. */
   referenceCode: string | null;
@@ -174,10 +222,7 @@ export function createEmptyTripDraft(): TripDraft {
     vehicleClass: null,
     routeType: null,
     luggageOption: null,
-    luggageType: null,
-    luggageLength: '',
-    luggageWidth: '',
-    luggageWeight: '',
+    luggageItems: [],
     vehicleMode: null,
     departureCity: null,
     departurePoint: null,
@@ -207,10 +252,22 @@ export function tripToRepostDraft(trip: Trip): TripDraft {
     vehicleClass: trip.vehicleClass,
     routeType: trip.routeType,
     luggageOption: trip.luggage?.option ?? null,
-    luggageType: trip.luggage?.type ?? null,
-    luggageLength: trip.luggage?.lengthCm != null ? String(trip.luggage.lengthCm) : '',
-    luggageWidth: trip.luggage?.widthCm != null ? String(trip.luggage.widthCm) : '',
-    luggageWeight: trip.luggage?.weightKg != null ? String(trip.luggage.weightKg) : '',
+    luggageItems:
+      trip.luggage?.option === 'checked'
+        ? (trip.luggage.items.length > 0 ? trip.luggage.items : [
+            {
+              type: trip.luggage.type,
+              lengthCm: trip.luggage.lengthCm,
+              widthCm: trip.luggage.widthCm,
+              weightKg: trip.luggage.weightKg,
+            },
+          ]).map((item) => ({
+            type: item.type,
+            length: item.lengthCm != null ? String(item.lengthCm) : '',
+            width: item.widthCm != null ? String(item.widthCm) : '',
+            weight: item.weightKg != null ? String(item.weightKg) : '',
+          }))
+        : [],
     vehicleMode: trip.vehicleMode,
     departureCity: trip.departureCity,
     departurePoint: trip.departurePoint,
@@ -245,17 +302,7 @@ export function isLuggageComplete(draft: TripDraft): boolean {
   if (draft.luggageOption !== 'checked') {
     return false;
   }
-  const length = Number.parseFloat(draft.luggageLength.trim());
-  const width = Number.parseFloat(draft.luggageWidth.trim());
-  const weight = Number.parseFloat(draft.luggageWeight.trim());
-  const dimsOk =
-    Number.isFinite(length) &&
-    length > 0 &&
-    Number.isFinite(width) &&
-    width > 0 &&
-    Number.isFinite(weight) &&
-    weight > 0;
-  return Boolean(draft.luggageType) && dimsOk;
+  return draft.luggageItems.length > 0 && draft.luggageItems.every(isLuggageDraftItemComplete);
 }
 
 export function draftToTrip(draft: TripDraft, id: string): Trip | null {
@@ -327,7 +374,7 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     ? new Date(now.getTime() + durationMs).toISOString()
     : draft.departureUntil;
 
-  // When arrival isn't set, place it after the departure window so API validation passes.
+  const arrivalOpen = !draft.arrivalAt;
   const departureWindowEndMs = new Date(departureUntil ?? departureAt).getTime();
   const arrivalAt =
     draft.arrivalAt ??
@@ -351,9 +398,12 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     departureAt,
     departureUntil,
     departureOpen,
+    departureTimeSet: Boolean(draft.departureTimeSet),
     arrivalCity: draft.arrivalCity,
     arrivalPoint,
     arrivalAt,
+    arrivalOpen,
+    arrivalTimeSet: Boolean(draft.arrivalAt) && Boolean(draft.arrivalTimeSet),
     listingType,
     referenceCode: null,
     startingPrice: trimmedPrice || null,

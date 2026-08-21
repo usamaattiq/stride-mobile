@@ -146,6 +146,7 @@ export function formatTripDateTime(
   iso: string | null | undefined,
   locale: string,
   fallback = '—',
+  includeTime = true,
 ): string {
   if (!iso) {
     return fallback;
@@ -160,6 +161,9 @@ export function formatTripDateTime(
     month: 'short',
     year: 'numeric',
   });
+  if (!includeTime) {
+    return day;
+  }
   const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',

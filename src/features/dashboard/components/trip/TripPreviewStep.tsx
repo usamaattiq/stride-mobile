@@ -120,10 +120,11 @@ export function TripPreviewStep({
       : draft.departureTimeSet
         ? formatTripDateTime(draft.departureAt, locale, '')
         : formatDateRangeLabel(draft.departureAt, null, locale, '');
-  const arrivalWhen =
-    draft.departureAt && draft.arrivalAt
+  const arrivalWhen = !draft.arrivalAt
+    ? undefined
+    : draft.arrivalTimeSet
       ? formatTripDateTime(draft.arrivalAt, locale, '')
-      : undefined;
+      : formatDateRangeLabel(draft.arrivalAt, null, locale, '');
 
   return (
     <View style={styles.root}>

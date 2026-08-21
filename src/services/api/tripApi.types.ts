@@ -12,12 +12,20 @@ export type TripLocationPointDto = {
   longitude: number;
 };
 
+export type TripLuggagePieceDto = {
+  type: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+};
+
 export type TripLuggageDto = {
   option: 'handCarry' | 'checked';
   type: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
   lengthCm: number | null;
   widthCm: number | null;
   weightKg: number | null;
+  items?: TripLuggagePieceDto[];
 };
 
 export type TripDto = {
@@ -38,9 +46,12 @@ export type TripDto = {
   departureAt: string;
   departureUntil: string | null;
   departureOpen: boolean;
+  departureTimeSet?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
+  arrivalOpen?: boolean;
+  arrivalTimeSet?: boolean;
   listingType: 'rfq' | 'auction';
   /** Public listing code, e.g. AUC-2026-1234. */
   referenceCode: string;
@@ -83,9 +94,12 @@ export type CreateTripPayload = {
   departureAt: string;
   departureUntil?: string | null;
   departureOpen?: boolean;
+  departureTimeSet?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
+  arrivalOpen?: boolean;
+  arrivalTimeSet?: boolean;
   listingType: 'rfq' | 'auction';
   /** Required for driver listings; omitted for passenger requests. */
   startingPrice?: string;
@@ -97,6 +111,7 @@ export type CreateTripPayload = {
   luggageLengthCm?: number | null;
   luggageWidthCm?: number | null;
   luggageWeightKg?: number | null;
+  luggageItems?: TripLuggagePieceDto[];
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
   startMode: 'instant' | 'scheduled';

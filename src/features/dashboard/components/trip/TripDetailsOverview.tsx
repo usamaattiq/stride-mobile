@@ -233,39 +233,56 @@ export function TripDetailsOverview({
                 </AppText>
               </View>
 
-              {luggage.option === 'checked' ? (
-                <>
-                  {luggage.type ? (
-                    <View style={styles.luggageRow}>
-                      <AppText style={styles.eyebrow}>{t('trips.create.luggageType')}</AppText>
-                      <AppText weight="semibold" style={styles.luggageValue}>
-                        {t(LUGGAGE_TYPE_LABEL_KEYS[luggage.type])}
-                      </AppText>
+              {luggage.option === 'checked'
+                ? (luggage.items?.length
+                    ? luggage.items
+                    : [
+                        {
+                          type: luggage.type,
+                          lengthCm: luggage.lengthCm,
+                          widthCm: luggage.widthCm,
+                          weightKg: luggage.weightKg,
+                        },
+                      ]
+                  ).map((piece, index, list) => (
+                    <View key={`luggage-piece-${index}`}>
+                      {list.length > 1 ? (
+                        <AppText weight="semibold" style={styles.luggageValue}>
+                          {t('trips.create.luggagePiece', { number: index + 1 })}
+                        </AppText>
+                      ) : null}
+                      {piece.type ? (
+                        <View style={styles.luggageRow}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.luggageType')}</AppText>
+                          <AppText weight="semibold" style={styles.luggageValue}>
+                            {t(LUGGAGE_TYPE_LABEL_KEYS[piece.type])}
+                          </AppText>
+                        </View>
+                      ) : null}
+                      {piece.lengthCm != null || piece.widthCm != null ? (
+                        <View style={styles.luggageRow}>
+                          <AppText style={styles.eyebrow}>
+                            {t('dashboard.listings.detail.luggageDimensions')}
+                          </AppText>
+                          <AppText weight="semibold" style={styles.luggageValue}>
+                            {[piece.lengthCm, piece.widthCm]
+                              .filter((value): value is number => value != null)
+                              .join(' × ')}{' '}
+                            {t('dashboard.listings.detail.luggageCm')}
+                          </AppText>
+                        </View>
+                      ) : null}
+                      {piece.weightKg != null ? (
+                        <View style={styles.luggageRow}>
+                          <AppText style={styles.eyebrow}>{t('trips.create.luggageWeight')}</AppText>
+                          <AppText weight="semibold" style={styles.luggageValue}>
+                            {piece.weightKg} {t('dashboard.listings.detail.luggageKg')}
+                          </AppText>
+                        </View>
+                      ) : null}
                     </View>
-                  ) : null}
-                  {luggage.lengthCm != null || luggage.widthCm != null ? (
-                    <View style={styles.luggageRow}>
-                      <AppText style={styles.eyebrow}>
-                        {t('dashboard.listings.detail.luggageDimensions')}
-                      </AppText>
-                      <AppText weight="semibold" style={styles.luggageValue}>
-                        {[luggage.lengthCm, luggage.widthCm]
-                          .filter((value): value is number => value != null)
-                          .join(' × ')}{' '}
-                        {t('dashboard.listings.detail.luggageCm')}
-                      </AppText>
-                    </View>
-                  ) : null}
-                  {luggage.weightKg != null ? (
-                    <View style={styles.luggageRow}>
-                      <AppText style={styles.eyebrow}>{t('trips.create.luggageWeight')}</AppText>
-                      <AppText weight="semibold" style={styles.luggageValue}>
-                        {luggage.weightKg} {t('dashboard.listings.detail.luggageKg')}
-                      </AppText>
-                    </View>
-                  ) : null}
-                </>
-              ) : null}
+                  ))
+                : null}
             </View>
           ) : null}
         </Pressable>
