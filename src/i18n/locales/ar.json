@@ -793,7 +793,7 @@
     "successBody": "تم حفظ تفاصيل مركبتك.",
     "fields": {
       "title": "العنوان",
-      "titlePlaceholder": "مثال: SUV عائلي",
+      "titlePlaceholder": "مثال: دفع رباعي عائلي",
       "description": "الوصف",
       "descriptionPlaceholder": "وصف مختصر لمركبتك (اختياري)",
       "plateNumber": "رقم اللوحة",
@@ -814,7 +814,7 @@
       "yearPlaceholder": "مثال: 2022"
     },
     "classes": {
-      "suv": "SUV",
+      "suv": "دفع رباعي",
       "sedan": "سيدان",
       "bus": "حافلة",
       "van": "فان",
