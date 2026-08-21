@@ -20,7 +20,8 @@ import { tripApi } from "@/services/api/tripApi";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { usePullToRefresh } from "@/shared/hooks/usePullToRefresh";
-import { citiesReferToSamePlace } from "@/shared/utils/localized-city-name";
+import { citiesReferToSamePlace, cityNameSearchHaystack, normalizeSearchText, prefetchCityNamesForSearch } from "@/shared/utils/localized-city-name";
+import { ENV } from "@/shared/config/env";
 import { colors, spacing } from "@/theme";
 
 import { ListingCard } from "./ListingCard";
@@ -45,18 +46,18 @@ const PAGE_SIZE = 20;
 const INITIAL_PAGE_WIDTH = Dimensions.get("window").width - spacing.md * 2;
 
 function matchesQuery(trip: Trip, query: string): boolean {
-  const normalized = query.trim().toLowerCase();
+  const normalized = normalizeSearchText(query);
   if (!normalized) {
     return true;
   }
-  const haystack = [
-    trip.departureCity.label,
-    trip.arrivalCity.label,
-    trip.vehicleTitle ?? "",
-    trip.vehicleClass ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
+  const haystack = normalizeSearchText(
+    [
+      cityNameSearchHaystack(trip.departureCity, trip.departurePoint),
+      cityNameSearchHaystack(trip.arrivalCity, trip.arrivalPoint),
+      trip.vehicleTitle ?? "",
+      trip.vehicleClass ?? "",
+    ].join(" "),
+  );
   return haystack.includes(normalized);
 }
 
@@ -99,6 +100,7 @@ export const DriverListingsPanel = React.memo(
       useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
 
     const [trips, setTrips] = React.useState<Trip[]>([]);
+    const [cityNamesEpoch, setCityNamesEpoch] = React.useState(0);
     const [loadError, setLoadError] = React.useState<string | null>(null);
     const [isScreenLoading, setIsScreenLoading] = React.useState(true);
     const hasLoadedOnceRef = React.useRef(false);
@@ -150,7 +152,30 @@ export const DriverListingsPanel = React.memo(
           page: 1,
           limit: PAGE_SIZE,
         });
-        setTrips(result.items.map(mapTripDtoToTrip));
+        const mapped = result.items.map(mapTripDtoToTrip);
+        setTrips(mapped);
+        const unique = new Map<
+          string,
+          { city: Trip["departureCity"]; latitude?: number; longitude?: number }
+        >();
+        for (const trip of mapped) {
+          unique.set(trip.departureCity.id, {
+            city: trip.departureCity,
+            latitude: trip.departurePoint?.latitude,
+            longitude: trip.departurePoint?.longitude,
+          });
+          unique.set(trip.arrivalCity.id, {
+            city: trip.arrivalCity,
+            latitude: trip.arrivalPoint?.latitude,
+            longitude: trip.arrivalPoint?.longitude,
+          });
+        }
+        void prefetchCityNamesForSearch(
+          [...unique.values()],
+          ENV.googleMapsApiKey,
+        ).then(() => {
+          setCityNamesEpoch((value) => value + 1);
+        });
       } catch (error) {
         setLoadError(
           getErrorMessage(error, t("dashboard.home.requestsLoadFailed")),
@@ -261,7 +286,7 @@ export const DriverListingsPanel = React.memo(
           (trip) => trip.listingType === "auction" && applySharedFilters(trip),
         ),
       };
-    }, [trips, query, filters, routeType]);
+    }, [trips, query, filters, routeType, cityNamesEpoch]);
 
     const renderCategoryPage = (
       category: TripListingCategory,

@@ -1,6 +1,8 @@
 import type { AuctionStatusValue } from '@/services/api/auctionApi.types';
 import type { RfqStatusValue } from '@/services/api/rfqApi.types';
 
+import { cityNameSearchHaystack, normalizeSearchText } from '@/shared/utils/localized-city-name';
+
 import type { TripListingCategory } from '../types/tripBrowse.types';
 import type { Trip, TripListingType } from '../types/trip.types';
 import { getListingExpiresAtMs } from './listingWindow';
@@ -96,16 +98,16 @@ export function matchesListingStatus(
 }
 
 export function matchesListingQuery(trip: Trip, query: string): boolean {
-  const normalized = query.trim().toLowerCase();
+  const normalized = normalizeSearchText(query);
   if (!normalized) {
     return true;
   }
-  const haystack = [
-    trip.departureCity.label,
-    trip.arrivalCity.label,
-    trip.vehicleTitle ?? '',
-  ]
-    .join(' ')
-    .toLowerCase();
+  const haystack = normalizeSearchText(
+    [
+      cityNameSearchHaystack(trip.departureCity, trip.departurePoint),
+      cityNameSearchHaystack(trip.arrivalCity, trip.arrivalPoint),
+      trip.vehicleTitle ?? '',
+    ].join(' '),
+  );
   return haystack.includes(normalized);
 }
