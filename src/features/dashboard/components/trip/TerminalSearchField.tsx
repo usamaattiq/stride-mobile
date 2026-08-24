@@ -165,9 +165,12 @@ export function TerminalSearchField({
             onChangeText={setQuery}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
-              setIsFocused(false);
-              setResults([]);
-              setShowEmpty(false);
+              // Delay so a tap on a result can fire before the list unmounts (Android release).
+              setTimeout(() => {
+                setIsFocused(false);
+                setResults([]);
+                setShowEmpty(false);
+              }, 250);
             }}
             placeholder={placeholder}
             placeholderTextColor={colors.text.tertiary}
@@ -189,7 +192,7 @@ export function TerminalSearchField({
             {results.map((item) => (
               <Pressable
                 key={item.id}
-                onPress={() => handleSelect(item)}
+                onPressIn={() => handleSelect(item)}
                 style={styles.resultRow}
                 accessibilityRole="button"
               >

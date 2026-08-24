@@ -177,8 +177,14 @@ export function ListingCard({
     return () => clearInterval(id);
   }, [tickMs]);
 
-  const fromCity = useLocalizedCityName(trip.departureCity, trip.departurePoint);
-  const toCity = useLocalizedCityName(trip.arrivalCity, trip.arrivalPoint);
+  const fromCity = useLocalizedCityName(
+    trip.departureCity,
+    pending ? undefined : trip.departurePoint,
+  );
+  const toCity = useLocalizedCityName(
+    trip.arrivalCity,
+    pending ? undefined : trip.arrivalPoint,
+  );
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;

@@ -137,8 +137,6 @@ export function TripPreviewStep({
         toCity={toCity}
         departureWhen={departureWhen}
         arrivalWhen={arrivalWhen}
-        departurePoint={draft.departurePoint}
-        arrivalPoint={draft.arrivalPoint}
       />
 
       {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
