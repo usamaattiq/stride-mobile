@@ -17,7 +17,6 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
@@ -209,9 +208,50 @@ export function DateRangeCalendarField({
     <View style={[styles.sheetContent, embedded && styles.sheetContentEmbedded]}>
       {embedded ? null : (
         <View style={styles.sheetHeader}>
-          <AppText weight="bold" style={styles.sheetTitle}>
-            {t('trips.create.departureDateWindow')}
-          </AppText>
+          <View style={styles.sheetTitleRow}>
+            <AppText weight="bold" style={styles.sheetTitle} numberOfLines={2}>
+              {t('trips.create.departureDateWindow')}
+            </AppText>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={clearRange}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  styles.headerActionSecondary,
+                  pressed && styles.headerActionPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+              >
+                <AppText weight="bold" style={styles.headerActionSecondaryLabel}>
+                  {t('common.clear')}
+                </AppText>
+              </Pressable>
+              <Pressable
+                onPress={applyRange}
+                disabled={!draftStart}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  styles.headerActionPrimary,
+                  !draftStart && styles.headerActionDisabled,
+                  pressed && draftStart && styles.headerActionPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.done')}
+                accessibilityState={{ disabled: !draftStart }}
+              >
+                <AppText
+                  weight="bold"
+                  style={[
+                    styles.headerActionPrimaryLabel,
+                    !draftStart && styles.headerActionDisabledLabel,
+                  ]}
+                >
+                  {t('common.done')}
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
           <View style={styles.sheetSubtitleWrap}>
             <AppText style={styles.sheetSubtitle} numberOfLines={2}>
               {draftStart && draftEnd
@@ -312,23 +352,6 @@ export function DateRangeCalendarField({
       <AppText style={styles.maxDaysNote}>
         {t('trips.create.departureWindowMaxDays', { count: MAX_DATE_WINDOW_DAYS })}
       </AppText>
-
-      {embedded ? null : (
-        <View style={styles.actions}>
-          <Button
-            label={t('common.clear')}
-            onPress={clearRange}
-            variant="secondary"
-            style={styles.actionButton}
-          />
-          <Button
-            label={t('common.done')}
-            onPress={applyRange}
-            disabled={!draftStart}
-            style={styles.actionButton}
-          />
-        </View>
-      )}
     </View>
   );
 
@@ -457,12 +480,53 @@ const styles = StyleSheet.create({
   sheetHeader: {
     gap: 2,
   },
+  sheetTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   sheetTitle: {
+    flex: 1,
     fontSize: 17,
     color: colors.text.primary,
   },
-  sheetSubtitleWrap: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  headerAction: {
     minHeight: 36,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerActionSecondary: {
+    backgroundColor: colors.primarySoft,
+  },
+  headerActionPrimary: {
+    backgroundColor: colors.primary,
+  },
+  headerActionDisabled: {
+    opacity: 0.45,
+  },
+  headerActionPressed: {
+    opacity: 0.85,
+  },
+  headerActionSecondaryLabel: {
+    fontSize: 13,
+    color: colors.primary,
+  },
+  headerActionPrimaryLabel: {
+    fontSize: 13,
+    color: colors.white,
+  },
+  headerActionDisabledLabel: {
+    color: colors.white,
+  },
+  sheetSubtitleWrap: {
+    minHeight: 22,
     justifyContent: 'center',
   },
   sheetSubtitle: {
@@ -498,6 +562,7 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   grid: {
+    flexShrink: 1,
     gap: 0,
   },
   weekDaysRow: {
@@ -506,7 +571,7 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     flex: 1,
-    aspectRatio: 1,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -548,14 +613,8 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.text.secondary,
     textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  actions: {
     marginTop: 'auto',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
 });
