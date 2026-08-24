@@ -27,6 +27,7 @@ type TripLuggageStepProps = {
   draft: TripDraft;
   onChange: (partial: Partial<TripDraft>) => void;
   onContinue: () => void;
+  errorMessage?: string | null;
 };
 
 const LUGGAGE_TYPES: TripLuggageType[] = [
@@ -41,6 +42,7 @@ export function TripLuggageStep({
   draft,
   onChange,
   onContinue,
+  errorMessage,
 }: TripLuggageStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [typeSheetIndex, setTypeSheetIndex] = React.useState<number | null>(null);
@@ -232,10 +234,12 @@ export function TripLuggageStep({
             />
           ) : null}
 
+          {errorMessage ? <AppText style={styles.submitError}>{errorMessage}</AppText> : null}
           <Button
             label={t('common.continue')}
             onPress={onContinue}
             disabled={!isLuggageComplete(draft)}
+            eagerPress
           />
         </View>
       </AuthCard>
@@ -418,5 +422,10 @@ const styles = StyleSheet.create({
   sheetRowLabel: {
     fontSize: 15,
     color: colors.text.primary,
+  },
+  submitError: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
   },
 });

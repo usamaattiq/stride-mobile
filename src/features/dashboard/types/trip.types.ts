@@ -125,6 +125,16 @@ export type TripLocationPoint = {
   longitude: number;
 };
 
+export type TripCreationStep =
+  | 'routeType'
+  | 'vehicle'
+  | 'vehicleMode'
+  | 'details'
+  | 'luggage'
+  | 'listing'
+  | 'schedule'
+  | 'preview';
+
 export type TripDraft = {
   vehicleId: string | null;
   /** Passenger requests pick a class instead of a concrete vehicle. */
@@ -374,11 +384,11 @@ export function draftToTrip(draft: TripDraft, id: string): Trip | null {
     ? new Date(now.getTime() + durationMs).toISOString()
     : draft.departureUntil;
 
-  const arrivalOpen = !draft.arrivalAt;
+  const arrivalOpen = seaOrAir || !draft.arrivalAt;
   const departureWindowEndMs = new Date(departureUntil ?? departureAt).getTime();
-  const arrivalAt =
-    draft.arrivalAt ??
-    new Date(departureWindowEndMs + 60 * 60 * 1000).toISOString();
+  const arrivalAt = seaOrAir
+    ? new Date(new Date(departureAt).getTime() + 60 * 60 * 1000).toISOString()
+    : (draft.arrivalAt ?? new Date(departureWindowEndMs + 60 * 60 * 1000).toISOString());
 
   return {
     id,

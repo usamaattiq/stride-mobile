@@ -31,6 +31,7 @@ type TripDetailsStepProps = {
   draft: TripDraft;
   onChange: (partial: Partial<TripDraft>) => void;
   onContinue: () => void;
+  errorMessage?: string | null;
 };
 
 type CityPickerMode = 'departure' | 'arrival' | null;
@@ -74,6 +75,7 @@ export function TripDetailsStep({
   draft,
   onChange,
   onContinue,
+  errorMessage,
 }: TripDetailsStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
@@ -383,7 +385,13 @@ export function TripDetailsStep({
             </>
           ) : null}
 
-          <Button label={t('common.continue')} onPress={onContinue} disabled={!canContinue} />
+          {errorMessage ? <AppText style={styles.submitError}>{errorMessage}</AppText> : null}
+          <Button
+            label={t('common.continue')}
+            onPress={onContinue}
+            disabled={!canContinue}
+            eagerPress
+          />
         </View>
       </AuthCard>
 
@@ -475,6 +483,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.primary,
     paddingHorizontal: spacing.xs,
+  },
+  submitError: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
   },
   pressed: {
     opacity: 0.85,

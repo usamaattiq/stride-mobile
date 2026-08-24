@@ -21,6 +21,8 @@ type ButtonProps = {
   loading?: boolean;
   accessibilityHint?: string;
   style?: ViewStyle;
+  /** Fire on press-in so Continue isn't lost when an input blurs (Android). */
+  eagerPress?: boolean;
 };
 
 export function Button({
@@ -31,6 +33,7 @@ export function Button({
   loading = false,
   accessibilityHint,
   style,
+  eagerPress = false,
 }: ButtonProps) {
   const { currentLanguage } = useLanguage();
   const isPrimary = variant === 'primary';
@@ -45,7 +48,8 @@ export function Button({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={eagerPress ? undefined : onPress}
+      onPressIn={eagerPress && !isDisabled ? onPress : undefined}
       style={({ pressed }) => [
         styles.base,
         isPrimary ? styles.primary : styles.secondary,

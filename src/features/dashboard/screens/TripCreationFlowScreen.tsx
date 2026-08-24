@@ -27,20 +27,12 @@ import { getErrorMessage } from '@/services/api/errorMessage';
 import {
   isSeaOrAirRoute,
   shouldSkipListingScheduleStep,
+  type TripCreationStep,
   type TripDraft,
   type TripRouteType,
 } from '@/features/dashboard/types/trip.types';
+import { mapCreateTripValidationError } from '@/features/dashboard/utils/tripCreateValidation';
 import { spacing } from '@/theme';
-
-type TripCreationStep =
-  | 'routeType'
-  | 'vehicle'
-  | 'vehicleMode'
-  | 'details'
-  | 'luggage'
-  | 'listing'
-  | 'schedule'
-  | 'preview';
 
 const DRIVER_STEP_ORDER: TripCreationStep[] = [
   'vehicle',
@@ -129,7 +121,7 @@ function seaAirDefaults(): Partial<TripDraft> {
     vehicleMode: 'shared',
     listingType: 'rfq',
     durationHours: 24,
-    startMode: null,
+    startMode: 'instant',
     scheduledStartAt: null,
     vehicleClass: null,
     vehicleId: null,
@@ -149,6 +141,9 @@ export function TripCreationFlowScreen(): React.ReactElement {
     useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>(() => firstStepForRole(isPassenger));
   const [publishError, setPublishError] = React.useState<string | null>(null);
+  const [stepError, setStepError] = React.useState<{ step: TripCreationStep; message: string } | null>(
+    null,
+  );
   const isLeavingRef = React.useRef(false);
   const didReturnFromVehicleRef = React.useRef(false);
 
@@ -191,7 +186,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
   }, [navigation]);
 
   const goToStep = React.useCallback((next: TripCreationStep) => {
-    Keyboard.dismiss();
+    setStepError((current) => (current && current.step !== next ? null : current));
     setStep(next);
   }, []);
 
@@ -204,6 +199,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
       draft.routeType,
     );
     const index = order.indexOf(step);
+    if (index < 0) {
+      goToStep(order[1] ?? order[0]!);
+      return;
+    }
     if (index < order.length - 1) {
       goToStep(order[index + 1]!);
     }
@@ -226,6 +225,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
       draft.routeType,
     );
     const index = order.indexOf(step);
+    if (index < 0) {
+      goToStep(order[0]!);
+      return true;
+    }
     if (index > 0) {
       goToStep(order[index - 1]!);
       return true;
@@ -237,6 +240,28 @@ export function TripCreationFlowScreen(): React.ReactElement {
     draft.routeType,
     draft.vehicleMode,
     goToStep,
+    isPassenger,
+    step,
+  ]);
+
+  React.useLayoutEffect(() => {
+    const order = stepOrderForRole(
+      isPassenger,
+      draft.vehicleMode,
+      draft.listingType,
+      draft.durationHours,
+      draft.routeType,
+    );
+    if (order.includes(step)) {
+      return;
+    }
+    const fallback = step === 'preview' ? order[order.length - 1]! : (order[1] ?? order[0]!);
+    setStep(fallback);
+  }, [
+    draft.durationHours,
+    draft.listingType,
+    draft.routeType,
+    draft.vehicleMode,
     isPassenger,
     step,
   ]);
@@ -291,12 +316,11 @@ export function TripCreationFlowScreen(): React.ReactElement {
       return;
     }
     setPublishError(null);
+    setStepError(null);
     void publishDraft()
       .then((trip) => {
         if (!trip) {
-          setPublishError(
-            t(isPassenger ? 'trips.create.publishRequestFailed' : 'trips.create.publishFailed'),
-          );
+          setPublishError(t('trips.create.publishIncomplete'));
           return;
         }
         isLeavingRef.current = true;
@@ -306,6 +330,24 @@ export function TripCreationFlowScreen(): React.ReactElement {
         });
       })
       .catch((error) => {
+        const mapped = mapCreateTripValidationError(error);
+        if (mapped) {
+          const message =
+            mapped.message ||
+            t('trips.create.publishIncomplete');
+          const order = stepOrderForRole(
+            isPassenger,
+            draft.vehicleMode,
+            draft.listingType,
+            draft.durationHours,
+            draft.routeType,
+          );
+          const target = order.includes(mapped.step) ? mapped.step : 'details';
+          setStepError({ step: target, message });
+          setStep(target);
+          setPublishError(target === 'preview' ? message : null);
+          return;
+        }
         setPublishError(
           getErrorMessage(
             error,
@@ -494,14 +536,29 @@ export function TripCreationFlowScreen(): React.ReactElement {
 
         {step === 'details' ? (
           isSeaOrAirRoute(draft.routeType) ? (
-            <TripSeaAirDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+            <TripSeaAirDetailsStep
+              draft={draft}
+              onChange={patchDraft}
+              onContinue={goToNextStep}
+              errorMessage={stepError?.step === 'details' ? stepError.message : null}
+            />
           ) : (
-            <TripDetailsStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+            <TripDetailsStep
+              draft={draft}
+              onChange={patchDraft}
+              onContinue={goToNextStep}
+              errorMessage={stepError?.step === 'details' ? stepError.message : null}
+            />
           )
         ) : null}
 
         {step === 'luggage' ? (
-          <TripLuggageStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+          <TripLuggageStep
+            draft={draft}
+            onChange={patchDraft}
+            onContinue={goToNextStep}
+            errorMessage={stepError?.step === 'luggage' ? stepError.message : null}
+          />
         ) : null}
 
         {step === 'listing' ? (
@@ -509,7 +566,12 @@ export function TripCreationFlowScreen(): React.ReactElement {
         ) : null}
 
         {step === 'schedule' ? (
-          <TripScheduleStep draft={draft} onChange={patchDraft} onContinue={goToNextStep} />
+          <TripScheduleStep
+            draft={draft}
+            onChange={patchDraft}
+            onContinue={goToNextStep}
+            errorMessage={stepError?.step === 'schedule' ? stepError.message : null}
+          />
         ) : null}
 
         {step === 'preview' ? (

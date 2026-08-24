@@ -91,7 +91,7 @@ export function TripVehicleModeStep({
           })}
         </View>
 
-        <Button label={t('common.continue')} onPress={onContinue} disabled={!value} />
+        <Button label={t('common.continue')} onPress={onContinue} disabled={!value} eagerPress />
       </View>
     </AuthCard>
   );

@@ -14,13 +14,15 @@ import {
 import type { TripDraft } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import type { TerminalSearchItemDto } from '@/services/api/tripApi.types';
+import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 type TripSeaAirDetailsStepProps = {
   draft: TripDraft;
   onChange: (partial: Partial<TripDraft>) => void;
   onContinue: () => void;
+  errorMessage?: string | null;
 };
 
 function isComplete(draft: TripDraft): boolean {
@@ -53,6 +55,7 @@ export function TripSeaAirDetailsStep({
   draft,
   onChange,
   onContinue,
+  errorMessage,
 }: TripSeaAirDetailsStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isAir = draft.routeType === 'air';
@@ -151,7 +154,16 @@ export function TripSeaAirDetailsStep({
           maxLength={1000}
         />
 
-        <Button label={t('common.continue')} onPress={onContinue} disabled={!canContinue} />
+        {errorMessage ? (
+          <AppText style={styles.error}>{errorMessage}</AppText>
+        ) : null}
+
+        <Button
+          label={t('common.continue')}
+          onPress={onContinue}
+          disabled={!canContinue}
+          eagerPress
+        />
       </View>
     </AuthCard>
   );
@@ -164,5 +176,10 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 96,
     paddingTop: spacing.sm,
+  },
+  error: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.primary,
   },
 });

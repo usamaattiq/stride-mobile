@@ -165,12 +165,9 @@ export function TerminalSearchField({
             onChangeText={setQuery}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
-              // Delay so a tap on a result can fire before the list unmounts (Android release).
               setTimeout(() => {
                 setIsFocused(false);
-                setResults([]);
-                setShowEmpty(false);
-              }, 250);
+              }, 180);
             }}
             placeholder={placeholder}
             placeholderTextColor={colors.text.tertiary}
