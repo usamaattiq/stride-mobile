@@ -540,6 +540,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.xs,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
   },
