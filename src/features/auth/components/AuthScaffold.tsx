@@ -88,6 +88,12 @@ type AuthScaffoldProps = {
   refreshControlProps?: RefreshControlProps;
   /** Pinned below the scroll body (e.g. auction bid composer). */
   footer?: React.ReactNode;
+  /**
+   * Dashboard tab roots: apply the status-bar inset on the red header only (matches
+   * Home/Settings) instead of wrapping the whole screen in SafeAreaView, which can
+   * jump on first lazy tab mount.
+   */
+  manualTopInset?: boolean;
 };
 
 export function AuthScaffold({
@@ -113,6 +119,7 @@ export function AuthScaffold({
   extraKeyboardSpace,
   refreshControlProps,
   footer,
+  manualTopInset = false,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -159,8 +166,13 @@ export function AuthScaffold({
     </View>
   );
 
+  const Screen = manualTopInset ? View : SafeAreaView;
+  const screenProps = manualTopInset
+    ? { style: styles.safeArea }
+    : { style: styles.safeArea, edges: ['top', 'left', 'right'] as const };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <Screen {...screenProps}>
       <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
@@ -168,6 +180,7 @@ export function AuthScaffold({
             styles.header,
             compactHeader ? styles.headerCompact : null,
             compactHeader && centerTitleInTopBar ? styles.headerCompactCenteredTitle : null,
+            manualTopInset ? { paddingTop: insets.top + spacing.md } : null,
             !compactHeader
               ? {
                   height: hasStepper
@@ -286,7 +299,7 @@ export function AuthScaffold({
           />
         ) : null}
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

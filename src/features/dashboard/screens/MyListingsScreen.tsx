@@ -304,6 +304,7 @@ export function MyListingsScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
+      manualTopInset
       scrollable={false}
       contentWrapStyle={styles.contentWrap}
       headerExtra={

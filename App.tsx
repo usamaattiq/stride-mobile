@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { I18nextProvider } from 'react-i18next';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 import { AuthNavigator } from './src/features/auth/navigation/AuthNavigator';
 import type { AuthStackParamList } from './src/features/auth/navigation/types';
@@ -145,7 +145,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <KeyboardProvider>
         <I18nextProvider i18n={i18n}>
           <View style={{ flex: 1 }} onLayout={onLayoutRootView}>

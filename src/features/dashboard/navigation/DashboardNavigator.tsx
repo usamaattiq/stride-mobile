@@ -133,6 +133,8 @@ function DashboardTabs(): React.ReactElement {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        sceneContainerStyle: styles.tabScene,
+        lazy: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.text.tertiary,
         tabBarShowLabel: route.name !== 'CreateTrip',
@@ -261,6 +263,9 @@ export function DashboardNavigator(): React.ReactElement {
 const styles = StyleSheet.create({
   tabsRoot: {
     flex: 1,
+  },
+  tabScene: {
+    backgroundColor: colors.primary,
   },
   tabBar: {
     backgroundColor: colors.white,
