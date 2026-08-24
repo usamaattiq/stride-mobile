@@ -44,21 +44,86 @@ function SectionIcon({ name }: SectionIconProps): React.ReactElement {
 type SectionHeaderProps = {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
   title: string;
+  meta?: { area: string | null; weight: string | null } | null;
   right?: React.ReactNode;
 };
 
-function SectionHeader({ icon, title, right }: SectionHeaderProps): React.ReactElement {
+function SectionHeader({ icon, title, meta, right }: SectionHeaderProps): React.ReactElement {
   return (
     <View style={styles.cardHeader}>
       <SectionIcon name={icon} />
       <View style={styles.cardHeaderCopy}>
-        <AppText weight="bold" style={styles.sectionTitle}>
+        <AppText weight="bold" style={styles.sectionTitle} numberOfLines={1}>
           {title}
         </AppText>
+        {meta?.area || meta?.weight ? (
+          <View style={styles.sectionMetaRow}>
+            {meta.area ? (
+              <AppText style={styles.sectionMeta} numberOfLines={1}>
+                {meta.area}
+              </AppText>
+            ) : null}
+            {meta.weight ? (
+              <AppText style={styles.sectionMeta} numberOfLines={1}>
+                {meta.weight}
+              </AppText>
+            ) : null}
+          </View>
+        ) : null}
       </View>
       {right ?? null}
     </View>
   );
+}
+
+function luggagePieces(luggage: TripLuggage) {
+  if (luggage.option !== 'checked') {
+    return [];
+  }
+  if (luggage.items?.length) {
+    return luggage.items;
+  }
+  return [
+    {
+      type: luggage.type,
+      lengthCm: luggage.lengthCm,
+      widthCm: luggage.widthCm,
+      weightKg: luggage.weightKg,
+    },
+  ];
+}
+
+function luggageTotalsMeta(
+  luggage: TripLuggage,
+  t: (key: string, options?: Record<string, string>) => string,
+): { area: string | null; weight: string | null } {
+  const empty = { area: null, weight: null };
+  const pieces = luggagePieces(luggage);
+  if (pieces.length === 0) {
+    return empty;
+  }
+  let area = 0;
+  let weight = 0;
+  for (const piece of pieces) {
+    if (piece.lengthCm != null && piece.widthCm != null) {
+      area += piece.lengthCm * piece.widthCm;
+    }
+    if (piece.weightKg != null) {
+      weight += piece.weightKg;
+    }
+  }
+  const areaLabel = Number.isInteger(area) ? String(area) : area.toFixed(1);
+  const weightLabel = Number.isInteger(weight) ? String(weight) : weight.toFixed(1);
+  return {
+    area:
+      area > 0
+        ? t('dashboard.listings.detail.luggageTotalsArea', { area: areaLabel })
+        : null,
+    weight:
+      weight > 0
+        ? t('dashboard.listings.detail.luggageTotalsWeight', { weight: weightLabel })
+        : null,
+  };
 }
 
 type LocationPointRowProps = {
@@ -214,6 +279,7 @@ export function TripDetailsOverview({
           <SectionHeader
             icon="suitcase"
             title={t('trips.create.luggageTitle')}
+            meta={luggageTotalsMeta(luggage, t)}
             right={
               <FontAwesome
                 name={luggageExpanded ? 'chevron-up' : 'chevron-down'}
@@ -244,21 +310,13 @@ export function TripDetailsOverview({
                           weightKg: luggage.weightKg,
                         },
                       ]
-                  ).map((piece, index, list) => (
+                  ).map((piece, index) => (
                     <View key={`luggage-piece-${index}`}>
-                      {list.length > 1 ? (
-                        <AppText weight="semibold" style={styles.luggageValue}>
-                          {t('trips.create.luggagePiece', { number: index + 1 })}
-                        </AppText>
-                      ) : null}
-                      {piece.type ? (
-                        <View style={styles.luggageRow}>
-                          <AppText style={styles.eyebrow}>{t('trips.create.luggageType')}</AppText>
-                          <AppText weight="semibold" style={styles.luggageValue}>
-                            {t(LUGGAGE_TYPE_LABEL_KEYS[piece.type])}
-                          </AppText>
-                        </View>
-                      ) : null}
+                      <AppText weight="semibold" style={styles.luggageValue}>
+                        {piece.type
+                          ? t(LUGGAGE_TYPE_LABEL_KEYS[piece.type])
+                          : t('trips.create.luggageNew')}
+                      </AppText>
                       {piece.lengthCm != null || piece.widthCm != null ? (
                         <View style={styles.luggageRow}>
                           <AppText style={styles.eyebrow}>
@@ -404,25 +462,35 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
   },
   cardHeaderCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 1,
+    gap: spacing.xxs,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+  sectionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    columnGap: spacing.md,
+    rowGap: 2,
+  },
+  sectionMeta: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.text.secondary,
   },
   sectionIcon: {
     width: 32,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    //  borderRadius: radius.sm,
-    // backgroundColor: colors.primarySoft,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    color: colors.text.primary,
   },
   eyebrow: {
     fontSize: 11,

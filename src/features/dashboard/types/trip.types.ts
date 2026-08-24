@@ -55,8 +55,12 @@ export function emptyLuggageDraftItem(): TripLuggageDraftItem {
 }
 
 function parseDimension(value: string): number | null {
-  const parsed = Number.parseFloat(value.trim());
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const parsed = Number.parseFloat(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function isLuggageDraftItemComplete(item: TripLuggageDraftItem): boolean {
