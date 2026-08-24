@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Dimensions,
   Keyboard,
   Modal,
   Platform,
@@ -7,6 +8,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type KeyboardEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -31,6 +33,17 @@ export type AppBottomSheetProps = {
   sheetStyle?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Distance from the top of the IME to the bottom of the physical screen.
+ * Using `height` alone is wrong on Android 3-button nav: the IME sits *above*
+ * the nav bar, so `height` undershoots and footers stay in the keyboard.
+ */
+function keyboardOcclusion(event: KeyboardEvent): number {
+  const screenH = Dimensions.get('screen').height;
+  const { height, screenY } = event.endCoordinates;
+  return Math.max(0, height, screenH - screenY);
+}
+
 function BottomSheetFrame({
   onClose,
   children,
@@ -44,7 +57,7 @@ function BottomSheetFrame({
 }): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { width, height: windowHeight } = useWindowDimensions();
-  const keyboardHeight = useSharedValue(0);
+  const keyboardOcclusionSv = useSharedValue(0);
   const layoutHeight = useSharedValue(windowHeight);
   const lastWidthRef = React.useRef(width);
   const clampedRatio = Math.min(0.95, Math.max(0.22, heightRatio));
@@ -55,26 +68,37 @@ function BottomSheetFrame({
     MIN_BOTTOM_INSET,
     spacing.sm,
   );
-  // Leave a little room under the status bar so the sheet never clips off-screen.
   const topReserve = Math.max(insets.top, spacing.md);
 
   React.useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const show = Keyboard.addListener(showEvent, (event) => {
-      const next = event.endCoordinates.height;
-      const duration = Math.max(event.duration ?? 0, 1);
-      keyboardHeight.value = withTiming(next, { duration });
-    });
-    const hide = Keyboard.addListener(hideEvent, (event) => {
-      const duration = Math.max(event.duration ?? 0, 1);
-      keyboardHeight.value = withTiming(0, { duration });
-    });
+    const applyShow = (event: KeyboardEvent) => {
+      const next = keyboardOcclusion(event);
+      const duration = Math.max(event.duration ?? 0, Platform.OS === 'ios' ? 1 : 0);
+      keyboardOcclusionSv.value = duration > 0 ? withTiming(next, { duration }) : next;
+    };
+    const applyHide = (event: KeyboardEvent) => {
+      const duration = Math.max(event.duration ?? 0, Platform.OS === 'ios' ? 1 : 0);
+      keyboardOcclusionSv.value = duration > 0 ? withTiming(0, { duration }) : 0;
+    };
+
+    const show = Keyboard.addListener(showEvent, applyShow);
+    const hide = Keyboard.addListener(hideEvent, applyHide);
+    const frame =
+      Platform.OS === 'android'
+        ? Keyboard.addListener('keyboardDidChangeFrame', (event) => {
+            const next = keyboardOcclusion(event);
+            keyboardOcclusionSv.value = next < 1 ? 0 : next;
+          })
+        : null;
+
     return () => {
       show.remove();
       hide.remove();
+      frame?.remove();
     };
-  }, [keyboardHeight]);
+  }, [keyboardOcclusionSv]);
 
   React.useEffect(() => {
     if (lastWidthRef.current !== width) {
@@ -82,22 +106,21 @@ function BottomSheetFrame({
       layoutHeight.value = windowHeight;
       return;
     }
-    // iOS can shrink window height while the keyboard is open — keep the full height.
     if (windowHeight >= layoutHeight.value) {
       layoutHeight.value = windowHeight;
     }
   }, [layoutHeight, width, windowHeight]);
 
   const animatedSheetStyle = useAnimatedStyle(() => {
-    const kb = Math.max(0, keyboardHeight.value);
-    const open = kb > 1;
-    const lift = open ? kb : 0;
+    const lift = Math.max(0, keyboardOcclusionSv.value);
+    const open = lift > 1;
     const fullH = layoutHeight.value;
-    const maxHeight = Math.min(fullH * clampedRatio, fullH - lift - topReserve);
+    // Shrink the sheet into the remaining space so the inner ScrollView keeps
+    // a real height and can scroll; do not let the sheet overflow under the IME.
+    const maxHeight = Math.min(fullH * clampedRatio, Math.max(fullH - lift - topReserve, fullH * 0.32));
     return {
       marginBottom: lift,
       height: maxHeight,
-      // Keyboard already covers the home indicator — extra padding leaves a hole above it.
       paddingBottom: open ? 0 : closedPaddingBottom,
     };
   });
@@ -116,6 +139,7 @@ function BottomSheetFrame({
     </View>
   );
 }
+
 export function AppBottomSheet({
   visible,
   onClose,
@@ -132,7 +156,6 @@ export function AppBottomSheet({
       statusBarTranslucent
       navigationBarTranslucent
     >
-      {/* Modal renders outside the app SafeArea tree — nest a provider so insets work. */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
         <BottomSheetFrame onClose={onClose} heightRatio={heightRatio} sheetStyle={sheetStyle}>
           {children}
@@ -162,5 +185,6 @@ const styles = StyleSheet.create({
   },
   sheetInner: {
     flex: 1,
+    minHeight: 0,
   },
 });

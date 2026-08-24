@@ -8,12 +8,12 @@ import {
 import { spacing } from '@/theme';
 
 /** Gap kept between the focused field and the keyboard. */
-const DEFAULT_BOTTOM_OFFSET = spacing.huge;
+const DEFAULT_BOTTOM_OFFSET = spacing.huge + spacing.xl;
 /**
- * Android uses window `pan`, so extra space double-shifts the form off-screen.
- * iOS only needs a little room so the last field can scroll above the keyboard.
+ * Extra inset while the keyboard is open. Android 3-button nav sits below the
+ * IME, so the field needs more room than iOS.
  */
-const DEFAULT_EXTRA_KEYBOARD_SPACE = Platform.OS === 'ios' ? spacing.lg : spacing.md;
+const DEFAULT_EXTRA_KEYBOARD_SPACE = Platform.OS === 'ios' ? spacing.xl : spacing.xxxl;
 
 export type KeyboardAwareScrollViewProps = ScrollViewProps &
   Partial<

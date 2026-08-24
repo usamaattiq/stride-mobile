@@ -113,8 +113,9 @@ export function TripFilterSheet({
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        nestedScrollEnabled
         contentContainerStyle={styles.scrollContent}
-        scrollEnabled={false}
       >
         <SeatsStepper
           label={t('dashboard.home.filterSeats')}
@@ -311,6 +312,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
   footerRow: {
     flexDirection: 'row',
