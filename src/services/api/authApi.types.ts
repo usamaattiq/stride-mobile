@@ -74,8 +74,19 @@ export type AccountDeletionBlockReason =
   /** @deprecated older API combined offers and bids */
   | 'active_offer_or_bid';
 
+export type AccountDeletionActivityKind = 'trip' | 'offer' | 'bid';
+
+export type AccountDeletionActivityRole = 'driver' | 'passenger';
+
+export type AccountDeletionActivity = {
+  kind: AccountDeletionActivityKind;
+  role: AccountDeletionActivityRole;
+  label: string;
+};
+
 export type AccountDeletionEligibility = {
   canDelete: boolean;
   reasons: AccountDeletionBlockReason[];
+  activities?: AccountDeletionActivity[];
 };
 

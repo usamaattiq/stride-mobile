@@ -13,7 +13,10 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { ApiError } from '@/services/api/apiError';
 import { authApi } from '@/services/api/authApi';
-import type { AccountDeletionBlockReason } from '@/services/api/authApi.types';
+import type {
+  AccountDeletionActivity,
+  AccountDeletionBlockReason,
+} from '@/services/api/authApi.types';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -45,18 +48,83 @@ type DeleteEligibilityState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   canDelete: boolean;
   reasons: AccountDeletionBlockReason[];
+  activities: AccountDeletionActivity[];
 };
 
 const INITIAL_DELETE_ELIGIBILITY: DeleteEligibilityState = {
   status: 'idle',
   canDelete: false,
   reasons: [],
+  activities: [],
 };
 
-function deletionBlockItems(
+type DeleteBlockRow = {
+  key: string;
+  heading?: string;
+  text: string;
+};
+
+function parseDeletionActivities(raw: unknown): AccountDeletionActivity[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+    const row = item as Partial<AccountDeletionActivity>;
+    if (
+      (row.kind !== 'trip' && row.kind !== 'offer' && row.kind !== 'bid') ||
+      (row.role !== 'driver' && row.role !== 'passenger') ||
+      typeof row.label !== 'string' ||
+      !row.label.trim()
+    ) {
+      return [];
+    }
+    return [{ kind: row.kind, role: row.role, label: row.label.trim() }];
+  });
+}
+
+function activityItemLabel(
+  activity: AccountDeletionActivity,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
+  const key =
+    activity.kind === 'trip'
+      ? 'profile.account.deleteAccount.blockedTripItem'
+      : activity.kind === 'offer'
+        ? 'profile.account.deleteAccount.blockedOfferItem'
+        : 'profile.account.deleteAccount.blockedBidItem';
+  return t(key, { route: activity.label });
+}
+
+function deletionBlockRows(
   reasons: AccountDeletionBlockReason[],
-  t: (key: string) => string,
-): string[] {
+  activities: AccountDeletionActivity[],
+  t: (key: string, options?: Record<string, string>) => string,
+): DeleteBlockRow[] {
+  if (activities.length > 0) {
+    const rows: DeleteBlockRow[] = [];
+    (['driver', 'passenger'] as const).forEach((role) => {
+      const group = activities.filter((activity) => activity.role === role);
+      if (group.length === 0) {
+        return;
+      }
+      const heading =
+        role === 'driver'
+          ? t('profile.account.deleteAccount.blockedAsDriver')
+          : t('profile.account.deleteAccount.blockedAsPassenger');
+      group.forEach((activity, index) => {
+        rows.push({
+          key: `${role}-${activity.kind}-${activity.label}-${index}`,
+          heading: index === 0 ? heading : undefined,
+          text: activityItemLabel(activity, t),
+        });
+      });
+    });
+    return rows;
+  }
+
   const items: string[] = [];
   const hasCombinedSender = reasons.includes('active_offer_or_bid');
   if (reasons.includes('owner_open_listing')) {
@@ -71,7 +139,7 @@ function deletionBlockItems(
   if (items.length === 0 && reasons.length > 0) {
     items.push(t('profile.account.deleteAccount.blockedGeneric'));
   }
-  return items;
+  return items.map((text, index) => ({ key: `fallback-${index}`, text }));
 }
 
 type SettingsNav = CompositeNavigationProp<
@@ -113,7 +181,7 @@ export function SettingsHomeScreen(): React.ReactElement {
   );
   const deleteEligibilityRequestId = React.useRef(0);
 
-  const deleteBlockItems = React.useMemo(() => {
+  const deleteBlockRows = React.useMemo(() => {
     if (
       deleteAccountError ||
       deleteEligibility.status !== 'ready' ||
@@ -121,7 +189,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     ) {
       return [];
     }
-    return deletionBlockItems(deleteEligibility.reasons, t);
+    return deletionBlockRows(deleteEligibility.reasons, deleteEligibility.activities, t);
   }, [deleteAccountError, deleteEligibility, t]);
 
   const deleteDialogMessage = React.useMemo(() => {
@@ -211,7 +279,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     const requestId = deleteEligibilityRequestId.current + 1;
     deleteEligibilityRequestId.current = requestId;
     setDeleteAccountError(null);
-    setDeleteEligibility({ status: 'loading', canDelete: false, reasons: [] });
+    setDeleteEligibility({ status: 'loading', canDelete: false, reasons: [], activities: [] });
     setDialog('delete-account');
     void authApi
       .getDeletionEligibility()
@@ -223,13 +291,14 @@ export function SettingsHomeScreen(): React.ReactElement {
           status: 'ready',
           canDelete: result.canDelete,
           reasons: result.reasons,
+          activities: parseDeletionActivities(result.activities),
         });
       })
       .catch(() => {
         if (deleteEligibilityRequestId.current !== requestId) {
           return;
         }
-        setDeleteEligibility({ status: 'error', canDelete: false, reasons: [] });
+        setDeleteEligibility({ status: 'error', canDelete: false, reasons: [], activities: [] });
       });
   };
 
@@ -253,9 +322,16 @@ export function SettingsHomeScreen(): React.ReactElement {
         authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
       } catch (error) {
         if (error instanceof ApiError && error.code === 'ACCOUNT_DELETION_BLOCKED') {
-          const details = error.details as { reasons?: AccountDeletionBlockReason[] } | undefined;
+          const details = error.details as
+            | { reasons?: AccountDeletionBlockReason[]; activities?: unknown }
+            | undefined;
           const reasons = Array.isArray(details?.reasons) ? details.reasons : [];
-          setDeleteEligibility({ status: 'ready', canDelete: false, reasons });
+          setDeleteEligibility({
+            status: 'ready',
+            canDelete: false,
+            reasons,
+            activities: parseDeletionActivities(details?.activities),
+          });
           setDeleteAccountError(null);
         } else {
           setDeleteAccountError(
@@ -488,15 +564,24 @@ export function SettingsHomeScreen(): React.ReactElement {
           loading: deletingAccount,
         }}
       >
-        {deleteBlockItems.length > 0 ? (
-          <View style={styles.deleteBlockList}>
-            {deleteBlockItems.map((item) => (
-              <View key={item} style={styles.deleteBlockRow}>
-                <AppText style={styles.deleteBlockBullet}>•</AppText>
-                <AppText style={styles.deleteBlockItem}>{item}</AppText>
+        {deleteBlockRows.length > 0 ? (
+          <ScrollView
+            style={styles.deleteBlockScroll}
+            contentContainerStyle={styles.deleteBlockList}
+            nestedScrollEnabled
+          >
+            {deleteBlockRows.map((row) => (
+              <View key={row.key} style={styles.deleteBlockGroup}>
+                {row.heading ? (
+                  <AppText style={styles.deleteBlockHeading}>{row.heading}</AppText>
+                ) : null}
+                <View style={styles.deleteBlockRow}>
+                  <AppText style={styles.deleteBlockBullet}>•</AppText>
+                  <AppText style={styles.deleteBlockItem}>{row.text}</AppText>
+                </View>
               </View>
             ))}
-          </View>
+          </ScrollView>
         ) : null}
       </AppDialog>
     </View>
@@ -528,10 +613,24 @@ const styles = StyleSheet.create({
   menu: {
     gap: 8,
   },
-  deleteBlockList: {
+  deleteBlockScroll: {
     alignSelf: 'stretch',
+    maxHeight: 220,
     marginTop: spacing.sm,
+  },
+  deleteBlockList: {
     gap: spacing.xs,
+  },
+  deleteBlockGroup: {
+    gap: 2,
+  },
+  deleteBlockHeading: {
+    marginTop: spacing.xs,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: colors.text.primary,
+    textAlign: 'left',
   },
   deleteBlockRow: {
     flexDirection: 'row',
