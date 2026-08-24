@@ -21,7 +21,7 @@ import { ROUTE_TYPE_ICONS, ROUTE_TYPE_LABEL_KEYS } from '../constants/routeTypes
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
-import type { Trip, TripRouteType } from '../types/trip.types';
+import { isSeaOrAirRoute, type Trip, type TripRouteType } from '../types/trip.types';
 import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
 import { canRepostListing } from '../utils/listingFilters';
 
@@ -177,13 +177,14 @@ export function ListingCard({
     return () => clearInterval(id);
   }, [tickMs]);
 
+  const seaOrAir = isSeaOrAirRoute(trip.routeType);
   const fromCity = useLocalizedCityName(
     trip.departureCity,
-    pending ? undefined : trip.departurePoint,
+    pending && !seaOrAir ? undefined : trip.departurePoint,
   );
   const toCity = useLocalizedCityName(
     trip.arrivalCity,
-    pending ? undefined : trip.arrivalPoint,
+    pending && !seaOrAir ? undefined : trip.arrivalPoint,
   );
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))

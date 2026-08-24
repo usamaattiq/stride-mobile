@@ -17,7 +17,7 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
 import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
@@ -81,10 +81,10 @@ export function TripPreviewStep({
   );
 
   const trip = enrichPreviewTrip(draft, vehicle);
-  const fromCity = draft.departureCity
-    ? cityDisplayName(draft.departureCity.label)
-    : null;
-  const toCity = draft.arrivalCity ? cityDisplayName(draft.arrivalCity.label) : null;
+  const fromCityName = useLocalizedCityName(draft.departureCity, draft.departurePoint);
+  const toCityName = useLocalizedCityName(draft.arrivalCity, draft.arrivalPoint);
+  const fromCity = fromCityName || null;
+  const toCity = toCityName || null;
   const modeLabel =
     draft.vehicleMode === 'fullPrivate'
       ? t('trips.create.vehicleModeFullPrivate')
@@ -137,6 +137,8 @@ export function TripPreviewStep({
         toCity={toCity}
         departureWhen={departureWhen}
         arrivalWhen={arrivalWhen}
+        departurePoint={draft.departurePoint}
+        arrivalPoint={draft.arrivalPoint}
       />
 
       {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
