@@ -18,6 +18,7 @@ export type AppDialogProps = {
   visible: boolean;
   title: string;
   message?: string;
+  children?: React.ReactNode;
   /** FontAwesome glyph shown in the badge above the title. */
   icon?: React.ComponentProps<typeof FontAwesome>['name'];
   confirmAction: AppDialogAction;
@@ -33,6 +34,7 @@ export function AppDialog({
   visible,
   title,
   message,
+  children,
   icon = 'exclamation',
   confirmAction,
   cancelAction,
@@ -64,6 +66,7 @@ export function AppDialog({
           </AppText>
 
           {message ? <AppText style={styles.message}>{message}</AppText> : null}
+          {children ? <View style={styles.body}>{children}</View> : null}
 
           <View style={styles.actions}>
             {cancelAction ? (
@@ -131,6 +134,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  body: {
+    width: '100%',
   },
   actions: {
     flexDirection: 'row',

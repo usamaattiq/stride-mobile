@@ -53,24 +53,25 @@ const INITIAL_DELETE_ELIGIBILITY: DeleteEligibilityState = {
   reasons: [],
 };
 
-function deletionBlockMessageKey(
+function deletionBlockItems(
   reasons: AccountDeletionBlockReason[],
-): 'profile.account.deleteAccount.blockedBoth'
-  | 'profile.account.deleteAccount.blockedOwner'
-  | 'profile.account.deleteAccount.blockedSender'
-  | 'profile.account.deleteAccount.blockedGeneric' {
-  const hasOwner = reasons.includes('owner_open_listing');
-  const hasSender = reasons.includes('active_offer_or_bid');
-  if (hasOwner && hasSender) {
-    return 'profile.account.deleteAccount.blockedBoth';
+  t: (key: string) => string,
+): string[] {
+  const items: string[] = [];
+  const hasCombinedSender = reasons.includes('active_offer_or_bid');
+  if (reasons.includes('owner_open_listing')) {
+    items.push(t('profile.account.deleteAccount.blockedTrips'));
   }
-  if (hasOwner) {
-    return 'profile.account.deleteAccount.blockedOwner';
+  if (reasons.includes('active_offer') || hasCombinedSender) {
+    items.push(t('profile.account.deleteAccount.blockedOffers'));
   }
-  if (hasSender) {
-    return 'profile.account.deleteAccount.blockedSender';
+  if (reasons.includes('active_bid') || hasCombinedSender) {
+    items.push(t('profile.account.deleteAccount.blockedBids'));
   }
-  return 'profile.account.deleteAccount.blockedGeneric';
+  if (items.length === 0 && reasons.length > 0) {
+    items.push(t('profile.account.deleteAccount.blockedGeneric'));
+  }
+  return items;
 }
 
 type SettingsNav = CompositeNavigationProp<
@@ -112,6 +113,17 @@ export function SettingsHomeScreen(): React.ReactElement {
   );
   const deleteEligibilityRequestId = React.useRef(0);
 
+  const deleteBlockItems = React.useMemo(() => {
+    if (
+      deleteAccountError ||
+      deleteEligibility.status !== 'ready' ||
+      deleteEligibility.canDelete
+    ) {
+      return [];
+    }
+    return deletionBlockItems(deleteEligibility.reasons, t);
+  }, [deleteAccountError, deleteEligibility, t]);
+
   const deleteDialogMessage = React.useMemo(() => {
     if (deleteAccountError) {
       return deleteAccountError;
@@ -125,7 +137,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     if (deleteEligibility.canDelete) {
       return t('profile.account.deleteAccount.confirm');
     }
-    return t(deletionBlockMessageKey(deleteEligibility.reasons));
+    return t('profile.account.deleteAccount.blockedIntro');
   }, [deleteAccountError, deleteEligibility, t]);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
@@ -475,7 +487,18 @@ export function SettingsHomeScreen(): React.ReactElement {
             deleteEligibility.status !== 'ready',
           loading: deletingAccount,
         }}
-      />
+      >
+        {deleteBlockItems.length > 0 ? (
+          <View style={styles.deleteBlockList}>
+            {deleteBlockItems.map((item) => (
+              <View key={item} style={styles.deleteBlockRow}>
+                <AppText style={styles.deleteBlockBullet}>•</AppText>
+                <AppText style={styles.deleteBlockItem}>{item}</AppText>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </AppDialog>
     </View>
   );
 }
@@ -504,6 +527,28 @@ const styles = StyleSheet.create({
   },
   menu: {
     gap: 8,
+  },
+  deleteBlockList: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  deleteBlockRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+  deleteBlockBullet: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.text.secondary,
+  },
+  deleteBlockItem: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.text.secondary,
+    textAlign: 'left',
   },
   footer: {
     alignItems: 'center',

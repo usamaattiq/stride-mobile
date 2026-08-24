@@ -67,7 +67,12 @@ export type BecomeDriverPayload = {
   deviceId: string;
 };
 
-export type AccountDeletionBlockReason = 'owner_open_listing' | 'active_offer_or_bid';
+export type AccountDeletionBlockReason =
+  | 'owner_open_listing'
+  | 'active_offer'
+  | 'active_bid'
+  /** @deprecated older API combined offers and bids */
+  | 'active_offer_or_bid';
 
 export type AccountDeletionEligibility = {
   canDelete: boolean;
