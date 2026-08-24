@@ -954,7 +954,7 @@
       "paymentMethodHint": "Choose how you want to receive payments.",
       "paymentCash": "Cash",
       "paymentOnline": "Bank Transfer",
-      "paymentBoth": "Cash/Bank Transfer",
+      "paymentBoth": "Both",
       "durationLabel": "Listing duration",
       "durationValue": "{{count}} hour(s)",
       "durationMinutesOnly": "{{count}} min",
