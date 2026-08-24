@@ -38,6 +38,11 @@ import { useVehicles } from "../../context/VehicleContext";
 import type { DashboardRootStackParamList } from "../../navigation/dashboardRootTypes";
 import type { Vehicle } from "../../types/vehicle.types";
 import { isTerminalListingStatus } from "../../utils/listingFilters";
+import {
+  AuctionLeadingBidHeader,
+  auctionEndsAtMs,
+  remainingSecondsUntil,
+} from "./AuctionLeadingBidHeader";
 import { fromListVehicle, OfferResponseCard } from "./OfferResponseCard";
 import { OfferVehicleSummaryCard } from "./TripOfferPanel";
 import { TripVehicleSelectStep } from "./TripVehicleSelectStep";
@@ -82,51 +87,6 @@ function formatAmount(amount: number | null | undefined): string {
     return "—";
   }
   return formatPriceAmount(amount);
-}
-
-function formatRemaining(seconds: number, t: TFunction): string {
-  const totalMinutes = Math.max(0, Math.ceil(seconds / 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours > 0) {
-    return t("dashboard.listings.detail.bid.remainingHours", {
-      hours,
-      minutes,
-    });
-  }
-  return t("dashboard.listings.detail.bid.remainingMinutes", { minutes });
-}
-
-function remainingSecondsUntil(
-  endsAtMs: number | null | undefined,
-  now: number,
-): number | null {
-  if (endsAtMs == null || !Number.isFinite(endsAtMs)) {
-    return null;
-  }
-  const remaining = Math.ceil((endsAtMs - now) / 1000);
-  return remaining > 0 ? remaining : null;
-}
-
-function auctionEndsAtMs(
-  snapshot: {
-    remainingSeconds?: number | null;
-    endsAt?: string | null;
-  } | null,
-): number | null {
-  if (!snapshot) {
-    return null;
-  }
-  if (snapshot.endsAt) {
-    const parsed = Date.parse(snapshot.endsAt);
-    if (Number.isFinite(parsed) && parsed > Date.now()) {
-      return parsed;
-    }
-  }
-  if (snapshot.remainingSeconds != null && snapshot.remainingSeconds > 0) {
-    return Date.now() + snapshot.remainingSeconds * 1000;
-  }
-  return null;
 }
 
 function BidComposerBar({
@@ -213,21 +173,6 @@ function BidHeader({
   onMessagePress?: () => void;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const remaining =
-    remainingSeconds != null && remainingSeconds > 0
-      ? formatRemaining(remainingSeconds, t)
-      : null;
-  const endingSoon =
-    remainingSeconds != null &&
-    remainingSeconds > 0 &&
-    remainingSeconds < 60 * 60;
-  const timerLabel = endingSoon
-    ? t("dashboard.listings.card.endingSoon")
-    : remaining;
-  const heading =
-    auctionType === "reverse"
-      ? t("dashboard.listings.detail.bid.titleLowest")
-      : t("dashboard.listings.detail.bid.title");
   const yourBidLabel =
     myBidAmount != null
       ? t("dashboard.listings.detail.bid.yourBid", {
@@ -278,45 +223,24 @@ function BidHeader({
           ) : null}
         </View>
       ) : null}
-      <View style={styles.titleRow}>
-        <AppText weight="bold" style={styles.title}>
-          {heading}
-        </AppText>
-        {timerLabel ? (
-          <View style={[styles.timerChip, endingSoon && styles.timerChipSoon]}>
-            <FontAwesome
-              name="clock-o"
-              size={11}
-              color={
-                endingSoon ? colors.accent.amber.text : colors.accent.green.text
-              }
-            />
-            <AppText
-              weight="semibold"
-              style={[styles.timerText, endingSoon && styles.timerTextSoon]}
-              numberOfLines={1}
-            >
-              {timerLabel}
-            </AppText>
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.priceRow}>
-        <AppText weight="bold" style={styles.highestBidAmount}>
-          {formatAmount(currentAmount)}
-        </AppText>
-        {yourBidLabel ? (
-          <View style={styles.yourBidChip}>
-            <AppText
-              weight="semibold"
-              style={styles.yourBidChipText}
-              numberOfLines={1}
-            >
-              {yourBidLabel}
-            </AppText>
-          </View>
-        ) : null}
-      </View>
+      <AuctionLeadingBidHeader
+        auctionType={auctionType}
+        currentAmount={currentAmount}
+        remainingSeconds={remainingSeconds}
+        trailing={
+          yourBidLabel ? (
+            <View style={styles.yourBidChip}>
+              <AppText
+                weight="semibold"
+                style={styles.yourBidChipText}
+                numberOfLines={1}
+              >
+                {yourBidLabel}
+              </AppText>
+            </View>
+          ) : null
+        }
+      />
     </View>
   );
 }
@@ -1072,11 +996,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
   },
-  title: {
-    flex: 1,
-    fontSize: 18,
-    color: colors.text.primary,
-  },
   headerBlock: {
     gap: spacing.sm,
   },
@@ -1116,43 +1035,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: colors.text.primary,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  timerChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent.green.soft,
-    flexShrink: 0,
-  },
-  timerChipSoon: {
-    backgroundColor: colors.accent.amber.soft,
-  },
-  timerText: {
-    fontSize: 12,
-    color: colors.accent.green.text,
-  },
-  timerTextSoon: {
-    color: colors.accent.amber.text,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
-  highestBidAmount: {
-    flexShrink: 0,
-    fontSize: 22,
-    lineHeight: 28,
-    color: colors.primary,
   },
   yourBidChip: {
     flexShrink: 1,

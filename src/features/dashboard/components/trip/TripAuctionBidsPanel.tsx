@@ -19,6 +19,11 @@ import { colors, radius, spacing } from '@/theme';
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import { isTerminalListingStatus } from '../../utils/listingFilters';
 import { reuseVehicleViewUrls } from '../../utils/reuseMediaViewUrls';
+import {
+  AuctionLeadingBidHeader,
+  auctionEndsAtMs,
+  remainingSecondsUntil,
+} from './AuctionLeadingBidHeader';
 import { OfferResponseCard } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
@@ -123,6 +128,18 @@ export function TripAuctionBidsPanel({
     return () => clearInterval(timer);
   }, [applySnapshot, snapshot?.status, tripId]);
 
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
+  const endsAtMs = auctionEndsAtMs(snapshot);
+  const liveRemaining = remainingSecondsUntil(endsAtMs, nowMs);
+
+  React.useEffect(() => {
+    if (endsAtMs == null || endsAtMs <= Date.now()) {
+      return undefined;
+    }
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [endsAtMs]);
+
   const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);
     setError(null);
@@ -163,24 +180,11 @@ export function TripAuctionBidsPanel({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerCopy}>
-        <View style={styles.titleRow}>
-          <AppText weight="bold" style={styles.headerTitle}>
-            {t('dashboard.listings.detail.auctionBids.title')}
-          </AppText>
-        </View>
-        <View style={styles.highestBidChip}>
-          <AppText weight="semibold" style={styles.headerMeta}>
-            {snapshot.auctionType === 'reverse'
-              ? t('dashboard.listings.detail.bid.lowestBid', {
-                  amount: formatPriceAmount(snapshot.currentAmount),
-                })
-              : t('dashboard.listings.detail.bid.highestBid', {
-                  amount: formatPriceAmount(snapshot.currentAmount),
-                })}
-          </AppText>
-        </View>
-      </View>
+      <AuctionLeadingBidHeader
+        auctionType={snapshot.auctionType}
+        currentAmount={snapshot.currentAmount}
+        remainingSeconds={liveRemaining}
+      />
 
       {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
@@ -290,33 +294,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
-  },
-  headerCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    color: colors.text.primary,
-  },
-  highestBidChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1,
-    borderColor: colors.primaryMuted,
-  },
-  headerMeta: {
-    fontSize: 16,
-    color: colors.primary,
   },
   actionsRow: {
     flexDirection: 'row',
