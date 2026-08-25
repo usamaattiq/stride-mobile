@@ -615,7 +615,8 @@
     },
     "verification": {
       "verified": "متحقق",
-      "notVerified": "غير متحقق"
+      "notVerified": "غير متحقق",
+      "pendingApproval": "بانتظار الموافقة"
     },
     "sections": {
       "account": "الملف الشخصي",
@@ -1110,6 +1111,7 @@
     "users": {
       "title": "المستخدمون",
       "subtitle": "مراجعة الركاب والسائقين",
+      "searchPlaceholder": "البحث بالاسم أو رقم الهاتف",
       "passengers": "الركاب",
       "drivers": "السائقون",
       "empty": "لا يوجد مستخدمون",

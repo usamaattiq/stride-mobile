@@ -39,13 +39,34 @@ export function DriverVerificationScreen(): React.ReactElement {
     useDashboardSession();
   const profile = useProfileStore((state) => state.profile);
 
-  const [licenseNumber, setLicenseNumber] = React.useState('');
-  const [frontUri, setFrontUri] = React.useState<string | null>(null);
-  const [backUri, setBackUri] = React.useState<string | null>(null);
+  const [licenseNumber, setLicenseNumber] = React.useState(
+    () => profile?.driverLicenseNumber?.trim() ?? '',
+  );
+  const [frontUri, setFrontUri] = React.useState<string | null>(
+    () => profile?.driverLicenseFrontViewUrl ?? profile?.driverLicenseFrontUrl ?? null,
+  );
+  const [backUri, setBackUri] = React.useState<string | null>(
+    () => profile?.driverLicenseBackViewUrl ?? profile?.driverLicenseBackUrl ?? null,
+  );
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [successKind, setSuccessKind] = React.useState<SuccessKind | null>(null);
   const [skipConfirmVisible, setSkipConfirmVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    setLicenseNumber(profile?.driverLicenseNumber?.trim() ?? '');
+    setFrontUri(profile?.driverLicenseFrontViewUrl ?? profile?.driverLicenseFrontUrl ?? null);
+    setBackUri(profile?.driverLicenseBackViewUrl ?? profile?.driverLicenseBackUrl ?? null);
+  }, [
+    profile?.driverLicenseNumber,
+    profile?.driverLicenseFrontUrl,
+    profile?.driverLicenseFrontViewUrl,
+    profile?.driverLicenseBackUrl,
+    profile?.driverLicenseBackViewUrl,
+  ]);
+
+  const licenseStatus = profile?.licenseStatus ?? 'not_submitted';
+  const isReadOnly = licenseStatus === 'pending' || licenseStatus === 'approved';
 
   const runAction = async (kind: SuccessKind, action: () => Promise<void>) => {
     if (submitting) {
@@ -84,7 +105,7 @@ export function DriverVerificationScreen(): React.ReactElement {
   };
 
   const handleSubmit = () => {
-    if (!frontUri || !backUri) {
+    if (!frontUri || !backUri || isReadOnly) {
       return;
     }
 
@@ -170,10 +191,11 @@ export function DriverVerificationScreen(): React.ReactElement {
               setSubmitError(null);
             }}
             onSubmit={handleSubmit}
-            onSkip={isCompleteFlow ? undefined : handleSkipPress}
+            onSkip={isCompleteFlow || isReadOnly ? undefined : handleSkipPress}
             keyboardType="default"
             loading={submitting}
             errorMessage={submitError}
+            readOnly={isReadOnly}
           />
         </AuthCard>
       </AuthScaffold>

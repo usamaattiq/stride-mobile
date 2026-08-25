@@ -64,9 +64,11 @@ export function NicVerificationScreen(): React.ReactElement {
       (profile?.nicFrontViewUrl ?? profile?.nicFrontUrl) &&
       (profile?.nicBackViewUrl ?? profile?.nicBackUrl),
   );
+  const nicStatus = profile?.nicStatus ?? 'not_submitted';
+  const isReadOnly = nicStatus === 'pending' || nicStatus === 'approved';
 
   const handleSubmit = async () => {
-    if (!frontUri || !backUri || submitting) {
+    if (!frontUri || !backUri || submitting || isReadOnly) {
       return;
     }
 
@@ -158,6 +160,7 @@ export function NicVerificationScreen(): React.ReactElement {
             }}
             loading={submitting}
             errorMessage={submitError}
+            readOnly={isReadOnly}
           />
         </AuthCard>
       </AuthScaffold>

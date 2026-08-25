@@ -138,11 +138,17 @@ export const adminApi = {
     return apiRequest<{ loggedOut: true }>({ method: 'POST', url: '/admin/auth/logout' });
   },
 
-  listUsers(role: 'passenger' | 'driver', filter: AdminUserFilter, page = 1) {
+  listUsers(role: 'passenger' | 'driver', filter: AdminUserFilter, search?: string, page = 1) {
     return apiRequest<{ items: AdminUserSummary[]; total: number }>({
       method: 'GET',
       url: '/admin/users',
-      params: { role, filter, page, limit: 50 },
+      params: {
+        role,
+        filter,
+        page,
+        limit: 50,
+        ...(search?.trim() ? { q: search.trim() } : {}),
+      },
     });
   },
 

@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { DashboardSearchBar } from '@/features/dashboard/components/DashboardSearchBar';
 import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmptyState';
 import { SegmentControl } from '@/features/dashboard/components/SegmentControl';
 import { i18n as appI18n } from '@/i18n';
@@ -44,11 +45,18 @@ export function AdminUsersScreen(): React.ReactElement {
   const navigation = useNavigation<NativeStackNavigationProp<AdminRootStackParamList>>();
   const [role, setRole] = React.useState<'passenger' | 'driver'>('passenger');
   const [filter, setFilter] = React.useState<AdminUserFilter>('all');
+  const [query, setQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const { data, loading, errorKey, reload } = useAdminResource({
-    deps: [role, filter],
+    deps: [role, filter, debouncedQuery],
     load: async () => {
-      const result = await adminApi.listUsers(role, filter);
+      const result = await adminApi.listUsers(role, filter, debouncedQuery || undefined);
       return result.items;
     },
   });
@@ -77,10 +85,11 @@ export function AdminUsersScreen(): React.ReactElement {
     ({ item }) => (
       <AdminUserCard
         user={item}
+        listRole={role}
         onPress={() => navigation.navigate('UserDetail', { userId: item.id })}
       />
     ),
-    [navigation],
+    [navigation, role],
   );
 
   const listEmpty = loading ? (
@@ -108,6 +117,11 @@ export function AdminUsersScreen(): React.ReactElement {
       }
     >
       <View style={styles.filters}>
+        <DashboardSearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t('admin.users.searchPlaceholder')}
+        />
         <FilterChips active={filter} onChange={setFilter} options={filterOptions} />
         {errorKey ? <AppText style={styles.error}>{t(errorKey)}</AppText> : null}
       </View>

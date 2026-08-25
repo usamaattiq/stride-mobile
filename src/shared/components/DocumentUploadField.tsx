@@ -24,6 +24,8 @@ export type DocumentUploadFieldProps = {
   changeHint?: string;
   /** Accessibility label for the clear/remove control. */
   removeAccessibilityLabel?: string;
+  /** When true, shows the current image without upload/remove actions. */
+  readOnly?: boolean;
 };
 
 export function DocumentUploadField({
@@ -36,6 +38,7 @@ export function DocumentUploadField({
   hint = 'Tap to upload image',
   changeHint = 'Tap to change',
   removeAccessibilityLabel = 'Remove',
+  readOnly = false,
 }: DocumentUploadFieldProps): React.ReactElement {
   const pickImage = async () => {
     // If the document-number field was still focused, its keyboard stays up
@@ -80,53 +83,67 @@ export function DocumentUploadField({
           </AppText>
         ) : null}
       </AppText>
-      <View style={[styles.box, tile && styles.boxTile]}>
-        <Pressable
-          onPress={pickImage}
-          style={styles.boxPress}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-        >
-          {uri ? (
-            <>
-              <Image source={{ uri }} style={styles.preview} contentFit="cover" />
-              <View style={[styles.editBadge, tile && styles.editBadgeTile]}>
-                <FontAwesome name="pencil" size={tile ? 10 : 12} color={colors.white} />
-                {tile ? null : (
-                  <AppText weight="medium" style={styles.editBadgeText}>
-                    {changeHint}
-                  </AppText>
-                )}
-              </View>
-            </>
+      <View style={[styles.box, tile && styles.boxTile, readOnly && styles.boxReadOnly]}>
+        {readOnly ? (
+          uri ? (
+            <Image source={{ uri }} style={styles.preview} contentFit="cover" />
           ) : (
             <View style={[styles.empty, tile && styles.emptyTile]}>
-              <FontAwesome
-                name="cloud-upload"
-                size={tile ? 18 : 22}
-                color={colors.primary}
-              />
-              <AppText
-                style={[styles.hint, tile && styles.hintTile]}
-                numberOfLines={tile ? 2 : undefined}
-              >
+              <AppText style={[styles.hint, tile && styles.hintTile]} numberOfLines={tile ? 2 : undefined}>
                 {hint}
               </AppText>
             </View>
-          )}
-        </Pressable>
+          )
+        ) : (
+          <>
+            <Pressable
+              onPress={pickImage}
+              style={styles.boxPress}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+            >
+              {uri ? (
+                <>
+                  <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+                  <View style={[styles.editBadge, tile && styles.editBadgeTile]}>
+                    <FontAwesome name="pencil" size={tile ? 10 : 12} color={colors.white} />
+                    {tile ? null : (
+                      <AppText weight="medium" style={styles.editBadgeText}>
+                        {changeHint}
+                      </AppText>
+                    )}
+                  </View>
+                </>
+              ) : (
+                <View style={[styles.empty, tile && styles.emptyTile]}>
+                  <FontAwesome
+                    name="cloud-upload"
+                    size={tile ? 18 : 22}
+                    color={colors.primary}
+                  />
+                  <AppText
+                    style={[styles.hint, tile && styles.hintTile]}
+                    numberOfLines={tile ? 2 : undefined}
+                  >
+                    {hint}
+                  </AppText>
+                </View>
+              )}
+            </Pressable>
 
-        {uri ? (
-          <Pressable
-            onPress={() => onChange(null)}
-            style={[styles.removeBadge, tile && styles.removeBadgeTile]}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={removeAccessibilityLabel}
-          >
-            <FontAwesome name="times" size={tile ? 10 : 12} color={colors.white} />
-          </Pressable>
-        ) : null}
+            {uri ? (
+              <Pressable
+                onPress={() => onChange(null)}
+                style={[styles.removeBadge, tile && styles.removeBadgeTile]}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={removeAccessibilityLabel}
+              >
+                <FontAwesome name="times" size={tile ? 10 : 12} color={colors.white} />
+              </Pressable>
+            ) : null}
+          </>
+        )}
       </View>
     </View>
   );
@@ -172,6 +189,10 @@ const styles = StyleSheet.create({
     height: undefined,
     width: '100%',
     aspectRatio: 1,
+  },
+  boxReadOnly: {
+    borderStyle: 'solid',
+    backgroundColor: colors.white,
   },
   boxPress: {
     ...StyleSheet.absoluteFillObject,

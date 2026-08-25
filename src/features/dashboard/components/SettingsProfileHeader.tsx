@@ -13,6 +13,8 @@ type SettingsProfileHeaderProps = {
   user: DashboardSessionUser;
   /** Driver identity is complete only when NIC + license are both done. */
   isIdentityComplete: boolean;
+  /** Shown when identity is incomplete and documents are awaiting admin review. */
+  isPendingApproval?: boolean;
   topInset: number;
   /** When set, shown instead of the default passenger/driver role label. */
   roleLabel?: string;
@@ -27,6 +29,7 @@ function roleLabelKey(role: AppRole): string {
 export function SettingsProfileHeader({
   user,
   isIdentityComplete,
+  isPendingApproval = false,
   topInset,
   roleLabel,
   onVerifyPress,
@@ -67,19 +70,28 @@ export function SettingsProfileHeader({
 
           {!isIdentityComplete ? (
             <Pressable
-              style={styles.unverifiedButton}
+              style={isPendingApproval ? styles.pendingButton : styles.unverifiedButton}
               accessibilityRole="button"
-              accessibilityLabel={t('profile.verification.notVerified')}
+              accessibilityLabel={
+                isPendingApproval
+                  ? t('profile.verification.pendingApproval')
+                  : t('profile.verification.notVerified')
+              }
               onPress={onVerifyPress}
               hitSlop={8}
             >
               <FontAwesome
-                name="exclamation-circle"
+                name={isPendingApproval ? 'clock-o' : 'exclamation-circle'}
                 size={13}
-                color={colors.primary}
+                color={isPendingApproval ? colors.accent.blue.text : colors.primary}
               />
-              <AppText weight="semibold" style={styles.unverifiedLabel}>
-                {t('profile.verification.notVerified')}
+              <AppText
+                weight="semibold"
+                style={isPendingApproval ? styles.pendingLabel : styles.unverifiedLabel}
+              >
+                {isPendingApproval
+                  ? t('profile.verification.pendingApproval')
+                  : t('profile.verification.notVerified')}
               </AppText>
             </Pressable>
           ) : null}
@@ -171,9 +183,24 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.primarySoft,
   },
+  pendingButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.blue.soft,
+  },
   unverifiedLabel: {
     fontSize: 12,
     color: colors.primary,
+  },
+  pendingLabel: {
+    fontSize: 12,
+    color: colors.accent.blue.text,
   },
   logoutButton: {
     width: 34,

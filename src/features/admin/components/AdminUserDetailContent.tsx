@@ -236,7 +236,7 @@ export function AdminUserDetailContent({
     (url): url is string => Boolean(url),
   );
 
-  const showNic = user.role !== 'driver' || user.documents.nicSubmitted;
+  const showNic = true;
   const showLicense = isDriver;
 
   const openWhatsApp = () => {

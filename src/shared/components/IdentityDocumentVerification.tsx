@@ -42,6 +42,8 @@ export type IdentityDocumentVerificationProps = {
   keyboardType?: KeyboardTypeOptions;
   loading?: boolean;
   errorMessage?: string | null;
+  /** When true, shows submitted values without edit or submit actions. */
+  readOnly?: boolean;
 };
 
 const GRID_GAP = spacing.sm;
@@ -71,6 +73,7 @@ export function IdentityDocumentVerification({
   keyboardType = 'default',
   loading = false,
   errorMessage = null,
+  readOnly = false,
 }: IdentityDocumentVerificationProps): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const accessoryId = React.useId();
@@ -96,7 +99,7 @@ export function IdentityDocumentVerification({
       <View style={styles.field}>
         <AppText weight="bold" style={styles.label}>
           {documentNumberLabel}
-          <AppText style={styles.required}> *</AppText>
+          {!readOnly ? <AppText style={styles.required}> *</AppText> : null}
         </AppText>
         <TextInput
           value={displayValue}
@@ -104,10 +107,15 @@ export function IdentityDocumentVerification({
           placeholder={documentNumberPlaceholder}
           placeholderTextColor={colors.text.tertiary}
           keyboardType={keyboardType}
-          inputAccessoryViewID={showDoneBar ? accessoryId : undefined}
-          style={[styles.input, { fontFamily: inputFontFamily }]}
+          inputAccessoryViewID={showDoneBar && !readOnly ? accessoryId : undefined}
+          editable={!readOnly}
+          style={[
+            styles.input,
+            readOnly && styles.inputReadOnly,
+            { fontFamily: inputFontFamily },
+          ]}
         />
-        {showDoneBar ? (
+        {showDoneBar && !readOnly ? (
           <KeyboardDoneBar nativeID={accessoryId} disabled={!canSubmit} onDone={onSubmit} />
         ) : null}
       </View>
@@ -116,25 +124,27 @@ export function IdentityDocumentVerification({
         <View style={styles.tileCol}>
           <DocumentUploadField
             label={frontLabel}
-            required
+            required={!readOnly}
             dense
             tile
             uri={frontUri}
             onChange={onChangeFront}
             hint={uploadHint}
             changeHint={changeHint}
+            readOnly={readOnly}
           />
         </View>
         <View style={styles.tileCol}>
           <DocumentUploadField
             label={backLabel}
-            required
+            required={!readOnly}
             dense
             tile
             uri={backUri}
             onChange={onChangeBack}
             hint={uploadHint}
             changeHint={changeHint}
+            readOnly={readOnly}
           />
         </View>
       </View>
@@ -143,28 +153,32 @@ export function IdentityDocumentVerification({
         <AppText style={styles.errorText}>{errorMessage}</AppText>
       ) : null}
 
-      <Button
-        label={submitLabel}
-        onPress={onSubmit}
-        disabled={!canSubmit}
-        loading={loading}
-      />
+      {!readOnly ? (
+        <>
+          <Button
+            label={submitLabel}
+            onPress={onSubmit}
+            disabled={!canSubmit}
+            loading={loading}
+          />
 
-      {onSkip && skipLabel ? (
-        <Pressable
-          onPress={onSkip}
-          style={styles.skip}
-          hitSlop={8}
-          disabled={loading}
-          accessibilityState={{ disabled: loading }}
-        >
-          <AppText
-            weight="semibold"
-            style={[styles.skipText, loading && styles.skipTextDisabled]}
-          >
-            {skipLabel}
-          </AppText>
-        </Pressable>
+          {onSkip && skipLabel ? (
+            <Pressable
+              onPress={onSkip}
+              style={styles.skip}
+              hitSlop={8}
+              disabled={loading}
+              accessibilityState={{ disabled: loading }}
+            >
+              <AppText
+                weight="semibold"
+                style={[styles.skipText, loading && styles.skipTextDisabled]}
+              >
+                {skipLabel}
+              </AppText>
+            </Pressable>
+          ) : null}
+        </>
       ) : null}
     </View>
   );
@@ -195,6 +209,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     fontSize: 13,
     color: colors.text.primary,
+  },
+  inputReadOnly: {
+    backgroundColor: colors.background.subtle,
+    color: colors.text.secondary,
   },
   imagesRow: {
     flexDirection: 'row',

@@ -615,7 +615,8 @@
     },
     "verification": {
       "verified": "Verified",
-      "notVerified": "Not verified"
+      "notVerified": "Not verified",
+      "pendingApproval": "Waiting for approval"
     },
     "sections": {
       "account": "Profile",
@@ -1110,6 +1111,7 @@
     "users": {
       "title": "Users",
       "subtitle": "Review passengers and drivers",
+      "searchPlaceholder": "Search by name or phone",
       "passengers": "Passengers",
       "drivers": "Drivers",
       "empty": "No users found",

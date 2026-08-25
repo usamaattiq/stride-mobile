@@ -14,6 +14,8 @@ import type { IdentityDocumentStatus } from '@/services/api/adminApi';
 
 type AdminUserCardProps = {
   user: AdminUserSummary;
+  /** Which admin list tab is active — controls which document badge is shown. */
+  listRole: 'passenger' | 'driver';
   onPress: () => void;
 };
 
@@ -46,7 +48,7 @@ function initialsForName(fullName: string): string {
     .toUpperCase();
 }
 
-export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.ReactElement {
+export function AdminUserCard({ user, listRole, onPress }: AdminUserCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
   const avatarUrl = user.avatarViewUrl?.trim() || null;
@@ -68,7 +70,7 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
         >
           <View style={styles.topRow}>
             <View style={styles.topBadges}>
-              {user.role !== 'driver' || user.documents.nicSubmitted ? (
+              {listRole === 'passenger' ? (
                 <View
                   style={[
                     styles.badge,
@@ -91,9 +93,7 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
                     {`${t('admin.users.nic')} · ${docStatusLabel(user.documents.nicStatus, t)}`}
                   </AppText>
                 </View>
-              ) : null}
-
-              {user.role === 'driver' ? (
+              ) : (
                 <View
                   style={[
                     styles.badge,
@@ -116,7 +116,7 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
                     {`${t('admin.users.license')} · ${docStatusLabel(user.documents.licenseStatus, t)}`}
                   </AppText>
                 </View>
-              ) : null}
+              )}
             </View>
 
             <View style={styles.creditsBadge}>

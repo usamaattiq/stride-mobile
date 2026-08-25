@@ -164,6 +164,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     switchToPassenger,
     resetSession,
   } = useDashboardSession();
+  const profile = useProfileStore((state) => state.profile);
   const { resetDraft } = useSignupDraftStore();
   const sessionKind = useAuthStore((state) => state.sessionKind);
   const adminProfile = useAdminStore((state) => state.profile);
@@ -250,6 +251,21 @@ export function SettingsHomeScreen(): React.ReactElement {
     : user.role === 'driver'
       ? user.isVerified && hasDriverVerification
       : user.isVerified;
+
+  const isPendingApproval = React.useMemo(() => {
+    if (isAdmin || isIdentityComplete || !profile) {
+      return false;
+    }
+
+    const nicPending = profile.nicStatus === 'pending';
+    const licensePending = profile.licenseStatus === 'pending';
+
+    if (user.role === 'driver') {
+      return nicPending || licensePending;
+    }
+
+    return nicPending;
+  }, [isAdmin, isIdentityComplete, profile, user.role]);
 
   const handleVerifyPress = () => {
     if (user.role === 'driver') {
@@ -476,6 +492,7 @@ export function SettingsHomeScreen(): React.ReactElement {
       <SettingsProfileHeader
         user={displayUser}
         isIdentityComplete={isIdentityComplete}
+        isPendingApproval={isPendingApproval}
         roleLabel={isAdmin ? t('admin.settings.role') : undefined}
         topInset={insets.top}
         onVerifyPress={isAdmin ? undefined : handleVerifyPress}
