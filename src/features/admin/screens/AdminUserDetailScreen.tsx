@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -112,44 +113,60 @@ export function AdminUserDetailScreen(): React.ReactElement {
           }
           icon={user.role === 'driver' ? 'car' : 'user'}
           name={user.fullName}
+          avatarUrl={user.avatarViewUrl}
           phone={user.phoneE164}
           message={t('admin.users.whatsappMessage', { name: user.fullName })}
         />
 
-        <AppText style={styles.meta}>{user.email ?? t('admin.users.noEmail')}</AppText>
-        <AppText style={styles.meta}>{user.address ?? t('admin.users.noAddress')}</AppText>
-        <AppText style={styles.meta}>
-          {t('admin.users.roleCredits', {
-            role: user.role,
-            credits: user.credits,
-            status: user.status,
-          })}
-        </AppText>
-        <AppText style={styles.meta}>
-          {user.documents.nicVerified
-            ? t('admin.users.verified')
-            : t('admin.users.notVerified')}
-          {user.nicNumber ? ` · ${t('admin.users.nic')} ${user.nicNumber}` : ''}
-        </AppText>
+        {user.email?.trim() ? (
+          <View style={styles.metaRow}>
+            <FontAwesome name="envelope" size={12} color={colors.primary} />
+            <AppText style={styles.meta}>{user.email.trim()}</AppText>
+          </View>
+        ) : null}
+        {user.address?.trim() ? (
+          <View style={styles.metaRow}>
+            <FontAwesome name="map-marker" size={12} color={colors.primary} />
+            <AppText style={styles.meta}>{user.address.trim()}</AppText>
+          </View>
+        ) : null}
+        <View style={styles.metaRow}>
+          <FontAwesome name="star" size={12} color={colors.primary} />
+          <AppText style={styles.meta}>
+            {t('admin.users.roleCredits', {
+              role: user.role,
+              credits: user.credits,
+              status: user.status,
+            })}
+          </AppText>
+        </View>
+        {user.role !== 'driver' || user.documents.nicVerified ? (
+          <>
+            <AppText style={styles.meta}>
+              {`${user.documents.nicVerified ? t('admin.users.verified') : t('admin.users.notVerified')}${
+                user.nicNumber ? ` · ${t('admin.users.nic')} ${user.nicNumber}` : ''
+              }`}
+            </AppText>
 
-        <OfferPhotosStrip
-          label={t('admin.users.nic')}
-          photos={
-            nicPhotos.length
-              ? { photoUrls: nicPhotos, photoDisplayUris: nicPhotos }
-              : null
-          }
-        />
+            <OfferPhotosStrip
+              label={t('admin.users.nic')}
+              photos={
+                nicPhotos.length
+                  ? { photoUrls: nicPhotos, photoDisplayUris: nicPhotos }
+                  : null
+              }
+            />
+          </>
+        ) : null}
 
         {user.role === 'driver' ? (
           <>
             <AppText style={styles.meta}>
-              {user.documents.licenseVerified
-                ? t('admin.users.verified')
-                : t('admin.users.notVerified')}
-              {user.driverLicenseNumber
-                ? ` · ${t('admin.users.license')} ${user.driverLicenseNumber}`
-                : ''}
+              {`${user.documents.licenseVerified ? t('admin.users.verified') : t('admin.users.notVerified')}${
+                user.driverLicenseNumber
+                  ? ` · ${t('admin.users.license')} ${user.driverLicenseNumber}`
+                  : ''
+              }`}
             </AppText>
             <OfferPhotosStrip
               label={t('admin.users.license')}
@@ -171,7 +188,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xl,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   meta: {
+    flex: 1,
     color: colors.text.secondary,
   },
   centered: {

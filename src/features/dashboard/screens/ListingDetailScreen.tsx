@@ -572,6 +572,11 @@ export function ListingDetailScreen(): React.ReactElement {
       vehicle: vehicleTitle,
       mode: modeLabel,
     });
+  const adminTripWinner = adminTrip
+    ? adminTrip.isPassengerRequest
+      ? adminTrip.driver
+      : adminTrip.winningPassenger
+    : null;
 
   const tabs: Array<{ id: DetailTab; label: string }> = [
     { id: "overview", label: t("dashboard.listings.detail.tabs.overview") },
@@ -704,28 +709,50 @@ export function ListingDetailScreen(): React.ReactElement {
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
-            {isAdminViewer ? (
+            {isAdminViewer && adminTrip ? (
               <View style={styles.adminContacts}>
                 <WhatsAppContactCard
-                  title={t("admin.trips.driver")}
-                  icon="car"
-                  name={adminTrip?.driver?.fullName ?? null}
-                  phone={adminTrip?.driver?.phoneE164}
-                  message={t("admin.trips.whatsappDriver", {
-                    ref: trip.referenceCode ?? trip.id,
-                  })}
+                  title={
+                    adminTrip.isPassengerRequest
+                      ? t('admin.trips.passenger')
+                      : t('admin.trips.driver')
+                  }
+                  icon={adminTrip.isPassengerRequest ? 'user' : 'car'}
+                  name={adminTrip.owner.fullName}
+                  avatarUrl={adminTrip.owner.avatarViewUrl}
+                  phone={adminTrip.owner.phoneE164}
+                  message={t(
+                    adminTrip.isPassengerRequest
+                      ? 'admin.trips.whatsappPassenger'
+                      : 'admin.trips.whatsappDriver',
+                    {
+                      ref: trip.referenceCode ?? trip.id,
+                    },
+                  )}
                 />
-                <WhatsAppContactCard
-                  title={t("admin.trips.winningPassenger")}
-                  icon="user"
-                  name={adminTrip?.winningPassenger?.fullName ?? null}
-                  phone={adminTrip?.winningPassenger?.phoneE164}
-                  message={t("admin.trips.whatsappPassenger", {
-                    ref: trip.referenceCode ?? trip.id,
-                  })}
-                />
+                {adminTripWinner ? (
+                  <WhatsAppContactCard
+                    title={
+                      adminTrip.isPassengerRequest
+                        ? t('admin.trips.winningDriver')
+                        : t('admin.trips.winningPassenger')
+                    }
+                    icon={adminTrip.isPassengerRequest ? 'car' : 'user'}
+                    name={adminTripWinner.fullName}
+                    avatarUrl={adminTripWinner.avatarViewUrl}
+                    phone={adminTripWinner.phoneE164}
+                    message={t(
+                      adminTrip.isPassengerRequest
+                        ? 'admin.trips.whatsappDriver'
+                        : 'admin.trips.whatsappPassenger',
+                      {
+                        ref: trip.referenceCode ?? trip.id,
+                      },
+                    )}
+                  />
+                ) : null}
               </View>
-            ) : trip.listingType === "auction" ? (
+            ) : isAdminViewer ? null : trip.listingType === 'auction' ? (
               <TripBidPanel
                 ref={bidPanelRef}
                 tripId={trip.id}

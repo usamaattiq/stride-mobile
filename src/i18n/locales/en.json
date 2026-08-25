@@ -1130,8 +1130,10 @@
       "payment": "Payment: {{method}}",
       "startingPrice": "Starting price: {{price}}",
       "noDescription": "No description",
+      "passenger": "Passenger",
       "driver": "Driver",
-      "winningPassenger": "Winning Passenger",
+      "winningDriver": "Winning driver",
+      "winningPassenger": "Winning passenger",
       "whatsappDriver": "Hi, regarding trip {{ref}} (driver).",
       "whatsappPassenger": "Hi, regarding trip {{ref}} (passenger)."
     },

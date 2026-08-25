@@ -95,15 +95,18 @@ export function mapAdminTripSummaryToTrip(trip: AdminTripSummary): Trip {
       ? (trip.status as AuctionStatusValue)
       : null;
 
+  const vehiclePhotoViewUrls = trip.vehiclePhotoViewUrls ?? [];
+  const vehiclePhotoViewUrl = trip.vehiclePhotoViewUrl ?? vehiclePhotoViewUrls[0] ?? null;
+
   return {
     id: trip.id,
     vehicleId: trip.isPassengerRequest ? null : trip.id,
     vehicleTitle: null,
-    vehiclePhotoUrl: null,
-    vehiclePhotoUrls: [],
-    vehiclePhotoCount: 0,
-    vehicleClass: trip.isPassengerRequest ? 'sedan' : null,
-    vehicleTotalSeats: trip.isPassengerRequest ? 4 : null,
+    vehiclePhotoUrl: vehiclePhotoViewUrl,
+    vehiclePhotoUrls: vehiclePhotoViewUrls,
+    vehiclePhotoCount: vehiclePhotoViewUrls.length || (vehiclePhotoViewUrl ? 1 : 0),
+    vehicleClass: trip.vehicleClass ?? (trip.isPassengerRequest ? 'sedan' : null),
+    vehicleTotalSeats: trip.vehicleTotalSeats ?? (trip.isPassengerRequest ? 4 : null),
     listingVehicle: null,
     routeType: trip.routeType,
     luggage: null,

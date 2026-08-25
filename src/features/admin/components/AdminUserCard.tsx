@@ -28,6 +28,7 @@ function initialsForName(fullName: string): string {
 export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
+  const avatarUrl = user.avatarViewUrl?.trim() || null;
 
   return (
     <View style={styles.shadowGutter}>
@@ -46,31 +47,38 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
         >
           <View style={styles.topRow}>
             <View style={styles.topBadges}>
-              <View
-                style={[
-                  styles.badge,
-                  user.documents.nicVerified ? styles.badgeGreen : styles.badgeAmber,
-                ]}
-              >
-                <FontAwesome
-                  name={user.documents.nicVerified ? 'check' : 'exclamation-circle'}
-                  size={9}
-                  color={user.documents.nicVerified ? colors.accent.green.text : colors.accent.amber.text}
-                />
-                <AppText
-                  weight="semibold"
+              {user.role !== 'driver' || user.documents.nicVerified ? (
+                <View
                   style={[
-                    styles.badgeText,
-                    user.documents.nicVerified ? styles.badgeTextGreen : styles.badgeTextAmber,
+                    styles.badge,
+                    user.documents.nicVerified ? styles.badgeGreen : styles.badgeAmber,
                   ]}
-                  numberOfLines={1}
                 >
-                  {t('admin.users.nic')} ·{' '}
-                  {user.documents.nicVerified
-                    ? t('admin.users.verified')
-                    : t('admin.users.notVerified')}
-                </AppText>
-              </View>
+                  <FontAwesome
+                    name={user.documents.nicVerified ? 'check' : 'exclamation-circle'}
+                    size={9}
+                    color={
+                      user.documents.nicVerified
+                        ? colors.accent.green.text
+                        : colors.accent.amber.text
+                    }
+                  />
+                  <AppText
+                    weight="semibold"
+                    style={[
+                      styles.badgeText,
+                      user.documents.nicVerified ? styles.badgeTextGreen : styles.badgeTextAmber,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {`${t('admin.users.nic')} · ${
+                      user.documents.nicVerified
+                        ? t('admin.users.verified')
+                        : t('admin.users.notVerified')
+                    }`}
+                  </AppText>
+                </View>
+              ) : null}
 
               {user.role === 'driver' ? (
                 <View
@@ -98,10 +106,11 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
                     ]}
                     numberOfLines={1}
                   >
-                    {t('admin.users.license')} ·{' '}
-                    {user.documents.licenseVerified
-                      ? t('admin.users.verified')
-                      : t('admin.users.notVerified')}
+                    {`${t('admin.users.license')} · ${
+                      user.documents.licenseVerified
+                        ? t('admin.users.verified')
+                        : t('admin.users.notVerified')
+                    }`}
                   </AppText>
                 </View>
               ) : null}
@@ -116,9 +125,9 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
           </View>
 
           <View style={styles.mainRow}>
-            {user.avatarViewUrl ? (
+            {avatarUrl ? (
               <Image
-                source={{ uri: user.avatarViewUrl }}
+                source={{ uri: avatarUrl }}
                 style={styles.thumbnail}
                 contentFit="cover"
                 cachePolicy="memory-disk"
@@ -136,12 +145,20 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
               <AppText weight="bold" style={styles.name} numberOfLines={1}>
                 {user.fullName}
               </AppText>
-              <AppText style={styles.meta} numberOfLines={1}>
-                {user.phoneE164}
-              </AppText>
-              <AppText style={styles.meta} numberOfLines={1}>
-                {user.email ?? t('admin.users.noEmail')}
-              </AppText>
+              <View style={styles.metaRow}>
+                <FontAwesome name="phone" size={11} color={colors.primary} />
+                <AppText style={styles.meta} numberOfLines={1}>
+                  {user.phoneE164}
+                </AppText>
+              </View>
+              {user.email?.trim() ? (
+                <View style={styles.metaRow}>
+                  <FontAwesome name="envelope" size={11} color={colors.primary} />
+                  <AppText style={styles.meta} numberOfLines={1}>
+                    {user.email.trim()}
+                  </AppText>
+                </View>
+              ) : null}
             </View>
           </View>
         </LinearGradient>
@@ -255,7 +272,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
   meta: {
+    flex: 1,
     fontSize: 13,
     color: colors.text.secondary,
   },

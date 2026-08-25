@@ -40,6 +40,7 @@ export type AdminTripParticipant = {
   fullName: string;
   phoneE164: string;
   role: 'passenger' | 'driver';
+  avatarViewUrl?: string | null;
 };
 
 export type AdminTripSummary = {
@@ -55,6 +56,10 @@ export type AdminTripSummary = {
   owner: AdminTripParticipant;
   isPassengerRequest: boolean;
   publishedAt: string;
+  vehiclePhotoViewUrl?: string | null;
+  vehiclePhotoViewUrls?: string[];
+  vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
+  vehicleTotalSeats?: number | null;
 };
 
 export type AdminTripDetail = AdminTripSummary & {

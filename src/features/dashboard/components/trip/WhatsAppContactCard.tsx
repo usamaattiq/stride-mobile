@@ -1,5 +1,6 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +15,8 @@ export type WhatsAppContactCardProps = {
   /** Header icon — defaults to user. */
   icon?: React.ComponentProps<typeof FontAwesome>['name'];
   name: string | null;
+  /** Profile photo when available. */
+  avatarUrl?: string | null;
   /** When set, WhatsApp is shown. Omit until contact exchange (confirm). */
   phone?: string | null;
   /** Prefill text for WhatsApp. */
@@ -36,6 +39,7 @@ export function WhatsAppContactCard({
   title,
   icon = 'user',
   name,
+  avatarUrl,
   phone,
   message,
   onMessagePress,
@@ -45,6 +49,7 @@ export function WhatsAppContactCard({
   const showWhatsApp = Boolean(phoneValue);
   const displayName = name?.trim() || null;
   const initial = displayInitial(displayName);
+  const avatarUri = avatarUrl?.trim() || null;
 
   const openChat = () => {
     if (!phoneValue) {
@@ -63,11 +68,20 @@ export function WhatsAppContactCard({
       </View>
 
       <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <AppText weight="bold" style={styles.avatarInitial}>
-            {initial}
-          </AppText>
-        </View>
+        {avatarUri ? (
+          <Image
+            source={{ uri: avatarUri }}
+            style={styles.avatarImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        ) : (
+          <View style={styles.avatar}>
+            <AppText weight="bold" style={styles.avatarInitial}>
+              {initial}
+            </AppText>
+          </View>
+        )}
         <View style={styles.copy}>
           <AppText weight="semibold" style={styles.name} numberOfLines={1}>
             {displayName ?? t('dashboard.listings.detail.contact.fallbackName')}
@@ -143,6 +157,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
   },
   avatarInitial: {
     fontSize: 15,

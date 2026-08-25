@@ -1130,7 +1130,9 @@
       "payment": "الدفع: {{method}}",
       "startingPrice": "السعر الابتدائي: {{price}}",
       "noDescription": "لا يوجد وصف",
+      "passenger": "الراكب",
       "driver": "السائق",
+      "winningDriver": "السائق الفائز",
       "winningPassenger": "الراكب الفائز",
       "whatsappDriver": "مرحباً، بخصوص الرحلة {{ref}} (سائق).",
       "whatsappPassenger": "مرحباً، بخصوص الرحلة {{ref}} (راكب)."

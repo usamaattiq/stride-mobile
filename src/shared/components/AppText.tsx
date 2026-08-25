@@ -27,8 +27,11 @@ function renderArabicTextWithLatinDigits(
   }
 
   const digitFont = getFontFamily('en', weight);
-  return parts.map((part, index) =>
-    /^\d+$/.test(part) ? (
+  return parts.map((part, index) => {
+    if (!part) {
+      return null;
+    }
+    return /^\d+$/.test(part) ? (
       <Text
         key={`d-${index}`}
         style={[{ fontFamily: digitFont }, digitStyle]}
@@ -36,9 +39,9 @@ function renderArabicTextWithLatinDigits(
         {part}
       </Text>
     ) : (
-      part
-    ),
-  );
+      <Text key={`t-${index}`}>{part}</Text>
+    );
+  });
 }
 
 function mapArabicChildren(
