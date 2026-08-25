@@ -537,6 +537,7 @@
         },
         "contact": {
           "fallbackName": "جهة اتصال الرحلة",
+          "whatsapp": "واتساب",
           "whatsappHint": "الدردشة عبر واتساب",
           "whatsappA11y": "فتح دردشة واتساب مع {{phone}}",
           "message": "رسالة",
@@ -1033,6 +1034,10 @@
     "skipConfirmConfirm": "تخطي الآن",
     "submitFailed": "تعذر إكمال التحقق من السائق. يرجى المحاولة مرة أخرى.",
     "skipFailed": "تعذر الدخول إلى وضع السائق. يرجى المحاولة مرة أخرى.",
+    "submittedTitle": "تم إرسال الرخصة",
+    "submittedBody": "تم إرسال رخصة القيادة وهي بانتظار موافقة الإدارة.",
+    "submittedBecomeTitle": "أنت سائق الآن",
+    "submittedBecomeBody": "تم إرسال الرخصة للمراجعة. يمكنك تقديم الرحلات بعد الموافقة عليها.",
     "successTitle": "أنت سائق الآن",
     "successBody": "تم حفظ بيانات الرخصة. يمكنك الآن تقديم الرحلات.",
     "skipSuccessBody": "أنت في وضع السائق. يمكنك رفع الرخصة لاحقاً من الإعدادات.",
@@ -1048,15 +1053,25 @@
     "nicBack": "الوجه الخلفي للهوية",
     "uploadHint": "اضغط لرفع صورة",
     "changeHint": "اضغط للتغيير",
-    "cta": "إرسال والتحقق",
+    "cta": "إرسال للمراجعة",
     "saveCta": "حفظ التغييرات",
     "submitFailed": "تعذر إكمال التحقق من الهوية. يرجى المحاولة مرة أخرى.",
+    "submittedTitle": "تم إرسال المستندات",
+    "submittedBody": "تم إرسال بطاقة الهوية وهي بانتظار موافقة الإدارة.",
     "successTitle": "تم التحقق من الهوية",
     "successBody": "تم حفظ مستندات الهوية.",
     "savedTitle": "تم تحديث الهوية",
     "savedBody": "تم حفظ مستندات الهوية بنجاح.",
     "successBodyContinueLicense": "تم حفظ الهوية. بعد ذلك ارفع رخصة القيادة.",
     "continueLicenseCta": "متابعة"
+  },
+  "verificationStatus": {
+    "pendingTitle": "بانتظار الموافقة",
+    "pendingBody": "تم إرسال مستنداتك وهي قيد المراجعة من فريقنا.",
+    "approvedTitle": "موثّق",
+    "approvedBody": "تمت الموافقة على مستنداتك.",
+    "rejectedTitle": "تم رفض المستندات",
+    "rejectedBody": "يرجى مراجعة الملاحظات وإعادة إرسال المستندات."
   },
   "generalInformation": {
     "title": "المعلومات العامة",
@@ -1107,7 +1122,13 @@
       "license": "رخصة القيادة",
       "verified": "موثّق",
       "notVerified": "غير موثّق",
+      "pendingApproval": "بانتظار الموافقة",
+      "rejected": "مرفوض",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "rejectionReason": "السبب",
       "documentNumber": "الرقم",
+      "document": "المستند",
       "noImage": "لا توجد صورة",
       "driverContact": "جهة اتصال السائق",
       "passengerContact": "جهة اتصال الراكب",
@@ -1117,6 +1138,15 @@
         "verified": "موثّق",
         "notVerified": "غير موثّق",
         "documentsSubmitted": "تم إرسال المستندات"
+      },
+      "detail": {
+        "title": "ملف المستخدم",
+        "contactInfo": "معلومات الاتصال",
+        "phone": "الهاتف",
+        "email": "البريد الإلكتروني",
+        "address": "العنوان",
+        "memberSince": "عضو منذ",
+        "documents": "المستندات"
       }
     },
     "trips": {

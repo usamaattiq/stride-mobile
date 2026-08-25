@@ -20,6 +20,10 @@ export type UserProfileDto = {
   driverLicenseFrontViewUrl?: string | null;
   driverLicenseBackUrl: string | null;
   driverLicenseBackViewUrl?: string | null;
+  nicStatus: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  nicRejectionReason?: string | null;
+  licenseStatus: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  licenseRejectionReason?: string | null;
   role: 'passenger' | 'driver';
   biometricEnabled: boolean;
   credits: number;

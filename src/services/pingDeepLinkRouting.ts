@@ -53,9 +53,23 @@ function navigateToNotifications(): void {
   });
 }
 
+function navigateToVerification(document: 'nic' | 'license'): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'MainTabs',
+    params: {
+      screen: 'Settings',
+      params: {
+        screen: document === 'nic' ? 'NicVerification' : 'DriverVerification',
+        params: document === 'license' ? { purpose: 'complete' } : undefined,
+      },
+    },
+    initial: false,
+  });
+}
+
 /**
  * Handles `musafir249://listing/<tripId>`, `musafir249://chat/<tripId>/<conversationId>`,
- * and `musafir249://notifications`.
+ * `musafir249://verification/<nic|license>`, and `musafir249://notifications`.
  */
 export function handlePingDeepLink(url: string): void {
   try {
@@ -76,6 +90,13 @@ export function handlePingDeepLink(url: string): void {
     }
     if (target === 'chat' && tripId) {
       navigateToListing(tripId, segments[2]);
+      return;
+    }
+    if (target === 'verification') {
+      const document = segments[1];
+      if (document === 'nic' || document === 'license') {
+        navigateToVerification(document);
+      }
       return;
     }
     if (target === 'notifications') {

@@ -537,6 +537,7 @@
         },
         "contact": {
           "fallbackName": "Trip contact",
+          "whatsapp": "WhatsApp",
           "whatsappHint": "Chat on WhatsApp",
           "whatsappA11y": "Open WhatsApp chat with {{phone}}",
           "message": "Message",
@@ -1033,6 +1034,10 @@
     "skipConfirmConfirm": "Skip for now",
     "submitFailed": "Couldn't complete driver verification. Please try again.",
     "skipFailed": "Couldn't enter driver mode. Please try again.",
+    "submittedTitle": "License submitted",
+    "submittedBody": "Your driving license was submitted and is waiting for admin approval.",
+    "submittedBecomeTitle": "You're a driver",
+    "submittedBecomeBody": "Your license was submitted for review. You can offer rides once it is approved.",
     "successTitle": "You're a driver",
     "successBody": "Your license details were saved. You can now offer rides.",
     "skipSuccessBody": "You're in driver mode. You can upload your license later from Settings.",
@@ -1048,15 +1053,25 @@
     "nicBack": "NIC back side",
     "uploadHint": "Tap to upload image",
     "changeHint": "Tap to change",
-    "cta": "Submit & verify",
+    "cta": "Submit for review",
     "saveCta": "Save changes",
     "submitFailed": "Couldn't complete NIC verification. Please try again.",
+    "submittedTitle": "Documents submitted",
+    "submittedBody": "Your NIC was submitted and is waiting for admin approval.",
     "successTitle": "NIC verified",
     "successBody": "Your identity documents were saved.",
     "savedTitle": "NIC updated",
     "savedBody": "Your NIC documents were saved successfully.",
     "successBodyContinueLicense": "NIC saved. Next, upload your driving license.",
     "continueLicenseCta": "Continue"
+  },
+  "verificationStatus": {
+    "pendingTitle": "Waiting for approval",
+    "pendingBody": "Your documents were submitted and are being reviewed by our team.",
+    "approvedTitle": "Verified",
+    "approvedBody": "Your documents have been approved.",
+    "rejectedTitle": "Documents rejected",
+    "rejectedBody": "Please review the feedback and submit your documents again."
   },
   "generalInformation": {
     "title": "General information",
@@ -1107,7 +1122,13 @@
       "license": "Driving License",
       "verified": "Verified",
       "notVerified": "Not verified",
+      "pendingApproval": "Waiting for approval",
+      "rejected": "Rejected",
+      "approve": "Approve",
+      "reject": "Reject",
+      "rejectionReason": "Reason",
       "documentNumber": "Number",
+      "document": "Document",
       "noImage": "No image",
       "driverContact": "Driver contact",
       "passengerContact": "Passenger contact",
@@ -1117,6 +1138,15 @@
         "verified": "Verified",
         "notVerified": "Not verified",
         "documentsSubmitted": "Documents submitted"
+      },
+      "detail": {
+        "title": "User profile",
+        "contactInfo": "Contact information",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "memberSince": "Member since",
+        "documents": "Documents"
       }
     },
     "trips": {

@@ -9,11 +9,13 @@ import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
+import { DocumentReviewStatusBanner } from '@/shared/components/DocumentReviewStatusBanner';
 import { IdentityDocumentVerification } from '@/shared/components/IdentityDocumentVerification';
 import {
   isRemoteMediaUrl,
   uploadLocalFileToPresignedUrl,
 } from '@/shared/services/mediaUploadService';
+import { useProfileStore } from '@/store/profileStore';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
 import type { SettingsStackParamList } from '../navigation/settingsTypes';
@@ -35,6 +37,7 @@ export function DriverVerificationScreen(): React.ReactElement {
 
   const { becomeDriver, switchToDriver, submitLicenseVerification } =
     useDashboardSession();
+  const profile = useProfileStore((state) => state.profile);
 
   const [licenseNumber, setLicenseNumber] = React.useState('');
   const [frontUri, setFrontUri] = React.useState<string | null>(null);
@@ -117,8 +120,8 @@ export function DriverVerificationScreen(): React.ReactElement {
     successKind === 'skipped'
       ? t('driverVerification.skipSuccessBody')
       : successKind === 'completed'
-        ? t('driverVerification.completeSuccessBody')
-        : t('driverVerification.successBody');
+        ? t('driverVerification.submittedBody')
+        : t('driverVerification.submittedBecomeBody');
 
   return (
     <>
@@ -134,6 +137,10 @@ export function DriverVerificationScreen(): React.ReactElement {
         showLanguageSwitcher={false}
       >
         <AuthCard>
+          <DocumentReviewStatusBanner
+            status={profile?.licenseStatus ?? 'not_submitted'}
+            rejectionReason={profile?.licenseRejectionReason}
+          />
           <IdentityDocumentVerification
             documentNumber={licenseNumber}
             documentNumberLabel={t('driverVerification.licenseNumber')}
@@ -191,8 +198,8 @@ export function DriverVerificationScreen(): React.ReactElement {
         icon="check"
         title={
           isCompleteFlow
-            ? t('driverVerification.completeSuccessTitle')
-            : t('driverVerification.successTitle')
+            ? t('driverVerification.submittedTitle')
+            : t('driverVerification.submittedBecomeTitle')
         }
         message={successMessage}
         confirmAction={{

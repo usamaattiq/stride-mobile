@@ -10,11 +10,32 @@ import type { AdminUserSummary } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
+import type { IdentityDocumentStatus } from '@/services/api/adminApi';
 
 type AdminUserCardProps = {
   user: AdminUserSummary;
   onPress: () => void;
 };
+
+function docBadgeStyle(status: IdentityDocumentStatus) {
+  if (status === 'approved') {
+    return { badge: styles.badgeGreen, text: styles.badgeTextGreen, icon: 'check' as const, color: colors.accent.green.text };
+  }
+  if (status === 'pending') {
+    return { badge: styles.badgeBlue, text: styles.badgeTextBlue, icon: 'clock-o' as const, color: colors.accent.blue.text };
+  }
+  if (status === 'rejected') {
+    return { badge: styles.badgeRed, text: styles.badgeTextRed, icon: 'times-circle' as const, color: colors.primary };
+  }
+  return { badge: styles.badgeAmber, text: styles.badgeTextAmber, icon: 'exclamation-circle' as const, color: colors.accent.amber.text };
+}
+
+function docStatusLabel(status: IdentityDocumentStatus, t: (key: string) => string): string {
+  if (status === 'approved') return t('admin.users.verified');
+  if (status === 'pending') return t('admin.users.pendingApproval');
+  if (status === 'rejected') return t('admin.users.rejected');
+  return t('admin.users.notVerified');
+}
 
 function initialsForName(fullName: string): string {
   return fullName
@@ -47,35 +68,27 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
         >
           <View style={styles.topRow}>
             <View style={styles.topBadges}>
-              {user.role !== 'driver' || user.documents.nicVerified ? (
+              {user.role !== 'driver' || user.documents.nicSubmitted ? (
                 <View
                   style={[
                     styles.badge,
-                    user.documents.nicVerified ? styles.badgeGreen : styles.badgeAmber,
+                    docBadgeStyle(user.documents.nicStatus).badge,
                   ]}
                 >
                   <FontAwesome
-                    name={user.documents.nicVerified ? 'check' : 'exclamation-circle'}
+                    name={docBadgeStyle(user.documents.nicStatus).icon}
                     size={9}
-                    color={
-                      user.documents.nicVerified
-                        ? colors.accent.green.text
-                        : colors.accent.amber.text
-                    }
+                    color={docBadgeStyle(user.documents.nicStatus).color}
                   />
                   <AppText
                     weight="semibold"
                     style={[
                       styles.badgeText,
-                      user.documents.nicVerified ? styles.badgeTextGreen : styles.badgeTextAmber,
+                      docBadgeStyle(user.documents.nicStatus).text,
                     ]}
                     numberOfLines={1}
                   >
-                    {`${t('admin.users.nic')} · ${
-                      user.documents.nicVerified
-                        ? t('admin.users.verified')
-                        : t('admin.users.notVerified')
-                    }`}
+                    {`${t('admin.users.nic')} · ${docStatusLabel(user.documents.nicStatus, t)}`}
                   </AppText>
                 </View>
               ) : null}
@@ -84,33 +97,23 @@ export function AdminUserCard({ user, onPress }: AdminUserCardProps): React.Reac
                 <View
                   style={[
                     styles.badge,
-                    user.documents.licenseVerified ? styles.badgeGreen : styles.badgeAmber,
+                    docBadgeStyle(user.documents.licenseStatus).badge,
                   ]}
                 >
                   <FontAwesome
-                    name={user.documents.licenseVerified ? 'check' : 'exclamation-circle'}
+                    name={docBadgeStyle(user.documents.licenseStatus).icon}
                     size={9}
-                    color={
-                      user.documents.licenseVerified
-                        ? colors.accent.green.text
-                        : colors.accent.amber.text
-                    }
+                    color={docBadgeStyle(user.documents.licenseStatus).color}
                   />
                   <AppText
                     weight="semibold"
                     style={[
                       styles.badgeText,
-                      user.documents.licenseVerified
-                        ? styles.badgeTextGreen
-                        : styles.badgeTextAmber,
+                      docBadgeStyle(user.documents.licenseStatus).text,
                     ]}
                     numberOfLines={1}
                   >
-                    {`${t('admin.users.license')} · ${
-                      user.documents.licenseVerified
-                        ? t('admin.users.verified')
-                        : t('admin.users.notVerified')
-                    }`}
+                    {`${t('admin.users.license')} · ${docStatusLabel(user.documents.licenseStatus, t)}`}
                   </AppText>
                 </View>
               ) : null}
@@ -213,8 +216,14 @@ const styles = StyleSheet.create({
   badgeGreen: {
     backgroundColor: colors.accent.green.soft,
   },
+  badgeBlue: {
+    backgroundColor: colors.accent.blue.soft,
+  },
   badgeAmber: {
     backgroundColor: colors.accent.amber.soft,
+  },
+  badgeRed: {
+    backgroundColor: colors.primaryMuted,
   },
   badgeText: {
     flexShrink: 1,
@@ -223,8 +232,14 @@ const styles = StyleSheet.create({
   badgeTextGreen: {
     color: colors.accent.green.text,
   },
+  badgeTextBlue: {
+    color: colors.accent.blue.text,
+  },
   badgeTextAmber: {
     color: colors.accent.amber.text,
+  },
+  badgeTextRed: {
+    color: colors.primary,
   },
   creditsBadge: {
     flexDirection: 'row',
@@ -251,7 +266,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 88,
     height: 88,
-    borderRadius: radius.sm,
+    borderRadius: radius.full,
     overflow: 'hidden',
     backgroundColor: colors.primarySoft,
   },

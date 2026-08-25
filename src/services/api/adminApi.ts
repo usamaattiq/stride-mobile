@@ -2,11 +2,15 @@ import { apiRequest } from './client';
 import type { PhoneIdentity } from './authApi.types';
 import { getDeviceId } from '@/services/deviceId';
 
+export type IdentityDocumentStatus = 'not_submitted' | 'pending' | 'approved' | 'rejected';
+
 export type AdminDocumentStatus = {
   nicSubmitted: boolean;
   nicVerified: boolean;
+  nicStatus: IdentityDocumentStatus;
   licenseSubmitted: boolean;
   licenseVerified: boolean;
+  licenseStatus: IdentityDocumentStatus;
   documentsSubmitted: boolean;
   fullyVerified: boolean;
 };
@@ -30,9 +34,11 @@ export type AdminUserDetail = AdminUserSummary & {
   nicNumber: string | null;
   nicFrontViewUrl?: string | null;
   nicBackViewUrl?: string | null;
+  nicRejectionReason?: string | null;
   driverLicenseNumber: string | null;
   driverLicenseFrontViewUrl?: string | null;
   driverLicenseBackViewUrl?: string | null;
+  licenseRejectionReason?: string | null;
 };
 
 export type AdminTripParticipant = {
@@ -142,6 +148,21 @@ export const adminApi = {
 
   getUser(userId: string) {
     return apiRequest<AdminUserDetail>({ method: 'GET', url: `/admin/users/${userId}` });
+  },
+
+  reviewDocument(
+    userId: string,
+    input: {
+      document: 'nic' | 'license';
+      action: 'approve' | 'reject';
+      reason?: string;
+    },
+  ) {
+    return apiRequest<AdminUserDetail>({
+      method: 'POST',
+      url: `/admin/users/${userId}/documents/review`,
+      data: input,
+    });
   },
 
   listTrips(page = 1) {
