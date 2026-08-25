@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { DashboardSessionProvider } from '@/features/dashboard/context/DashboardSessionContext';
 import { DashboardNavigator } from '@/features/dashboard/navigation/DashboardNavigator';
+import { AdminNavigator } from '@/features/admin/navigation/AdminNavigator';
 import { navigationRef } from '@/navigation/navigationRef';
 import { colors } from '@/theme';
 
@@ -48,6 +49,14 @@ export function AuthNavigator({
             name="Dashboard"
             component={DashboardNavigator}
             options={{ gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="Admin"
+            component={AdminNavigator}
+            options={{
+              gestureEnabled: false,
+              contentStyle: { backgroundColor: colors.primary },
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>

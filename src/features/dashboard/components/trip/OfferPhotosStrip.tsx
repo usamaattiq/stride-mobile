@@ -11,11 +11,13 @@ import { colors, radius, spacing } from "@/theme";
 
 type OfferPhotosStripProps = {
   photos: OfferAttachmentPhotos | null | undefined;
+  label?: string;
 };
 
 /** Photos a responder attached instead of a vehicle on a sea/air request. */
 export function OfferPhotosStrip({
   photos,
+  label,
 }: OfferPhotosStripProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [galleryIndex, setGalleryIndex] = React.useState<number | null>(null);
@@ -31,7 +33,7 @@ export function OfferPhotosStrip({
   return (
     <View style={styles.root}>
       <AppText style={styles.label}>
-        {t("dashboard.listings.detail.offer.photosAttached")}
+        {label ?? t("dashboard.listings.detail.offer.photosAttached")}
       </AppText>
       <View style={styles.row}>
         {uris.map((uri, index) => {

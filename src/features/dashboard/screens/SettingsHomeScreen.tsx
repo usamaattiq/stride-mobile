@@ -11,6 +11,8 @@ import Constants from 'expo-constants';
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { resetToWelcome } from '@/navigation/navigationRef';
+import { adminApi } from '@/services/api/adminApi';
 import { ApiError } from '@/services/api/apiError';
 import { authApi } from '@/services/api/authApi';
 import type {
@@ -27,6 +29,7 @@ import { getLanguageOptions } from '@/shared/components/language-switcher/option
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { useAuthStore } from '@/store/authStore';
+import { adminStore, useAdminStore } from '@/store/adminStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useSignupDraftStore } from '@/store/signupDraftStore';
 import { colors, spacing } from '@/theme';
@@ -162,6 +165,9 @@ export function SettingsHomeScreen(): React.ReactElement {
     resetSession,
   } = useDashboardSession();
   const { resetDraft } = useSignupDraftStore();
+  const sessionKind = useAuthStore((state) => state.sessionKind);
+  const adminProfile = useAdminStore((state) => state.profile);
+  const isAdmin = sessionKind === 'admin';
   const navigation = useNavigation<SettingsNav>();
   const dashboardRootNavigation = navigation.getParent()?.getParent() as
     | NativeStackNavigationProp<DashboardRootStackParamList>
@@ -221,12 +227,27 @@ export function SettingsHomeScreen(): React.ReactElement {
       getSettingsSectionsForRole({
         role: user.role,
         hasDriverVerification,
+        isAdmin,
       }),
-    [user.role, hasDriverVerification],
+    [user.role, hasDriverVerification, isAdmin],
   );
 
-  const isIdentityComplete =
-    user.role === 'driver'
+  const displayUser = React.useMemo(() => {
+    if (!isAdmin || !adminProfile) {
+      return user;
+    }
+    return {
+      ...user,
+      firstName: adminProfile.fullName.split(' ')[0] ?? adminProfile.fullName,
+      fullName: adminProfile.fullName,
+      mobileNumber: adminProfile.phoneE164,
+      isVerified: true,
+    };
+  }, [adminProfile, isAdmin, user]);
+
+  const isIdentityComplete = isAdmin
+    ? true
+    : user.role === 'driver'
       ? user.isVerified && hasDriverVerification
       : user.isVerified;
 
@@ -256,12 +277,21 @@ export function SettingsHomeScreen(): React.ReactElement {
     setDialog(null);
     void (async () => {
       await unregisterPushNotifications();
-      await authApi.logout().catch(() => undefined);
+      if (isAdmin) {
+        await adminApi.logout().catch(() => undefined);
+        adminStore.clearProfile();
+      } else {
+        await authApi.logout().catch(() => undefined);
+      }
       await useAuthStore.getState().signOut();
       useProfileStore.getState().clearProfile();
       resetDraft();
       resetSession();
-      authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      if (authRootNavigation) {
+        authRootNavigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      } else {
+        resetToWelcome();
+      }
     })();
   };
 
@@ -444,10 +474,11 @@ export function SettingsHomeScreen(): React.ReactElement {
     <View style={styles.root}>
       <FocusAwareStatusBar style="light" />
       <SettingsProfileHeader
-        user={user}
+        user={displayUser}
         isIdentityComplete={isIdentityComplete}
+        roleLabel={isAdmin ? t('admin.settings.role') : undefined}
         topInset={insets.top}
-        onVerifyPress={handleVerifyPress}
+        onVerifyPress={isAdmin ? undefined : handleVerifyPress}
         onLogoutPress={() => setDialog('logout')}
       />
 

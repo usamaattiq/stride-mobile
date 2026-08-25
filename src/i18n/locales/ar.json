@@ -1068,6 +1068,101 @@
     "saveFailed": "تعذر حفظ ملفك الشخصي. حاول مرة أخرى.",
     "removePhoto": "إزالة الصورة"
   },
+  "admin": {
+    "title": "إدارة سترايد",
+    "tabs": {
+      "Users": "المستخدمون",
+      "Trips": "الرحلات",
+      "Credits": "الرصيد",
+      "Subzone": "المنطقة الفرعية",
+      "Settings": "الإعدادات"
+    },
+    "common": {
+      "loading": "جارٍ التحميل…",
+      "loadFailed": "تعذر تحميل البيانات",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ…",
+      "delete": "حذف"
+    },
+    "logout": {
+      "title": "تسجيل الخروج",
+      "message": "هل تريد تسجيل الخروج من لوحة الإدارة؟",
+      "confirm": "تسجيل الخروج"
+    },
+    "settings": {
+      "role": "مسؤول"
+    },
+    "users": {
+      "title": "المستخدمون",
+      "subtitle": "مراجعة الركاب والسائقين",
+      "passengers": "الركاب",
+      "drivers": "السائقون",
+      "empty": "لا يوجد مستخدمون",
+      "loadFailed": "تعذر تحميل المستخدمين",
+      "detailFailed": "تعذر تحميل تفاصيل المستخدم",
+      "noEmail": "لا يوجد بريد إلكتروني",
+      "noAddress": "لا يوجد عنوان",
+      "roleCredits": "الدور: {{role}} · الرصيد: {{credits}} · الحالة: {{status}}",
+      "nic": "بطاقة الهوية",
+      "license": "رخصة القيادة",
+      "verified": "موثّق",
+      "notVerified": "غير موثّق",
+      "documentNumber": "الرقم",
+      "noImage": "لا توجد صورة",
+      "driverContact": "جهة اتصال السائق",
+      "passengerContact": "جهة اتصال الراكب",
+      "whatsappMessage": "مرحباً {{name}}، هذه إدارة سترايد.",
+      "filters": {
+        "all": "الكل",
+        "verified": "موثّق",
+        "notVerified": "غير موثّق",
+        "documentsSubmitted": "تم إرسال المستندات"
+      }
+    },
+    "trips": {
+      "title": "الرحلات",
+      "subtitle": "جميع رحلات المنصة",
+      "empty": "لا توجد رحلات",
+      "loadFailed": "تعذر تحميل الرحلات",
+      "detailFailed": "تعذر تحميل تفاصيل الرحلة",
+      "departure": "المغادرة: {{date}}",
+      "vehicleMode": "وضع المركبة: {{mode}}",
+      "payment": "الدفع: {{method}}",
+      "startingPrice": "السعر الابتدائي: {{price}}",
+      "noDescription": "لا يوجد وصف",
+      "driver": "السائق",
+      "winningPassenger": "الراكب الفائز",
+      "whatsappDriver": "مرحباً، بخصوص الرحلة {{ref}} (سائق).",
+      "whatsappPassenger": "مرحباً، بخصوص الرحلة {{ref}} (راكب)."
+    },
+    "credits": {
+      "title": "الرصيد",
+      "subtitle": "إدارة رصيد المستخدمين",
+      "empty": "لا يوجد مستخدمون",
+      "loadFailed": "تعذر تحميل الرصيد",
+      "saveFailed": "تعذر تحديث الرصيد",
+      "invalid": "يجب أن يكون الرصيد رقماً صحيحاً غير سالب"
+    },
+    "subzone": {
+      "title": "المنطقة الفرعية",
+      "subtitle": "إدارة المناطق الفرعية",
+      "addTitle": "إضافة منطقة فرعية",
+      "name": "اسم المنطقة الفرعية",
+      "cityLabel": "اسم المدينة",
+      "cityId": "معرّف المدينة (اختياري)",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "create": "إنشاء منطقة فرعية",
+      "activate": "تفعيل",
+      "deactivate": "إلغاء التفعيل",
+      "empty": "لا توجد مناطق فرعية بعد",
+      "required": "الاسم والمدينة مطلوبان",
+      "loadFailed": "تعذر تحميل المناطق الفرعية",
+      "createFailed": "تعذر إنشاء المنطقة الفرعية",
+      "updateFailed": "تعذر تحديث المنطقة الفرعية",
+      "deleteFailed": "تعذر حذف المنطقة الفرعية"
+    }
+  },
   "common": {
     "cancel": "إلغاء",
     "ok": "حسنًا",

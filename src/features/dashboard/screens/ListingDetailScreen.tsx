@@ -20,6 +20,7 @@ import { useResizeMode } from "react-native-keyboard-controller";
 
 import { AuthScaffold } from "@/features/auth/components/AuthScaffold";
 import { i18n as appI18n } from "@/i18n";
+import { adminApi } from "@/services/api/adminApi";
 import { auctionApi } from "@/services/api/auctionApi";
 import { chatApi } from "@/services/api/chatApi";
 import type { TripConversationInboxItem } from "@/services/api/chatApi.types";
@@ -33,6 +34,7 @@ import { useLocalizedCityName } from "@/shared/hooks/useLocalizedCityName";
 import { colors, radius, spacing } from "@/theme";
 
 import { ListingCard } from "../components/ListingCard";
+import { WhatsAppContactCard } from "../components/trip/WhatsAppContactCard";
 import {
   formatDateRangeLabel,
   formatTripDateTime,
@@ -62,6 +64,9 @@ import {
   getListingStartsAtMs,
 } from "../utils/listingWindow";
 import { mapTripDtoToTrip } from "../utils/trip.mapper";
+import { mapAdminTripDetailToTrip } from "@/features/admin/utils/admin.mapper";
+import { authStore } from "@/store/authStore";
+import type { AdminTripDetail } from "@/services/api/adminApi";
 
 type DetailTab = "overview" | "responses";
 
@@ -84,17 +89,18 @@ function indexToTab(index: number): DetailTab {
 
 export function ListingDetailScreen(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const navigation =
-    useNavigation<
-      NativeStackNavigationProp<DashboardRootStackParamList, "ListingDetail">
-    >();
+  const navigation = useNavigation<
+    NativeStackNavigationProp<{ ListingDetail: DashboardRootStackParamList["ListingDetail"] }>
+  >();
   const route =
-    useRoute<RouteProp<DashboardRootStackParamList, "ListingDetail">>();
+    useRoute<RouteProp<{ ListingDetail: DashboardRootStackParamList["ListingDetail"] }, "ListingDetail">>();
+  const isAdminViewer = authStore.getSessionKind() === "admin";
   const { getTripById, patchTrip, removeTrip, refreshTrips, beginRepostTrip } =
     useTrips();
 
   const cached = getTripById(route.params.tripId);
   const [trip, setTrip] = React.useState<Trip | null>(cached ?? null);
+  const [adminTrip, setAdminTrip] = React.useState<AdminTripDetail | null>(null);
   const [loading, setLoading] = React.useState(!cached);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<DetailTab>("responses");
@@ -128,8 +134,9 @@ export function ListingDetailScreen(): React.ReactElement {
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */
   const isOwnListing =
-    route.params.viewerIsOwner === true ||
-    Boolean(getTripById(route.params.tripId));
+    !isAdminViewer &&
+    (route.params.viewerIsOwner === true ||
+      Boolean(getTripById(route.params.tripId)));
   // Offer form needs adjustResize so the price field can scroll above the keyboard
   // (app default is Android pan, which leaves the focused field covered).
   useResizeMode();
@@ -214,7 +221,7 @@ export function ListingDetailScreen(): React.ReactElement {
   );
 
   React.useEffect(() => {
-    const seeded = getTripById(route.params.tripId);
+    const seeded = isAdminViewer ? undefined : getTripById(route.params.tripId);
     if (seeded) {
       setTrip(seeded);
     }
@@ -222,15 +229,22 @@ export function ListingDetailScreen(): React.ReactElement {
     let cancelled = false;
     setLoading(!seeded);
     setLoadError(null);
-    void tripApi
-      .getById(route.params.tripId)
-      .then((dto) => {
-        if (!cancelled) {
-          const next = mapTripDtoToTrip(dto);
-          setTrip(next);
-          patchTrip(next.id, next);
-        }
-      })
+    const load = isAdminViewer
+      ? adminApi.getTrip(route.params.tripId).then((detail) => {
+          if (!cancelled) {
+            setAdminTrip(detail);
+            setTrip(mapAdminTripDetailToTrip(detail));
+          }
+        })
+      : tripApi.getById(route.params.tripId).then((dto) => {
+          if (!cancelled) {
+            const next = mapTripDtoToTrip(dto);
+            setTrip(next);
+            patchTrip(next.id, next);
+          }
+        });
+
+    void load
       .catch((error) => {
         if (!cancelled && !seeded) {
           setLoadError(
@@ -247,13 +261,12 @@ export function ListingDetailScreen(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-    // Only reload when the listing id changes — status polls patch local state in place.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- getTripById/patchTrip would retrigger and overwrite live tags
-  }, [route.params.tripId, t]);
+  }, [route.params.tripId, t, isAdminViewer]);
 
   const requestedConversationId = route.params.conversationId;
   React.useEffect(() => {
-    if (!requestedConversationId) {
+    if (!requestedConversationId || isAdminViewer) {
       return;
     }
     setNotificationChat({
@@ -283,16 +296,22 @@ export function ListingDetailScreen(): React.ReactElement {
         }
       })
       .catch(() => undefined);
-  }, [navigation, requestedConversationId]);
+  }, [isAdminViewer, navigation, requestedConversationId]);
 
   const reloadTrip = React.useCallback(async () => {
     setLoadError(null);
+    if (isAdminViewer) {
+      const detail = await adminApi.getTrip(route.params.tripId);
+      setAdminTrip(detail);
+      setTrip(mapAdminTripDetailToTrip(detail));
+      return;
+    }
     const dto = await tripApi.getById(route.params.tripId);
     setTrip(mapTripDtoToTrip(dto));
     if (isOwnListing) {
       await refreshTrips().catch(() => undefined);
     }
-  }, [isOwnListing, refreshTrips, route.params.tripId]);
+  }, [isAdminViewer, isOwnListing, refreshTrips, route.params.tripId]);
 
   const { refreshControlProps } = usePullToRefresh(reloadTrip);
 
@@ -485,6 +504,7 @@ export function ListingDetailScreen(): React.ReactElement {
         showLegalFooter={false}
         showLanguageSwitcher={false}
         compactHeader
+        manualTopInset={isAdminViewer}
       >
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
@@ -501,6 +521,7 @@ export function ListingDetailScreen(): React.ReactElement {
         showLegalFooter={false}
         showLanguageSwitcher={false}
         compactHeader
+        manualTopInset={isAdminViewer}
       >
         <View style={styles.centered}>
           <AppText style={styles.errorText}>
@@ -580,12 +601,14 @@ export function ListingDetailScreen(): React.ReactElement {
       showLegalFooter={false}
       showLanguageSwitcher={false}
       compactHeader
-      // Clearance above the keyboard for the focused price field + submit button.
+      manualTopInset={isAdminViewer}
       // Only affects keyboard-open scroll — no permanent empty gap at the bottom.
-      scrollBottomOffset={isOwnListing ? undefined : spacing.huge + spacing.sm}
+      scrollBottomOffset={
+        isOwnListing || isAdminViewer ? undefined : spacing.huge + spacing.sm
+      }
       refreshControlProps={refreshControlProps}
       footer={
-        !isOwnListing && trip?.listingType === "auction"
+        !isOwnListing && !isAdminViewer && trip?.listingType === "auction"
           ? auctionComposer
           : undefined
       }
@@ -659,7 +682,10 @@ export function ListingDetailScreen(): React.ReactElement {
             isOwnListing
               ? () => {
                   beginRepostTrip(trip);
-                  openTripCreationFlow(navigation, { repost: true });
+                  openTripCreationFlow(
+                    navigation as NativeStackNavigationProp<DashboardRootStackParamList>,
+                    { repost: true },
+                  );
                 }
               : undefined
           }
@@ -678,7 +704,28 @@ export function ListingDetailScreen(): React.ReactElement {
               departurePoint={trip.departurePoint}
               arrivalPoint={trip.arrivalPoint}
             />
-            {trip.listingType === "auction" ? (
+            {isAdminViewer ? (
+              <View style={styles.adminContacts}>
+                <WhatsAppContactCard
+                  title={t("admin.trips.driver")}
+                  icon="car"
+                  name={adminTrip?.driver?.fullName ?? null}
+                  phone={adminTrip?.driver?.phoneE164}
+                  message={t("admin.trips.whatsappDriver", {
+                    ref: trip.referenceCode ?? trip.id,
+                  })}
+                />
+                <WhatsAppContactCard
+                  title={t("admin.trips.winningPassenger")}
+                  icon="user"
+                  name={adminTrip?.winningPassenger?.fullName ?? null}
+                  phone={adminTrip?.winningPassenger?.phoneE164}
+                  message={t("admin.trips.whatsappPassenger", {
+                    ref: trip.referenceCode ?? trip.id,
+                  })}
+                />
+              </View>
+            ) : trip.listingType === "auction" ? (
               <TripBidPanel
                 ref={bidPanelRef}
                 tripId={trip.id}
@@ -852,6 +899,10 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: spacing.xs,
+  },
+  adminContacts: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   pagerBleed: {
     marginLeft: -spacing.md,

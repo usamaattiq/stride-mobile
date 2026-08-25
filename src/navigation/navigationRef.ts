@@ -17,3 +17,10 @@ export function resetToDashboard(): void {
     navigationRef.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
   }
 }
+
+/** Admin root after admin login. */
+export function resetToAdmin(): void {
+  if (navigationRef.isReady()) {
+    navigationRef.reset({ index: 0, routes: [{ name: 'Admin' }] });
+  }
+}

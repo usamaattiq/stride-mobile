@@ -14,6 +14,8 @@ type SettingsProfileHeaderProps = {
   /** Driver identity is complete only when NIC + license are both done. */
   isIdentityComplete: boolean;
   topInset: number;
+  /** When set, shown instead of the default passenger/driver role label. */
+  roleLabel?: string;
   onVerifyPress?: () => void;
   onLogoutPress?: () => void;
 };
@@ -26,6 +28,7 @@ export function SettingsProfileHeader({
   user,
   isIdentityComplete,
   topInset,
+  roleLabel,
   onVerifyPress,
   onLogoutPress,
 }: SettingsProfileHeaderProps): React.ReactElement {
@@ -60,7 +63,7 @@ export function SettingsProfileHeader({
               </View>
             ) : null}
           </View>
-          <AppText style={styles.role}>{t(roleLabelKey(user.role))}</AppText>
+          <AppText style={styles.role}>{roleLabel ?? t(roleLabelKey(user.role))}</AppText>
 
           {!isIdentityComplete ? (
             <Pressable

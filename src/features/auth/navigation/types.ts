@@ -8,4 +8,5 @@ export type AuthStackParamList = {
   SignupSuccess: undefined;
   LoginFlow: undefined;
   Dashboard: NavigatorScreenParams<DashboardRootStackParamList> | undefined;
+  Admin: undefined;
 };

@@ -10,6 +10,7 @@ import { AuthNavigator } from './src/features/auth/navigation/AuthNavigator';
 import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
+import { adminApi } from './src/services/api/adminApi';
 import { isSessionRevokedError } from './src/services/api/apiError';
 import { usePingNotificationRouting } from './src/services/pingDeepLinkRouting';
 import {
@@ -17,6 +18,7 @@ import {
   registerForPushNotifications,
 } from './src/services/pushNotifications';
 import { authStore } from './src/store/authStore';
+import { adminStore } from './src/store/adminStore';
 import { devicePrefsStore } from './src/store/devicePrefsStore';
 import { profileStore } from './src/store/profileStore';
 import { appFontAssets, colors } from './src/theme';
@@ -95,7 +97,7 @@ export default function App() {
 
     void (async () => {
       await devicePrefsStore.hydrate();
-      const token = await authStore.hydrate();
+      const { token, sessionKind } = await authStore.hydrate();
 
       if (!token) {
         if (mounted) {
@@ -105,6 +107,15 @@ export default function App() {
       }
 
       try {
+        if (sessionKind === 'admin') {
+          const profile = await adminApi.getMe();
+          adminStore.setProfile(profile);
+          if (mounted) {
+            setInitialRouteName('Admin');
+          }
+          return;
+        }
+
         const profile = await authApi.getMe();
         profileStore.setProfile(profile);
         void registerForPushNotifications();
@@ -114,6 +125,7 @@ export default function App() {
       } catch (error) {
         await authStore.signOut();
         profileStore.clearProfile();
+        adminStore.clearProfile();
         if (isSessionRevokedError(error)) {
           Alert.alert(i18n.t('auth.sessionRevoked.title'), i18n.t('auth.sessionRevoked.message'));
         }

@@ -1068,6 +1068,101 @@
     "saveFailed": "Could not save your profile. Please try again.",
     "removePhoto": "Remove photo"
   },
+  "admin": {
+    "title": "Stride Admin",
+    "tabs": {
+      "Users": "Users",
+      "Trips": "Trips",
+      "Credits": "Credits",
+      "Subzone": "Subzone",
+      "Settings": "Settings"
+    },
+    "common": {
+      "loading": "Loading…",
+      "loadFailed": "Couldn't load data",
+      "save": "Save",
+      "saving": "Saving…",
+      "delete": "Delete"
+    },
+    "logout": {
+      "title": "Sign out",
+      "message": "Are you sure you want to sign out of the admin panel?",
+      "confirm": "Sign out"
+    },
+    "settings": {
+      "role": "Administrator"
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Review passengers and drivers",
+      "passengers": "Passengers",
+      "drivers": "Drivers",
+      "empty": "No users found",
+      "loadFailed": "Couldn't load users",
+      "detailFailed": "Couldn't load user details",
+      "noEmail": "No email",
+      "noAddress": "No address",
+      "roleCredits": "Role: {{role}} · Credits: {{credits}} · Status: {{status}}",
+      "nic": "NIC",
+      "license": "Driving License",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "documentNumber": "Number",
+      "noImage": "No image",
+      "driverContact": "Driver contact",
+      "passengerContact": "Passenger contact",
+      "whatsappMessage": "Hi {{name}}, this is Stride Admin.",
+      "filters": {
+        "all": "All",
+        "verified": "Verified",
+        "notVerified": "Not verified",
+        "documentsSubmitted": "Documents submitted"
+      }
+    },
+    "trips": {
+      "title": "Trips",
+      "subtitle": "All platform trips",
+      "empty": "No trips found",
+      "loadFailed": "Couldn't load trips",
+      "detailFailed": "Couldn't load trip details",
+      "departure": "Departure: {{date}}",
+      "vehicleMode": "Vehicle mode: {{mode}}",
+      "payment": "Payment: {{method}}",
+      "startingPrice": "Starting price: {{price}}",
+      "noDescription": "No description",
+      "driver": "Driver",
+      "winningPassenger": "Winning Passenger",
+      "whatsappDriver": "Hi, regarding trip {{ref}} (driver).",
+      "whatsappPassenger": "Hi, regarding trip {{ref}} (passenger)."
+    },
+    "credits": {
+      "title": "Credits",
+      "subtitle": "Manage user credits",
+      "empty": "No users found",
+      "loadFailed": "Couldn't load credits",
+      "saveFailed": "Couldn't update credits",
+      "invalid": "Credits must be a non-negative whole number"
+    },
+    "subzone": {
+      "title": "Subzone",
+      "subtitle": "Manage geographic subzones",
+      "addTitle": "Add subzone",
+      "name": "Subzone name",
+      "cityLabel": "City label",
+      "cityId": "City ID (optional)",
+      "active": "Active",
+      "inactive": "Inactive",
+      "create": "Create subzone",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "empty": "No subzones yet",
+      "required": "Name and city are required",
+      "loadFailed": "Couldn't load subzones",
+      "createFailed": "Couldn't create subzone",
+      "updateFailed": "Couldn't update subzone",
+      "deleteFailed": "Couldn't delete subzone"
+    }
+  },
   "common": {
     "cancel": "Cancel",
     "ok": "OK",

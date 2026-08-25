@@ -42,6 +42,8 @@ export type SettingsMenuSection = {
 export type SettingsMenuVisibility = {
   role: AppRole;
   hasDriverVerification: boolean;
+  /** Admin sessions only show language / legal items on the shared Settings screen. */
+  isAdmin?: boolean;
 };
 
 export const settingsMenuIconStyle = {
@@ -146,10 +148,15 @@ export const SETTINGS_MENU_SECTIONS: SettingsMenuSection[] = [
   },
 ];
 
+const ADMIN_SETTINGS_ACTIONS: SettingsMenuAction[] = ['language', 'terms', 'privacy'];
+
 function isMenuItemVisible(
   item: SettingsMenuItem,
   visibility: SettingsMenuVisibility,
 ): boolean {
+  if (visibility.isAdmin) {
+    return ADMIN_SETTINGS_ACTIONS.includes(item.action);
+  }
   if (item.roles && !item.roles.includes(visibility.role)) {
     return false;
   }

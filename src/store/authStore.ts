@@ -1,43 +1,61 @@
 import { create } from 'zustand';
 
-import { secureStorage } from '@/services/storage/secureStorage';
+import { secureStorage, type SessionKind } from '@/services/storage/secureStorage';
 
 type AuthStatus = 'idle' | 'authenticated' | 'unauthenticated';
 
 type AuthStoreState = {
   status: AuthStatus;
   accessToken: string | null;
-  setAuthenticated: (token: string) => Promise<void>;
+  sessionKind: SessionKind | null;
+  setAuthenticated: (token: string, sessionKind?: SessionKind) => Promise<void>;
   signOut: () => Promise<void>;
-  hydrate: () => Promise<string | null>;
+  hydrate: () => Promise<{ token: string | null; sessionKind: SessionKind | null }>;
 };
 
 export const useAuthStore = create<AuthStoreState>((set) => ({
   status: 'idle',
   accessToken: null,
+  sessionKind: null,
 
-  setAuthenticated: async (token) => {
-    await secureStorage.setAccessToken(token);
-    set({ status: 'authenticated', accessToken: token });
+  setAuthenticated: async (token, sessionKind = 'user') => {
+    await Promise.all([
+      secureStorage.setAccessToken(token),
+      secureStorage.setSessionKind(sessionKind),
+    ]);
+    set({ status: 'authenticated', accessToken: token, sessionKind });
   },
 
   signOut: async () => {
-    await secureStorage.clearAccessToken();
-    set({ status: 'unauthenticated', accessToken: null });
+    await Promise.all([
+      secureStorage.clearAccessToken(),
+      secureStorage.clearSessionKind(),
+    ]);
+    set({ status: 'unauthenticated', accessToken: null, sessionKind: null });
   },
 
   hydrate: async () => {
-    const token = await secureStorage.getAccessToken();
-    set({ accessToken: token, status: token ? 'authenticated' : 'unauthenticated' });
-    return token;
+    const [token, sessionKind] = await Promise.all([
+      secureStorage.getAccessToken(),
+      secureStorage.getSessionKind(),
+    ]);
+    set({
+      accessToken: token,
+      sessionKind: token ? sessionKind ?? 'user' : null,
+      status: token ? 'authenticated' : 'unauthenticated',
+    });
+    return { token, sessionKind: token ? sessionKind ?? 'user' : null };
   },
 }));
 
 /** Non-reactive accessors for use outside React (axios interceptors, handlers). */
 export const authStore = {
   getToken: (): string | null => useAuthStore.getState().accessToken,
+  getSessionKind: (): SessionKind | null => useAuthStore.getState().sessionKind,
   getStatus: (): AuthStatus => useAuthStore.getState().status,
-  setAuthenticated: (token: string): Promise<void> => useAuthStore.getState().setAuthenticated(token),
+  setAuthenticated: (token: string, sessionKind?: SessionKind): Promise<void> =>
+    useAuthStore.getState().setAuthenticated(token, sessionKind),
   signOut: (): Promise<void> => useAuthStore.getState().signOut(),
-  hydrate: (): Promise<string | null> => useAuthStore.getState().hydrate(),
+  hydrate: (): Promise<{ token: string | null; sessionKind: SessionKind | null }> =>
+    useAuthStore.getState().hydrate(),
 };
