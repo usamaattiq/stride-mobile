@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { BrowseTripsParams, CreateTripPayload, PaginatedTripsDto, TerminalKind, TerminalSearchItemDto, TripDto } from './tripApi.types';
+import type { BrowseTripsParams, CreateTripPayload, PaginatedTripsDto, TerminalKind, TerminalSearchItemDto, TripDto, TripSubzonePointDto } from './tripApi.types';
 
 function buildBrowseQuery(params: BrowseTripsParams): string {
   const search = new URLSearchParams();
@@ -71,6 +71,24 @@ export const tripApi = {
       search.set('lang', lang.startsWith('ar') ? 'ar' : 'en');
     }
     return apiRequest({ method: 'GET', url: `/trips/terminals?${search.toString()}` });
+  },
+
+  listSubzones: (params: { cityId?: string; cityLabel?: string; q?: string } = {}) => {
+    const search = new URLSearchParams();
+    if (params.cityId?.trim()) {
+      search.set('cityId', params.cityId.trim());
+    }
+    if (params.cityLabel?.trim()) {
+      search.set('cityLabel', params.cityLabel.trim());
+    }
+    if (params.q?.trim()) {
+      search.set('q', params.q.trim());
+    }
+    const query = search.toString();
+    return apiRequest<{ items: TripSubzonePointDto[] }>({
+      method: 'GET',
+      url: `/trips/subzones${query ? `?${query}` : ''}`,
+    });
   },
 
   remove: (tripId: string): Promise<{ deleted: true }> =>

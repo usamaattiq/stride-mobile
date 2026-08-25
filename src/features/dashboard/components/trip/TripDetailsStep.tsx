@@ -22,10 +22,80 @@ import {
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type { TripCity, TripDraft, TripLocationPoint } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
+import { tripApi } from '@/services/api/tripApi';
+import type { TripSubzonePointDto } from '@/services/api/tripApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { colors, radius, spacing } from '@/theme';
+
+function shouldShowPointLabel(
+  city: TripCity | null,
+  point: TripLocationPoint | null,
+): boolean {
+  if (!point?.label?.trim() || !city?.label?.trim()) {
+    return false;
+  }
+  return cityDisplayName(point.label) !== cityDisplayName(city.label);
+}
+
+function matchSavedLocation(
+  city: TripCity | null,
+  point: TripLocationPoint | null,
+  savedLocations: TripSubzonePointDto[],
+): TripSubzonePointDto | null {
+  if (!city || !point) {
+    return null;
+  }
+
+  return (
+    savedLocations.find((location) => {
+      if (location.name.trim() !== point.label.trim()) {
+        return false;
+      }
+
+      const locationCityId = location.cityId ?? `subzone-${location.id}`;
+      if (city.id === locationCityId || city.id === location.id) {
+        return true;
+      }
+
+      return (
+        cityDisplayName(location.cityLabel) === cityDisplayName(city.label) &&
+        Math.abs(location.latitude - point.latitude) < 0.00001 &&
+        Math.abs(location.longitude - point.longitude) < 0.00001
+      );
+    }) ?? null
+  );
+}
+
+function getRouteFieldDisplay(
+  city: TripCity | null,
+  point: TripLocationPoint | null,
+  savedLocation: TripSubzonePointDto | null,
+  placeholder: string,
+): { primary: string; secondary: string | null; isPlaceholder: boolean } {
+  if (savedLocation) {
+    return {
+      primary: savedLocation.name,
+      secondary: cityDisplayName(savedLocation.cityLabel),
+      isPlaceholder: false,
+    };
+  }
+
+  if (city) {
+    return {
+      primary: city.label,
+      secondary: shouldShowPointLabel(city, point) ? point?.label ?? null : null,
+      isPlaceholder: false,
+    };
+  }
+
+  return {
+    primary: placeholder,
+    secondary: null,
+    isPlaceholder: true,
+  };
+}
 
 type TripDetailsStepProps = {
   draft: TripDraft;
@@ -85,6 +155,14 @@ export function TripDetailsStep({
   const [cityPickerMode, setCityPickerMode] = React.useState<CityPickerMode>(null);
   const [departureError, setDepartureError] = React.useState<string | null>(null);
   const [arrivalError, setArrivalError] = React.useState<string | null>(null);
+  const [savedLocations, setSavedLocations] = React.useState<TripSubzonePointDto[]>([]);
+
+  React.useEffect(() => {
+    void tripApi
+      .listSubzones()
+      .then((result) => setSavedLocations(result.items))
+      .catch(() => undefined);
+  }, []);
 
   const startDateRequired = draft.vehicleMode === 'shared';
   const departureWindowEnd = draft.departureUntil
@@ -143,7 +221,7 @@ export function TripDetailsStep({
         setArrivalError(null);
         onChange({
           arrivalCity: city,
-          arrivalPoint: draft.arrivalCity?.id === city.id ? draft.arrivalPoint : null,
+          arrivalPoint: null,
         });
         return;
       }
@@ -152,7 +230,7 @@ export function TripDetailsStep({
       setArrivalError(null);
       const next: Partial<TripDraft> = {
         departureCity: city,
-        departurePoint: draft.departureCity?.id === city.id ? draft.departurePoint : null,
+        departurePoint: null,
       };
       if (draft.arrivalCity?.id === city.id) {
         next.arrivalCity = null;
@@ -163,12 +241,53 @@ export function TripDetailsStep({
     [
       cityPickerMode,
       draft.arrivalCity?.id,
-      draft.arrivalPoint,
       draft.departureCity?.id,
-      draft.departurePoint,
       onChange,
       t,
     ],
+  );
+
+  const applySavedLocation = React.useCallback(
+    (location: TripSubzonePointDto, mode: 'departure' | 'arrival') => {
+      const city: TripCity = {
+        id: location.cityId ?? `subzone-${location.id}`,
+        label: cityDisplayName(location.cityLabel),
+      };
+      const point: TripLocationPoint = {
+        label: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
+
+      if (mode === 'departure') {
+        setDepartureError(null);
+        setArrivalError(null);
+        const next: Partial<TripDraft> = { departureCity: city, departurePoint: point };
+        if (draft.arrivalCity?.id === city.id || draft.arrivalCity?.label === city.label) {
+          next.arrivalCity = null;
+          next.arrivalPoint = null;
+        }
+        onChange(next);
+        return;
+      }
+
+      if (draft.departureCity?.id === city.id || draft.departureCity?.label === city.label) {
+        setArrivalError(t('dashboard.search.sameCityNotAllowed'));
+        return;
+      }
+      setArrivalError(null);
+      onChange({ arrivalCity: city, arrivalPoint: point });
+    },
+    [draft.arrivalCity?.id, draft.arrivalCity?.label, draft.departureCity, onChange, t],
+  );
+
+  const handleSavedLocationSelect = React.useCallback(
+    (location: TripSubzonePointDto) => {
+      const mode = cityPickerMode ?? 'departure';
+      applySavedLocation(location, mode);
+      setCityPickerMode(null);
+    },
+    [applySavedLocation, cityPickerMode],
   );
 
   const openMapForMode = React.useCallback(
@@ -179,6 +298,25 @@ export function TripDetailsStep({
       }, initial);
     },
     [applyMapSelection, draft.arrivalPoint, draft.departurePoint, openMapPickerForSelection],
+  );
+
+  const savedDeparture = matchSavedLocation(
+    draft.departureCity,
+    draft.departurePoint,
+    savedLocations,
+  );
+  const savedArrival = matchSavedLocation(draft.arrivalCity, draft.arrivalPoint, savedLocations);
+  const departureDisplay = getRouteFieldDisplay(
+    draft.departureCity,
+    draft.departurePoint,
+    savedDeparture,
+    t('trips.create.cityPlaceholder'),
+  );
+  const arrivalDisplay = getRouteFieldDisplay(
+    draft.arrivalCity,
+    draft.arrivalPoint,
+    savedArrival,
+    t('trips.create.cityPlaceholder'),
   );
 
   return (
@@ -207,14 +345,17 @@ export function TripDetailsStep({
                 <View style={styles.fieldCopy}>
                   <AppText
                     weight="semibold"
-                    style={[styles.fieldValue, !draft.departureCity && styles.fieldPlaceholder]}
+                    style={[
+                      styles.fieldValue,
+                      departureDisplay.isPlaceholder && styles.fieldPlaceholder,
+                    ]}
                     numberOfLines={1}
                   >
-                    {draft.departureCity?.label ?? t('trips.create.cityPlaceholder')}
+                    {departureDisplay.primary}
                   </AppText>
-                  {draft.departurePoint?.label ? (
+                  {departureDisplay.secondary ? (
                     <AppText style={styles.fieldAddress} numberOfLines={1}>
-                      {draft.departurePoint.label}
+                      {departureDisplay.secondary}
                     </AppText>
                   ) : null}
                 </View>
@@ -313,14 +454,17 @@ export function TripDetailsStep({
                 <View style={styles.fieldCopy}>
                   <AppText
                     weight="semibold"
-                    style={[styles.fieldValue, !draft.arrivalCity && styles.fieldPlaceholder]}
+                    style={[
+                      styles.fieldValue,
+                      arrivalDisplay.isPlaceholder && styles.fieldPlaceholder,
+                    ]}
                     numberOfLines={1}
                   >
-                    {draft.arrivalCity?.label ?? t('trips.create.cityPlaceholder')}
+                    {arrivalDisplay.primary}
                   </AppText>
-                  {draft.arrivalPoint?.label ? (
+                  {arrivalDisplay.secondary ? (
                     <AppText style={styles.fieldAddress} numberOfLines={1}>
-                      {draft.arrivalPoint.label}
+                      {arrivalDisplay.secondary}
                     </AppText>
                   ) : null}
                 </View>
@@ -400,8 +544,11 @@ export function TripDetailsStep({
         mode={cityPickerMode ?? 'departure'}
         value={cityPickerMode === 'arrival' ? draft.arrivalCity : draft.departureCity}
         excludeCityId={cityPickerMode === 'arrival' ? draft.departureCity?.id : undefined}
+        appearance="light"
+        savedLocations={savedLocations}
         onClose={() => setCityPickerMode(null)}
         onSelect={handleCitySelect}
+        onSelectSavedLocation={handleSavedLocationSelect}
         onChooseMap={() => {
           const mode = cityPickerMode ?? 'departure';
           openMapForMode(mode);

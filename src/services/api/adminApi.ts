@@ -90,6 +90,8 @@ export type AdminSubzone = {
   name: string;
   cityId: string | null;
   cityLabel: string;
+  latitude: number | null;
+  longitude: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -203,6 +205,8 @@ export const adminApi = {
     name: string;
     cityLabel: string;
     cityId?: string | null;
+    latitude: number;
+    longitude: number;
     isActive?: boolean;
   }) {
     return apiRequest<AdminSubzone>({
@@ -218,6 +222,8 @@ export const adminApi = {
       name: string;
       cityLabel: string;
       cityId: string | null;
+      latitude: number;
+      longitude: number;
       isActive: boolean;
     }>,
   ) {

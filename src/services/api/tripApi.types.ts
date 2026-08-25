@@ -154,3 +154,12 @@ export type TerminalSearchItemDto = {
   longitude: number;
 };
 
+export type TripSubzonePointDto = {
+  id: string;
+  name: string;
+  cityId: string | null;
+  cityLabel: string;
+  latitude: number;
+  longitude: number;
+};
+
