@@ -15,14 +15,14 @@ import { colors, spacing } from '@/theme';
 
 import { AdminUserDetailContent } from '../components/AdminUserDetailContent';
 import { AdminUserProfileHeader } from '../components/AdminUserProfileHeader';
-import type { AdminRootStackParamList } from '../navigation/adminNavigationTypes';
+import type { AdminUsersStackParamList } from '../navigation/adminNavigationTypes';
 
 export function AdminUserDetailScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
   const navigation =
-    useNavigation<NativeStackNavigationProp<AdminRootStackParamList, 'UserDetail'>>();
-  const route = useRoute<RouteProp<AdminRootStackParamList, 'UserDetail'>>();
+    useNavigation<NativeStackNavigationProp<AdminUsersStackParamList, 'UserDetail'>>();
+  const route = useRoute<RouteProp<AdminUsersStackParamList, 'UserDetail'>>();
   const [user, setUser] = React.useState<AdminUserDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [errorKey, setErrorKey] = React.useState<string | null>(null);
@@ -99,7 +99,11 @@ export function AdminUserDetailScreen(): React.ReactElement {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AdminUserDetailContent user={user} onUserUpdated={setUser} />
+          <AdminUserDetailContent
+            user={user}
+            listRole={route.params.listRole ?? user.role}
+            onUserUpdated={setUser}
+          />
         </ScrollView>
       </View>
     </View>

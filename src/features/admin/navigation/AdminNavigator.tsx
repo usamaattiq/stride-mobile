@@ -17,10 +17,15 @@ import { AdminTripsScreen } from '../screens/AdminTripsScreen';
 import { AdminUserDetailScreen } from '../screens/AdminUserDetailScreen';
 import { AdminUsersScreen } from '../screens/AdminUsersScreen';
 import { AdminTabLabel } from './AdminTabLabel';
-import type { AdminRootStackParamList, AdminTabParamList } from './adminNavigationTypes';
+import type {
+  AdminTabParamList,
+  AdminTripsStackParamList,
+  AdminUsersStackParamList,
+} from './adminNavigationTypes';
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
-const RootStack = createNativeStackNavigator<AdminRootStackParamList>();
+const UsersStack = createNativeStackNavigator<AdminUsersStackParamList>();
+const TripsStack = createNativeStackNavigator<AdminTripsStackParamList>();
 
 const TAB_BAR_CONTENT_HEIGHT = 64;
 const TAB_BAR_EXTRA = 12;
@@ -38,10 +43,10 @@ const TAB_ICONS: Record<
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background.subtle,
   },
   scene: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background.subtle,
   },
   tabBar: {
     backgroundColor: colors.white,
@@ -56,6 +61,41 @@ const styles = StyleSheet.create({
   },
 });
 
+const nestedStackScreenOptions = {
+  headerShown: false,
+  freezeOnBlur: false,
+  contentStyle: styles.scene,
+} as const;
+
+function tabBarHiddenOnNested(
+  route: { name?: string; state?: unknown },
+  homeRouteName: string,
+  defaultTabBarStyle: object,
+) {
+  const focusedRoute = getFocusedRouteNameFromRoute(route) ?? homeRouteName;
+  return focusedRoute === homeRouteName
+    ? defaultTabBarStyle
+    : { display: 'none' as const };
+}
+
+function AdminUsersStack(): React.ReactElement {
+  return (
+    <UsersStack.Navigator screenOptions={nestedStackScreenOptions}>
+      <UsersStack.Screen name="UsersHome" component={AdminUsersScreen} />
+      <UsersStack.Screen name="UserDetail" component={AdminUserDetailScreen} />
+    </UsersStack.Navigator>
+  );
+}
+
+function AdminTripsStack(): React.ReactElement {
+  return (
+    <TripsStack.Navigator screenOptions={nestedStackScreenOptions}>
+      <TripsStack.Screen name="TripsHome" component={AdminTripsScreen} />
+      <TripsStack.Screen name="ListingDetail" component={ListingDetailScreen} />
+    </TripsStack.Navigator>
+  );
+}
+
 function AdminTabs(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + insets.bottom + TAB_BAR_EXTRA;
@@ -65,11 +105,14 @@ function AdminTabs(): React.ReactElement {
   );
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} collapsable={false}>
       <Tab.Navigator
         safeAreaInsets={{ top: 0 }}
         screenOptions={{
           headerShown: false,
+          lazy: false,
+          freezeOnBlur: false,
+          tabBarHideOnKeyboard: true,
           sceneStyle: styles.scene,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.text.tertiary,
@@ -81,23 +124,25 @@ function AdminTabs(): React.ReactElement {
       >
         <Tab.Screen
           name="Users"
-          component={AdminUsersScreen}
-          options={{
+          component={AdminUsersStack}
+          options={({ route }) => ({
             tabBarIcon: ({ color }) => (
               <FontAwesome name={TAB_ICONS.Users} size={22} color={color} />
             ),
             tabBarLabel: ({ color }) => <AdminTabLabel routeName="Users" color={color} />,
-          }}
+            tabBarStyle: tabBarHiddenOnNested(route, 'UsersHome', defaultTabBarStyle),
+          })}
         />
         <Tab.Screen
           name="Trips"
-          component={AdminTripsScreen}
-          options={{
+          component={AdminTripsStack}
+          options={({ route }) => ({
             tabBarIcon: ({ color }) => (
               <FontAwesome name={TAB_ICONS.Trips} size={22} color={color} />
             ),
             tabBarLabel: ({ color }) => <AdminTabLabel routeName="Trips" color={color} />,
-          }}
+            tabBarStyle: tabBarHiddenOnNested(route, 'TripsHome', defaultTabBarStyle),
+          })}
         />
         <Tab.Screen
           name="Credits"
@@ -122,19 +167,13 @@ function AdminTabs(): React.ReactElement {
         <Tab.Screen
           name="Settings"
           component={SettingsStackNavigator}
-          options={({ route }) => {
-            const focusedRoute = getFocusedRouteNameFromRoute(route) ?? 'SettingsHome';
-            return {
-              tabBarIcon: ({ color }) => (
-                <FontAwesome name="cog" size={22} color={color} />
-              ),
-              tabBarLabel: ({ color }) => <AdminTabLabel routeName="Settings" color={color} />,
-              tabBarStyle:
-                focusedRoute === 'SettingsHome'
-                  ? defaultTabBarStyle
-                  : { display: 'none' },
-            };
-          }}
+          options={({ route }) => ({
+            tabBarIcon: ({ color }) => (
+              <FontAwesome name="cog" size={22} color={color} />
+            ),
+            tabBarLabel: ({ color }) => <AdminTabLabel routeName="Settings" color={color} />,
+            tabBarStyle: tabBarHiddenOnNested(route, 'SettingsHome', defaultTabBarStyle),
+          })}
           listeners={({ navigation }) => ({
             tabPress: () => {
               const settingsRoute = navigation
@@ -161,16 +200,7 @@ function AdminTabs(): React.ReactElement {
 export function AdminNavigator(): React.ReactElement {
   return (
     <TripProvider>
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: styles.scene,
-        }}
-      >
-        <RootStack.Screen name="MainTabs" component={AdminTabs} />
-        <RootStack.Screen name="ListingDetail" component={ListingDetailScreen} />
-        <RootStack.Screen name="UserDetail" component={AdminUserDetailScreen} />
-      </RootStack.Navigator>
+      <AdminTabs />
     </TripProvider>
   );
 }

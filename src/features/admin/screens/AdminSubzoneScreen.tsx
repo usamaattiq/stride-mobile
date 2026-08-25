@@ -20,6 +20,7 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 import { useAdminResource } from '../hooks/useAdminResource';
 
@@ -43,6 +44,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [saving, setSaving] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [actionErrorKey, setActionErrorKey] = React.useState<string | null>(null);
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
 
@@ -54,6 +56,8 @@ export function AdminSubzoneScreen(): React.ReactElement {
   });
 
   const subzones = data ?? [];
+  const canCreate =
+    form.name.trim().length > 0 && form.latitude != null && form.longitude != null;
   const { refreshControlProps } = usePullToRefresh(reload);
 
   const pickLocation = React.useCallback(() => {
@@ -112,37 +116,71 @@ export function AdminSubzoneScreen(): React.ReactElement {
 
   const removeSubzone = React.useCallback(
     async (subzoneId: string) => {
+      if (deletingId) {
+        return;
+      }
       setActionErrorKey(null);
+      setDeletingId(subzoneId);
       try {
         await adminApi.deleteSubzone(subzoneId);
         await reload();
       } catch {
         setActionErrorKey('admin.subzone.deleteFailed');
+      } finally {
+        setDeletingId(null);
       }
     },
-    [reload],
+    [deletingId, reload],
   );
 
   const renderSubzone = React.useCallback<ListRenderItem<AdminSubzone>>(
-    ({ item }) => (
-      <View style={styles.card}>
-        <View style={styles.info}>
-          <AppText weight="bold">{item.name}</AppText>
-          <AppText style={styles.meta}>{item.cityLabel}</AppText>
-          {item.latitude != null && item.longitude != null ? (
-            <AppText style={styles.meta}>
-              {`${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`}
-            </AppText>
-          ) : null}
+    ({ item }) => {
+      const deleting = deletingId === item.id;
+      const coords =
+        item.latitude != null && item.longitude != null
+          ? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`
+          : null;
+
+      return (
+        <View style={styles.shadowGutter}>
+          <View style={styles.item}>
+            <View style={styles.itemInner}>
+              <View style={styles.iconWrap}>
+                <FontAwesome name="map-marker" size={16} color={colors.primary} />
+              </View>
+              <View style={styles.info}>
+                <AppText weight="bold" style={styles.name} numberOfLines={1}>
+                  {item.name}
+                </AppText>
+                <AppText style={styles.meta} numberOfLines={1}>
+                  {item.cityLabel}
+                </AppText>
+                {coords ? (
+                  <AppText style={styles.coords} numberOfLines={1}>
+                    {coords}
+                  </AppText>
+                ) : null}
+              </View>
+              <Pressable
+                onPress={() => void removeSubzone(item.id)}
+                disabled={deleting}
+                style={({ pressed }) => [
+                  styles.deleteButton,
+                  pressed && styles.pressed,
+                  deleting && styles.deleteButtonDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('admin.common.delete')}
+                hitSlop={8}
+              >
+                <FontAwesome name="trash-o" size={14} color={colors.white} />
+              </Pressable>
+            </View>
+          </View>
         </View>
-        <Button
-          label={t('admin.common.delete')}
-          onPress={() => void removeSubzone(item.id)}
-          variant="secondary"
-        />
-      </View>
-    ),
-    [removeSubzone, t],
+      );
+    },
+    [deletingId, removeSubzone, t],
   );
 
   const listHeader = (
@@ -187,7 +225,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
         <Button
           label={saving ? t('admin.common.saving') : t('admin.subzone.create')}
           onPress={() => void createSubzone()}
-          disabled={saving}
+          disabled={saving || !canCreate}
         />
         {errorKey || actionErrorKey ? (
           <AppText style={styles.error}>
@@ -304,20 +342,63 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  card: {
+  shadowGutter: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  item: {
+    borderRadius: radius.md,
+    backgroundColor: colors.background.subtle,
+    ...cardBackShadow,
+  },
+  itemInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
-    borderRadius: radius.md,
-    padding: spacing.md,
+    backgroundColor: colors.background.subtle,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.xs,
+  },
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+  },
+  deleteButtonDisabled: {
+    opacity: 0.55,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.white,
-    gap: spacing.sm,
   },
   info: {
+    flex: 1,
+    minWidth: 0,
     gap: 2,
   },
+  name: {
+    fontSize: 16,
+    color: colors.text.primary,
+  },
   meta: {
+    fontSize: 13,
     color: colors.text.secondary,
-    fontSize: 14,
+  },
+  coords: {
+    fontSize: 12,
+    color: colors.text.tertiary,
   },
   emptyFooter: {
     flex: 1,

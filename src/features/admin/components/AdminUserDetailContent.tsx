@@ -19,6 +19,7 @@ const DOC_PHOTO_SIZE = 72;
 
 type AdminUserDetailContentProps = {
   user: AdminUserDetail;
+  listRole: 'passenger' | 'driver';
   onUserUpdated: (user: AdminUserDetail) => void;
 };
 
@@ -222,10 +223,10 @@ function DocSection({
 
 export function AdminUserDetailContent({
   user,
+  listRole,
   onUserUpdated,
 }: AdminUserDetailContentProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const isDriver = user.role === 'driver';
   const memberSince = formatTripDateTime(user.createdAt, i18n.language, '—', false);
   const [reviewingDoc, setReviewingDoc] = React.useState<'nic' | 'license' | null>(null);
 
@@ -236,8 +237,7 @@ export function AdminUserDetailContent({
     (url): url is string => Boolean(url),
   );
 
-  const showNic = true;
-  const showLicense = isDriver;
+  const showLicense = listRole === 'driver';
 
   const openWhatsApp = () => {
     void openWhatsAppChat(
@@ -294,22 +294,20 @@ export function AdminUserDetailContent({
         </Pressable>
       </View>
 
-      {showNic ? (
-        <DocSection
-          title={t('admin.users.nic')}
-          reviewStatus={user.documents.nicStatus}
-          rejectionReason={user.nicRejectionReason}
-          number={user.nicNumber}
-          photos={nicPhotos}
-          reviewing={reviewingDoc === 'nic'}
-          onApprove={() => {
-            void reviewDocument('nic', 'approve');
-          }}
-          onReject={() => {
-            void reviewDocument('nic', 'reject');
-          }}
-        />
-      ) : null}
+      <DocSection
+        title={t('admin.users.nic')}
+        reviewStatus={user.documents.nicStatus}
+        rejectionReason={user.nicRejectionReason}
+        number={user.nicNumber}
+        photos={nicPhotos}
+        reviewing={reviewingDoc === 'nic'}
+        onApprove={() => {
+          void reviewDocument('nic', 'approve');
+        }}
+        onReject={() => {
+          void reviewDocument('nic', 'reject');
+        }}
+      />
       {showLicense ? (
         <DocSection
           title={t('admin.users.license')}

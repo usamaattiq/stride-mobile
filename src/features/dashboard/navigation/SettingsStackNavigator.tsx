@@ -12,7 +12,7 @@ const Stack = createNativeStackNavigator<SettingsStackParamList>();
 
 export function SettingsStackNavigator(): React.ReactElement {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, freezeOnBlur: false }}>
       <Stack.Screen name="SettingsHome" component={SettingsHomeScreen} />
       <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} />
       <Stack.Screen name="DriverVerification" component={DriverVerificationScreen} />

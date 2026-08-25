@@ -25,7 +25,7 @@ import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, spacing } from '@/theme';
 
 import { useAdminResource } from '../hooks/useAdminResource';
-import type { AdminRootStackParamList } from '../navigation/adminNavigationTypes';
+import type { AdminTripsStackParamList } from '../navigation/adminNavigationTypes';
 import { mapAdminTripSummaryToTrip } from '../utils/admin.mapper';
 
 const SKELETON_COUNT = 4;
@@ -36,7 +36,7 @@ function ListSeparator(): React.ReactElement {
 
 export function AdminTripsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const navigation = useNavigation<NativeStackNavigationProp<AdminRootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<AdminTripsStackParamList>>();
   const [listingCategory, setListingCategory] =
     React.useState<TripListingCategory>('all');
   const [routeType, setRouteType] = React.useState<TripRouteType | null>(null);

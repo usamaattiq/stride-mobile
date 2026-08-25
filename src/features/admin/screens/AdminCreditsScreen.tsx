@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   TextInput,
@@ -14,9 +15,9 @@ import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmpt
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminCreditUser } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, radius, spacing } from '@/theme';
+import { cardBackShadow } from '@/theme/cardShadow';
 
 import { useAdminResource } from '../hooks/useAdminResource';
 
@@ -60,31 +61,59 @@ export function AdminCreditsScreen(): React.ReactElement {
   );
 
   const renderUser = React.useCallback<ListRenderItem<AdminCreditUser>>(
-    ({ item }) => (
-      <View style={styles.card}>
-        <View style={styles.info}>
-          <AppText weight="bold">{item.fullName}</AppText>
-          <AppText style={styles.meta}>{item.phoneE164}</AppText>
-          <AppText style={styles.meta}>
-            {item.role === 'driver' ? t('admin.users.drivers') : t('admin.users.passengers')}
-          </AppText>
+    ({ item }) => {
+      const saving = savingId === item.id;
+      return (
+        <View style={styles.shadowGutter}>
+          <View style={styles.item}>
+            <View style={styles.itemInner}>
+              <View style={styles.info}>
+                <AppText weight="bold" style={styles.name} numberOfLines={1}>
+                  {item.fullName}
+                </AppText>
+                <AppText style={styles.meta} numberOfLines={1}>
+                  {item.phoneE164}
+                </AppText>
+                <AppText style={styles.meta} numberOfLines={1}>
+                  {item.role === 'driver'
+                    ? t('admin.users.drivers')
+                    : t('admin.users.passengers')}
+                </AppText>
+                <View style={styles.creditsRow}>
+                  <AppText weight="semibold" style={styles.creditsLabel}>
+                    {t('dashboard.home.credits')}
+                  </AppText>
+                  <TextInput
+                    value={drafts[item.id] ?? '0'}
+                    onChangeText={(text) =>
+                      setDrafts((current) => ({ ...current, [item.id]: text }))
+                    }
+                    keyboardType="number-pad"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+              <Pressable
+                onPress={() => void saveCredits(item.id)}
+                disabled={saving}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  pressed && styles.pressed,
+                  saving && styles.saveButtonDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('admin.common.save')}
+                hitSlop={8}
+              >
+                <AppText weight="semibold" style={styles.saveLabel}>
+                  {saving ? t('admin.common.saving') : t('admin.common.save')}
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
         </View>
-
-        <TextInput
-          value={drafts[item.id] ?? '0'}
-          onChangeText={(text) => setDrafts((current) => ({ ...current, [item.id]: text }))}
-          keyboardType="number-pad"
-          style={styles.input}
-        />
-
-        <Button
-          label={savingId === item.id ? t('admin.common.saving') : t('admin.common.save')}
-          onPress={() => void saveCredits(item.id)}
-          disabled={savingId === item.id}
-          variant="secondary"
-        />
-      </View>
-    ),
+      );
+    },
     [drafts, saveCredits, savingId, t],
   );
 
@@ -143,38 +172,88 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: 8,
     paddingBottom: spacing.huge + spacing.md,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
-  card: {
+  shadowGutter: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  item: {
+    borderRadius: radius.md,
+    backgroundColor: colors.background.subtle,
+    ...cardBackShadow,
+  },
+  itemInner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    backgroundColor: colors.white,
-    gap: spacing.sm,
+    backgroundColor: colors.background.subtle,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.xs,
   },
   info: {
+    flex: 1,
+    minWidth: 0,
     gap: 2,
+  },
+  name: {
+    fontSize: 16,
+    color: colors.text.primary,
   },
   meta: {
     color: colors.text.secondary,
-    fontSize: 14,
+    fontSize: 13,
+  },
+  creditsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  creditsLabel: {
+    fontSize: 13,
+    color: colors.text.primary,
   },
   input: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border.strong,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.background.subtle,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.white,
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+  saveButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-start',
+  },
+  saveButtonDisabled: {
+    opacity: 0.55,
+  },
+  saveLabel: {
+    fontSize: 12,
+    color: colors.white,
   },
   error: {
     color: colors.primary,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
   muted: {
     color: colors.text.secondary,
     textAlign: 'center',
     paddingVertical: spacing.xl,
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

@@ -27,7 +27,7 @@ import { colors, spacing } from '@/theme';
 
 import { AdminUserCard } from '../components/AdminUserCard';
 import { useAdminResource } from '../hooks/useAdminResource';
-import type { AdminRootStackParamList } from '../navigation/adminNavigationTypes';
+import type { AdminUsersStackParamList } from '../navigation/adminNavigationTypes';
 
 const FILTER_OPTIONS: { id: AdminUserFilter; labelKey: string }[] = [
   { id: 'all', labelKey: 'admin.users.filters.all' },
@@ -42,7 +42,7 @@ function ListSeparator(): React.ReactElement {
 
 export function AdminUsersScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const navigation = useNavigation<NativeStackNavigationProp<AdminRootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<AdminUsersStackParamList>>();
   const [role, setRole] = React.useState<'passenger' | 'driver'>('passenger');
   const [filter, setFilter] = React.useState<AdminUserFilter>('all');
   const [query, setQuery] = React.useState('');
@@ -86,7 +86,9 @@ export function AdminUsersScreen(): React.ReactElement {
       <AdminUserCard
         user={item}
         listRole={role}
-        onPress={() => navigation.navigate('UserDetail', { userId: item.id })}
+        onPress={() =>
+          navigation.navigate('UserDetail', { userId: item.id, listRole: role })
+        }
       />
     ),
     [navigation, role],
