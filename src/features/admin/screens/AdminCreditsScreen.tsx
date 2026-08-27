@@ -74,11 +74,6 @@ export function AdminCreditsScreen(): React.ReactElement {
                 <AppText style={styles.meta} numberOfLines={1}>
                   {item.phoneE164}
                 </AppText>
-                <AppText style={styles.meta} numberOfLines={1}>
-                  {item.role === 'driver'
-                    ? t('admin.users.drivers')
-                    : t('admin.users.passengers')}
-                </AppText>
                 <View style={styles.creditsRow}>
                   <AppText weight="semibold" style={styles.creditsLabel}>
                     {t('dashboard.home.credits')}

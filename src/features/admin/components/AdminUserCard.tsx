@@ -118,13 +118,6 @@ export function AdminUserCard({ user, listRole, onPress }: AdminUserCardProps): 
                 </View>
               )}
             </View>
-
-            <View style={styles.creditsBadge}>
-              <FontAwesome name="star" size={9} color={colors.white} />
-              <AppText weight="semibold" style={styles.creditsText} numberOfLines={1}>
-                {t('dashboard.home.creditsA11y', { count: user.credits })}
-              </AppText>
-            </View>
           </View>
 
           <View style={styles.mainRow}>
@@ -240,20 +233,6 @@ const styles = StyleSheet.create({
   },
   badgeTextRed: {
     color: colors.primary,
-  },
-  creditsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent.credits,
-    flexShrink: 0,
-  },
-  creditsText: {
-    fontSize: 11,
-    color: colors.white,
   },
   mainRow: {
     flexDirection: 'row',

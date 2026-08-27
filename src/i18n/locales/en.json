@@ -1172,7 +1172,7 @@
     },
     "credits": {
       "title": "Credits",
-      "subtitle": "Manage user credits",
+      "subtitle": "Credits belong to the user account, not driver or passenger role",
       "empty": "No users found",
       "loadFailed": "Couldn't load credits",
       "saveFailed": "Couldn't update credits",
