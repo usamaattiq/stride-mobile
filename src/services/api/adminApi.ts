@@ -69,6 +69,13 @@ export type AdminTripSummary = {
   vehiclePhotoViewUrls?: string[];
   vehicleClass?: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
   vehicleTotalSeats?: number | null;
+  vehicleMode?: string;
+  startingPrice?: string | null;
+  paymentMethod?: string;
+  durationHours?: number;
+  startMode?: string;
+  scheduledStartAt?: string | null;
+  statusVariant?: string | null;
 };
 
 export type AdminTripDetail = AdminTripSummary & {

@@ -85,6 +85,21 @@ export function mapAdminUserDetailToMessage(user: AdminUserDetail): HomeMessage 
   return mapAdminUserSummaryToMessage(user);
 }
 
+function mapAdminPaymentMethod(value: string | undefined): Trip['paymentMethod'] {
+  if (value === 'ONLINE') return 'online';
+  if (value === 'BOTH') return 'both';
+  return 'cash';
+}
+
+function mapAdminStatusVariant(
+  value: string | null | undefined,
+): Trip['auctionStatusVariant'] {
+  if (value === 'muted' || value === 'accent' || value === 'warning' || value === 'success') {
+    return value;
+  }
+  return null;
+}
+
 export function mapAdminTripSummaryToTrip(trip: AdminTripSummary): Trip {
   const rfqStatus =
     trip.listingType === 'rfq' && trip.status
@@ -110,7 +125,7 @@ export function mapAdminTripSummaryToTrip(trip: AdminTripSummary): Trip {
     listingVehicle: null,
     routeType: trip.routeType,
     luggage: null,
-    vehicleMode: 'shared',
+    vehicleMode: trip.vehicleMode === 'FULL_PRIVATE' ? 'fullPrivate' : 'shared',
     departureCity: { id: `${trip.id}-from`, label: trip.departureCityLabel },
     departurePoint: { label: trip.departureCityLabel, latitude: 0, longitude: 0 },
     departureAt: trip.departureAt,
@@ -124,17 +139,17 @@ export function mapAdminTripSummaryToTrip(trip: AdminTripSummary): Trip {
     arrivalTimeSet: true,
     listingType: trip.listingType,
     referenceCode: trip.referenceCode,
-    startingPrice: null,
-    paymentMethod: 'cash',
-    durationHours: 24,
-    startMode: 'instant',
-    scheduledStartAt: null,
+    startingPrice: trip.startingPrice ?? null,
+    paymentMethod: mapAdminPaymentMethod(trip.paymentMethod),
+    durationHours: trip.durationHours ?? 24,
+    startMode: trip.startMode === 'SCHEDULED' ? 'scheduled' : 'instant',
+    scheduledStartAt: trip.scheduledStartAt ?? null,
     description: null,
     publishedAt: trip.publishedAt,
     rfqStatus,
     auctionStatus,
     auctionStatusLabel: trip.statusLabel,
-    auctionStatusVariant: null,
+    auctionStatusVariant: mapAdminStatusVariant(trip.statusVariant),
     auctionRemainingSeconds: null,
     myOfferStatus: null,
     myOfferPrice: null,
@@ -150,12 +165,7 @@ export function mapAdminTripDetailToTrip(trip: AdminTripDetail): Trip {
   return {
     ...base,
     vehicleMode: trip.vehicleMode === 'FULL_PRIVATE' ? 'fullPrivate' : 'shared',
-    paymentMethod:
-      trip.paymentMethod === 'ONLINE'
-        ? 'online'
-        : trip.paymentMethod === 'BOTH'
-          ? 'both'
-          : 'cash',
+    paymentMethod: mapAdminPaymentMethod(trip.paymentMethod),
     startingPrice: trip.startingPrice,
     description: trip.description,
   };
