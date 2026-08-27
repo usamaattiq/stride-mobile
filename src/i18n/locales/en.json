@@ -1208,6 +1208,7 @@
         "email": "Email",
         "address": "Address",
         "memberSince": "Member since",
+        "credits": "Credits",
         "documents": "Documents"
       }
     },
@@ -1235,7 +1236,7 @@
     },
     "credits": {
       "title": "Credits",
-      "subtitle": "Credits belong to the user account, not driver or passenger role",
+      "subtitle": "Review pending credit purchases",
       "empty": "No users found",
       "loadFailed": "Couldn't load credits",
       "saveFailed": "Couldn't update credits",

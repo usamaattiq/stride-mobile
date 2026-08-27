@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
@@ -229,6 +229,13 @@ export function AdminUserDetailContent({
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const memberSince = formatTripDateTime(user.createdAt, i18n.language, '—', false);
   const [reviewingDoc, setReviewingDoc] = React.useState<'nic' | 'license' | null>(null);
+  const [creditsDraft, setCreditsDraft] = React.useState(String(user.credits));
+  const [savingCredits, setSavingCredits] = React.useState(false);
+  const [creditsErrorKey, setCreditsErrorKey] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setCreditsDraft(String(user.credits));
+  }, [user.credits]);
 
   const nicPhotos = [user.nicFrontViewUrl, user.nicBackViewUrl].filter(
     (url): url is string => Boolean(url),
@@ -244,6 +251,25 @@ export function AdminUserDetailContent({
       user.phoneE164,
       t('admin.users.whatsappMessage', { name: user.fullName }),
     ).catch(() => undefined);
+  };
+
+  const saveCredits = async () => {
+    const value = Number(creditsDraft);
+    if (!Number.isInteger(value) || value < 0) {
+      setCreditsErrorKey('admin.credits.invalid');
+      return;
+    }
+
+    setSavingCredits(true);
+    setCreditsErrorKey(null);
+    try {
+      const updated = await adminApi.updateCredits(user.id, value);
+      onUserUpdated({ ...user, credits: updated.credits });
+    } catch {
+      setCreditsErrorKey('admin.credits.saveFailed');
+    } finally {
+      setSavingCredits(false);
+    }
   };
 
   const reviewDocument = async (document: 'nic' | 'license', action: 'approve' | 'reject') => {
@@ -292,6 +318,42 @@ export function AdminUserDetailContent({
             {t('dashboard.listings.detail.contact.whatsapp')}
           </AppText>
         </Pressable>
+      </View>
+
+      <View style={styles.shadowCard}>
+        <AppText weight="bold" style={styles.cardHeading}>
+          {t('admin.users.detail.credits')}
+        </AppText>
+        <View style={styles.creditsRow}>
+          <AppText weight="semibold" style={styles.creditsLabel}>
+            {t('dashboard.home.credits')}
+          </AppText>
+          <TextInput
+            value={creditsDraft}
+            onChangeText={setCreditsDraft}
+            keyboardType="number-pad"
+            style={styles.creditsInput}
+          />
+          <Pressable
+            onPress={() => void saveCredits()}
+            disabled={savingCredits}
+            style={({ pressed }) => [
+              styles.creditsSaveButton,
+              pressed && styles.pressed,
+              savingCredits && styles.creditsSaveDisabled,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('admin.common.save')}
+            hitSlop={8}
+          >
+            <AppText weight="semibold" style={styles.creditsSaveLabel}>
+              {savingCredits ? t('admin.common.saving') : t('admin.common.save')}
+            </AppText>
+          </Pressable>
+        </View>
+        {creditsErrorKey ? (
+          <AppText style={styles.creditsError}>{t(creditsErrorKey)}</AppText>
+        ) : null}
       </View>
 
       <DocSection
@@ -393,6 +455,45 @@ const styles = StyleSheet.create({
   whatsappLabel: {
     color: colors.white,
     fontSize: 15,
+  },
+  creditsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  creditsLabel: {
+    fontSize: 13,
+    color: colors.text.primary,
+  },
+  creditsInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.white,
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+  creditsSaveButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  creditsSaveDisabled: {
+    opacity: 0.55,
+  },
+  creditsSaveLabel: {
+    fontSize: 12,
+    color: colors.white,
+  },
+  creditsError: {
+    color: colors.primary,
+    fontSize: 13,
+    marginTop: spacing.xs,
   },
   docTile: {
     gap: spacing.sm,

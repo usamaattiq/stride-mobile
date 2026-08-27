@@ -15,7 +15,6 @@ import { AdminHomeScreen } from '../screens/AdminHomeScreen';
 import { AdminCreditsScreen } from '../screens/AdminCreditsScreen';
 import { AdminCreditSettingsScreen } from '../screens/AdminCreditSettingsScreen';
 import { AdminCreditPurchaseDetailScreen } from '../screens/AdminCreditPurchaseDetailScreen';
-import { AdminCreditPurchaseListScreen } from '../screens/AdminCreditPurchaseListScreen';
 import { AdminSubzoneScreen } from '../screens/AdminSubzoneScreen';
 import { AdminTripsScreen } from '../screens/AdminTripsScreen';
 import { AdminUserDetailScreen } from '../screens/AdminUserDetailScreen';
@@ -109,7 +108,6 @@ function AdminCreditsStack(): React.ReactElement {
     <CreditsStack.Navigator screenOptions={nestedStackScreenOptions}>
       <CreditsStack.Screen name="CreditsHome" component={AdminCreditsScreen} />
       <CreditsStack.Screen name="CreditSettings" component={AdminCreditSettingsScreen} />
-      <CreditsStack.Screen name="CreditPurchaseRequests" component={AdminCreditPurchaseListScreen} />
       <CreditsStack.Screen name="CreditPurchaseDetail" component={AdminCreditPurchaseDetailScreen} />
     </CreditsStack.Navigator>
   );

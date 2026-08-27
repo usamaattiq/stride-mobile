@@ -4,7 +4,6 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  TextInput,
   View,
   type ListRenderItem,
 } from 'react-native';
@@ -14,13 +13,13 @@ import { useTranslation } from 'react-i18next';
 
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { CreditPurchaseRequestTile } from '@/features/dashboard/components/CreditPurchaseRequestTile';
 import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmptyState';
 import { i18n as appI18n } from '@/i18n';
-import { adminApi, type AdminCreditUser } from '@/services/api/adminApi';
+import { adminApi, type AdminCreditPurchaseSummary } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { colors, radius, spacing } from '@/theme';
-import { cardBackShadow } from '@/theme/cardShadow';
+import { colors, spacing } from '@/theme';
 
 import { useAdminResource } from '../hooks/useAdminResource';
 import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTypes';
@@ -29,170 +28,75 @@ export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<AdminCreditsStackParamList>>();
-  const [drafts, setDrafts] = React.useState<Record<string, string>>({});
-  const [savingId, setSavingId] = React.useState<string | null>(null);
-  const [saveErrorKey, setSaveErrorKey] = React.useState<string | null>(null);
-  const [pendingCount, setPendingCount] = React.useState(0);
 
   const { data, loading, errorKey, reload } = useAdminResource({
     reloadOnFocus: true,
     load: async () => {
-      const [result, pending] = await Promise.all([
-        adminApi.listCredits(),
-        adminApi.countPendingCreditPurchases(),
-      ]);
-      setDrafts(Object.fromEntries(result.items.map((user) => [user.id, String(user.credits)])));
-      setPendingCount(pending.pendingCount);
+      const result = await adminApi.listCreditPurchases();
       return result.items;
     },
   });
 
-  const users = data ?? [];
+  const items = data ?? [];
   const { refreshControlProps } = usePullToRefresh(reload);
 
-  const saveCredits = React.useCallback(
-    async (userId: string) => {
-      const value = Number(drafts[userId]);
-      if (!Number.isInteger(value) || value < 0) {
-        setSaveErrorKey('admin.credits.invalid');
-        return;
-      }
-
-      setSavingId(userId);
-      setSaveErrorKey(null);
-      try {
-        await adminApi.updateCredits(userId, value);
-        await reload();
-      } catch {
-        setSaveErrorKey('admin.credits.saveFailed');
-      } finally {
-        setSavingId(null);
-      }
-    },
-    [drafts, reload],
-  );
-
-  const renderUser = React.useCallback<ListRenderItem<AdminCreditUser>>(
-    ({ item }) => {
-      const saving = savingId === item.id;
-      return (
-        <View style={styles.shadowGutter}>
-          <View style={styles.item}>
-            <View style={styles.itemInner}>
-              <View style={styles.info}>
-                <AppText weight="bold" style={styles.name} numberOfLines={1}>
-                  {item.fullName}
-                </AppText>
-                <AppText style={styles.meta} numberOfLines={1}>
-                  {item.phoneE164}
-                </AppText>
-                <View style={styles.creditsRow}>
-                  <AppText weight="semibold" style={styles.creditsLabel}>
-                    {t('dashboard.home.credits')}
-                  </AppText>
-                  <TextInput
-                    value={drafts[item.id] ?? '0'}
-                    onChangeText={(text) =>
-                      setDrafts((current) => ({ ...current, [item.id]: text }))
-                    }
-                    keyboardType="number-pad"
-                    style={styles.input}
-                  />
-                </View>
-              </View>
-              <Pressable
-                onPress={() => void saveCredits(item.id)}
-                disabled={saving}
-                style={({ pressed }) => [
-                  styles.saveButton,
-                  pressed && styles.pressed,
-                  saving && styles.saveButtonDisabled,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('admin.common.save')}
-                hitSlop={8}
-              >
-                <AppText weight="semibold" style={styles.saveLabel}>
-                  {saving ? t('admin.common.saving') : t('admin.common.save')}
-                </AppText>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      );
-    },
-    [drafts, saveCredits, savingId, t],
-  );
-
-  const listEmpty = loading ? (
-    <AppText style={styles.muted}>{t('admin.common.loading')}</AppText>
-  ) : (
-    <ListingsEmptyState
-      title={t('admin.credits.empty')}
-      subtitle={t('admin.credits.subtitle')}
-      icon="coins"
-    />
+  const renderItem = React.useCallback<ListRenderItem<AdminCreditPurchaseSummary>>(
+    ({ item }) => (
+      <View style={styles.shadowGutter}>
+        <CreditPurchaseRequestTile
+          title={item.user.fullName}
+          subtitle={`${t('admin.credits.requestFor', { count: item.credits })} · ${item.user.phoneE164}`}
+          credits={item.credits}
+          amount={item.amount}
+          unitPrice={item.credits > 0 ? item.amount / item.credits : 0}
+          status={item.status}
+          onPress={() => navigation.navigate('CreditPurchaseDetail', { purchaseId: item.id })}
+        />
+      </View>
+    ),
+    [navigation, t],
   );
 
   return (
     <AuthScaffold
       title={t('admin.credits.title')}
-      subtitle={t('admin.credits.subtitle')}
+      subtitle={t('admin.credits.requestsSubtitle')}
       compactHeader
       manualTopInset
       scrollable={false}
       showLanguageSwitcher={false}
       showLegalFooter={false}
       titleRight={
-        <View style={styles.headerActions}>
-          <Pressable
-            onPress={() => navigation.navigate('CreditPurchaseRequests')}
-            style={({ pressed }) => [styles.requestsButton, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.credits.requestsA11y', { count: pendingCount })}
-            hitSlop={8}
-          >
-            <AppText weight="semibold" style={styles.requestsLabel}>
-              {t('admin.credits.requests')}
-            </AppText>
-            {pendingCount > 0 ? (
-              <View style={styles.requestsBadge}>
-                <AppText weight="bold" style={styles.requestsBadgeText}>
-                  {pendingCount > 9 ? '9+' : String(pendingCount)}
-                </AppText>
-              </View>
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={() => navigation.navigate('CreditSettings')}
-            style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.credits.settingsA11y')}
-            hitSlop={8}
-          >
-            <FontAwesome name="cog" size={16} color={colors.white} />
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => navigation.navigate('CreditSettings')}
+          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel={t('admin.credits.settingsA11y')}
+          hitSlop={8}
+        >
+          <FontAwesome name="cog" size={16} color={colors.white} />
+        </Pressable>
       }
       contentWrapStyle={styles.contentWrap}
     >
-      {errorKey || saveErrorKey ? (
-        <AppText style={styles.error}>
-          {t(errorKey ?? saveErrorKey ?? 'admin.common.loadFailed')}
-        </AppText>
-      ) : null}
-
+      {errorKey ? <AppText style={styles.error}>{t(errorKey)}</AppText> : null}
       <FlatList
-        data={users}
+        data={items}
         keyExtractor={(item) => item.id}
-        renderItem={renderUser}
-        ListEmptyComponent={listEmpty}
+        renderItem={renderItem}
+        ListEmptyComponent={
+          loading ? (
+            <AppText style={styles.muted}>{t('admin.common.loading')}</AppText>
+          ) : (
+            <ListingsEmptyState
+              title={t('admin.credits.requestsEmpty')}
+              subtitle={t('admin.credits.requestsSubtitle')}
+              icon="coins"
+            />
+          )
+        }
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl {...refreshControlProps} />}
-        keyboardShouldPersistTaps="handled"
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={7}
       />
     </AuthScaffold>
   );
@@ -201,7 +105,6 @@ export function AdminCreditsScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
-    paddingTop: spacing.md,
     paddingHorizontal: 0,
     paddingBottom: 0,
   },
@@ -209,77 +112,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.md,
     paddingTop: 8,
-    paddingBottom: spacing.huge + spacing.md,
-    gap: spacing.md,
+    paddingBottom: spacing.huge,
+    gap: spacing.sm,
   },
   shadowGutter: {
     marginHorizontal: -spacing.md,
     paddingHorizontal: spacing.md,
-  },
-  item: {
-    borderRadius: radius.md,
-    backgroundColor: colors.background.subtle,
-    ...cardBackShadow,
-  },
-  itemInner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.default,
-    backgroundColor: colors.background.subtle,
-    paddingVertical: spacing.sm,
-    paddingLeft: spacing.sm,
-    paddingRight: spacing.xs,
-  },
-  info: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  name: {
-    fontSize: 16,
-    color: colors.text.primary,
-  },
-  meta: {
-    color: colors.text.secondary,
-    fontSize: 13,
-  },
-  creditsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  creditsLabel: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border.strong,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.white,
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-  saveButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignSelf: 'flex-start',
-  },
-  saveButtonDisabled: {
-    opacity: 0.55,
-  },
-  saveLabel: {
-    fontSize: 12,
-    color: colors.white,
   },
   error: {
     color: colors.primary,
@@ -294,12 +132,6 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-  },
   settingsButton: {
     width: 32,
     height: 32,
@@ -307,31 +139,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  requestsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-  },
-  requestsLabel: {
-    fontSize: 13,
-    color: colors.white,
-  },
-  requestsBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 5,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  requestsBadgeText: {
-    fontSize: 11,
-    color: colors.primary,
   },
 });

@@ -17,7 +17,6 @@ export type AdminTripsStackParamList = {
 export type AdminCreditsStackParamList = {
   CreditsHome: undefined;
   CreditSettings: undefined;
-  CreditPurchaseRequests: undefined;
   CreditPurchaseDetail: { purchaseId: string };
 };
 
