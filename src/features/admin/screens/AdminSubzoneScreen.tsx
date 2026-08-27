@@ -185,6 +185,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
 
   const listHeader = (
     <>
+      <View style={styles.shadowGutter}>
       <View style={styles.formCard}>
         <AppText weight="bold" style={styles.sectionTitle}>
           {t('admin.subzone.addTitle')}
@@ -232,6 +233,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
             {t(errorKey ?? actionErrorKey ?? 'admin.common.loadFailed')}
           </AppText>
         ) : null}
+      </View>
       </View>
       {subzones.length > 0 ? (
         <AppText weight="bold" style={styles.addedHeader}>
@@ -303,9 +305,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     borderRadius: radius.md,
     padding: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background.subtle,
     marginBottom: spacing.md,
     gap: spacing.sm,
+    ...cardBackShadow,
   },
   sectionTitle: {
     marginBottom: spacing.xs,
@@ -316,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.background.subtle,
+    backgroundColor: colors.white,
   },
   mapPickButton: {
     flexDirection: 'row',
@@ -327,7 +330,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.background.subtle,
+    backgroundColor: colors.white,
   },
   mapPickCopy: {
     flex: 1,
