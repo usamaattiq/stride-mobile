@@ -1121,6 +1121,7 @@
   "admin": {
     "title": "Stride Admin",
     "tabs": {
+      "Home": "Home",
       "Users": "Users",
       "Trips": "Trips",
       "Credits": "Credits",
@@ -1141,6 +1142,16 @@
     },
     "settings": {
       "role": "Administrator"
+    },
+    "home": {
+      "title": "Home",
+      "subtitle": "Overview of users and trips",
+      "totalUsers": "Total users",
+      "totalTrips": "Total trips",
+      "tripsByDrivers": "Trips by drivers",
+      "tripsByPassengers": "Trips by passengers",
+      "usersByDate": "Users by date",
+      "chartEmpty": "No new users in this period"
     },
     "users": {
       "title": "Users",

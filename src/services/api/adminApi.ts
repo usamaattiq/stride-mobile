@@ -77,6 +77,14 @@ export type AdminTripDetail = AdminTripSummary & {
   winningPassenger: AdminTripParticipant | null;
 };
 
+export type AdminHomeStats = {
+  totalUsers: number;
+  totalTrips: number;
+  tripsByDrivers: number;
+  tripsByPassengers: number;
+  usersByDate: { date: string; count: number }[];
+};
+
 export type AdminCreditUser = {
   id: string;
   fullName: string;
@@ -206,6 +214,10 @@ export const adminApi = {
 
   getTrip(tripId: string) {
     return apiRequest<AdminTripDetail>({ method: 'GET', url: `/admin/trips/${tripId}` });
+  },
+
+  getHomeStats() {
+    return apiRequest<AdminHomeStats>({ method: 'GET', url: '/admin/home/stats' });
   },
 
   listCredits() {
