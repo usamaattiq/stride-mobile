@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { i18n as appI18n } from "@/i18n";
 import { getErrorMessage } from "@/services/api/errorMessage";
+import { isApiErrorWithCode } from "@/services/api/apiError";
 import { rfqApi } from "@/services/api/rfqApi";
 import type {
   RfqOfferStatus,
@@ -28,6 +29,7 @@ import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
 import { colors, radius, spacing } from "@/theme";
 
@@ -523,10 +525,13 @@ export const TripOfferPanel = React.forwardRef<
           ...(photoUrls.length > 0 ? { photoUrls } : {}),
         });
         setPhotoUris([]);
+        void refreshSessionProfile();
         load();
       } catch (err) {
         setError(
-          getErrorMessage(
+          isApiErrorWithCode(err, "INSUFFICIENT_CREDITS")
+            ? t("common.insufficientCredits")
+            : getErrorMessage(
             err,
             t("dashboard.listings.detail.offer.submitFailed"),
           ),

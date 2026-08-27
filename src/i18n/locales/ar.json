@@ -1004,6 +1004,9 @@
       "notSpecified": "غير محدد",
       "publish": "نشر الرحلة",
       "publishRequest": "نشر الطلب",
+      "publishCostA11y": "{{count}} رصيد",
+      "insufficientCreditsTitle": "رصيد غير كافٍ",
+      "insufficientCreditsBody": "النشر يكلف {{needed}} رصيد. رصيدك الحالي {{balance}}.",
       "publishIncomplete": "أكمل الحقول المطلوبة قبل النشر.",
       "publishFailed": "تعذر نشر هذه الرحلة. يرجى المحاولة مرة أخرى.",
       "publishRequestFailed": "تعذر نشر هذا الطلب. يرجى المحاولة مرة أخرى.",
@@ -1210,7 +1213,8 @@
     "clear": "مسح",
     "continue": "متابعة",
     "close": "إغلاق",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "insufficientCredits": "ليس لديك رصيد كافٍ لهذا الإجراء."
   },
   "legal": {
     "common": {

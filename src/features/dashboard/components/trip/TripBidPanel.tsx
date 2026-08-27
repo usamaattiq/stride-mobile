@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { i18n as appI18n } from "@/i18n";
 import { getErrorMessage } from "@/services/api/errorMessage";
+import { isApiErrorWithCode } from "@/services/api/apiError";
 import { auctionApi } from "@/services/api/auctionApi";
 import type {
   AuctionParticipantSnapshot,
@@ -29,6 +30,7 @@ import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { formatPriceAmount, toLatinDigits } from "@/shared/utils/latin-digits";
+import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
 import { colors, getInputFontFamily, radius, spacing } from "@/theme";
 import { cardBackShadow } from "@/theme/cardShadow";
@@ -499,9 +501,14 @@ export const TripBidPanel = React.forwardRef<
           setAmount("");
           applySnapshot(result);
         }
+        void refreshSessionProfile();
       })
       .catch((err) =>
-        setError(getErrorMessage(err, t("dashboard.listings.detail.bid.submitFailed"))),
+        setError(
+          isApiErrorWithCode(err, "INSUFFICIENT_CREDITS")
+            ? t("common.insufficientCredits")
+            : getErrorMessage(err, t("dashboard.listings.detail.bid.submitFailed")),
+        ),
       )
       .finally(() => setSubmitting(false));
   }, [amount, applySnapshot, requiresVehicle, selectedVehicleId, t, tripId]);

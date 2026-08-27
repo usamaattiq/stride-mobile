@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { tripApi } from '@/services/api/tripApi';
+import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
 import { useProfileStore } from '@/store/profileStore';
 
 import {
@@ -106,6 +107,7 @@ export function TripProvider({
       const trip = mapTripDtoToTrip(created);
       setTrips((current) => [trip, ...current]);
       clearDraft();
+      void refreshSessionProfile();
       return trip;
     } finally {
       setIsPublishing(false);

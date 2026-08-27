@@ -8,6 +8,11 @@ export const ENV = {
   apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? '',
   /** Hosted stride-compliance origin, no trailing slash (e.g. https://compliance.stride.ai). */
   complianceBaseUrl: process.env.EXPO_PUBLIC_COMPLIANCE_BASE_URL?.trim() ?? '',
+  /** Must match stride-api `TRIP_CREATE_CREDITS`. */
+  tripCreateCredits: Number.parseInt(
+    process.env.EXPO_PUBLIC_TRIP_CREATE_CREDITS?.trim() || '10',
+    10,
+  ) || 10,
 } as const;
 
 export const hasGoogleMapsApiKey = (): boolean => ENV.googleMapsApiKey.length > 0;

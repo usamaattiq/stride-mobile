@@ -1004,6 +1004,9 @@
       "notSpecified": "Not specified",
       "publish": "Publish trip",
       "publishRequest": "Publish request",
+      "publishCostA11y": "{{count}} credits",
+      "insufficientCreditsTitle": "Not enough credits",
+      "insufficientCreditsBody": "Publishing costs {{needed}} credits. You have {{balance}}.",
       "publishIncomplete": "Complete the required fields before publishing.",
       "publishFailed": "Couldn't publish this trip. Please try again.",
       "publishRequestFailed": "Couldn't publish this request. Please try again.",
@@ -1210,7 +1213,8 @@
     "clear": "Clear",
     "continue": "Continue",
     "close": "Close",
-    "remove": "Remove"
+    "remove": "Remove",
+    "insufficientCredits": "You don't have enough credits for this action."
   },
   "legal": {
     "common": {

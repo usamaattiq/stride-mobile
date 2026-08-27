@@ -1,5 +1,5 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -17,7 +17,9 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
+import { ENV } from '@/shared/config/env';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { formatLatinNumber } from '@/shared/utils/latin-digits';
 import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
@@ -79,6 +81,8 @@ export function TripPreviewStep({
   const publishLabel = t(
     isPassenger ? 'trips.create.publishRequest' : 'trips.create.publish',
   );
+  const publishCost = ENV.tripCreateCredits;
+  const publishCostLabel = formatLatinNumber(publishCost);
 
   const trip = enrichPreviewTrip(draft, vehicle);
   const fromCityName = useLocalizedCityName(draft.departureCity, draft.departurePoint);
@@ -152,7 +156,7 @@ export function TripPreviewStep({
           publishing && styles.actionDisabled,
         ]}
         accessibilityRole="button"
-        accessibilityLabel={publishLabel}
+        accessibilityLabel={`${publishLabel}, ${t('trips.create.publishCostA11y', { count: publishCostLabel })}`}
         accessibilityState={{ busy: publishing, disabled: publishing }}
       >
         {publishing ? (
@@ -163,6 +167,12 @@ export function TripPreviewStep({
             <AppText weight="bold" style={[styles.publishButtonText, iosArabicAlign]}>
               {publishLabel}
             </AppText>
+            <View style={styles.publishCost}>
+              <FontAwesome5 name="coins" size={12} color={colors.accent.coins} solid />
+              <AppText weight="bold" style={styles.publishCostText}>
+                {publishCostLabel}
+              </AppText>
+            </View>
           </>
         )}
       </Pressable>
@@ -193,6 +203,20 @@ const styles = StyleSheet.create({
   },
   publishButtonText: {
     fontSize: 14,
+    color: colors.white,
+  },
+  publishCost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: spacing.xxs,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  publishCostText: {
+    fontSize: 13,
     color: colors.white,
   },
   actionDisabled: {

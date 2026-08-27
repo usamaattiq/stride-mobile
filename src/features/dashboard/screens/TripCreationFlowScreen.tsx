@@ -23,7 +23,10 @@ import { useVehicles } from '@/features/dashboard/context/VehicleContext';
 import type { DashboardRootStackParamList } from '@/features/dashboard/navigation/dashboardRootTypes';
 import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
+import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
+import { AppDialog } from '@/shared/components/AppDialog';
+import { ENV } from '@/shared/config/env';
 import {
   isSeaOrAirRoute,
   shouldSkipListingScheduleStep,
@@ -141,6 +144,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     useVehicles();
   const [step, setStep] = React.useState<TripCreationStep>(() => firstStepForRole(isPassenger));
   const [publishError, setPublishError] = React.useState<string | null>(null);
+  const [insufficientCreditsVisible, setInsufficientCreditsVisible] = React.useState(false);
   const [stepError, setStepError] = React.useState<{ step: TripCreationStep; message: string } | null>(
     null,
   );
@@ -317,6 +321,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
     }
     setPublishError(null);
     setStepError(null);
+    if (user.credits < ENV.tripCreateCredits) {
+      setInsufficientCreditsVisible(true);
+      return;
+    }
     void publishDraft()
       .then((trip) => {
         if (!trip) {
@@ -346,6 +354,10 @@ export function TripCreationFlowScreen(): React.ReactElement {
           setStepError({ step: target, message });
           setStep(target);
           setPublishError(target === 'preview' ? message : null);
+          return;
+        }
+        if (isApiErrorWithCode(error, 'INSUFFICIENT_CREDITS')) {
+          setInsufficientCreditsVisible(true);
           return;
         }
         setPublishError(
@@ -585,6 +597,19 @@ export function TripCreationFlowScreen(): React.ReactElement {
           />
         ) : null}
       </AuthScaffold>
+      <AppDialog
+        visible={insufficientCreditsVisible}
+        icon="star"
+        title={t('trips.create.insufficientCreditsTitle')}
+        message={t('trips.create.insufficientCreditsBody', {
+          needed: ENV.tripCreateCredits,
+          balance: user.credits,
+        })}
+        confirmAction={{
+          label: t('common.ok'),
+          onPress: () => setInsufficientCreditsVisible(false),
+        }}
+      />
     </>
   );
 }
