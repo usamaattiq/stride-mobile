@@ -37,6 +37,7 @@ type TripPreviewStepProps = {
   onPublish: () => void;
   onEditStep: (step: TripPreviewEditStep) => void;
   publishing?: boolean;
+  publishCost?: number;
   errorMessage?: string | null;
 };
 
@@ -69,6 +70,7 @@ export function TripPreviewStep({
   vehicle,
   onPublish,
   publishing = false,
+  publishCost = ENV.tripCreateCredits,
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
@@ -81,7 +83,6 @@ export function TripPreviewStep({
   const publishLabel = t(
     isPassenger ? 'trips.create.publishRequest' : 'trips.create.publish',
   );
-  const publishCost = ENV.tripCreateCredits;
   const publishCostLabel = formatLatinNumber(publishCost);
 
   const trip = enrichPreviewTrip(draft, vehicle);

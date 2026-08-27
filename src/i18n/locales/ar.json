@@ -1146,6 +1146,7 @@
     "home": {
       "title": "الرئيسية",
       "subtitle": "نظرة عامة على المستخدمين والرحلات",
+      "analytics": "التحليلات",
       "totalUsers": "إجمالي المستخدمين",
       "totalTrips": "إجمالي الرحلات",
       "tripsByDrivers": "رحلات السائقين",
@@ -1235,7 +1236,18 @@
       "proof": "إثبات الدفع",
       "approve": "موافقة",
       "reject": "رفض",
-      "reviewFailed": "تعذر تحديث هذا الطلب"
+      "reviewFailed": "تعذر تحديث هذا الطلب",
+      "settingsTitle": "إعدادات الرصيد",
+      "settingsSubtitle": "تُطبَّق هذه القيم على عمليات الشراء والرحلات والعروض الجديدة",
+      "settingsA11y": "إعدادات الرصيد",
+      "settingsInvalid": "أدخل أعداداً صحيحة من 0 أو أكثر",
+      "settingsSaveFailed": "تعذر حفظ إعدادات الرصيد",
+      "unitPriceLabel": "سعر الرصيد",
+      "unitPriceHint": "يُستخدم لطلبات الشراء الجديدة فقط",
+      "tripCreateLabel": "رصيد إنشاء رحلة أو طلب",
+      "tripCreateHint": "يُخصم عند نشر رحلة أو طلب راكب",
+      "bidOfferLabel": "رصيد إرسال عرض أو مزايدة",
+      "bidOfferHint": "يُخصم عند تقديم عرض أو مزايدة"
     },
     "subzone": {
       "title": "المنطقة الفرعية",

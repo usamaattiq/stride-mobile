@@ -232,6 +232,33 @@ export const adminApi = {
     });
   },
 
+  getCreditSettings() {
+    return apiRequest<{
+      unitPrice: number;
+      tripCreateCredits: number;
+      bidOfferCredits: number;
+    }>({
+      method: 'GET',
+      url: '/admin/credits/settings',
+    });
+  },
+
+  updateCreditSettings(input: {
+    unitPrice: number;
+    tripCreateCredits: number;
+    bidOfferCredits: number;
+  }) {
+    return apiRequest<{
+      unitPrice: number;
+      tripCreateCredits: number;
+      bidOfferCredits: number;
+    }>({
+      method: 'PATCH',
+      url: '/admin/credits/settings',
+      data: input,
+    });
+  },
+
   countPendingCreditPurchases() {
     return apiRequest<{ pendingCount: number }>({
       method: 'GET',

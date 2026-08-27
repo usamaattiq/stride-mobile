@@ -24,6 +24,7 @@ import type { DashboardRootStackParamList } from '@/features/dashboard/navigatio
 import { exitTripCreation } from '@/features/dashboard/navigation/homeStackNavigation';
 import { i18n as appI18n } from '@/i18n';
 import { isApiErrorWithCode } from '@/services/api/apiError';
+import { creditsApi } from '@/services/api/creditsApi';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { ENV } from '@/shared/config/env';
@@ -145,11 +146,23 @@ export function TripCreationFlowScreen(): React.ReactElement {
   const [step, setStep] = React.useState<TripCreationStep>(() => firstStepForRole(isPassenger));
   const [publishError, setPublishError] = React.useState<string | null>(null);
   const [insufficientCreditsVisible, setInsufficientCreditsVisible] = React.useState(false);
+  const [tripCreateCredits, setTripCreateCredits] = React.useState(ENV.tripCreateCredits);
   const [stepError, setStepError] = React.useState<{ step: TripCreationStep; message: string } | null>(
     null,
   );
   const isLeavingRef = React.useRef(false);
   const didReturnFromVehicleRef = React.useRef(false);
+
+  React.useEffect(() => {
+    void creditsApi
+      .getCatalog()
+      .then((catalog) => {
+        if (Number.isFinite(catalog.tripCreateCredits)) {
+          setTripCreateCredits(catalog.tripCreateCredits);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   React.useEffect(() => {
     if (route.params?.flowKey === undefined) {
@@ -321,7 +334,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
     }
     setPublishError(null);
     setStepError(null);
-    if (user.credits < ENV.tripCreateCredits) {
+    if (user.credits < tripCreateCredits) {
       setInsufficientCreditsVisible(true);
       return;
     }
@@ -593,6 +606,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
             onPublish={handlePublish}
             onEditStep={goToStep}
             publishing={isPublishing}
+            publishCost={tripCreateCredits}
             errorMessage={publishError}
           />
         ) : null}
@@ -602,7 +616,7 @@ export function TripCreationFlowScreen(): React.ReactElement {
         icon="star"
         title={t('trips.create.insufficientCreditsTitle')}
         message={t('trips.create.insufficientCreditsBody', {
-          needed: ENV.tripCreateCredits,
+          needed: tripCreateCredits,
           balance: user.credits,
         })}
         confirmAction={{

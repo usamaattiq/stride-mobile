@@ -1146,6 +1146,7 @@
     "home": {
       "title": "Home",
       "subtitle": "Overview of users and trips",
+      "analytics": "Analytics",
       "totalUsers": "Total users",
       "totalTrips": "Total trips",
       "tripsByDrivers": "Trips by drivers",
@@ -1235,7 +1236,18 @@
       "proof": "Payment proof",
       "approve": "Approve",
       "reject": "Reject",
-      "reviewFailed": "Couldn't update this request"
+      "reviewFailed": "Couldn't update this request",
+      "settingsTitle": "Credit settings",
+      "settingsSubtitle": "These values apply to new purchases, trips, and bids",
+      "settingsA11y": "Credit settings",
+      "settingsInvalid": "Enter whole numbers of 0 or more",
+      "settingsSaveFailed": "Couldn't save credit settings",
+      "unitPriceLabel": "Price per credit",
+      "unitPriceHint": "Used only for new purchase requests",
+      "tripCreateLabel": "Credits to create a trip or request",
+      "tripCreateHint": "Deducted when a user publishes a trip or passenger request",
+      "bidOfferLabel": "Credits to send a bid or offer",
+      "bidOfferHint": "Deducted when a user places a bid or sends an offer"
     },
     "subzone": {
       "title": "Subzone",

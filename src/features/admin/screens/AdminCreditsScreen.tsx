@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
+import { FontAwesome } from '@expo/vector-icons';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmptyState';
 import { i18n as appI18n } from '@/i18n';
@@ -143,24 +144,35 @@ export function AdminCreditsScreen(): React.ReactElement {
       showLanguageSwitcher={false}
       showLegalFooter={false}
       titleRight={
-        <Pressable
-          onPress={() => navigation.navigate('CreditPurchaseRequests')}
-          style={({ pressed }) => [styles.requestsButton, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel={t('admin.credits.requestsA11y', { count: pendingCount })}
-          hitSlop={8}
-        >
-          <AppText weight="semibold" style={styles.requestsLabel}>
-            {t('admin.credits.requests')}
-          </AppText>
-          {pendingCount > 0 ? (
-            <View style={styles.requestsBadge}>
-              <AppText weight="bold" style={styles.requestsBadgeText}>
-                {pendingCount > 9 ? '9+' : String(pendingCount)}
-              </AppText>
-            </View>
-          ) : null}
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => navigation.navigate('CreditPurchaseRequests')}
+            style={({ pressed }) => [styles.requestsButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel={t('admin.credits.requestsA11y', { count: pendingCount })}
+            hitSlop={8}
+          >
+            <AppText weight="semibold" style={styles.requestsLabel}>
+              {t('admin.credits.requests')}
+            </AppText>
+            {pendingCount > 0 ? (
+              <View style={styles.requestsBadge}>
+                <AppText weight="bold" style={styles.requestsBadgeText}>
+                  {pendingCount > 9 ? '9+' : String(pendingCount)}
+                </AppText>
+              </View>
+            ) : null}
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('CreditSettings')}
+            style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel={t('admin.credits.settingsA11y')}
+            hitSlop={8}
+          >
+            <FontAwesome name="cog" size={16} color={colors.white} />
+          </Pressable>
+        </View>
       }
       contentWrapStyle={styles.contentWrap}
     >
@@ -281,6 +293,20 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   requestsButton: {
     flexDirection: 'row',

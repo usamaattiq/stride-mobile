@@ -5,6 +5,8 @@ export type CreditPurchaseStatus = 'pending' | 'approved' | 'rejected';
 export type CreditCatalog = {
   unitPrice: number;
   currency: 'PKR';
+  tripCreateCredits: number;
+  bidOfferCredits: number;
 };
 
 export type CreditPurchase = {

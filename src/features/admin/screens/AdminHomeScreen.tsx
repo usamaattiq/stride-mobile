@@ -55,6 +55,9 @@ export function AdminHomeScreen(): React.ReactElement {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl {...refreshControlProps} />}
       >
+        <AppText weight="bold" style={styles.sectionTitle}>
+          {t('admin.home.analytics')}
+        </AppText>
         <View style={styles.grid}>
           {STAT_CARDS.map((card) => (
             <View key={card.key} style={styles.statGutter}>
@@ -100,6 +103,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: 12,
     paddingBottom: spacing.huge,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: colors.text.primary,
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.xs,
   },
   grid: {
     flexDirection: 'row',
