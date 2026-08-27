@@ -233,14 +233,16 @@ export function BuyCreditsScreen(): React.ReactElement {
                   end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
                   style={styles.cardInner}
                 >
-                  <AppText weight="bold" style={styles.qtyLabel}>
+                  <AppText weight="bold" style={styles.bankTitle}>
                     {t('dashboard.home.bankTitle')}
                     {bankAccounts.length > 1 ? ` ${index + 1}` : ''}
                   </AppText>
-                  <BankRow label={t('dashboard.home.bankName')} value={account.bankName} />
-                  <BankRow label={t('dashboard.home.accountTitle')} value={account.accountTitle} />
-                  <BankRow label={t('dashboard.home.accountNumber')} value={account.accountNumber} />
-                  <BankRow label={t('dashboard.home.iban')} value={account.iban} />
+                  <View style={styles.bankDetailsCard}>
+                    <BankRow label={t('dashboard.home.bankName')} value={account.bankName} />
+                    <BankRow label={t('dashboard.home.accountTitle')} value={account.accountTitle} />
+                    <BankRow label={t('dashboard.home.accountNumber')} value={account.accountNumber} />
+                    <BankRow label={t('dashboard.home.iban')} value={account.iban} />
+                  </View>
                 </LinearGradient>
               </View>
             </View>
@@ -381,15 +383,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
+  bankTitle: {
+    fontSize: 16,
+    color: colors.text.primary,
+  },
+  bankDetailsCard: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
   bankRow: {
     gap: 2,
   },
   bankLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.secondary,
   },
   bankValue: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.text.primary,
   },
   hint: {
