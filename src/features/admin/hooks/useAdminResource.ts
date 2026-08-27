@@ -24,6 +24,7 @@ export function useAdminResource<T>({
   const [loading, setLoading] = React.useState(true);
   const [errorKey, setErrorKey] = React.useState<string | null>(null);
   const loadRef = React.useRef(load);
+  const hasDataRef = React.useRef(false);
   loadRef.current = load;
 
   const reload = React.useCallback(async () => {
@@ -31,6 +32,7 @@ export function useAdminResource<T>({
     try {
       const result = await loadRef.current();
       setData(result);
+      hasDataRef.current = true;
     } catch {
       setErrorKey('admin.common.loadFailed');
     } finally {
@@ -39,7 +41,9 @@ export function useAdminResource<T>({
   }, []);
 
   React.useEffect(() => {
-    setLoading(true);
+    if (!hasDataRef.current) {
+      setLoading(true);
+    }
     void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are caller-controlled reload triggers only
   }, [reload, ...deps]);
