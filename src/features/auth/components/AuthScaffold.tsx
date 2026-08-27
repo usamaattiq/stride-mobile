@@ -64,6 +64,8 @@ type AuthScaffoldProps = {
   showLanguageSwitcher?: boolean;
   /** Optional control rendered on the right of the header top bar. */
   headerRight?: React.ReactNode;
+  /** Optional control rendered beside the header title (e.g. a Requests button). */
+  titleRight?: React.ReactNode;
   /** Optional content rendered in the red header below the title/subtitle. */
   headerExtra?: React.ReactNode;
   /**
@@ -110,6 +112,7 @@ export function AuthScaffold({
   showLegalFooter = true,
   showLanguageSwitcher = true,
   headerRight,
+  titleRight,
   headerExtra,
   compactHeader = false,
   centerTitleInTopBar = false,
@@ -243,15 +246,18 @@ export function AuthScaffold({
               ]}
             >
               {showTitleInHeaderCopy ? (
-                <AppText
-                  weight="bold"
-                  style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.6}
-                >
-                  {title}
-                </AppText>
+                <View style={styles.titleRow}>
+                  <AppText
+                    weight="bold"
+                    style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
+                  >
+                    {title}
+                  </AppText>
+                  {titleRight}
+                </View>
               ) : null}
               {subtitle ? (
                 <AppText
@@ -388,7 +394,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 30,
     lineHeight: 36,
+    flexShrink: 1,
     maxWidth: 320,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    width: '100%',
   },
   titleCompact: {
     fontSize: 22,

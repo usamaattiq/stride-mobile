@@ -8,6 +8,8 @@ import {
   View,
   type ListRenderItem,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
@@ -20,17 +22,26 @@ import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
 import { useAdminResource } from '../hooks/useAdminResource';
+import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTypes';
 
 export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AdminCreditsStackParamList>>();
   const [drafts, setDrafts] = React.useState<Record<string, string>>({});
   const [savingId, setSavingId] = React.useState<string | null>(null);
   const [saveErrorKey, setSaveErrorKey] = React.useState<string | null>(null);
+  const [pendingCount, setPendingCount] = React.useState(0);
 
   const { data, loading, errorKey, reload } = useAdminResource({
+    reloadOnFocus: true,
     load: async () => {
-      const result = await adminApi.listCredits();
+      const [result, pending] = await Promise.all([
+        adminApi.listCredits(),
+        adminApi.countPendingCreditPurchases(),
+      ]);
       setDrafts(Object.fromEntries(result.items.map((user) => [user.id, String(user.credits)])));
+      setPendingCount(pending.pendingCount);
       return result.items;
     },
   });
@@ -131,6 +142,26 @@ export function AdminCreditsScreen(): React.ReactElement {
       scrollable={false}
       showLanguageSwitcher={false}
       showLegalFooter={false}
+      titleRight={
+        <Pressable
+          onPress={() => navigation.navigate('CreditPurchaseRequests')}
+          style={({ pressed }) => [styles.requestsButton, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel={t('admin.credits.requestsA11y', { count: pendingCount })}
+          hitSlop={8}
+        >
+          <AppText weight="semibold" style={styles.requestsLabel}>
+            {t('admin.credits.requests')}
+          </AppText>
+          {pendingCount > 0 ? (
+            <View style={styles.requestsBadge}>
+              <AppText weight="bold" style={styles.requestsBadgeText}>
+                {pendingCount > 9 ? '9+' : String(pendingCount)}
+              </AppText>
+            </View>
+          ) : null}
+        </Pressable>
+      }
       contentWrapStyle={styles.contentWrap}
     >
       {errorKey || saveErrorKey ? (
@@ -250,5 +281,31 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  requestsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  requestsLabel: {
+    fontSize: 13,
+    color: colors.white,
+  },
+  requestsBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestsBadgeText: {
+    fontSize: 11,
+    color: colors.primary,
   },
 });

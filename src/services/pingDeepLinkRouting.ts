@@ -39,6 +39,19 @@ function navigateToListing(tripId: string, conversationId?: string): void {
   });
 }
 
+function navigateToBuyCredits(): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'MainTabs',
+    params: {
+      screen: 'Home',
+      params: {
+        screen: 'BuyCredits',
+      },
+    },
+    initial: false,
+  });
+}
+
 function navigateToNotifications(): void {
   navigationRef.navigate('Dashboard', {
     screen: 'MainTabs',
@@ -101,6 +114,10 @@ export function handlePingDeepLink(url: string): void {
     }
     if (target === 'notifications') {
       navigateToNotifications();
+      return;
+    }
+    if (target === 'credits') {
+      navigateToBuyCredits();
     }
   } catch (error) {
     console.warn('[push] Failed to handle deep link', url, error);

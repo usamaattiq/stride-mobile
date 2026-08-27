@@ -85,6 +85,29 @@ export type AdminCreditUser = {
   credits: number;
 };
 
+export type AdminCreditPurchaseSummary = {
+  id: string;
+  credits: number;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  proofViewUrl: string | null;
+  user: {
+    id: string;
+    fullName: string;
+    phoneE164: string;
+    avatarViewUrl: string | null;
+  };
+};
+
+export type AdminCreditPurchaseDetail = AdminCreditPurchaseSummary & {
+  unitPrice: number;
+  proofViewUrl: string | null;
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  userCredits: number;
+};
+
 export type AdminSubzone = {
   id: string;
   name: string;
@@ -194,6 +217,39 @@ export const adminApi = {
       method: 'PATCH',
       url: `/admin/credits/${userId}`,
       data: { credits },
+    });
+  },
+
+  countPendingCreditPurchases() {
+    return apiRequest<{ pendingCount: number }>({
+      method: 'GET',
+      url: '/admin/credits/purchases/pending-count',
+    });
+  },
+
+  listCreditPurchases() {
+    return apiRequest<{ items: AdminCreditPurchaseSummary[] }>({
+      method: 'GET',
+      url: '/admin/credits/purchases',
+    });
+  },
+
+  getCreditPurchase(purchaseId: string) {
+    return apiRequest<AdminCreditPurchaseDetail>({
+      method: 'GET',
+      url: `/admin/credits/purchases/${purchaseId}`,
+    });
+  },
+
+  reviewCreditPurchase(
+    purchaseId: string,
+    action: 'approve' | 'reject',
+    rejectionReason?: string,
+  ) {
+    return apiRequest<AdminCreditPurchaseDetail>({
+      method: 'POST',
+      url: `/admin/credits/purchases/${purchaseId}/review`,
+      data: { action, ...(rejectionReason ? { rejectionReason } : {}) },
     });
   },
 

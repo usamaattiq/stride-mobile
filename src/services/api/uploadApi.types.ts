@@ -5,7 +5,8 @@ export type UploadPurpose =
   | 'license_front'
   | 'license_back'
   | 'vehicle'
-  | 'offer_attachment';
+  | 'offer_attachment'
+  | 'credit_purchase_proof';
 
 export type PresignUploadResult = {
   uploadUrl: string;

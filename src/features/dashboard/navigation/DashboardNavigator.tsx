@@ -160,7 +160,17 @@ function DashboardTabs(): React.ReactElement {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStackNavigator} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStackNavigator}
+        options={({ route }) => {
+          const focusedRoute = getFocusedRouteNameFromRoute(route) ?? 'HomeMain';
+          return {
+            tabBarStyle:
+              focusedRoute === 'HomeMain' ? defaultTabBarStyle : { display: 'none' },
+          };
+        }}
+      />
       <Tab.Screen name="MyListings" component={MyListingsScreen} />
       <Tab.Screen
         name="CreateTrip"

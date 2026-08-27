@@ -12,12 +12,15 @@ import { SettingsStackNavigator } from '@/features/dashboard/navigation/Settings
 import { colors } from '@/theme';
 
 import { AdminCreditsScreen } from '../screens/AdminCreditsScreen';
+import { AdminCreditPurchaseDetailScreen } from '../screens/AdminCreditPurchaseDetailScreen';
+import { AdminCreditPurchaseListScreen } from '../screens/AdminCreditPurchaseListScreen';
 import { AdminSubzoneScreen } from '../screens/AdminSubzoneScreen';
 import { AdminTripsScreen } from '../screens/AdminTripsScreen';
 import { AdminUserDetailScreen } from '../screens/AdminUserDetailScreen';
 import { AdminUsersScreen } from '../screens/AdminUsersScreen';
 import { AdminTabLabel } from './AdminTabLabel';
 import type {
+  AdminCreditsStackParamList,
   AdminTabParamList,
   AdminTripsStackParamList,
   AdminUsersStackParamList,
@@ -26,6 +29,7 @@ import type {
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 const UsersStack = createNativeStackNavigator<AdminUsersStackParamList>();
 const TripsStack = createNativeStackNavigator<AdminTripsStackParamList>();
+const CreditsStack = createNativeStackNavigator<AdminCreditsStackParamList>();
 
 const TAB_BAR_CONTENT_HEIGHT = 64;
 const TAB_BAR_EXTRA = 12;
@@ -96,6 +100,16 @@ function AdminTripsStack(): React.ReactElement {
   );
 }
 
+function AdminCreditsStack(): React.ReactElement {
+  return (
+    <CreditsStack.Navigator screenOptions={nestedStackScreenOptions}>
+      <CreditsStack.Screen name="CreditsHome" component={AdminCreditsScreen} />
+      <CreditsStack.Screen name="CreditPurchaseRequests" component={AdminCreditPurchaseListScreen} />
+      <CreditsStack.Screen name="CreditPurchaseDetail" component={AdminCreditPurchaseDetailScreen} />
+    </CreditsStack.Navigator>
+  );
+}
+
 function AdminTabs(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + insets.bottom + TAB_BAR_EXTRA;
@@ -146,13 +160,14 @@ function AdminTabs(): React.ReactElement {
         />
         <Tab.Screen
           name="Credits"
-          component={AdminCreditsScreen}
-          options={{
+          component={AdminCreditsStack}
+          options={({ route }) => ({
             tabBarIcon: ({ color }) => (
               <FontAwesome name={TAB_ICONS.Credits} size={22} color={color} />
             ),
             tabBarLabel: ({ color }) => <AdminTabLabel routeName="Credits" color={color} />,
-          }}
+            tabBarStyle: tabBarHiddenOnNested(route, 'CreditsHome', defaultTabBarStyle),
+          })}
         />
         <Tab.Screen
           name="Subzone"

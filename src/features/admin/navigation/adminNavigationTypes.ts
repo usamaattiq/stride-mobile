@@ -13,10 +13,16 @@ export type AdminTripsStackParamList = {
   ListingDetail: DashboardRootStackParamList['ListingDetail'];
 };
 
+export type AdminCreditsStackParamList = {
+  CreditsHome: undefined;
+  CreditPurchaseRequests: undefined;
+  CreditPurchaseDetail: { purchaseId: string };
+};
+
 export type AdminTabParamList = {
   Users: NavigatorScreenParams<AdminUsersStackParamList>;
   Trips: NavigatorScreenParams<AdminTripsStackParamList>;
-  Credits: undefined;
+  Credits: NavigatorScreenParams<AdminCreditsStackParamList>;
   Subzone: undefined;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
 };
