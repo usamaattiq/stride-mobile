@@ -1134,6 +1134,7 @@
       "loadFailed": "Couldn't load data",
       "save": "Save",
       "saving": "Saving…",
+      "edit": "Edit",
       "delete": "Delete"
     },
     "logout": {
@@ -1153,7 +1154,7 @@
         "accountTitle": "Account title",
         "accountNumber": "Account number",
         "iban": "IBAN",
-        "invalid": "Fill every field. Account number must be digits only, and IBAN must be capital letters and numbers.",
+        "invalid": "Fill bank name, account title, and account number (digits only). IBAN is optional; if entered it must be capital letters and numbers.",
         "saveFailed": "Couldn't save bank accounts"
       }
     },
