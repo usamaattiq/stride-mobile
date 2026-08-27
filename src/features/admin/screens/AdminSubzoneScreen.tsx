@@ -19,6 +19,7 @@ import { adminApi, type AdminSubzone } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
+import { openInGoogleMaps } from '@/shared/utils/open-in-google-maps';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -136,31 +137,62 @@ export function AdminSubzoneScreen(): React.ReactElement {
   const renderSubzone = React.useCallback<ListRenderItem<AdminSubzone>>(
     ({ item }) => {
       const deleting = deletingId === item.id;
-      const coords =
-        item.latitude != null && item.longitude != null
-          ? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`
-          : null;
+      const canOpenMaps =
+        item.latitude != null &&
+        item.longitude != null &&
+        Number.isFinite(item.latitude) &&
+        Number.isFinite(item.longitude);
+      const coords = canOpenMaps
+        ? `${item.latitude!.toFixed(5)}, ${item.longitude!.toFixed(5)}`
+        : null;
 
       return (
         <View style={styles.shadowGutter}>
           <View style={styles.item}>
             <View style={styles.itemInner}>
-              <View style={styles.iconWrap}>
-                <FontAwesome name="map-marker" size={16} color={colors.primary} />
-              </View>
-              <View style={styles.info}>
-                <AppText weight="bold" style={styles.name} numberOfLines={1}>
-                  {item.name}
-                </AppText>
-                <AppText style={styles.meta} numberOfLines={1}>
-                  {item.cityLabel}
-                </AppText>
-                {coords ? (
-                  <AppText style={styles.coords} numberOfLines={1}>
-                    {coords}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.itemOpen,
+                  pressed && canOpenMaps && styles.pressed,
+                ]}
+                disabled={!canOpenMaps}
+                onPress={() => {
+                  if (!canOpenMaps) {
+                    return;
+                  }
+                  void openInGoogleMaps({
+                    latitude: item.latitude!,
+                    longitude: item.longitude!,
+                    label: item.name,
+                  });
+                }}
+                accessibilityRole={canOpenMaps ? 'link' : 'text'}
+                accessibilityLabel={
+                  canOpenMaps
+                    ? t('admin.subzone.openInMaps', { name: item.name })
+                    : item.name
+                }
+              >
+                <View style={styles.iconWrap}>
+                  <FontAwesome name="map-marker" size={16} color={colors.primary} />
+                </View>
+                <View style={styles.info}>
+                  <AppText weight="bold" style={styles.name} numberOfLines={1}>
+                    {item.name}
                   </AppText>
+                  <AppText style={styles.meta} numberOfLines={1}>
+                    {item.cityLabel}
+                  </AppText>
+                  {coords ? (
+                    <AppText style={styles.coords} numberOfLines={1}>
+                      {coords}
+                    </AppText>
+                  ) : null}
+                </View>
+                {canOpenMaps ? (
+                  <FontAwesome name="external-link" size={12} color={colors.primary} />
                 ) : null}
-              </View>
+              </Pressable>
               <Pressable
                 onPress={() => void removeSubzone(item.id)}
                 disabled={deleting}
@@ -365,6 +397,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingLeft: spacing.sm,
     paddingRight: spacing.xs,
+  },
+  itemOpen: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   deleteButton: {
     width: 32,

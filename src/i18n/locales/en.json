@@ -1199,7 +1199,8 @@
       "loadFailed": "Couldn't load subzones",
       "createFailed": "Couldn't create subzone",
       "updateFailed": "Couldn't update subzone",
-      "deleteFailed": "Couldn't delete subzone"
+      "deleteFailed": "Couldn't delete subzone",
+      "openInMaps": "Open {{name}} in maps"
     }
   },
   "common": {
