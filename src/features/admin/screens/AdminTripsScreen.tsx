@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
+import { DashboardSearchBar } from '@/features/dashboard/components/DashboardSearchBar';
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
 import { ListingCardSkeleton } from '@/features/dashboard/components/ListingCardSkeleton';
 import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmptyState';
@@ -40,10 +41,18 @@ export function AdminTripsScreen(): React.ReactElement {
   const [listingCategory, setListingCategory] =
     React.useState<TripListingCategory>('all');
   const [routeType, setRouteType] = React.useState<TripRouteType | null>(null);
+  const [query, setQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const { data, loading, errorKey, reload } = useAdminResource({
+    deps: [debouncedQuery],
     load: async () => {
-      const result = await adminApi.listTrips();
+      const result = await adminApi.listTrips(1, debouncedQuery || undefined);
       return result.items;
     },
   });
@@ -115,6 +124,11 @@ export function AdminTripsScreen(): React.ReactElement {
       }
     >
       <View style={styles.filters}>
+        <DashboardSearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t('admin.trips.searchPlaceholder')}
+        />
         <RouteTypeFilterChips value={routeType} onChange={setRouteType} />
       </View>
 
@@ -149,6 +163,7 @@ const styles = StyleSheet.create({
   filters: {
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   listContent: {
     flexGrow: 1,

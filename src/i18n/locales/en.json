@@ -1214,6 +1214,7 @@
     "trips": {
       "title": "Trips",
       "subtitle": "All platform trips",
+      "searchPlaceholder": "Search by city or ref",
       "empty": "No trips found",
       "loadFailed": "Couldn't load trips",
       "detailFailed": "Couldn't load trip details",
@@ -1226,6 +1227,9 @@
       "driver": "Driver",
       "winningDriver": "Winning driver",
       "winningPassenger": "Winning passenger",
+      "bidders": "Bidders",
+      "offerSenders": "Offer senders",
+      "noResponses": "No bids or offers yet",
       "whatsappDriver": "Hi, regarding trip {{ref}} (driver).",
       "whatsappPassenger": "Hi, regarding trip {{ref}} (passenger)."
     },

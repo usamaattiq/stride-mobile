@@ -5,12 +5,13 @@ import type { SettingsStackParamList } from '@/features/dashboard/navigation/set
 
 export type AdminUsersStackParamList = {
   UsersHome: undefined;
-  UserDetail: { userId: string; listRole: 'passenger' | 'driver' };
+  UserDetail: { userId: string; listRole?: 'passenger' | 'driver' };
 };
 
 export type AdminTripsStackParamList = {
   TripsHome: undefined;
   ListingDetail: DashboardRootStackParamList['ListingDetail'];
+  UserDetail: { userId: string; listRole?: 'passenger' | 'driver' };
 };
 
 export type AdminCreditsStackParamList = {

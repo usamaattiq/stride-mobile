@@ -146,6 +146,7 @@ export type OfferResponseCardProps = {
   actionsDisabled?: boolean;
   whatsappPhone?: string | null;
   whatsappMessage?: string;
+  onProfilePress?: () => void;
 };
 
 export function OfferResponseCard({
@@ -172,6 +173,7 @@ export function OfferResponseCard({
   actionsDisabled = false,
   whatsappPhone,
   whatsappMessage = "",
+  onProfilePress,
 }: OfferResponseCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const initial = name.trim().charAt(0).toUpperCase() || "?";
@@ -246,7 +248,15 @@ export function OfferResponseCard({
         </View>
       </View>
 
-      <View style={styles.identityRow}>
+      <Pressable
+        onPress={onProfilePress}
+        disabled={!onProfilePress}
+        style={({ pressed }) => [
+          styles.identityRow,
+          pressed && onProfilePress && styles.identityPressed,
+        ]}
+        accessibilityRole={onProfilePress ? "button" : undefined}
+      >
         <View style={styles.identity}>
           <View style={styles.avatar}>
             <AppText weight="bold" style={styles.avatarInitial}>
@@ -282,7 +292,7 @@ export function OfferResponseCard({
             </AppText>
           ) : null}
         </View>
-      </View>
+      </Pressable>
 
       {vehicle ? (
         <View style={styles.vehicleChip}>
@@ -368,6 +378,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.sm,
+  },
+  identityPressed: {
+    opacity: 0.85,
   },
   identity: {
     flex: 1,

@@ -99,6 +99,7 @@ function AdminTripsStack(): React.ReactElement {
     <TripsStack.Navigator screenOptions={nestedStackScreenOptions}>
       <TripsStack.Screen name="TripsHome" component={AdminTripsScreen} />
       <TripsStack.Screen name="ListingDetail" component={ListingDetailScreen} />
+      <TripsStack.Screen name="UserDetail" component={AdminUserDetailScreen} />
     </TripsStack.Navigator>
   );
 }

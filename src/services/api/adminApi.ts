@@ -75,6 +75,18 @@ export type AdminTripDetail = AdminTripSummary & {
   startingPrice: string | null;
   driver: AdminTripParticipant | null;
   winningPassenger: AdminTripParticipant | null;
+  responses: AdminTripResponse[];
+};
+
+export type AdminTripResponse = {
+  userId: string;
+  fullName: string;
+  phoneE164: string;
+  role: 'passenger' | 'driver';
+  avatarViewUrl?: string | null;
+  amount: string | null;
+  status: string;
+  rank: number | null;
 };
 
 export type AdminHomeStats = {
@@ -211,11 +223,15 @@ export const adminApi = {
     });
   },
 
-  listTrips(page = 1) {
+  listTrips(page = 1, search?: string) {
     return apiRequest<{ items: AdminTripSummary[]; total: number }>({
       method: 'GET',
       url: '/admin/trips',
-      params: { page, limit: 50 },
+      params: {
+        page,
+        limit: 50,
+        ...(search?.trim() ? { q: search.trim() } : {}),
+      },
     });
   },
 

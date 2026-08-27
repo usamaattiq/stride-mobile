@@ -1214,6 +1214,7 @@
     "trips": {
       "title": "الرحلات",
       "subtitle": "جميع رحلات المنصة",
+      "searchPlaceholder": "البحث بالمدينة أو الرقم المرجعي",
       "empty": "لا توجد رحلات",
       "loadFailed": "تعذر تحميل الرحلات",
       "detailFailed": "تعذر تحميل تفاصيل الرحلة",
@@ -1226,6 +1227,9 @@
       "driver": "السائق",
       "winningDriver": "السائق الفائز",
       "winningPassenger": "الراكب الفائز",
+      "bidders": "المزايدون",
+      "offerSenders": "مرسلو العروض",
+      "noResponses": "لا توجد مزايدات أو عروض بعد",
       "whatsappDriver": "مرحباً، بخصوص الرحلة {{ref}} (سائق).",
       "whatsappPassenger": "مرحباً، بخصوص الرحلة {{ref}} (راكب)."
     },

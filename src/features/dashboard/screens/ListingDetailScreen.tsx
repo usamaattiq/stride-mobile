@@ -65,8 +65,11 @@ import {
 } from "../utils/listingWindow";
 import { mapTripDtoToTrip } from "../utils/trip.mapper";
 import { mapAdminTripDetailToTrip } from "@/features/admin/utils/admin.mapper";
+import type { AdminTripsStackParamList } from "@/features/admin/navigation/adminNavigationTypes";
 import { authStore } from "@/store/authStore";
-import type { AdminTripDetail } from "@/services/api/adminApi";
+import type { AdminTripDetail, AdminTripParticipant, AdminTripResponse } from "@/services/api/adminApi";
+import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { OfferResponseCard } from "../components/trip/OfferResponseCard";
 
 type DetailTab = "overview" | "responses";
 
@@ -90,7 +93,9 @@ function indexToTab(index: number): DetailTab {
 export function ListingDetailScreen(): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const navigation = useNavigation<
-    NativeStackNavigationProp<{ ListingDetail: DashboardRootStackParamList["ListingDetail"] }>
+    NativeStackNavigationProp<
+      { ListingDetail: DashboardRootStackParamList["ListingDetail"] } & AdminTripsStackParamList
+    >
   >();
   const route =
     useRoute<RouteProp<{ ListingDetail: DashboardRootStackParamList["ListingDetail"] }, "ListingDetail">>();
@@ -496,6 +501,16 @@ export function ListingDetailScreen(): React.ReactElement {
     [patchTrip, route.params.tripId],
   );
 
+  const openAdminUserProfile = React.useCallback(
+    (user: Pick<AdminTripParticipant, "id" | "role">) => {
+      navigation.navigate("UserDetail", {
+        userId: user.id,
+        listRole: user.role,
+      });
+    },
+    [navigation],
+  );
+
   if (loading) {
     return (
       <AuthScaffold
@@ -729,6 +744,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       ref: trip.referenceCode ?? trip.id,
                     },
                   )}
+                  onProfilePress={() => openAdminUserProfile(adminTrip.owner)}
                 />
                 {adminTripWinner ? (
                   <WhatsAppContactCard
@@ -749,8 +765,61 @@ export function ListingDetailScreen(): React.ReactElement {
                         ref: trip.referenceCode ?? trip.id,
                       },
                     )}
+                    onProfilePress={() => openAdminUserProfile(adminTripWinner)}
                   />
                 ) : null}
+                <AppText weight="bold" style={styles.adminResponsesTitle}>
+                  {trip.listingType === 'auction'
+                    ? t('admin.trips.bidders')
+                    : t('admin.trips.offerSenders')}
+                </AppText>
+                {(adminTrip.responses ?? []).length === 0 ? (
+                  <AppText style={styles.adminResponsesEmpty}>
+                    {t('admin.trips.noResponses')}
+                  </AppText>
+                ) : (
+                  (adminTrip.responses ?? []).map((response: AdminTripResponse) => {
+                    const offerStatusKey =
+                      `dashboard.listings.detail.responses.offerStatus.${response.status}` as const;
+                    const tag =
+                      response.rank != null
+                        ? t('dashboard.listings.detail.bid.rank', { rank: response.rank })
+                        : t(offerStatusKey, { defaultValue: response.status });
+                    return (
+                      <OfferResponseCard
+                        key={response.userId}
+                        tag={tag}
+                        tagTone={
+                          response.status === 'confirmed'
+                            ? 'confirmed'
+                            : response.status === 'selected'
+                              ? 'selected'
+                              : response.rank === 1
+                                ? 'warning'
+                                : 'muted'
+                        }
+                        name={response.fullName}
+                        priceLabel={
+                          response.amount != null ? formatPriceAmount(response.amount) : '—'
+                        }
+                        footer="whatsapp"
+                        whatsappPhone={response.phoneE164}
+                        whatsappMessage={t(
+                          response.role === 'driver'
+                            ? 'admin.trips.whatsappDriver'
+                            : 'admin.trips.whatsappPassenger',
+                          { ref: trip.referenceCode ?? trip.id },
+                        )}
+                        onProfilePress={() =>
+                          openAdminUserProfile({
+                            id: response.userId,
+                            role: response.role,
+                          })
+                        }
+                      />
+                    );
+                  })
+                )}
               </View>
             ) : isAdminViewer ? null : trip.listingType === 'auction' ? (
               <TripBidPanel
@@ -930,6 +999,15 @@ const styles = StyleSheet.create({
   adminContacts: {
     gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  adminResponsesTitle: {
+    fontSize: 16,
+    color: colors.text.primary,
+    marginTop: spacing.xs,
+  },
+  adminResponsesEmpty: {
+    fontSize: 13,
+    color: colors.text.secondary,
   },
   pagerBleed: {
     marginLeft: -spacing.md,

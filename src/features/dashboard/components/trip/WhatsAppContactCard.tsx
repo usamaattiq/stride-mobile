@@ -21,8 +21,8 @@ export type WhatsAppContactCardProps = {
   phone?: string | null;
   /** Prefill text for WhatsApp. */
   message: string;
-  /** Opens in-app 1:1 chat (available once an offer/bid is in play). */
-  onMessagePress?: () => void;
+  /** Opens this user's profile (admin listing detail). */
+  onProfilePress?: () => void;
 };
 
 const WHATSAPP_GREEN = '#25D366';
@@ -43,6 +43,7 @@ export function WhatsAppContactCard({
   phone,
   message,
   onMessagePress,
+  onProfilePress,
 }: WhatsAppContactCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const phoneValue = phone?.trim() || null;
@@ -67,7 +68,12 @@ export function WhatsAppContactCard({
         </AppText>
       </View>
 
-      <View style={styles.identity}>
+      <Pressable
+        onPress={onProfilePress}
+        disabled={!onProfilePress}
+        style={({ pressed }) => [styles.identity, pressed && onProfilePress && styles.identityPressed]}
+        accessibilityRole={onProfilePress ? 'button' : undefined}
+      >
         {avatarUri ? (
           <Image
             source={{ uri: avatarUri }}
@@ -92,7 +98,7 @@ export function WhatsAppContactCard({
               : t('dashboard.listings.detail.contact.chatHint')}
           </AppText>
         </View>
-      </View>
+      </Pressable>
 
       {onMessagePress ? (
         <Pressable
@@ -149,6 +155,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  identityPressed: {
+    opacity: 0.85,
   },
   avatar: {
     width: 36,
