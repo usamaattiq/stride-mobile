@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { i18n as appI18n } from "@/i18n";
 import { getErrorMessage } from "@/services/api/errorMessage";
 import { isApiErrorWithCode } from "@/services/api/apiError";
+import { creditsApi } from "@/services/api/creditsApi";
 import { rfqApi } from "@/services/api/rfqApi";
 import type {
   RfqOfferStatus,
@@ -28,6 +29,7 @@ import { AppBottomSheet } from "@/shared/components/AppBottomSheet";
 import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
+import { ENV } from "@/shared/config/env";
 import { formatPriceAmount } from "@/shared/utils/latin-digits";
 import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
@@ -312,6 +314,18 @@ export const TripOfferPanel = React.forwardRef<
     React.useState<OfferVehicleDetailSource | null>(null);
   const [chatOpen, setChatOpen] = React.useState(false);
   const [photoUris, setPhotoUris] = React.useState<string[]>([]);
+  const [bidOfferCredits, setBidOfferCredits] = React.useState(ENV.bidOfferCredits);
+
+  React.useEffect(() => {
+    void creditsApi
+      .getCatalog()
+      .then((catalog) => {
+        if (Number.isFinite(catalog.bidOfferCredits)) {
+          setBidOfferCredits(catalog.bidOfferCredits);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -815,6 +829,7 @@ export const TripOfferPanel = React.forwardRef<
               onPress={submitOffer}
               loading={submitting}
               disabled={!canSubmit}
+              creditCost={bidOfferCredits}
             />
           </View>
         </View>

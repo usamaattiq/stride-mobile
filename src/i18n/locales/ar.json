@@ -229,10 +229,11 @@
       "creditsTimesPrice": "{{count}} × {{price}}",
       "balance": "رصيدك: {{count}}",
       "proofLabel": "إثبات الدفع",
-      "attachment": "مرفق",
-      "proofHint": "أرفق لقطة شاشة للدفع",
-      "addProof": "إضافة لقطة شاشة",
-      "changeProof": "تغيير لقطة الشاشة",
+      "bankTitle": "بيانات البنك",
+      "bankName": "اسم البنك",
+      "accountTitle": "اسم الحساب",
+      "accountNumber": "رقم الحساب",
+      "iban": "الآيبان",
       "sendRequest": "إرسال الطلب",
       "sending": "جاري الإرسال…",
       "required": "اختر الكمية وأرفق إثبات الدفع.",
@@ -1141,7 +1142,20 @@
       "confirm": "تسجيل الخروج"
     },
     "settings": {
-      "role": "مسؤول"
+      "role": "مسؤول",
+      "section": "المسؤول",
+      "bankAccounts": {
+        "title": "حسابات البنك",
+        "subtitle": "تظهر للمستخدمين عند شراء الرصيد",
+        "accountN": "حساب {{n}}",
+        "add": "إضافة",
+        "bankName": "اسم البنك",
+        "accountTitle": "اسم الحساب",
+        "accountNumber": "رقم الحساب",
+        "iban": "الآيبان",
+        "invalid": "أكمل كل الحقول. رقم الحساب أرقام فقط، والآيبان أحرف كبيرة وأرقام.",
+        "saveFailed": "تعذر حفظ حسابات البنك"
+      }
     },
     "home": {
       "title": "الرئيسية",

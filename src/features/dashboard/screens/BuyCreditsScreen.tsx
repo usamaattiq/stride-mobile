@@ -5,6 +5,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -19,21 +20,31 @@ import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditP
 import { CreditPurchaseRequestTile } from '@/features/dashboard/components/CreditPurchaseRequestTile';
 import type { HomeStackParamList } from '@/features/dashboard/navigation/homeTypes';
 import { i18n as appI18n } from '@/i18n';
-import { creditsApi, type CreditPurchase } from '@/services/api/creditsApi';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { creditsApi, type CreditBankAccount, type CreditPurchase } from '@/services/api/creditsApi';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { uploadLocalFileToPresignedUrl } from '@/shared/services/mediaUploadService';
 import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
-import { colors, radius, spacing } from '@/theme';
+import { toLatinDigits } from '@/shared/utils/latin-digits';
+import { colors, getInputFontFamily, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
+
+function hasBankDetails(details: CreditBankAccount): boolean {
+  return [details.bankName, details.accountTitle, details.accountNumber, details.iban].some(
+    (value) => value.trim().length > 0,
+  );
+}
 
 export function BuyCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
-  const [quantity, setQuantity] = React.useState(10);
+  const [quantityText, setQuantityText] = React.useState('0');
   const [unitPrice, setUnitPrice] = React.useState(2);
+  const [bankAccounts, setBankAccounts] = React.useState<CreditBankAccount[]>([]);
   const [proofUri, setProofUri] = React.useState<string | null>(null);
   const [purchases, setPurchases] = React.useState<CreditPurchase[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -49,6 +60,7 @@ export function BuyCreditsScreen(): React.ReactElement {
         creditsApi.listPurchases(),
       ]);
       setUnitPrice(catalog.unitPrice);
+      setBankAccounts(catalog.bankAccounts ?? []);
       setPurchases(list.items);
     } catch (err) {
       setError(getErrorMessage(err, t('admin.common.loadFailed')));
@@ -61,7 +73,27 @@ export function BuyCreditsScreen(): React.ReactElement {
     void load();
   }, [load]);
 
+  const quantity = Number.parseInt(quantityText, 10) || 0;
   const total = quantity * unitPrice;
+  const canSubmit = quantity >= 1 && Boolean(proofUri) && !submitting;
+  const qtyFontFamily = getInputFontFamily(currentLanguage, 'number-pad');
+
+  const setQuantity = (next: number) => {
+    setQuantityText(String(Math.max(0, Math.min(1000, next))));
+  };
+
+  const onQuantityChange = (text: string) => {
+    const digits = toLatinDigits(text).replace(/[^\d]/g, '');
+    if (digits.length === 0) {
+      setQuantityText('');
+      return;
+    }
+    const parsed = Number.parseInt(digits, 10);
+    if (!Number.isFinite(parsed)) {
+      return;
+    }
+    setQuantity(parsed);
+  };
 
   const pickProof = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -79,7 +111,7 @@ export function BuyCreditsScreen(): React.ReactElement {
   };
 
   const submit = async () => {
-    if (!proofUri || submitting) {
+    if (!canSubmit || !proofUri) {
       setError(t('dashboard.home.required'));
       return;
     }
@@ -94,6 +126,7 @@ export function BuyCreditsScreen(): React.ReactElement {
         proofUrl: uploaded.fileUrl,
       });
       setProofUri(null);
+      setQuantityText('0');
       setSentVisible(true);
       await load();
       void refreshSessionProfile();
@@ -139,19 +172,45 @@ export function BuyCreditsScreen(): React.ReactElement {
               </AppText>
               <View style={styles.qtyRow}>
                 <Pressable
-                  onPress={() => setQuantity((current) => Math.max(1, current - 1))}
-                  style={({ pressed }) => [styles.qtyButton, pressed && styles.pressed]}
+                  onPress={() => setQuantity(quantity - 1)}
+                  disabled={quantity <= 0}
+                  style={({ pressed }) => [
+                    styles.qtyButton,
+                    quantity <= 0 && styles.qtyButtonDisabled,
+                    pressed && quantity > 0 && styles.pressed,
+                  ]}
                 >
-                  <FontAwesome5 name="minus" size={12} color={colors.primary} solid />
+                  <FontAwesome5
+                    name="minus"
+                    size={12}
+                    color={quantity <= 0 ? colors.text.tertiary : colors.primary}
+                    solid
+                  />
                 </Pressable>
-                <AppText weight="bold" style={styles.qtyValue}>
-                  {quantity}
-                </AppText>
+                <TextInput
+                  value={toLatinDigits(quantityText)}
+                  onChangeText={onQuantityChange}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={colors.text.tertiary}
+                  style={[styles.qtyInput, { fontFamily: qtyFontFamily }]}
+                  maxLength={4}
+                />
                 <Pressable
-                  onPress={() => setQuantity((current) => Math.min(1000, current + 1))}
-                  style={({ pressed }) => [styles.qtyButton, pressed && styles.pressed]}
+                  onPress={() => setQuantity(quantity + 1)}
+                  disabled={quantity >= 1000}
+                  style={({ pressed }) => [
+                    styles.qtyButton,
+                    quantity >= 1000 && styles.qtyButtonDisabled,
+                    pressed && quantity < 1000 && styles.pressed,
+                  ]}
                 >
-                  <FontAwesome5 name="plus" size={12} color={colors.primary} solid />
+                  <FontAwesome5
+                    name="plus"
+                    size={12}
+                    color={quantity >= 1000 ? colors.text.tertiary : colors.primary}
+                    solid
+                  />
                 </Pressable>
               </View>
               <AppText style={styles.calc}>
@@ -164,16 +223,38 @@ export function BuyCreditsScreen(): React.ReactElement {
             </View>
           </View>
 
+          {bankAccounts.filter(hasBankDetails).map((account, index) => (
+            <View key={`${account.accountNumber}-${index}`} style={styles.shadowGutter}>
+              <View style={styles.card}>
+                <LinearGradient
+                  colors={['#FFFFFF', '#FFFBFB', '#FFF4F2', '#FEE8E6', '#FED7D3']}
+                  locations={[0, 0.28, 0.52, 0.78, 1]}
+                  start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+                  end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
+                  style={styles.cardInner}
+                >
+                  <AppText weight="bold" style={styles.qtyLabel}>
+                    {t('dashboard.home.bankTitle')}
+                    {bankAccounts.length > 1 ? ` ${index + 1}` : ''}
+                  </AppText>
+                  <BankRow label={t('dashboard.home.bankName')} value={account.bankName} />
+                  <BankRow label={t('dashboard.home.accountTitle')} value={account.accountTitle} />
+                  <BankRow label={t('dashboard.home.accountNumber')} value={account.accountNumber} />
+                  <BankRow label={t('dashboard.home.iban')} value={account.iban} />
+                </LinearGradient>
+              </View>
+            </View>
+          ))}
+
           <CreditPurchaseProofCard
             uri={proofUri}
-            hint={t('dashboard.home.proofHint')}
             onPress={() => void pickProof()}
           />
           {error ? <AppText style={styles.error}>{error}</AppText> : null}
           <Button
             label={submitting ? t('dashboard.home.sending') : t('dashboard.home.sendRequest')}
             onPress={() => void submit()}
-            disabled={submitting || !proofUri}
+            disabled={!canSubmit}
           />
 
           <AppText weight="bold" style={styles.section}>
@@ -211,6 +292,20 @@ export function BuyCreditsScreen(): React.ReactElement {
         }}
       />
     </>
+  );
+}
+
+function BankRow({ label, value }: { label: string; value: string }): React.ReactElement | null {
+  if (!value.trim()) {
+    return null;
+  }
+  return (
+    <View style={styles.bankRow}>
+      <AppText style={styles.bankLabel}>{label}</AppText>
+      <AppText weight="semibold" style={styles.bankValue} selectable>
+        {value}
+      </AppText>
+    </View>
   );
 }
 
@@ -263,10 +358,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyValue: {
-    minWidth: 40,
+  qtyButtonDisabled: {
+    opacity: 0.45,
+  },
+  qtyInput: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.md,
+    fontSize: 15,
+    color: colors.text.primary,
     textAlign: 'center',
-    fontSize: 20,
   },
   calc: {
     fontSize: 12,
@@ -274,6 +379,17 @@ const styles = StyleSheet.create({
   },
   total: {
     fontSize: 16,
+    color: colors.text.primary,
+  },
+  bankRow: {
+    gap: 2,
+  },
+  bankLabel: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  bankValue: {
+    fontSize: 15,
     color: colors.text.primary,
   },
   hint: {

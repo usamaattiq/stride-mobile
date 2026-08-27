@@ -229,10 +229,11 @@
       "creditsTimesPrice": "{{count}} × {{price}}",
       "balance": "Your balance: {{count}}",
       "proofLabel": "Payment proof",
-      "attachment": "Attachment",
-      "proofHint": "Attach a screenshot of your payment",
-      "addProof": "Add screenshot",
-      "changeProof": "Change screenshot",
+      "bankTitle": "Bank details",
+      "bankName": "Bank name",
+      "accountTitle": "Account title",
+      "accountNumber": "Account number",
+      "iban": "IBAN",
       "sendRequest": "Send request",
       "sending": "Sending…",
       "required": "Choose a quantity and attach payment proof.",
@@ -1141,7 +1142,20 @@
       "confirm": "Sign out"
     },
     "settings": {
-      "role": "Administrator"
+      "role": "Administrator",
+      "section": "Admin",
+      "bankAccounts": {
+        "title": "Bank accounts",
+        "subtitle": "Accounts shown when users buy credits",
+        "accountN": "Account {{n}}",
+        "add": "Add",
+        "bankName": "Bank name",
+        "accountTitle": "Account title",
+        "accountNumber": "Account number",
+        "iban": "IBAN",
+        "invalid": "Fill every field. Account number must be digits only, and IBAN must be capital letters and numbers.",
+        "saveFailed": "Couldn't save bank accounts"
+      }
     },
     "home": {
       "title": "Home",

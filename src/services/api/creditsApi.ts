@@ -2,11 +2,19 @@ import { apiRequest } from './client';
 
 export type CreditPurchaseStatus = 'pending' | 'approved' | 'rejected';
 
+export type CreditBankAccount = {
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  iban: string;
+};
+
 export type CreditCatalog = {
   unitPrice: number;
   currency: 'PKR';
   tripCreateCredits: number;
   bidOfferCredits: number;
+  bankAccounts: CreditBankAccount[];
 };
 
 export type CreditPurchase = {

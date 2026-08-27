@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +64,7 @@ export function AdminCreditSettingsScreen(): React.ReactElement {
     }
   };
 
-  const inputStyle = [styles.input, { fontFamily: getInputFontFamily(currentLanguage) }];
+  const inputStyle = [styles.input, { fontFamily: getInputFontFamily(currentLanguage, 'number-pad') }];
 
   return (
     <AuthScaffold
@@ -139,7 +139,7 @@ function Field({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        keyboardType="number-pad"
+        keyboardType={'number-pad' satisfies TextInputProps['keyboardType']}
         style={inputStyle}
       />
     </View>

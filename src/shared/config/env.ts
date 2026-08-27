@@ -13,6 +13,10 @@ export const ENV = {
     process.env.EXPO_PUBLIC_TRIP_CREATE_CREDITS?.trim() || '10',
     10,
   ) || 10,
+  bidOfferCredits: Number.parseInt(
+    process.env.EXPO_PUBLIC_BID_OFFER_CREDITS?.trim() || '5',
+    10,
+  ) || 5,
 } as const;
 
 export const hasGoogleMapsApiKey = (): boolean => ENV.googleMapsApiKey.length > 0;

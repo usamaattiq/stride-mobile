@@ -13,17 +13,14 @@ import { cardBackShadow } from '@/theme/cardShadow';
 type CreditPurchaseProofCardProps = {
   uri?: string | null;
   onPress?: () => void;
-  hint?: string;
 };
 
 export function CreditPurchaseProofCard({
   uri,
   onPress,
-  hint,
 }: CreditPurchaseProofCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
-  const label = t('dashboard.home.attachment');
 
   const body = (
     <LinearGradient
@@ -36,26 +33,13 @@ export function CreditPurchaseProofCard({
       <AppText weight="bold" style={styles.title}>
         {t('dashboard.home.proofLabel')}
       </AppText>
-      {hint ? <AppText style={styles.hint}>{hint}</AppText> : null}
-      <View style={styles.preview}>
+      <View style={[styles.preview, !uri && styles.previewEmpty]}>
         {uri ? (
           <Image source={{ uri }} style={styles.image} contentFit="cover" />
         ) : (
-          <View style={[styles.image, styles.placeholder]}>
-            <FontAwesome name="camera" size={16} color={colors.primary} />
-          </View>
+          <FontAwesome name="plus" size={14} color={colors.primary} />
         )}
-        <View style={styles.overlay}>
-          <AppText weight="bold" style={styles.overlayText}>
-            {label}
-          </AppText>
-        </View>
       </View>
-      {onPress ? (
-        <AppText weight="semibold" style={styles.cta}>
-          {uri ? t('dashboard.home.changeProof') : t('dashboard.home.addProof')}
-        </AppText>
-      ) : null}
     </LinearGradient>
   );
 
@@ -67,7 +51,7 @@ export function CreditPurchaseProofCard({
             onPress={onPress}
             style={({ pressed }) => [pressed && styles.pressed]}
             accessibilityRole="button"
-            accessibilityLabel={label}
+            accessibilityLabel={t('dashboard.home.proofLabel')}
           >
             {body}
           </Pressable>
@@ -102,40 +86,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text.primary,
   },
-  hint: {
-    fontSize: 13,
-    color: colors.text.secondary,
-  },
   preview: {
     alignSelf: 'flex-start',
-    width: 112,
-    height: 112,
+    width: 76,
+    height: 76,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.subtle,
+  },
+  previewEmpty: {
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  placeholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.28)',
-  },
-  overlayText: {
-    color: colors.white,
-    fontSize: 12,
-  },
-  cta: {
-    color: colors.primary,
   },
   pressed: {
     opacity: 0.92,

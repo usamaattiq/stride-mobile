@@ -17,6 +17,7 @@ import { i18n as appI18n } from "@/i18n";
 import { getErrorMessage } from "@/services/api/errorMessage";
 import { isApiErrorWithCode } from "@/services/api/apiError";
 import { auctionApi } from "@/services/api/auctionApi";
+import { creditsApi } from "@/services/api/creditsApi";
 import type {
   AuctionParticipantSnapshot,
   AuctionParticipantStatus,
@@ -29,6 +30,8 @@ import { AppBottomSheet } from "@/shared/components/AppBottomSheet";
 import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
+import { CreditCostBadge } from "@/shared/components/CreditCostBadge";
+import { ENV } from "@/shared/config/env";
 import { formatPriceAmount, toLatinDigits } from "@/shared/utils/latin-digits";
 import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
@@ -101,6 +104,7 @@ function BidComposerBar({
   hint,
   error,
   onSubmit,
+  creditCost,
 }: {
   amount: string;
   onAmountChange: (text: string) => void;
@@ -111,6 +115,7 @@ function BidComposerBar({
   hint?: string | null;
   error?: string | null;
   onSubmit: () => void;
+  creditCost: number;
 }): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const fontFamily = getInputFontFamily(currentLanguage, "number-pad");
@@ -135,7 +140,7 @@ function BidComposerBar({
         <Pressable
           onPress={onSubmit}
           accessibilityRole="button"
-          accessibilityLabel={submitLabel}
+          accessibilityLabel={`${submitLabel}, ${creditCost}`}
           disabled={disabled || submitting}
           style={({ pressed }) => [
             styles.composerSend,
@@ -146,9 +151,12 @@ function BidComposerBar({
           {submitting ? (
             <ActivityIndicator color={colors.white} size="small" />
           ) : (
-            <AppText weight="bold" style={styles.composerSendLabel}>
-              {submitLabel}
-            </AppText>
+            <View style={styles.composerSendContent}>
+              <AppText weight="bold" style={styles.composerSendLabel}>
+                {submitLabel}
+              </AppText>
+              <CreditCostBadge count={creditCost} />
+            </View>
           )}
         </Pressable>
       </View>
@@ -322,7 +330,19 @@ export const TripBidPanel = React.forwardRef<
   const [vehicleDetail, setVehicleDetail] =
     React.useState<OfferVehicleDetailSource | null>(null);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [bidOfferCredits, setBidOfferCredits] = React.useState(ENV.bidOfferCredits);
   const amountTouchedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    void creditsApi
+      .getCatalog()
+      .then((catalog) => {
+        if (Number.isFinite(catalog.bidOfferCredits)) {
+          setBidOfferCredits(catalog.bidOfferCredits);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
     [selectedVehicleId, vehicles],
@@ -547,11 +567,13 @@ export const TripBidPanel = React.forwardRef<
         disabled={composerDisabled}
         error={error}
         onSubmit={placeBid}
+        creditCost={bidOfferCredits}
       />,
     );
     return () => onPinnedComposerChange?.(null);
   }, [
     amount,
+    bidOfferCredits,
     canCompose,
     composerDisabled,
     composerHint,
@@ -682,6 +704,7 @@ export const TripBidPanel = React.forwardRef<
             disabled={requiresVehicle && !selectedVehicleId}
             error={error}
             onSubmit={placeBid}
+            creditCost={bidOfferCredits}
           />
         ) : null}
         <AppBottomSheet
@@ -832,6 +855,7 @@ export const TripBidPanel = React.forwardRef<
             disabled={requiresVehicle && !selectedVehicleId}
             error={error}
             onSubmit={placeBid}
+            creditCost={bidOfferCredits}
           />
       ) : null}
 
@@ -1144,6 +1168,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  composerSendContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   composerSendDisabled: {
     opacity: 0.5,

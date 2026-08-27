@@ -471,6 +471,9 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'manage-vehicles':
         dashboardRootNavigation?.navigate('ManageVehicles');
         break;
+      case 'bank-accounts':
+        navigation.navigate('BankAccounts');
+        break;
       case 'delete-account':
         openDeleteDialog();
         break;

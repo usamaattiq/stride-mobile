@@ -137,6 +137,13 @@ export type AdminProfile = {
 
 export type AdminUserFilter = 'all' | 'verified' | 'not_verified' | 'documents_submitted';
 
+export type AdminBankAccount = {
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  iban: string;
+};
+
 export const adminApi = {
   sendLoginOtp(phone: PhoneIdentity) {
     return apiRequest<{ sent: true }>({
@@ -256,6 +263,21 @@ export const adminApi = {
       method: 'PATCH',
       url: '/admin/credits/settings',
       data: input,
+    });
+  },
+
+  getBankAccounts() {
+    return apiRequest<{ accounts: AdminBankAccount[] }>({
+      method: 'GET',
+      url: '/admin/bank-accounts',
+    });
+  },
+
+  updateBankAccounts(accounts: AdminBankAccount[]) {
+    return apiRequest<{ accounts: AdminBankAccount[] }>({
+      method: 'PATCH',
+      url: '/admin/bank-accounts',
+      data: { accounts },
     });
   },
 
