@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminUserDetail, type IdentityDocumentStatus } from '@/services/api/adminApi';
+import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
@@ -221,6 +222,60 @@ function DocSection({
   );
 }
 
+function PriceField({
+  label,
+  hint,
+  value,
+  onChangeText,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}): React.ReactElement {
+  return (
+    <View style={priceFieldStyles.field}>
+      <AppText weight="semibold" style={priceFieldStyles.label}>
+        {label}
+      </AppText>
+      <AppText style={priceFieldStyles.hint}>{hint}</AppText>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType="number-pad"
+        style={priceFieldStyles.input}
+      />
+    </View>
+  );
+}
+
+const priceFieldStyles = StyleSheet.create({
+  field: {
+    gap: 4,
+    marginTop: spacing.sm,
+  },
+  label: {
+    fontSize: 14,
+    color: colors.text.primary,
+    textAlign: 'left',
+  },
+  hint: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    textAlign: 'left',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.background.subtle,
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+});
+
 export function AdminUserDetailContent({
   user,
   listRole,
@@ -230,12 +285,23 @@ export function AdminUserDetailContent({
   const memberSince = formatTripDateTime(user.createdAt, i18n.language, '—', false);
   const [reviewingDoc, setReviewingDoc] = React.useState<'nic' | 'license' | null>(null);
   const [creditsDraft, setCreditsDraft] = React.useState(String(user.credits));
+  const [unitPriceDraft, setUnitPriceDraft] = React.useState(String(user.creditUnitPrice ?? ''));
+  const [tripCreateDraft, setTripCreateDraft] = React.useState(
+    String(user.tripCreateCredits ?? ''),
+  );
+  const [bidOfferDraft, setBidOfferDraft] = React.useState(String(user.bidOfferCredits ?? ''));
   const [savingCredits, setSavingCredits] = React.useState(false);
+  const [savingPrices, setSavingPrices] = React.useState(false);
   const [creditsErrorKey, setCreditsErrorKey] = React.useState<string | null>(null);
+  const [priceErrorKey, setPriceErrorKey] = React.useState<string | null>(null);
+  const [priceOpen, setPriceOpen] = React.useState(false);
 
   React.useEffect(() => {
     setCreditsDraft(String(user.credits));
-  }, [user.credits]);
+    setUnitPriceDraft(String(user.creditUnitPrice ?? ''));
+    setTripCreateDraft(String(user.tripCreateCredits ?? ''));
+    setBidOfferDraft(String(user.bidOfferCredits ?? ''));
+  }, [user.credits, user.creditUnitPrice, user.tripCreateCredits, user.bidOfferCredits]);
 
   const nicPhotos = [user.nicFrontViewUrl, user.nicBackViewUrl].filter(
     (url): url is string => Boolean(url),
@@ -244,6 +310,11 @@ export function AdminUserDetailContent({
     (url): url is string => Boolean(url),
   );
 
+  const creditsDirty = creditsDraft !== String(user.credits);
+  const pricesDirty =
+    unitPriceDraft !== String(user.creditUnitPrice ?? '') ||
+    tripCreateDraft !== String(user.tripCreateCredits ?? '') ||
+    bidOfferDraft !== String(user.bidOfferCredits ?? '');
   const showLicense = listRole === 'driver';
 
   const openWhatsApp = () => {
@@ -254,8 +325,8 @@ export function AdminUserDetailContent({
   };
 
   const saveCredits = async () => {
-    const value = Number(creditsDraft);
-    if (!Number.isInteger(value) || value < 0) {
+    const credits = Number(creditsDraft);
+    if (!Number.isInteger(credits) || credits < 0) {
       setCreditsErrorKey('admin.credits.invalid');
       return;
     }
@@ -263,12 +334,42 @@ export function AdminUserDetailContent({
     setSavingCredits(true);
     setCreditsErrorKey(null);
     try {
-      const updated = await adminApi.updateCredits(user.id, value);
-      onUserUpdated({ ...user, credits: updated.credits });
+      const updated = await adminApi.updateCredits(user.id, credits);
+      onUserUpdated(updated);
     } catch {
       setCreditsErrorKey('admin.credits.saveFailed');
     } finally {
       setSavingCredits(false);
+    }
+  };
+
+  const savePrices = async () => {
+    const unitPrice = Number(unitPriceDraft);
+    const tripCreateCredits = Number(tripCreateDraft);
+    const bidOfferCredits = Number(bidOfferDraft);
+    if (
+      ![unitPrice, tripCreateCredits, bidOfferCredits].every(
+        (value) => Number.isInteger(value) && value >= 0,
+      )
+    ) {
+      setPriceErrorKey('admin.credits.settingsInvalid');
+      return;
+    }
+
+    setSavingPrices(true);
+    setPriceErrorKey(null);
+    try {
+      const updated = await adminApi.updateCredits(user.id, user.credits, {
+        unitPrice,
+        tripCreateCredits,
+        bidOfferCredits,
+      });
+      onUserUpdated(updated);
+      setPriceOpen(false);
+    } catch {
+      setPriceErrorKey('admin.credits.saveFailed');
+    } finally {
+      setSavingPrices(false);
     }
   };
 
@@ -321,9 +422,25 @@ export function AdminUserDetailContent({
       </View>
 
       <View style={styles.shadowCard}>
-        <AppText weight="bold" style={styles.cardHeading}>
-          {t('admin.users.detail.credits')}
-        </AppText>
+        <View style={styles.creditsHeader}>
+          <AppText weight="bold" style={styles.cardHeading}>
+            {t('admin.users.detail.credits')}
+          </AppText>
+          <Pressable
+            onPress={() => {
+              setPriceErrorKey(null);
+              setPriceOpen(true);
+            }}
+            style={({ pressed }) => [styles.priceButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel={t('admin.users.detail.priceA11y')}
+            hitSlop={8}
+          >
+            <AppText weight="semibold" style={styles.priceButtonLabel}>
+              {t('admin.users.detail.price')}
+            </AppText>
+          </Pressable>
+        </View>
         <View style={styles.creditsRow}>
           <AppText weight="semibold" style={styles.creditsLabel}>
             {t('dashboard.home.credits')}
@@ -336,14 +453,15 @@ export function AdminUserDetailContent({
           />
           <Pressable
             onPress={() => void saveCredits()}
-            disabled={savingCredits}
+            disabled={!creditsDirty || savingCredits}
             style={({ pressed }) => [
               styles.creditsSaveButton,
-              pressed && styles.pressed,
-              savingCredits && styles.creditsSaveDisabled,
+              pressed && creditsDirty && styles.pressed,
+              (!creditsDirty || savingCredits) && styles.creditsSaveDisabled,
             ]}
             accessibilityRole="button"
             accessibilityLabel={t('admin.common.save')}
+            accessibilityState={{ disabled: !creditsDirty || savingCredits }}
             hitSlop={8}
           >
             <AppText weight="semibold" style={styles.creditsSaveLabel}>
@@ -355,6 +473,47 @@ export function AdminUserDetailContent({
           <AppText style={styles.creditsError}>{t(creditsErrorKey)}</AppText>
         ) : null}
       </View>
+
+      <AppDialog
+        visible={priceOpen}
+        title={t('admin.users.detail.priceTitle')}
+        message={t('admin.users.detail.priceSubtitle')}
+        icon="tag"
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setPriceOpen(false),
+        }}
+        confirmAction={{
+          label: savingPrices ? t('admin.common.saving') : t('admin.common.save'),
+          onPress: () => void savePrices(),
+          disabled: !pricesDirty || savingPrices,
+          loading: savingPrices,
+        }}
+      >
+        <View style={styles.priceFields}>
+          <PriceField
+            label={t('admin.credits.unitPriceLabel')}
+            hint={t('admin.credits.unitPriceHint')}
+            value={unitPriceDraft}
+            onChangeText={setUnitPriceDraft}
+          />
+          <PriceField
+            label={t('admin.credits.tripCreateLabel')}
+            hint={t('admin.credits.tripCreateHint')}
+            value={tripCreateDraft}
+            onChangeText={setTripCreateDraft}
+          />
+          <PriceField
+            label={t('admin.credits.bidOfferLabel')}
+            hint={t('admin.credits.bidOfferHint')}
+            value={bidOfferDraft}
+            onChangeText={setBidOfferDraft}
+          />
+          {priceErrorKey ? (
+            <AppText style={styles.creditsError}>{t(priceErrorKey)}</AppText>
+          ) : null}
+        </View>
+      </AppDialog>
 
       <DocSection
         title={t('admin.users.nic')}
@@ -408,7 +567,26 @@ const styles = StyleSheet.create({
   cardHeading: {
     fontSize: 13,
     color: colors.text.secondary,
+    flex: 1,
+  },
+  creditsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.xxs,
+  },
+  priceButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryMuted,
+  },
+  priceButtonLabel: {
+    fontSize: 12,
+    color: colors.primary,
+  },
+  priceFields: {
+    width: '100%',
   },
   detailRow: {
     flexDirection: 'row',

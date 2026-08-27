@@ -1209,6 +1209,10 @@
         "address": "العنوان",
         "memberSince": "عضو منذ",
         "credits": "الرصيد",
+        "price": "تعديل الأسعار",
+        "priceA11y": "تعديل أسعار الرصيد لهذا المستخدم",
+        "priceTitle": "أسعار الرصيد",
+        "priceSubtitle": "تُطبَّق هذه القيم على هذا المستخدم فقط",
         "documents": "المستندات"
       }
     },
@@ -1245,6 +1249,11 @@
       "requests": "الطلبات",
       "requestsSubtitle": "مراجعة طلبات شراء الرصيد المعلقة",
       "requestsEmpty": "لا توجد طلبات معلّقة",
+      "historyEmpty": "لا توجد طلبات مراجعة",
+      "historySubtitle": "طلبات الشراء الموافق عليها والمرفوضة",
+      "searchPlaceholder": "البحث بالاسم أو الهاتف",
+      "pendingApproval": "بانتظار الموافقة",
+      "history": "السجل",
       "requestsA11y": "{{count}} طلبات معلّقة",
       "requestFor": "طلب {{count}} رصيد",
       "amount": "{{amount}}",
@@ -1262,10 +1271,13 @@
       "settingsInvalid": "أدخل أعداداً صحيحة من 0 أو أكثر",
       "settingsSaveFailed": "تعذر حفظ إعدادات الرصيد",
       "unitPriceLabel": "سعر الرصيد",
+      "unitPriceShort": "السعر",
       "unitPriceHint": "يُستخدم لطلبات الشراء الجديدة فقط",
       "tripCreateLabel": "رصيد إنشاء رحلة أو طلب",
+      "tripCreateShort": "رحلة",
       "tripCreateHint": "يُخصم عند نشر رحلة أو طلب راكب",
       "bidOfferLabel": "رصيد إرسال عرض أو مزايدة",
+      "bidOfferShort": "عرض",
       "bidOfferHint": "يُخصم عند تقديم عرض أو مزايدة"
     },
     "subzone": {

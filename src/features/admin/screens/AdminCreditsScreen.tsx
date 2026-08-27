@@ -4,6 +4,7 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
+  TextInput,
   View,
   type ListRenderItem,
 } from 'react-native';
@@ -11,45 +12,129 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
-import { FontAwesome } from '@expo/vector-icons';
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { CreditPurchaseRequestTile } from '@/features/dashboard/components/CreditPurchaseRequestTile';
+import { DashboardSearchBar } from '@/features/dashboard/components/DashboardSearchBar';
 import { ListingsEmptyState } from '@/features/dashboard/components/ListingsEmptyState';
+import { SegmentControl } from '@/features/dashboard/components/SegmentControl';
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { adminApi, type AdminCreditPurchaseSummary } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
+import { getInputFontFamily } from '@/theme/typography';
 
 import { useAdminResource } from '../hooks/useAdminResource';
 import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTypes';
 
 export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const navigation =
     useNavigation<NativeStackNavigationProp<AdminCreditsStackParamList>>();
+  const [unitPrice, setUnitPrice] = React.useState('');
+  const [tripCreate, setTripCreate] = React.useState('');
+  const [bidOffer, setBidOffer] = React.useState('');
+  const [savedSettings, setSavedSettings] = React.useState({
+    unitPrice: '',
+    tripCreate: '',
+    bidOffer: '',
+  });
+  const [savingSettings, setSavingSettings] = React.useState(false);
+  const [settingsErrorKey, setSettingsErrorKey] = React.useState<string | null>(null);
+  const [listView, setListView] = React.useState<'pending' | 'history'>('pending');
+  const [query, setQuery] = React.useState('');
 
   const { data, loading, errorKey, reload } = useAdminResource({
     reloadOnFocus: true,
+    deps: [listView],
     load: async () => {
-      const result = await adminApi.listCreditPurchases();
+      const [result, settings] = await Promise.all([
+        adminApi.listCreditPurchases(listView),
+        adminApi.getCreditSettings(),
+      ]);
+      setUnitPrice(String(settings.unitPrice));
+      setTripCreate(String(settings.tripCreateCredits));
+      setBidOffer(String(settings.bidOfferCredits));
+      setSavedSettings({
+        unitPrice: String(settings.unitPrice),
+        tripCreate: String(settings.tripCreateCredits),
+        bidOffer: String(settings.bidOfferCredits),
+      });
       return result.items;
     },
   });
 
   const items = data ?? [];
+  const visibleItems = React.useMemo(() => {
+    const search = query.trim().toLowerCase();
+    if (!search) {
+      return items;
+    }
+    const digits = search.replace(/[\s-+]/g, '');
+    return items.filter((item) => {
+      const nameMatch = item.user.fullName.toLowerCase().includes(search);
+      const phoneMatch = item.user.phoneE164.toLowerCase().includes(search);
+      const phoneDigits = item.user.phoneE164.replace(/[\s-+]/g, '');
+      return nameMatch || phoneMatch || (digits.length > 0 && phoneDigits.includes(digits));
+    });
+  }, [items, query]);
   const { refreshControlProps } = usePullToRefresh(reload);
+  const inputFont = { fontFamily: getInputFontFamily(currentLanguage, 'number-pad') };
+  const settingsDirty =
+    unitPrice !== savedSettings.unitPrice ||
+    tripCreate !== savedSettings.tripCreate ||
+    bidOffer !== savedSettings.bidOffer;
+
+  const saveSettings = async () => {
+    const nextPrice = Number(unitPrice);
+    const nextTrip = Number(tripCreate);
+    const nextBid = Number(bidOffer);
+    if (![nextPrice, nextTrip, nextBid].every((value) => Number.isInteger(value) && value >= 0)) {
+      setSettingsErrorKey('admin.credits.settingsInvalid');
+      return;
+    }
+    setSavingSettings(true);
+    setSettingsErrorKey(null);
+    try {
+      await adminApi.updateCreditSettings({
+        unitPrice: nextPrice,
+        tripCreateCredits: nextTrip,
+        bidOfferCredits: nextBid,
+      });
+      setSavedSettings({
+        unitPrice: String(nextPrice),
+        tripCreate: String(nextTrip),
+        bidOffer: String(nextBid),
+      });
+    } catch {
+      setSettingsErrorKey('admin.credits.settingsSaveFailed');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const viewOptions = React.useMemo(
+    () => [
+      { id: 'pending' as const, label: t('admin.credits.pendingApproval') },
+      { id: 'history' as const, label: t('admin.credits.history') },
+    ],
+    [t],
+  );
 
   const renderItem = React.useCallback<ListRenderItem<AdminCreditPurchaseSummary>>(
     ({ item }) => (
       <View style={styles.shadowGutter}>
         <CreditPurchaseRequestTile
           title={item.user.fullName}
-          subtitle={`${t('admin.credits.requestFor', { count: item.credits })} · ${item.user.phoneE164}`}
+          subtitle={t('admin.credits.requestFor', { count: item.credits })}
+          phone={item.user.phoneE164}
           credits={item.credits}
           amount={item.amount}
           unitPrice={item.credits > 0 ? item.amount / item.credits : 0}
           status={item.status}
+          avatarUrl={item.user.avatarViewUrl}
           onPress={() => navigation.navigate('CreditPurchaseDetail', { purchaseId: item.id })}
         />
       </View>
@@ -60,28 +145,89 @@ export function AdminCreditsScreen(): React.ReactElement {
   return (
     <AuthScaffold
       title={t('admin.credits.title')}
-      subtitle={t('admin.credits.requestsSubtitle')}
       compactHeader
       manualTopInset
       scrollable={false}
       showLanguageSwitcher={false}
       showLegalFooter={false}
-      titleRight={
-        <Pressable
-          onPress={() => navigation.navigate('CreditSettings')}
-          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel={t('admin.credits.settingsA11y')}
-          hitSlop={8}
-        >
-          <FontAwesome name="cog" size={16} color={colors.white} />
-        </Pressable>
+      headerExtra={
+        <View style={styles.headerExtra}>
+          <View style={styles.settingsCard}>
+            <View style={styles.settingsLine}>
+              <AppText weight="semibold" style={styles.settingsLabel} numberOfLines={1}>
+                {t('admin.credits.unitPriceLabel')}
+              </AppText>
+              <TextInput
+                value={unitPrice}
+                onChangeText={setUnitPrice}
+                keyboardType="number-pad"
+                style={[styles.settingsInput, inputFont]}
+              />
+            </View>
+            <View style={styles.settingsLine}>
+              <AppText weight="semibold" style={styles.settingsLabel} numberOfLines={1}>
+                {t('admin.credits.tripCreateLabel')}
+              </AppText>
+              <TextInput
+                value={tripCreate}
+                onChangeText={setTripCreate}
+                keyboardType="number-pad"
+                style={[styles.settingsInput, inputFont]}
+              />
+            </View>
+            <View style={styles.settingsLine}>
+              <AppText weight="semibold" style={styles.settingsLabel} numberOfLines={1}>
+                {t('admin.credits.bidOfferLabel')}
+              </AppText>
+              <TextInput
+                value={bidOffer}
+                onChangeText={setBidOffer}
+                keyboardType="number-pad"
+                style={[styles.settingsInput, inputFont]}
+              />
+            </View>
+            <Pressable
+              onPress={() => void saveSettings()}
+              disabled={!settingsDirty || savingSettings}
+              style={({ pressed }) => [
+                styles.settingsSave,
+                settingsDirty && styles.settingsSaveActive,
+                pressed && settingsDirty && styles.pressed,
+                (!settingsDirty || savingSettings) && styles.settingsSaveDisabled,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('admin.common.save')}
+              accessibilityState={{ disabled: !settingsDirty || savingSettings }}
+            >
+              <AppText weight="semibold" style={styles.settingsSaveLabel}>
+                {savingSettings ? t('admin.common.saving') : t('admin.common.save')}
+              </AppText>
+            </Pressable>
+          </View>
+          <SegmentControl
+            options={viewOptions}
+            value={listView}
+            onChange={setListView}
+            variant="onBrand"
+          />
+        </View>
       }
       contentWrapStyle={styles.contentWrap}
     >
-      {errorKey ? <AppText style={styles.error}>{t(errorKey)}</AppText> : null}
+      {errorKey || settingsErrorKey ? (
+        <AppText style={styles.error}>
+          {t(errorKey ?? settingsErrorKey ?? 'admin.common.loadFailed')}
+        </AppText>
+      ) : null}
+      <View style={styles.searchWrap}>
+        <DashboardSearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t('admin.credits.searchPlaceholder')}
+        />
+      </View>
       <FlatList
-        data={items}
+        data={visibleItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListEmptyComponent={
@@ -89,14 +235,23 @@ export function AdminCreditsScreen(): React.ReactElement {
             <AppText style={styles.muted}>{t('admin.common.loading')}</AppText>
           ) : (
             <ListingsEmptyState
-              title={t('admin.credits.requestsEmpty')}
-              subtitle={t('admin.credits.requestsSubtitle')}
+              title={
+                listView === 'history'
+                  ? t('admin.credits.historyEmpty')
+                  : t('admin.credits.requestsEmpty')
+              }
+              subtitle={
+                listView === 'history'
+                  ? t('admin.credits.historySubtitle')
+                  : t('admin.credits.requestsSubtitle')
+              }
               icon="coins"
             />
           )
         }
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl {...refreshControlProps} />}
+        keyboardShouldPersistTaps="handled"
       />
     </AuthScaffold>
   );
@@ -105,8 +260,13 @@ export function AdminCreditsScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
+    paddingTop: spacing.md,
     paddingHorizontal: 0,
     paddingBottom: 0,
+  },
+  searchWrap: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
   },
   listContent: {
     flexGrow: 1,
@@ -118,6 +278,56 @@ const styles = StyleSheet.create({
   shadowGutter: {
     marginHorizontal: -spacing.md,
     paddingHorizontal: spacing.md,
+  },
+  headerExtra: {
+    gap: spacing.sm,
+  },
+  settingsCard: {
+    borderRadius: radius.md,
+    backgroundColor: colors.primaryPressed,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  settingsLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  settingsLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 13,
+    color: colors.white,
+  },
+  settingsInput: {
+    width: 64,
+    height: 36,
+    borderRadius: radius.sm,
+    backgroundColor: colors.white,
+    paddingHorizontal: 8,
+    paddingVertical: 0,
+    fontSize: 14,
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
+  settingsSave: {
+    alignSelf: 'flex-end',
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsSaveActive: {
+    backgroundColor: colors.primary,
+  },
+  settingsSaveDisabled: {
+    opacity: 0.55,
+  },
+  settingsSaveLabel: {
+    fontSize: 12,
+    color: colors.white,
   },
   error: {
     color: colors.primary,
@@ -131,13 +341,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
-  },
-  settingsButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

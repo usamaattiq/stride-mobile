@@ -39,6 +39,9 @@ export type AdminUserDetail = AdminUserSummary & {
   driverLicenseFrontViewUrl?: string | null;
   driverLicenseBackViewUrl?: string | null;
   licenseRejectionReason?: string | null;
+  creditUnitPrice: number;
+  tripCreateCredits: number;
+  bidOfferCredits: number;
 };
 
 export type AdminTripParticipant = {
@@ -247,11 +250,19 @@ export const adminApi = {
     return apiRequest<{ items: AdminCreditUser[] }>({ method: 'GET', url: '/admin/credits' });
   },
 
-  updateCredits(userId: string, credits: number) {
-    return apiRequest<AdminCreditUser>({
+  updateCredits(
+    userId: string,
+    credits: number,
+    costs?: {
+      unitPrice?: number;
+      tripCreateCredits?: number;
+      bidOfferCredits?: number;
+    },
+  ) {
+    return apiRequest<AdminUserDetail>({
       method: 'PATCH',
       url: `/admin/credits/${userId}`,
-      data: { credits },
+      data: { credits, ...costs },
     });
   },
 
@@ -304,10 +315,11 @@ export const adminApi = {
     });
   },
 
-  listCreditPurchases() {
+  listCreditPurchases(view: 'pending' | 'history' = 'pending') {
     return apiRequest<{ items: AdminCreditPurchaseSummary[] }>({
       method: 'GET',
       url: '/admin/credits/purchases',
+      params: { view },
     });
   },
 

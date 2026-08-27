@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -21,44 +22,63 @@ export function CreditPurchaseProofCard({
 }: CreditPurchaseProofCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
+  const [galleryOpen, setGalleryOpen] = React.useState(false);
+  const proofUri = uri?.trim() || null;
 
-  const body = (
-    <LinearGradient
-      colors={['#FFFFFF', '#FFFBFB', '#FFF4F2', '#FEE8E6', '#FED7D3']}
-      locations={[0, 0.28, 0.52, 0.78, 1]}
-      start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
-      end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
-      style={styles.inner}
-    >
-      <AppText weight="bold" style={styles.title}>
-        {t('dashboard.home.proofLabel')}
-      </AppText>
-      <View style={[styles.preview, !uri && styles.previewEmpty]}>
-        {uri ? (
-          <Image source={{ uri }} style={styles.image} contentFit="cover" />
-        ) : (
-          <FontAwesome name="plus" size={14} color={colors.primary} />
-        )}
-      </View>
-    </LinearGradient>
+  const onPreviewPress = () => {
+    if (proofUri) {
+      setGalleryOpen(true);
+      return;
+    }
+    onPress?.();
+  };
+
+  const canPress = Boolean(proofUri || onPress);
+
+  const preview = (
+    <View style={[styles.preview, !proofUri && styles.previewEmpty]}>
+      {proofUri ? (
+        <Image source={{ uri: proofUri }} style={styles.image} contentFit="contain" />
+      ) : (
+        <FontAwesome name="plus" size={14} color={colors.primary} />
+      )}
+    </View>
   );
 
   return (
     <View style={styles.shadowGutter}>
       <View style={styles.card}>
-        {onPress ? (
-          <Pressable
-            onPress={onPress}
-            style={({ pressed }) => [pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel={t('dashboard.home.proofLabel')}
-          >
-            {body}
-          </Pressable>
-        ) : (
-          body
-        )}
+        <LinearGradient
+          colors={['#FFFFFF', '#FFFBFB', '#FFF4F2', '#FEE8E6', '#FED7D3']}
+          locations={[0, 0.28, 0.52, 0.78, 1]}
+          start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+          end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
+          style={styles.inner}
+        >
+          <AppText weight="bold" style={styles.title}>
+            {t('dashboard.home.proofLabel')}
+          </AppText>
+          {canPress ? (
+            <Pressable
+              onPress={onPreviewPress}
+              style={({ pressed }) => [pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.home.proofLabel')}
+            >
+              {preview}
+            </Pressable>
+          ) : (
+            preview
+          )}
+        </LinearGradient>
       </View>
+      {proofUri ? (
+        <ImageGalleryModal
+          visible={galleryOpen}
+          images={[proofUri]}
+          onClose={() => setGalleryOpen(false)}
+        />
+      ) : null}
     </View>
   );
 }

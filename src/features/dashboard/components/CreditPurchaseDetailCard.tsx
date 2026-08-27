@@ -15,6 +15,7 @@ import { cardBackShadow } from '@/theme/cardShadow';
 type CreditPurchaseDetailCardProps = {
   title: string;
   subtitle?: string;
+  phone?: string | null;
   status: CreditPurchaseStatus;
   credits: number;
   amount: number;
@@ -37,6 +38,7 @@ function statusStyle(status: CreditPurchaseStatus) {
 export function CreditPurchaseDetailCard({
   title,
   subtitle,
+  phone,
   status,
   credits,
   amount,
@@ -75,6 +77,12 @@ export function CreditPurchaseDetailCard({
             <AppText weight="bold" style={styles.title}>
               {title}
             </AppText>
+            {phone?.trim() ? (
+              <View style={styles.phoneRow}>
+                <FontAwesome name="phone" size={13} color={colors.primary} />
+                <AppText style={styles.phone}>{phone.trim()}</AppText>
+              </View>
+            ) : null}
             {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null}
 
             <View style={styles.metaRow}>
@@ -141,6 +149,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     color: colors.text.primary,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
+  phone: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.secondary,
   },
   subtitle: {
     fontSize: 14,

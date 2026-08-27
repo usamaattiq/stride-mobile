@@ -1209,6 +1209,10 @@
         "address": "Address",
         "memberSince": "Member since",
         "credits": "Credits",
+        "price": "Edit prices",
+        "priceA11y": "Edit credit prices for this user",
+        "priceTitle": "Credit prices",
+        "priceSubtitle": "These values apply only to this user",
         "documents": "Documents"
       }
     },
@@ -1245,6 +1249,11 @@
       "requests": "Requests",
       "requestsSubtitle": "Review pending credit purchases",
       "requestsEmpty": "No pending requests",
+      "historyEmpty": "No reviewed requests",
+      "historySubtitle": "Approved and rejected purchase requests",
+      "searchPlaceholder": "Search by name or phone",
+      "pendingApproval": "Pending approval",
+      "history": "History",
       "requestsA11y": "{{count}} pending requests",
       "requestFor": "Request for {{count}} credits",
       "amount": "{{amount}}",
@@ -1262,10 +1271,13 @@
       "settingsInvalid": "Enter whole numbers of 0 or more",
       "settingsSaveFailed": "Couldn't save credit settings",
       "unitPriceLabel": "Price per credit",
+      "unitPriceShort": "Price",
       "unitPriceHint": "Used only for new purchase requests",
       "tripCreateLabel": "Credits to create a trip or request",
+      "tripCreateShort": "Trip",
       "tripCreateHint": "Deducted when a user publishes a trip or passenger request",
       "bidOfferLabel": "Credits to send a bid or offer",
+      "bidOfferShort": "Bid / offer",
       "bidOfferHint": "Deducted when a user places a bid or sends an offer"
     },
     "subzone": {

@@ -102,8 +102,8 @@ export function BuyCreditsScreen(): React.ReactElement {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.85,
+      allowsEditing: false,
+      quality: 1,
     });
     if (!result.canceled && result.assets[0]?.uri) {
       setProofUri(result.assets[0].uri);

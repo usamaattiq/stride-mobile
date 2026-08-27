@@ -1,5 +1,6 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { I18nManager, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -7,16 +8,19 @@ import { useTranslation } from 'react-i18next';
 import { i18n as appI18n } from '@/i18n';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
 type CreditPurchaseRequestTileProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
+  phone?: string | null;
   credits: number;
   amount: number;
   unitPrice: number;
   status: CreditPurchaseStatus;
+  avatarUrl?: string | null;
   onPress: () => void;
 };
 
@@ -48,15 +52,18 @@ function statusStyle(status: CreditPurchaseStatus) {
 export function CreditPurchaseRequestTile({
   title,
   subtitle,
+  phone,
   credits,
   amount,
   unitPrice,
   status,
+  avatarUrl,
   onPress,
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
+  const photoUrl = avatarUrl?.trim() || null;
   const statusLabel =
     status === 'approved'
       ? t('dashboard.home.statusApproved')
@@ -79,7 +86,7 @@ export function CreditPurchaseRequestTile({
           end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
           style={styles.inner}
         >
-          <View style={styles.statusRow}>
+          <View style={styles.topRow}>
             <View style={[styles.badge, statusUi.badge]}>
               <FontAwesome name={statusUi.icon} size={9} color={statusUi.color} />
               <AppText weight="semibold" style={[styles.badgeText, statusUi.text]} numberOfLines={1}>
@@ -89,21 +96,46 @@ export function CreditPurchaseRequestTile({
           </View>
 
           <View style={styles.mainRow}>
+            <View style={styles.thumbnail}>
+              {photoUrl ? (
+                <Image
+                  source={{ uri: photoUrl }}
+                  style={styles.thumbnailImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={styles.thumbnailFallback}>
+                  <FontAwesome name="user" size={18} color={colors.text.tertiary} />
+                </View>
+              )}
+            </View>
             <View style={styles.copy}>
               <AppText weight="bold" style={styles.title} numberOfLines={1}>
                 {title}
               </AppText>
-              <AppText style={styles.subtitle} numberOfLines={2}>
-                {subtitle}
-              </AppText>
+              {phone?.trim() ? (
+                <View style={styles.phoneRow}>
+                  <FontAwesome name="phone" size={11} color={colors.primary} />
+                  <AppText style={styles.phone} numberOfLines={1}>
+                    {phone.trim()}
+                  </AppText>
+                </View>
+              ) : null}
+              {subtitle ? (
+                <AppText style={styles.subtitle} numberOfLines={2}>
+                  {subtitle}
+                </AppText>
+              ) : null}
               <AppText style={styles.calc} numberOfLines={1}>
                 {t('dashboard.home.creditsTimesPrice', { count: credits, price: unitPrice })}
               </AppText>
-              <AppText weight="semibold" style={styles.price} numberOfLines={1}>
-                {t('dashboard.home.requestAmount', { amount })}
+            </View>
+            <View style={styles.priceBlock}>
+              <AppText weight="bold" style={styles.priceAmount} numberOfLines={1}>
+                {formatPriceAmount(amount)}
               </AppText>
             </View>
-            <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
           </View>
         </LinearGradient>
       </Pressable>
@@ -127,14 +159,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
     overflow: 'hidden',
-    padding: spacing.sm,
+    paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
-  statusRow: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingTop: spacing.xs,
   },
   badge: {
     flexDirection: 'row',
@@ -170,6 +204,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  thumbnail: {
+    width: 88,
+    height: 88,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+    backgroundColor: colors.primarySoft,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbnailFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   copy: {
     flex: 1,
@@ -180,6 +231,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  phone: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text.secondary,
+  },
   subtitle: {
     fontSize: 13,
     color: colors.text.secondary,
@@ -188,8 +250,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  price: {
-    fontSize: 14,
-    color: colors.text.primary,
+  priceBlock: {
+    alignItems: 'flex-end',
+    flexShrink: 0,
+    minWidth: 64,
+    alignSelf: 'flex-end',
+  },
+  priceAmount: {
+    fontSize: 22,
+    lineHeight: 32,
+    color: colors.primary,
   },
 });

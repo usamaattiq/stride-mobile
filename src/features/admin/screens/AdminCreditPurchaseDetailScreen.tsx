@@ -6,12 +6,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
-import { CreditPurchaseDetailCard } from '@/features/dashboard/components/CreditPurchaseDetailCard';
+import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditPurchaseProofCard';
+import { CreditPurchaseRequestTile } from '@/features/dashboard/components/CreditPurchaseRequestTile';
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminCreditPurchaseDetail } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTypes';
 
@@ -83,35 +84,46 @@ export function AdminCreditPurchaseDetailScreen(): React.ReactElement {
         <AppText style={styles.error}>{t(errorKey ?? 'admin.credits.detailFailed')}</AppText>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
-          <CreditPurchaseDetailCard
-            title={purchase.user.fullName}
-            subtitle={purchase.user.phoneE164}
-            status={purchase.status}
-            credits={purchase.credits}
-            amount={purchase.amount}
-            unitPrice={purchase.unitPrice}
-            proofUri={purchase.proofViewUrl}
-            rejectionReason={purchase.rejectionReason}
-            extra={
-              purchase.status === 'pending' ? (
-                <View style={styles.actions}>
-                  <Button
-                    label={t('admin.credits.reject')}
-                    variant="secondary"
-                    onPress={() => void review('reject')}
-                    disabled={reviewing}
-                    style={styles.action}
-                  />
-                  <Button
-                    label={t('admin.credits.approve')}
-                    onPress={() => void review('approve')}
-                    disabled={reviewing}
-                    style={styles.action}
-                  />
-                </View>
-              ) : null
-            }
-          />
+          <View style={styles.shadowGutter}>
+            <CreditPurchaseRequestTile
+              title={purchase.user.fullName}
+              subtitle={t('admin.credits.requestFor', { count: purchase.credits })}
+              phone={purchase.user.phoneE164}
+              credits={purchase.credits}
+              amount={purchase.amount}
+              unitPrice={purchase.unitPrice}
+              status={purchase.status}
+              avatarUrl={purchase.user.avatarViewUrl}
+              onPress={() =>
+                navigation.navigate('UserDetail', { userId: purchase.user.id })
+              }
+            />
+          </View>
+          {purchase.rejectionReason ? (
+            <View style={styles.rejectBox}>
+              <AppText style={styles.rejectText}>{purchase.rejectionReason}</AppText>
+            </View>
+          ) : null}
+          {purchase.proofViewUrl ? (
+            <CreditPurchaseProofCard uri={purchase.proofViewUrl} />
+          ) : null}
+          {purchase.status === 'pending' ? (
+            <View style={styles.actions}>
+              <Button
+                label={t('admin.credits.reject')}
+                variant="secondary"
+                onPress={() => void review('reject')}
+                disabled={reviewing}
+                style={styles.action}
+              />
+              <Button
+                label={t('admin.credits.approve')}
+                onPress={() => void review('approve')}
+                disabled={reviewing}
+                style={styles.action}
+              />
+            </View>
+          ) : null}
           {errorKey ? <AppText style={styles.error}>{t(errorKey)}</AppText> : null}
         </ScrollView>
       )}
@@ -131,6 +143,19 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.huge,
+    gap: spacing.sm,
+  },
+  shadowGutter: {
+    marginHorizontal: -spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  rejectBox: {
+    borderRadius: radius.md,
+    backgroundColor: colors.primaryMuted,
+    padding: spacing.sm,
+  },
+  rejectText: {
+    color: colors.primary,
   },
   actions: {
     flexDirection: 'row',
