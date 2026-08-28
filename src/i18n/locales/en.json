@@ -1120,7 +1120,7 @@
     "removePhoto": "Remove photo"
   },
   "admin": {
-    "title": "Stride Admin",
+    "title": "Admin",
     "tabs": {
       "Home": "Home",
       "Users": "Users",
@@ -1195,7 +1195,7 @@
       "noImage": "No image",
       "driverContact": "Driver contact",
       "passengerContact": "Passenger contact",
-      "whatsappMessage": "Hi {{name}}, this is Stride Admin.",
+      "whatsappMessage": "Hi {{name}}, this is Admin.",
       "filters": {
         "all": "All",
         "verified": "Verified",

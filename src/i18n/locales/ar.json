@@ -1120,7 +1120,7 @@
     "removePhoto": "إزالة الصورة"
   },
   "admin": {
-    "title": "إدارة سترايد",
+    "title": "الإدارة",
     "tabs": {
       "Home": "الرئيسية",
       "Users": "المستخدمون",
@@ -1195,7 +1195,7 @@
       "noImage": "لا توجد صورة",
       "driverContact": "جهة اتصال السائق",
       "passengerContact": "جهة اتصال الراكب",
-      "whatsappMessage": "مرحباً {{name}}، هذه إدارة سترايد.",
+      "whatsappMessage": "مرحباً {{name}}، هذه الإدارة.",
       "filters": {
         "all": "الكل",
         "verified": "موثّق",
