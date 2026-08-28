@@ -4,9 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { I18nManager, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditPurchaseProofCard';
 
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { useDisplayCurrency } from '@/shared/utils/currency';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
@@ -22,6 +24,7 @@ type CreditPurchaseDetailCardProps = {
   credits: number;
   amount: number;
   unitPrice: number;
+  createdAt?: string | null;
   proofUri?: string | null;
   rejectionReason?: string | null;
   extra?: React.ReactNode;
@@ -45,14 +48,19 @@ export function CreditPurchaseDetailCard({
   credits,
   amount,
   unitPrice,
+  createdAt,
   proofUri,
   rejectionReason,
   extra,
 }: CreditPurchaseDetailCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
+  const timestamp = createdAt
+    ? formatTripDateTime(createdAt, currentLanguage, '')
+    : '';
   const statusLabel =
     status === 'approved'
       ? t('dashboard.home.statusApproved')
@@ -71,11 +79,21 @@ export function CreditPurchaseDetailCard({
             end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
             style={styles.inner}
           >
-            <View style={[styles.badge, statusUi.badge]}>
-              <FontAwesome name={statusUi.icon} size={10} color={statusUi.color} />
-              <AppText weight="semibold" style={[styles.badgeText, statusUi.text]}>
-                {statusLabel}
-              </AppText>
+            <View style={styles.topRow}>
+              <View style={[styles.badge, statusUi.badge]}>
+                <FontAwesome name={statusUi.icon} size={10} color={statusUi.color} />
+                <AppText weight="semibold" style={[styles.badgeText, statusUi.text]}>
+                  {statusLabel}
+                </AppText>
+              </View>
+              {timestamp ? (
+                <View style={styles.timeBadge}>
+                  <FontAwesome name="clock-o" size={10} color={colors.text.secondary} />
+                  <AppText weight="semibold" style={styles.timeBadgeText} numberOfLines={1}>
+                    {timestamp}
+                  </AppText>
+                </View>
+              ) : null}
             </View>
             <AppText weight="bold" style={styles.title}>
               {title}
@@ -141,13 +159,35 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   badge: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.full,
+    flexShrink: 1,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.background.subtle,
+    flexShrink: 1,
+    maxWidth: '58%',
+  },
+  timeBadgeText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    flexShrink: 1,
   },
   badgeGreen: { backgroundColor: colors.accent.green.soft },
   badgeAmber: { backgroundColor: colors.accent.amber.soft },

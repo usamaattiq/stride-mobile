@@ -5,7 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { I18nManager, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { i18n as appI18n } from '@/i18n';
+import { useLanguage } from '@/i18n/hooks/useLanguage';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
@@ -21,7 +23,10 @@ type CreditPurchaseRequestTileProps = {
   amount: number;
   unitPrice: number;
   status: CreditPurchaseStatus;
+  createdAt?: string | null;
+  /** User photo — admin list only. Hidden on the main-app request history. */
   avatarUrl?: string | null;
+  showAvatar?: boolean;
   onPress: () => void;
 };
 
@@ -58,14 +63,20 @@ export function CreditPurchaseRequestTile({
   amount,
   unitPrice,
   status,
+  createdAt,
   avatarUrl,
+  showAvatar = false,
   onPress,
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const { currentLanguage } = useLanguage();
   const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
   const photoUrl = avatarUrl?.trim() || null;
+  const timestamp = createdAt
+    ? formatTripDateTime(createdAt, currentLanguage, '')
+    : '';
   const statusLabel =
     status === 'approved'
       ? t('dashboard.home.statusApproved')
@@ -95,23 +106,33 @@ export function CreditPurchaseRequestTile({
                 {statusLabel}
               </AppText>
             </View>
+            {timestamp ? (
+              <View style={styles.timeBadge}>
+                <FontAwesome name="clock-o" size={9} color={colors.text.secondary} />
+                <AppText weight="semibold" style={styles.timeBadgeText} numberOfLines={1}>
+                  {timestamp}
+                </AppText>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.mainRow}>
-            <View style={styles.thumbnail}>
-              {photoUrl ? (
-                <Image
-                  source={{ uri: photoUrl }}
-                  style={styles.thumbnailImage}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                />
-              ) : (
-                <View style={styles.thumbnailFallback}>
-                  <FontAwesome name="user" size={18} color={colors.text.tertiary} />
-                </View>
-              )}
-            </View>
+            {showAvatar ? (
+              <View style={styles.thumbnail}>
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.thumbnailImage}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                  />
+                ) : (
+                  <View style={styles.thumbnailFallback}>
+                    <FontAwesome name="user" size={18} color={colors.text.tertiary} />
+                  </View>
+                )}
+              </View>
+            ) : null}
             <View style={styles.copy}>
               <AppText weight="bold" style={styles.title} numberOfLines={1}>
                 {title}
@@ -171,7 +192,7 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     gap: spacing.xs,
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.xs,
@@ -183,6 +204,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: radius.full,
+    flexShrink: 1,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.background.subtle,
+    flexShrink: 1,
+    maxWidth: '58%',
+  },
+  timeBadgeText: {
+    fontSize: 11,
+    color: colors.text.secondary,
     flexShrink: 1,
   },
   badgeGreen: {

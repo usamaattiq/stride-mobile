@@ -275,7 +275,7 @@ export function BuyCreditsScreen(): React.ReactElement {
               <View key={item.id} style={styles.shadowGutter}>
                 <CreditPurchaseRequestTile
                   title={t('dashboard.home.creditsA11y', { count: item.credits })}
-                  subtitle={new Date(item.createdAt).toLocaleString()}
+                  createdAt={item.createdAt}
                   credits={item.credits}
                   amount={item.amount}
                   unitPrice={item.unitPrice}

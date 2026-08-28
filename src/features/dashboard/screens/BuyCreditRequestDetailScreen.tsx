@@ -66,7 +66,8 @@ export function BuyCreditRequestDetailScreen(): React.ReactElement {
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
           <CreditPurchaseDetailCard
-            title={new Date(purchase.createdAt).toLocaleString()}
+            title={t('dashboard.home.creditsA11y', { count: purchase.credits })}
+            createdAt={purchase.createdAt}
             status={purchase.status}
             credits={purchase.credits}
             amount={purchase.amount}

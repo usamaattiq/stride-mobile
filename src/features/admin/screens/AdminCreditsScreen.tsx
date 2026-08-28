@@ -134,7 +134,9 @@ export function AdminCreditsScreen(): React.ReactElement {
           amount={item.amount}
           unitPrice={item.credits > 0 ? item.amount / item.credits : 0}
           status={item.status}
+          createdAt={item.createdAt}
           avatarUrl={item.user.avatarViewUrl}
+          showAvatar
           onPress={() => navigation.navigate('CreditPurchaseDetail', { purchaseId: item.id })}
         />
       </View>

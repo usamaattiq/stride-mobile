@@ -93,7 +93,9 @@ export function AdminCreditPurchaseDetailScreen(): React.ReactElement {
               amount={purchase.amount}
               unitPrice={purchase.unitPrice}
               status={purchase.status}
+              createdAt={purchase.createdAt}
               avatarUrl={purchase.user.avatarViewUrl}
+              showAvatar
               onPress={() =>
                 navigation.navigate('UserDetail', { userId: purchase.user.id })
               }
