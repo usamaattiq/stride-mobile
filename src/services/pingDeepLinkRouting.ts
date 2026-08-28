@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 
 import { navigationRef } from '@/navigation/navigationRef';
 import { resolveDeepLinkFromNotificationData } from '@/services/pushNotifications';
+import { authStore } from '@/store/authStore';
 
 const SCHEME = 'musafir249';
 const NAV_RETRY_MS = 80;
@@ -156,6 +157,9 @@ function parsePath(url: string): string[] {
 }
 
 function openFromData(data: Record<string, unknown> | undefined): void {
+  if (authStore.getSessionKind() === 'admin') {
+    return;
+  }
   const deepLink = resolveDeepLinkFromNotificationData(data);
   if (!deepLink) {
     return;

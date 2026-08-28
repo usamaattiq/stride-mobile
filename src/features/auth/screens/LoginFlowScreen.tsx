@@ -11,7 +11,7 @@ import { adminApi } from '@/services/api/adminApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
-import { registerForPushNotifications } from '@/services/pushNotifications';
+import { registerForPushNotifications, unregisterPushNotifications } from '@/services/pushNotifications';
 import type { AdminProfile } from '@/services/api/adminApi';
 import type { UserProfileDto } from '@/services/api/authApi.types';
 import { useAuthStore } from '@/store/authStore';
@@ -176,6 +176,7 @@ export function LoginFlowScreen(): React.ReactElement {
   ) => {
     await useAuthStore.getState().setAuthenticated(accessToken, 'admin');
     adminStore.setProfile(profile);
+    void unregisterPushNotifications();
 
     const devicePrefs = useDevicePrefsStore.getState();
     await devicePrefs.setLastPhone(toPhoneIdentity(country, phoneDigits));

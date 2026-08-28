@@ -16,6 +16,7 @@ import { usePingNotificationRouting } from './src/services/pingDeepLinkRouting';
 import {
   attachPushTokenListener,
   registerForPushNotifications,
+  unregisterPushNotifications,
 } from './src/services/pushNotifications';
 import { authStore } from './src/store/authStore';
 import { adminStore } from './src/store/adminStore';
@@ -110,6 +111,7 @@ export default function App() {
         if (sessionKind === 'admin') {
           const profile = await adminApi.getMe();
           adminStore.setProfile(profile);
+          void unregisterPushNotifications();
           if (mounted) {
             setInitialRouteName('Admin');
           }
