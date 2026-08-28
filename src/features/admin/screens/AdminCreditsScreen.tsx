@@ -29,6 +29,15 @@ import { getInputFontFamily } from '@/theme/typography';
 import { useAdminResource } from '../hooks/useAdminResource';
 import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTypes';
 
+type CreditsPageData = {
+  items: AdminCreditPurchaseSummary[];
+  settings: {
+    unitPrice: number;
+    tripCreateCredits: number;
+    bidOfferCredits: number;
+  };
+};
+
 export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
@@ -48,7 +57,7 @@ export function AdminCreditsScreen(): React.ReactElement {
   const [listView, setListView] = React.useState<'pending' | 'history'>('pending');
   const [query, setQuery] = React.useState('');
 
-  const { data, loading, errorKey, reload } = useAdminResource({
+  const { data, loading, errorKey, reload } = useAdminResource<CreditsPageData>({
     reloadOnFocus: true,
     deps: [listView],
     load: async () => {
@@ -56,19 +65,29 @@ export function AdminCreditsScreen(): React.ReactElement {
         adminApi.listCreditPurchases(listView),
         adminApi.getCreditSettings(),
       ]);
-      setUnitPrice(String(settings.unitPrice));
-      setTripCreate(String(settings.tripCreateCredits));
-      setBidOffer(String(settings.bidOfferCredits));
-      setSavedSettings({
-        unitPrice: String(settings.unitPrice),
-        tripCreate: String(settings.tripCreateCredits),
-        bidOffer: String(settings.bidOfferCredits),
-      });
-      return result.items;
+      return { items: result.items, settings };
     },
   });
 
-  const items = data ?? [];
+  React.useEffect(() => {
+    if (!data) {
+      return;
+    }
+    const next = {
+      unitPrice: String(data.settings.unitPrice),
+      tripCreate: String(data.settings.tripCreateCredits),
+      bidOffer: String(data.settings.bidOfferCredits),
+    };
+    setUnitPrice(next.unitPrice);
+    setTripCreate(next.tripCreate);
+    setBidOffer(next.bidOffer);
+    setSavedSettings(next);
+  }, [data]);
+
+  const items = data?.items ?? [];
+  const settingsStamp = data
+    ? `${data.settings.unitPrice}-${data.settings.tripCreateCredits}-${data.settings.bidOfferCredits}`
+    : '0';
   const visibleItems = React.useMemo(() => {
     const search = query.trim().toLowerCase();
     if (!search) {
@@ -110,6 +129,7 @@ export function AdminCreditsScreen(): React.ReactElement {
         tripCreate: String(nextTrip),
         bidOffer: String(nextBid),
       });
+      await reload();
     } catch {
       setSettingsErrorKey('admin.credits.settingsSaveFailed');
     } finally {
@@ -166,6 +186,7 @@ export function AdminCreditsScreen(): React.ReactElement {
                   {currency}
                 </AppText>
                 <TextInput
+                  key={`unit-${settingsStamp}`}
                   value={unitPrice}
                   onChangeText={setUnitPrice}
                   keyboardType="number-pad"
@@ -178,6 +199,7 @@ export function AdminCreditsScreen(): React.ReactElement {
                 {t('admin.credits.tripCreateLabel')}
               </AppText>
               <TextInput
+                key={`trip-${settingsStamp}`}
                 value={tripCreate}
                 onChangeText={setTripCreate}
                 keyboardType="number-pad"
@@ -189,6 +211,7 @@ export function AdminCreditsScreen(): React.ReactElement {
                 {t('admin.credits.bidOfferLabel')}
               </AppText>
               <TextInput
+                key={`bid-${settingsStamp}`}
                 value={bidOffer}
                 onChangeText={setBidOffer}
                 keyboardType="number-pad"
@@ -259,6 +282,7 @@ export function AdminCreditsScreen(): React.ReactElement {
           )
         }
         contentContainerStyle={styles.listContent}
+        extraData={settingsStamp}
         refreshControl={<RefreshControl {...refreshControlProps} />}
         keyboardShouldPersistTaps="handled"
       />

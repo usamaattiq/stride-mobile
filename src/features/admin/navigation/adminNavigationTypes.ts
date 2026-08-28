@@ -21,7 +21,6 @@ export type AdminCreditsStackParamList = {
 };
 
 export type AdminTabParamList = {
-  Home: undefined;
   Users: NavigatorScreenParams<AdminUsersStackParamList>;
   Trips: NavigatorScreenParams<AdminTripsStackParamList>;
   Credits: NavigatorScreenParams<AdminCreditsStackParamList>;

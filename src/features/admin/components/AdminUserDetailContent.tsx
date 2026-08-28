@@ -270,7 +270,7 @@ export function AdminUserDetailContent({
     setUnitPriceDraft(String(user.creditUnitPrice ?? ''));
     setTripCreateDraft(String(user.tripCreateCredits ?? ''));
     setBidOfferDraft(String(user.bidOfferCredits ?? ''));
-  }, [user.credits, user.creditUnitPrice, user.tripCreateCredits, user.bidOfferCredits]);
+  }, [user]);
 
   const nicPhotos = [user.nicFrontViewUrl, user.nicBackViewUrl].filter(
     (url): url is string => Boolean(url),
@@ -470,6 +470,7 @@ export function AdminUserDetailContent({
                     {currency}
                   </AppText>
                   <TextInput
+                    key={`u-price-${user.creditUnitPrice ?? 'g'}`}
                     value={unitPriceDraft}
                     onChangeText={setUnitPriceDraft}
                     keyboardType="number-pad"
@@ -486,6 +487,7 @@ export function AdminUserDetailContent({
               <View style={styles.settingRow}>
                 <AppText style={styles.settingHint}>{t('admin.users.detail.perRequest')}</AppText>
                 <TextInput
+                  key={`u-trip-${user.tripCreateCredits ?? 'g'}`}
                   value={tripCreateDraft}
                   onChangeText={setTripCreateDraft}
                   keyboardType="number-pad"
@@ -495,6 +497,7 @@ export function AdminUserDetailContent({
               <View style={styles.settingRow}>
                 <AppText style={styles.settingHint}>{t('admin.users.detail.perBid')}</AppText>
                 <TextInput
+                  key={`u-bid-${user.bidOfferCredits ?? 'g'}`}
                   value={bidOfferDraft}
                   onChangeText={setBidOfferDraft}
                   keyboardType="number-pad"

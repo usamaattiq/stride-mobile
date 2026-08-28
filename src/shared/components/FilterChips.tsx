@@ -1,14 +1,13 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
 
 export type FilterChipOption<T extends string> = {
   id: T;
   label: string;
+  showDot?: boolean;
 };
 
 type FilterChipsProps<T extends string> = {
@@ -48,6 +47,9 @@ export function FilterChips<T extends string>({
             >
               {option.label}
             </AppText>
+            {option.showDot ? (
+              <View style={[styles.dot, selected && styles.dotOnSelected]} />
+            ) : null}
           </Pressable>
         );
       })}
@@ -62,6 +64,9 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.full,
@@ -83,6 +88,15 @@ const styles = StyleSheet.create({
   },
   labelIdle: {
     color: colors.text.primary,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  dotOnSelected: {
+    backgroundColor: colors.white,
   },
   pressed: {
     opacity: 0.85,

@@ -27,9 +27,10 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { uploadLocalFileToPresignedUrl } from '@/shared/services/mediaUploadService';
+import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
 import { useDisplayCurrency } from '@/shared/utils/currency';
-import { formatPriceAmount, toLatinDigits } from '@/shared/utils/latin-digits';
+import { formatLatinNumber, formatPriceAmount, toLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, getInputFontFamily, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -44,6 +45,7 @@ export function BuyCreditsScreen(): React.ReactElement {
   const { currentLanguage } = useLanguage();
   const currency = useDisplayCurrency();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const { user } = useDashboardSession();
   const [quantityText, setQuantityText] = React.useState('0');
   const [unitPrice, setUnitPrice] = React.useState(2);
   const [bankAccounts, setBankAccounts] = React.useState<CreditBankAccount[]>([]);
@@ -64,6 +66,7 @@ export function BuyCreditsScreen(): React.ReactElement {
       setUnitPrice(catalog.unitPrice);
       setBankAccounts(catalog.bankAccounts ?? []);
       setPurchases(list.items);
+      await refreshSessionProfile();
     } catch (err) {
       setError(getErrorMessage(err, t('admin.common.loadFailed')));
     } finally {
@@ -179,6 +182,14 @@ export function BuyCreditsScreen(): React.ReactElement {
                 end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
                 style={styles.cardInner}
               >
+              <View style={styles.qtyRow}>
+                <AppText weight="medium" style={styles.qtyLabel} numberOfLines={1}>
+                  {t('dashboard.home.currentCredits')}
+                </AppText>
+                <AppText weight="bold" style={styles.currentCreditsValue}>
+                  {formatLatinNumber(user.credits)}
+                </AppText>
+              </View>
               <View style={styles.qtyRow}>
                 <AppText weight="medium" style={styles.qtyLabel} numberOfLines={1}>
                   {t('dashboard.home.totalCredits')}
@@ -388,6 +399,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     fontSize: 13,
+    color: colors.text.primary,
+  },
+  currentCreditsValue: {
+    fontSize: 16,
     color: colors.text.primary,
   },
   qtyRow: {

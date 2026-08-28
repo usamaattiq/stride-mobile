@@ -52,10 +52,6 @@ export function AdminUserCard({ user, listRole, onPress }: AdminUserCardProps): 
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
   const avatarUrl = user.avatarViewUrl?.trim() || null;
-  const waitingForApproval =
-    listRole === 'driver'
-      ? user.documents.licenseStatus === 'pending'
-      : user.documents.nicStatus === 'pending';
 
   return (
     <View style={styles.shadowGutter}>
@@ -130,7 +126,6 @@ export function AdminUserCard({ user, listRole, onPress }: AdminUserCardProps): 
                 </View>
               ) : null}
             </View>
-            {waitingForApproval ? <View style={styles.pendingDot} /> : null}
           </View>
 
           <View style={styles.mainRow}>
@@ -209,13 +204,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minWidth: 0,
-  },
-  pendingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    flexShrink: 0,
   },
   badge: {
     flexDirection: 'row',

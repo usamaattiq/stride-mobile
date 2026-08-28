@@ -207,7 +207,7 @@ export const adminApi = {
   },
 
   listUsers(role: 'passenger' | 'driver', filter: AdminUserFilter, search?: string, page = 1) {
-    return apiRequest<{ items: AdminUserSummary[]; total: number }>({
+    return apiRequest<{ items: AdminUserSummary[]; total: number; hasPendingApprovals: boolean }>({
       method: 'GET',
       url: '/admin/users',
       params: {
@@ -221,7 +221,12 @@ export const adminApi = {
   },
 
   getUser(userId: string) {
-    return apiRequest<AdminUserDetail>({ method: 'GET', url: `/admin/users/${userId}` });
+    return apiRequest<AdminUserDetail>({
+      method: 'GET',
+      url: `/admin/users/${userId}`,
+      params: { _: Date.now() },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
   },
 
   setUserBlocked(userId: string, blocked: boolean) {
@@ -302,6 +307,8 @@ export const adminApi = {
     }>({
       method: 'GET',
       url: '/admin/credits/settings',
+      params: { _: Date.now() },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },
 
@@ -347,7 +354,8 @@ export const adminApi = {
     return apiRequest<{ items: AdminCreditPurchaseSummary[] }>({
       method: 'GET',
       url: '/admin/credits/purchases',
-      params: { view },
+      params: { view, _: Date.now() },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },
 

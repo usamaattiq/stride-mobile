@@ -225,6 +225,7 @@
       "buyCreditsSubtitle": "اختر عدد الرصيد، أرفق إثبات الدفع، ثم أرسل الطلب. يُضاف الرصيد بعد موافقة المسؤول.",
       "priceEach": "{{price}} لكل رصيد",
       "quantity": "الرصيد",
+      "currentCredits": "الرصيد الحالي",
       "totalCredits": "إجمالي الرصيد",
       "ratePerCredit": "سعر الرصيد",
       "totalPrice": "السعر الإجمالي",

@@ -31,9 +31,9 @@ import type { AdminUsersStackParamList } from '../navigation/adminNavigationType
 
 const FILTER_OPTIONS: { id: AdminUserFilter; labelKey: string }[] = [
   { id: 'all', labelKey: 'admin.users.filters.all' },
+  { id: 'documents_submitted', labelKey: 'admin.users.filters.waitingForApproval' },
   { id: 'verified', labelKey: 'admin.users.filters.verified' },
   { id: 'not_verified', labelKey: 'admin.users.filters.notVerified' },
-  { id: 'documents_submitted', labelKey: 'admin.users.filters.waitingForApproval' },
   { id: 'blocked', labelKey: 'admin.users.filters.blocked' },
 ];
 
@@ -57,12 +57,12 @@ export function AdminUsersScreen(): React.ReactElement {
   const { data, loading, errorKey, reload } = useAdminResource({
     deps: [role, filter, debouncedQuery],
     load: async () => {
-      const result = await adminApi.listUsers(role, filter, debouncedQuery || undefined);
-      return result.items;
+      return adminApi.listUsers(role, filter, debouncedQuery || undefined);
     },
   });
 
-  const users = data ?? [];
+  const users = data?.items ?? [];
+  const hasPendingApprovals = data?.hasPendingApprovals === true;
   const { refreshControlProps } = usePullToRefresh(reload);
 
   const roleOptions = React.useMemo(
@@ -78,8 +78,9 @@ export function AdminUsersScreen(): React.ReactElement {
       FILTER_OPTIONS.map((option) => ({
         id: option.id,
         label: t(option.labelKey),
+        showDot: option.id === 'documents_submitted' && hasPendingApprovals,
       })),
-    [t],
+    [t, hasPendingApprovals],
   );
 
   const renderUser = React.useCallback<ListRenderItem<AdminUserSummary>>(

@@ -11,7 +11,6 @@ import { ListingDetailScreen } from '@/features/dashboard/screens/ListingDetailS
 import { SettingsStackNavigator } from '@/features/dashboard/navigation/SettingsStackNavigator';
 import { colors } from '@/theme';
 
-import { AdminHomeScreen } from '../screens/AdminHomeScreen';
 import { AdminCreditsScreen } from '../screens/AdminCreditsScreen';
 import { AdminCreditPurchaseDetailScreen } from '../screens/AdminCreditPurchaseDetailScreen';
 import { AdminSubzoneScreen } from '../screens/AdminSubzoneScreen';
@@ -38,7 +37,6 @@ const TAB_ICONS: Record<
   Exclude<keyof AdminTabParamList, 'Settings'>,
   React.ComponentProps<typeof FontAwesome>['name']
 > = {
-  Home: 'home',
   Users: 'users',
   Trips: 'map',
   Credits: 'credit-card',
@@ -123,7 +121,7 @@ function AdminTabs(): React.ReactElement {
   return (
     <View style={styles.root} collapsable={false}>
       <Tab.Navigator
-        initialRouteName="Home"
+        initialRouteName="Users"
         safeAreaInsets={{ top: 0 }}
         screenOptions={{
           headerShown: false,
@@ -139,16 +137,6 @@ function AdminTabs(): React.ReactElement {
           tabBarStyle: defaultTabBarStyle,
         }}
       >
-        <Tab.Screen
-          name="Home"
-          component={AdminHomeScreen}
-          options={{
-            tabBarIcon: ({ color }) => (
-              <FontAwesome name={TAB_ICONS.Home} size={22} color={color} />
-            ),
-            tabBarLabel: ({ color }) => <AdminTabLabel routeName="Home" color={color} />,
-          }}
-        />
         <Tab.Screen
           name="Users"
           component={AdminUsersStack}

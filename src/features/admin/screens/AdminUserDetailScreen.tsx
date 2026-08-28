@@ -1,6 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { ActivityIndicator, RefreshControl, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { KeyboardAwareScrollView } from '@/shared/components/KeyboardAwareScrollView';
+import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
 import { colors, spacing } from '@/theme';
 
 import { AdminUserDetailContent } from '../components/AdminUserDetailContent';
@@ -27,18 +28,20 @@ export function AdminUserDetailScreen(): React.ReactElement {
   const [user, setUser] = React.useState<AdminUserDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [errorKey, setErrorKey] = React.useState<string | null>(null);
+  const skipFocusReload = React.useRef(true);
+
+  const loadUser = React.useCallback(async () => {
+    setErrorKey(null);
+    const detail = await adminApi.getUser(route.params.userId);
+    setUser(detail);
+  }, [route.params.userId]);
 
   React.useEffect(() => {
     let cancelled = false;
+    skipFocusReload.current = true;
     setLoading(true);
     setErrorKey(null);
-    void adminApi
-      .getUser(route.params.userId)
-      .then((detail) => {
-        if (!cancelled) {
-          setUser(detail);
-        }
-      })
+    void loadUser()
       .catch(() => {
         if (!cancelled) {
           setErrorKey('admin.users.detailFailed');
@@ -52,7 +55,19 @@ export function AdminUserDetailScreen(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [route.params.userId]);
+  }, [loadUser]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (skipFocusReload.current) {
+        skipFocusReload.current = false;
+        return;
+      }
+      void loadUser().catch(() => undefined);
+    }, [loadUser]),
+  );
+
+  const { refreshControlProps } = usePullToRefresh(loadUser);
 
   if (loading) {
     return (
@@ -97,6 +112,7 @@ export function AdminUserDetailScreen(): React.ReactElement {
             styles.scrollContent,
             { paddingBottom: spacing.xl + insets.bottom },
           ]}
+          refreshControl={<RefreshControl {...refreshControlProps} />}
         >
           <AdminUserDetailContent
             user={user}

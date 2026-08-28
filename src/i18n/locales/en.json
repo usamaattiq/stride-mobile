@@ -225,6 +225,7 @@
       "buyCreditsSubtitle": "Select how many credits you want, attach payment proof, then send. Credits are added after admin approval.",
       "priceEach": "{{price}} per credit",
       "quantity": "Credits",
+      "currentCredits": "Current credits",
       "totalCredits": "Total credits",
       "ratePerCredit": "Rate per credit",
       "totalPrice": "Total price",

@@ -32,7 +32,12 @@ export type CreditPurchase = {
 
 export const creditsApi = {
   getCatalog() {
-    return apiRequest<CreditCatalog>({ method: 'GET', url: '/credits/catalog' });
+    return apiRequest<CreditCatalog>({
+      method: 'GET',
+      url: '/credits/catalog',
+      params: { _: Date.now() },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
   },
 
   getPurchase(purchaseId: string) {
