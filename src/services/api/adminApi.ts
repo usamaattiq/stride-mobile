@@ -122,6 +122,7 @@ export type AdminCreditPurchaseSummary = {
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   proofViewUrl: string | null;
+  rejectionReason: string | null;
   user: {
     id: string;
     fullName: string;

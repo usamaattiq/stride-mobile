@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import { adminApi, type AdminUserDetail } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
+import { KeyboardAwareScrollView } from '@/shared/components/KeyboardAwareScrollView';
 import { colors, spacing } from '@/theme';
 
 import { AdminUserDetailContent } from '../components/AdminUserDetailContent';
@@ -90,21 +91,19 @@ export function AdminUserDetailScreen(): React.ReactElement {
       />
 
       <View style={styles.body}>
-        <ScrollView
+        <KeyboardAwareScrollView
           style={styles.scroll}
           contentContainerStyle={[
             styles.scrollContent,
             { paddingBottom: spacing.xl + insets.bottom },
           ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
           <AdminUserDetailContent
             user={user}
             listRole={route.params.listRole ?? user.role}
             onUserUpdated={setUser}
           />
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     </View>
   );

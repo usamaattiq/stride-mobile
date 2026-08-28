@@ -96,11 +96,12 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
     paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 0,
   },
   scroll: {
     paddingHorizontal: spacing.md,
-    paddingTop: 12,
+    paddingTop: spacing.md,
     paddingBottom: spacing.huge,
   },
   sectionTitle: {

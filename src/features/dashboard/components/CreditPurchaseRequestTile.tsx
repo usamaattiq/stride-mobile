@@ -27,6 +27,8 @@ type CreditPurchaseRequestTileProps = {
   /** User photo — admin list only. Hidden on the main-app request history. */
   avatarUrl?: string | null;
   showAvatar?: boolean;
+  compact?: boolean;
+  rejectionReason?: string | null;
   onPress: () => void;
 };
 
@@ -66,6 +68,8 @@ export function CreditPurchaseRequestTile({
   createdAt,
   avatarUrl,
   showAvatar = false,
+  compact = false,
+  rejectionReason,
   onPress,
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -97,9 +101,9 @@ export function CreditPurchaseRequestTile({
           locations={[0, 0.28, 0.52, 0.78, 1]}
           start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
           end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
-          style={styles.inner}
+          style={[styles.inner, compact && styles.innerCompact]}
         >
-          <View style={styles.topRow}>
+          <View style={[styles.topRow, compact && styles.topRowCompact]}>
             <View style={[styles.badge, statusUi.badge]}>
               <FontAwesome name={statusUi.icon} size={9} color={statusUi.color} />
               <AppText weight="semibold" style={[styles.badgeText, statusUi.text]} numberOfLines={1}>
@@ -116,7 +120,7 @@ export function CreditPurchaseRequestTile({
             ) : null}
           </View>
 
-          <View style={styles.mainRow}>
+          <View style={[styles.mainRow, compact && styles.mainRowCompact]}>
             {showAvatar ? (
               <View style={styles.thumbnail}>
                 {photoUrl ? (
@@ -134,7 +138,7 @@ export function CreditPurchaseRequestTile({
               </View>
             ) : null}
             <View style={styles.copy}>
-              <AppText weight="bold" style={styles.title} numberOfLines={1}>
+              <AppText weight="bold" style={[styles.title, compact && styles.titleCompact]} numberOfLines={1}>
                 {title}
               </AppText>
               {phone?.trim() ? (
@@ -159,11 +163,21 @@ export function CreditPurchaseRequestTile({
               </AppText>
             </View>
             <View style={styles.priceBlock}>
-              <AppText weight="bold" style={styles.priceAmount} numberOfLines={1}>
+              <AppText weight="bold" style={[styles.priceAmount, compact && styles.priceAmountCompact]} numberOfLines={1}>
                 {formatPriceWithCurrency(amount)}
               </AppText>
             </View>
           </View>
+          {status === 'rejected' && rejectionReason?.trim() ? (
+            <View style={[styles.remarksBox, compact && styles.remarksBoxCompact]}>
+              <AppText style={styles.remarksLabel} numberOfLines={1}>
+                {t('dashboard.home.rejectionRemarksLabel')}
+              </AppText>
+              <AppText style={styles.remarksText}>
+                {rejectionReason.trim()}
+              </AppText>
+            </View>
+          ) : null}
         </LinearGradient>
       </Pressable>
     </View>
@@ -189,6 +203,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
+  innerCompact: {
+    paddingBottom: spacing.xs,
+    gap: 6,
+  },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -196,6 +214,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.xs,
+  },
+  topRowCompact: {
+    paddingTop: 6,
   },
   badge: {
     flexDirection: 'row',
@@ -249,6 +270,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
+  mainRowCompact: {
+    paddingBottom: 2,
+  },
   thumbnail: {
     width: 88,
     height: 88,
@@ -273,6 +297,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     color: colors.text.primary,
+  },
+  titleCompact: {
+    fontSize: 14,
   },
   phoneRow: {
     flexDirection: 'row',
@@ -302,6 +329,30 @@ const styles = StyleSheet.create({
   priceAmount: {
     fontSize: 22,
     lineHeight: 32,
+    color: colors.primary,
+  },
+  priceAmountCompact: {
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  remarksBox: {
+    marginHorizontal: spacing.xs,
+    marginBottom: 2,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primaryMuted,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 6,
+    gap: 2,
+  },
+  remarksBoxCompact: {
+    paddingVertical: 4,
+  },
+  remarksLabel: {
+    fontSize: 10,
+    color: colors.primary,
+  },
+  remarksText: {
+    fontSize: 12,
     color: colors.primary,
   },
 });

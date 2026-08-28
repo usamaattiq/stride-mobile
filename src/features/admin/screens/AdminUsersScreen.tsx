@@ -33,7 +33,7 @@ const FILTER_OPTIONS: { id: AdminUserFilter; labelKey: string }[] = [
   { id: 'all', labelKey: 'admin.users.filters.all' },
   { id: 'verified', labelKey: 'admin.users.filters.verified' },
   { id: 'not_verified', labelKey: 'admin.users.filters.notVerified' },
-  { id: 'documents_submitted', labelKey: 'admin.users.filters.documentsSubmitted' },
+  { id: 'documents_submitted', labelKey: 'admin.users.filters.waitingForApproval' },
 ];
 
 function ListSeparator(): React.ReactElement {
@@ -148,7 +148,7 @@ export function AdminUsersScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
-    paddingTop: spacing.md,
+    paddingTop: 0,
     paddingHorizontal: 0,
     paddingBottom: 0,
   },
@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   listContent: {
     flexGrow: 1,

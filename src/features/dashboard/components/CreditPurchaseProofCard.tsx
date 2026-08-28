@@ -14,11 +14,13 @@ import { cardBackShadow } from '@/theme/cardShadow';
 type CreditPurchaseProofCardProps = {
   uri?: string | null;
   onPress?: () => void;
+  compact?: boolean;
 };
 
 export function CreditPurchaseProofCard({
   uri,
   onPress,
+  compact = false,
 }: CreditPurchaseProofCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
@@ -36,7 +38,7 @@ export function CreditPurchaseProofCard({
   const canPress = Boolean(proofUri || onPress);
 
   const preview = (
-    <View style={[styles.preview, !proofUri && styles.previewEmpty]}>
+    <View style={[styles.preview, !proofUri && styles.previewEmpty, compact && styles.previewCompact]}>
       {proofUri ? (
         <Image source={{ uri: proofUri }} style={styles.image} contentFit="contain" />
       ) : (
@@ -53,9 +55,9 @@ export function CreditPurchaseProofCard({
           locations={[0, 0.28, 0.52, 0.78, 1]}
           start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
           end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
-          style={styles.inner}
+          style={[styles.inner, compact && styles.innerCompact]}
         >
-          <AppText weight="bold" style={styles.title}>
+          <AppText weight="bold" style={[styles.title, compact && styles.titleCompact]}>
             {t('dashboard.home.proofLabel')}
           </AppText>
           {canPress ? (
@@ -102,9 +104,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
   },
+  innerCompact: {
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
   title: {
     fontSize: 15,
     color: colors.text.primary,
+  },
+  titleCompact: {
+    fontSize: 14,
   },
   preview: {
     alignSelf: 'flex-start',
@@ -115,6 +124,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.background.subtle,
+  },
+  previewCompact: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.sm,
   },
   previewEmpty: {
     borderStyle: 'dashed',

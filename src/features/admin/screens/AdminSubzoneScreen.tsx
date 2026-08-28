@@ -224,6 +224,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
         </AppText>
         <TextInput
           placeholder={t('admin.subzone.name')}
+          placeholderTextColor={colors.text.tertiary}
           value={form.name}
           onChangeText={(name) => setForm((current) => ({ ...current, name }))}
           style={styles.input}
@@ -352,6 +353,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.white,
+    fontSize: 15,
+    color: colors.text.primary,
   },
   mapPickButton: {
     flexDirection: 'row',

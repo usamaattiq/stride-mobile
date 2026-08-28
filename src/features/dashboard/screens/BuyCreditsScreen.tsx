@@ -77,11 +77,12 @@ export function BuyCreditsScreen(): React.ReactElement {
 
   const quantity = Number.parseInt(quantityText, 10) || 0;
   const total = quantity * unitPrice;
-  const canSubmit = quantity >= 1 && Boolean(proofUri) && !submitting;
+  const proofRequired = unitPrice > 0;
+  const canSubmit = quantity >= 1 && (!proofRequired || Boolean(proofUri)) && !submitting;
   const qtyFontFamily = getInputFontFamily(currentLanguage, 'number-pad');
 
   const setQuantity = (next: number) => {
-    setQuantityText(String(Math.max(0, Math.min(1000, next))));
+    setQuantityText(String(Math.max(0, Math.min(99999, next))));
   };
 
   const onQuantityChange = (text: string) => {
@@ -113,19 +114,28 @@ export function BuyCreditsScreen(): React.ReactElement {
   };
 
   const submit = async () => {
-    if (!canSubmit || !proofUri) {
-      setError(t('dashboard.home.required'));
+    if (!canSubmit) {
+      setError(t(proofRequired ? 'dashboard.home.required' : 'dashboard.home.requiredQuantity'));
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
-      const uploaded = await uploadLocalFileToPresignedUrl(proofUri, {
-        purpose: 'credit_purchase_proof',
-      });
+      let proofUrl: string | undefined;
+      if (proofRequired) {
+        if (!proofUri) {
+          setError(t('dashboard.home.required'));
+          setSubmitting(false);
+          return;
+        }
+        const uploaded = await uploadLocalFileToPresignedUrl(proofUri, {
+          purpose: 'credit_purchase_proof',
+        });
+        proofUrl = uploaded.fileUrl;
+      }
       await creditsApi.createPurchase({
         credits: quantity,
-        proofUrl: uploaded.fileUrl,
+        ...(proofUrl ? { proofUrl } : {}),
       });
       setProofUri(null);
       setQuantityText('0');
@@ -169,67 +179,87 @@ export function BuyCreditsScreen(): React.ReactElement {
                 end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
                 style={styles.cardInner}
               >
-              <AppText weight="medium" style={styles.qtyLabel}>
-                {t('dashboard.home.quantity')}
-              </AppText>
               <View style={styles.qtyRow}>
-                <Pressable
-                  onPress={() => setQuantity(quantity - 1)}
-                  disabled={quantity <= 0}
-                  style={({ pressed }) => [
-                    styles.qtyButton,
-                    quantity <= 0 && styles.qtyButtonDisabled,
-                    pressed && quantity > 0 && styles.pressed,
-                  ]}
-                >
-                  <FontAwesome5
-                    name="minus"
-                    size={12}
-                    color={quantity <= 0 ? colors.text.tertiary : colors.primary}
-                    solid
+                <AppText weight="medium" style={styles.qtyLabel} numberOfLines={1}>
+                  {t('dashboard.home.totalCredits')}
+                </AppText>
+                <View style={styles.qtyControls}>
+                  <Pressable
+                    onPress={() => setQuantity(quantity - 1)}
+                    disabled={quantity <= 0}
+                    style={({ pressed }) => [
+                      styles.qtyButton,
+                      quantity <= 0 && styles.qtyButtonDisabled,
+                      pressed && quantity > 0 && styles.pressed,
+                    ]}
+                  >
+                    <FontAwesome5
+                      name="minus"
+                      size={11}
+                      color={quantity <= 0 ? colors.text.tertiary : colors.primary}
+                      solid
+                    />
+                  </Pressable>
+                  <TextInput
+                    value={toLatinDigits(quantityText)}
+                    onChangeText={onQuantityChange}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor={colors.text.tertiary}
+                    style={[styles.qtyInput, { fontFamily: qtyFontFamily }]}
+                    maxLength={5}
                   />
-                </Pressable>
-                <TextInput
-                  value={toLatinDigits(quantityText)}
-                  onChangeText={onQuantityChange}
-                  keyboardType="number-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.text.tertiary}
-                  style={[styles.qtyInput, { fontFamily: qtyFontFamily }]}
-                  maxLength={4}
-                />
-                <Pressable
-                  onPress={() => setQuantity(quantity + 1)}
-                  disabled={quantity >= 1000}
-                  style={({ pressed }) => [
-                    styles.qtyButton,
-                    quantity >= 1000 && styles.qtyButtonDisabled,
-                    pressed && quantity < 1000 && styles.pressed,
-                  ]}
-                >
-                  <FontAwesome5
-                    name="plus"
-                    size={12}
-                    color={quantity >= 1000 ? colors.text.tertiary : colors.primary}
-                    solid
-                  />
-                </Pressable>
+                  <Pressable
+                    onPress={() => setQuantity(quantity + 1)}
+                    disabled={quantity >= 99999}
+                    style={({ pressed }) => [
+                      styles.qtyButton,
+                      quantity >= 99999 && styles.qtyButtonDisabled,
+                      pressed && quantity < 99999 && styles.pressed,
+                    ]}
+                  >
+                    <FontAwesome5
+                      name="plus"
+                      size={11}
+                      color={quantity >= 99999 ? colors.text.tertiary : colors.primary}
+                      solid
+                    />
+                  </Pressable>
+                </View>
               </View>
-              <AppText style={styles.calc}>
-                {t('dashboard.home.creditsTimesPrice', {
-                  count: quantity,
-                  price: formatPriceAmount(unitPrice),
-                  currency,
-                })}
-              </AppText>
-              <AppText weight="bold" style={styles.total}>
-                {t('dashboard.home.total', { amount: formatPriceAmount(total), currency })}
-              </AppText>
+              <View style={styles.metaRow}>
+                <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
+                <AppText weight="semibold" style={styles.metaValue}>
+                  {t('dashboard.listings.card.priceWithCurrency', {
+                    currency,
+                    price: formatPriceAmount(unitPrice),
+                  })}
+                </AppText>
+              </View>
+              <View style={styles.metaRow}>
+                <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
+                <View style={styles.totalBlock}>
+                  <AppText style={styles.totalCalc}>
+                    {t('dashboard.home.creditsTimesPrice', {
+                      count: quantity,
+                      currency,
+                      price: formatPriceAmount(unitPrice),
+                    })}
+                  </AppText>
+                  <AppText weight="bold" style={styles.totalValue}>
+                    {t('dashboard.listings.card.priceWithCurrency', {
+                      currency,
+                      price: formatPriceAmount(total),
+                    })}
+                  </AppText>
+                </View>
+              </View>
               </LinearGradient>
             </View>
           </View>
 
-          {bankAccounts.filter(hasBankDetails).map((account, index) => (
+          {proofRequired
+            ? bankAccounts.filter(hasBankDetails).map((account, index) => (
             <View key={`${account.accountNumber}-${index}`} style={styles.shadowGutter}>
               <View style={styles.card}>
                 <LinearGradient
@@ -252,12 +282,16 @@ export function BuyCreditsScreen(): React.ReactElement {
                 </LinearGradient>
               </View>
             </View>
-          ))}
+          ))
+            : null}
 
-          <CreditPurchaseProofCard
-            uri={proofUri}
-            onPress={() => void pickProof()}
-          />
+          {proofRequired ? (
+            <CreditPurchaseProofCard
+              uri={proofUri}
+              onPress={() => void pickProof()}
+              compact
+            />
+          ) : null}
           {error ? <AppText style={styles.error}>{error}</AppText> : null}
           <Button
             label={submitting ? t('dashboard.home.sending') : t('dashboard.home.sendRequest')}
@@ -280,6 +314,8 @@ export function BuyCreditsScreen(): React.ReactElement {
                   amount={item.amount}
                   unitPrice={item.unitPrice}
                   status={item.status}
+                  compact
+                  rejectionReason={item.rejectionReason}
                   onPress={() =>
                     navigation.navigate('BuyCreditRequestDetail', { purchaseId: item.id })
                   }
@@ -321,19 +357,20 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
     paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 0,
   },
   scroll: {
     paddingHorizontal: spacing.md,
-    paddingTop: 8,
+    paddingTop: spacing.md,
     paddingBottom: spacing.huge,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   shadowGutter: {
     marginHorizontal: -spacing.md,
     paddingHorizontal: spacing.md,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   card: {
     borderRadius: radius.md,
@@ -343,23 +380,31 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
     borderRadius: radius.md,
-    padding: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     overflow: 'hidden',
-    gap: spacing.sm,
+    gap: 8,
   },
   qtyLabel: {
-    fontSize: 14,
+    flex: 1,
+    minWidth: 0,
+    fontSize: 13,
     color: colors.text.primary,
   },
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
+  },
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   qtyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
     backgroundColor: colors.white,
@@ -370,45 +415,68 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   qtyInput: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: radius.md,
+    width: 68,
+    minHeight: 32,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xs,
     fontSize: 15,
     color: colors.text.primary,
     textAlign: 'center',
   },
-  calc: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  metaLabel: {
     fontSize: 12,
     color: colors.text.secondary,
   },
-  total: {
-    fontSize: 16,
+  metaValue: {
+    fontSize: 12,
     color: colors.text.primary,
   },
-  bankTitle: {
+  totalBlock: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+    gap: 8,
+    minWidth: 0,
+  },
+  totalCalc: {
+    fontSize: 11,
+    color: colors.text.secondary,
+  },
+  totalValue: {
     fontSize: 16,
+    color: colors.text.primary,
+    textAlign: 'right',
+  },
+  bankTitle: {
+    fontSize: 14,
     color: colors.text.primary,
   },
   bankDetailsCard: {
     backgroundColor: '#F3F4F6',
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: 6,
   },
   bankRow: {
-    gap: 2,
+    gap: 1,
   },
   bankLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.text.secondary,
   },
   bankValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text.primary,
   },
   hint: {

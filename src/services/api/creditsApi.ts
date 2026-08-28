@@ -43,7 +43,7 @@ export const creditsApi = {
     return apiRequest<{ items: CreditPurchase[] }>({ method: 'GET', url: '/credits/purchases' });
   },
 
-  createPurchase(input: { credits: number; proofUrl: string }) {
+  createPurchase(input: { credits: number; proofUrl?: string }) {
     return apiRequest<CreditPurchase>({
       method: 'POST',
       url: '/credits/purchases',

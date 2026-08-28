@@ -30,6 +30,10 @@ import { searchCities } from '@/shared/utils/city-search';
 import { enrichSelectedCity } from '@/shared/utils/localized-city-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
+type PickerListItem =
+  | { kind: 'saved'; id: string; location: TripSubzonePointDto }
+  | { kind: 'city'; id: string; city: TripCity };
+
 type SearchCityPickerModalProps = {
   visible: boolean;
   mode: 'departure' | 'arrival';
@@ -59,14 +63,6 @@ function filterSuggested(query: string): TripCity[] {
   }
   return SUGGESTED_CITIES.filter((city) => city.label.toLowerCase().includes(trimmed));
 }
-
-const keyExtractor = (item: TripCity) => item.id;
-
-const getItemLayout = (_: ArrayLike<TripCity> | null | undefined, index: number) => ({
-  length: ROW_HEIGHT,
-  offset: ROW_HEIGHT * index,
-  index,
-});
 
 type CityRowProps = {
   city: TripCity;
@@ -203,13 +199,13 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
 
   const filteredSavedLocations = React.useMemo(() => {
     const trimmed = query.trim().toLowerCase();
+    if (!trimmed) {
+      return [];
+    }
     return savedLocations.filter((location) => {
       const cityKey = location.cityId ?? `subzone-${location.id}`;
       if (excludeCityId && cityKey === excludeCityId) {
         return false;
-      }
-      if (!trimmed) {
-        return true;
       }
       return (
         location.name.toLowerCase().includes(trimmed) ||
@@ -217,6 +213,17 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
       );
     });
   }, [excludeCityId, query, savedLocations]);
+
+  const listItems = React.useMemo((): PickerListItem[] => {
+    const items: PickerListItem[] = [];
+    for (const location of filteredSavedLocations) {
+      items.push({ kind: 'saved', id: `saved-${location.id}`, location });
+    }
+    for (const city of cities) {
+      items.push({ kind: 'city', id: city.id, city });
+    }
+    return items;
+  }, [cities, filteredSavedLocations]);
 
   const finishClose = React.useCallback(() => {
     const selected = pendingSelectRef.current;
@@ -361,10 +368,17 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   );
 
   const renderItem = React.useCallback(
-    ({ item }: ListRenderItemInfo<TripCity>) => (
-      <CityRow city={item} selected={selectedId === item.id} onPress={handleSelect} />
-    ),
-    [handleSelect, selectedId],
+    ({ item }: ListRenderItemInfo<PickerListItem>) => {
+      if (item.kind === 'saved') {
+        return (
+          <SavedLocationRow location={item.location} onPress={handleSavedLocationPress} />
+        );
+      }
+      return (
+        <CityRow city={item.city} selected={selectedId === item.city.id} onPress={handleSelect} />
+      );
+    },
+    [handleSavedLocationPress, handleSelect, selectedId],
   );
 
   const listEmpty = React.useMemo(() => {
@@ -489,34 +503,18 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
               </Pressable>
             ) : null}
 
-            {filteredSavedLocations.length > 0 ? (
-              <View style={styles.listSection}>
-                <View style={styles.sectionHeaderInline}>
-                  <AppText weight="semibold" style={styles.sectionTitle}>
-                    {t('trips.create.savedLocations')}
-                  </AppText>
-                </View>
-                {filteredSavedLocations.map((location) => (
-                  <SavedLocationRow
-                    key={location.id}
-                    location={location}
-                    onPress={handleSavedLocationPress}
-                  />
-                ))}
+            {query.trim().length === 0 ? (
+              <View style={styles.sectionHeader}>
+                <AppText weight="semibold" style={styles.sectionTitle}>
+                  {sectionTitle}
+                </AppText>
               </View>
             ) : null}
 
-            <View style={styles.sectionHeader}>
-              <AppText weight="semibold" style={styles.sectionTitle}>
-                {sectionTitle}
-              </AppText>
-            </View>
-
             <FlatList
-              data={cities}
-              keyExtractor={keyExtractor}
+              data={listItems}
+              keyExtractor={(item) => item.id}
               renderItem={renderItem}
-              getItemLayout={getItemLayout}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               removeClippedSubviews

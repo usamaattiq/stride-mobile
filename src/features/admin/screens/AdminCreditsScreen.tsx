@@ -137,6 +137,7 @@ export function AdminCreditsScreen(): React.ReactElement {
           createdAt={item.createdAt}
           avatarUrl={item.user.avatarViewUrl}
           showAvatar
+          rejectionReason={item.rejectionReason}
           onPress={() => navigation.navigate('CreditPurchaseDetail', { purchaseId: item.id })}
         />
       </View>

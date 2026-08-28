@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminUserDetail, type IdentityDocumentStatus } from '@/services/api/adminApi';
-import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
@@ -222,60 +221,6 @@ function DocSection({
   );
 }
 
-function PriceField({
-  label,
-  hint,
-  value,
-  onChangeText,
-}: {
-  label: string;
-  hint: string;
-  value: string;
-  onChangeText: (text: string) => void;
-}): React.ReactElement {
-  return (
-    <View style={priceFieldStyles.field}>
-      <AppText weight="semibold" style={priceFieldStyles.label}>
-        {label}
-      </AppText>
-      <AppText style={priceFieldStyles.hint}>{hint}</AppText>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType="number-pad"
-        style={priceFieldStyles.input}
-      />
-    </View>
-  );
-}
-
-const priceFieldStyles = StyleSheet.create({
-  field: {
-    gap: 4,
-    marginTop: spacing.sm,
-  },
-  label: {
-    fontSize: 14,
-    color: colors.text.primary,
-    textAlign: 'left',
-  },
-  hint: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    textAlign: 'left',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border.strong,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.background.subtle,
-    fontSize: 15,
-    color: colors.text.primary,
-  },
-});
-
 export function AdminUserDetailContent({
   user,
   listRole,
@@ -294,7 +239,6 @@ export function AdminUserDetailContent({
   const [savingPrices, setSavingPrices] = React.useState(false);
   const [creditsErrorKey, setCreditsErrorKey] = React.useState<string | null>(null);
   const [priceErrorKey, setPriceErrorKey] = React.useState<string | null>(null);
-  const [priceOpen, setPriceOpen] = React.useState(false);
 
   React.useEffect(() => {
     setCreditsDraft(String(user.credits));
@@ -365,7 +309,6 @@ export function AdminUserDetailContent({
         bidOfferCredits,
       });
       onUserUpdated(updated);
-      setPriceOpen(false);
     } catch {
       setPriceErrorKey('admin.credits.saveFailed');
     } finally {
@@ -422,25 +365,9 @@ export function AdminUserDetailContent({
       </View>
 
       <View style={styles.shadowCard}>
-        <View style={styles.creditsHeader}>
-          <AppText weight="bold" style={styles.cardHeading}>
-            {t('admin.users.detail.credits')}
-          </AppText>
-          <Pressable
-            onPress={() => {
-              setPriceErrorKey(null);
-              setPriceOpen(true);
-            }}
-            style={({ pressed }) => [styles.priceButton, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.users.detail.priceA11y')}
-            hitSlop={8}
-          >
-            <AppText weight="semibold" style={styles.priceButtonLabel}>
-              {t('admin.users.detail.price')}
-            </AppText>
-          </Pressable>
-        </View>
+        <AppText weight="bold" style={styles.cardHeading}>
+          {t('admin.users.detail.credits')}
+        </AppText>
         <View style={styles.creditsRow}>
           <AppText weight="semibold" style={styles.creditsLabel}>
             {t('dashboard.home.credits')}
@@ -472,48 +399,61 @@ export function AdminUserDetailContent({
         {creditsErrorKey ? (
           <AppText style={styles.creditsError}>{t(creditsErrorKey)}</AppText>
         ) : null}
-      </View>
 
-      <AppDialog
-        visible={priceOpen}
-        title={t('admin.users.detail.priceTitle')}
-        message={t('admin.users.detail.priceSubtitle')}
-        icon="tag"
-        cancelAction={{
-          label: t('common.cancel'),
-          onPress: () => setPriceOpen(false),
-        }}
-        confirmAction={{
-          label: savingPrices ? t('admin.common.saving') : t('admin.common.save'),
-          onPress: () => void savePrices(),
-          disabled: !pricesDirty || savingPrices,
-          loading: savingPrices,
-        }}
-      >
-        <View style={styles.priceFields}>
-          <PriceField
-            label={t('admin.credits.unitPriceLabel')}
-            hint={t('admin.credits.unitPriceHint')}
-            value={unitPriceDraft}
-            onChangeText={setUnitPriceDraft}
-          />
-          <PriceField
-            label={t('admin.credits.tripCreateLabel')}
-            hint={t('admin.credits.tripCreateHint')}
-            value={tripCreateDraft}
-            onChangeText={setTripCreateDraft}
-          />
-          <PriceField
-            label={t('admin.credits.bidOfferLabel')}
-            hint={t('admin.credits.bidOfferHint')}
-            value={bidOfferDraft}
-            onChangeText={setBidOfferDraft}
-          />
-          {priceErrorKey ? (
-            <AppText style={styles.creditsError}>{t(priceErrorKey)}</AppText>
-          ) : null}
+        <View style={styles.pricesDivider} />
+        <AppText weight="bold" style={styles.pricesHeading}>
+          {t('admin.users.detail.creditPrices')}
+        </AppText>
+        <View style={styles.pricesRow}>
+          <View style={styles.priceCell}>
+            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perCredit')}</AppText>
+            <TextInput
+              value={unitPriceDraft}
+              onChangeText={setUnitPriceDraft}
+              keyboardType="number-pad"
+              style={styles.priceCellInput}
+            />
+          </View>
+          <View style={styles.priceCell}>
+            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perRequest')}</AppText>
+            <TextInput
+              value={tripCreateDraft}
+              onChangeText={setTripCreateDraft}
+              keyboardType="number-pad"
+              style={styles.priceCellInput}
+            />
+          </View>
+          <View style={styles.priceCell}>
+            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perBid')}</AppText>
+            <TextInput
+              value={bidOfferDraft}
+              onChangeText={setBidOfferDraft}
+              keyboardType="number-pad"
+              style={styles.priceCellInput}
+            />
+          </View>
+          <Pressable
+            onPress={() => void savePrices()}
+            disabled={!pricesDirty || savingPrices}
+            style={({ pressed }) => [
+              styles.creditsSaveButton,
+              pressed && pricesDirty && styles.pressed,
+              (!pricesDirty || savingPrices) && styles.creditsSaveDisabled,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('admin.common.save')}
+            accessibilityState={{ disabled: !pricesDirty || savingPrices }}
+            hitSlop={8}
+          >
+            <AppText weight="semibold" style={styles.creditsSaveLabel}>
+              {savingPrices ? t('admin.common.saving') : t('admin.common.save')}
+            </AppText>
+          </Pressable>
         </View>
-      </AppDialog>
+        {priceErrorKey ? (
+          <AppText style={styles.creditsError}>{t(priceErrorKey)}</AppText>
+        ) : null}
+      </View>
 
       <DocSection
         title={t('admin.users.nic')}
@@ -567,26 +507,42 @@ const styles = StyleSheet.create({
   cardHeading: {
     fontSize: 13,
     color: colors.text.secondary,
-    flex: 1,
   },
-  creditsHeader: {
+  pricesDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border.default,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  pricesHeading: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    marginBottom: 2,
+  },
+  pricesRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xxs,
+    alignItems: 'flex-end',
+    gap: spacing.xs,
   },
-  priceButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.primaryMuted,
+  priceCell: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
   },
-  priceButtonLabel: {
-    fontSize: 12,
-    color: colors.primary,
+  priceCellLabel: {
+    fontSize: 11,
+    color: colors.text.tertiary,
   },
-  priceFields: {
-    width: '100%',
+  priceCellInput: {
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.white,
+    fontSize: 14,
+    color: colors.text.primary,
+    textAlign: 'center',
   },
   detailRow: {
     flexDirection: 'row',
