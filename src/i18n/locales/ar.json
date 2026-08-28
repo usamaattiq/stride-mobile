@@ -1205,7 +1205,8 @@
         "all": "الكل",
         "verified": "موثّق",
         "notVerified": "غير موثّق",
-        "waitingForApproval": "بانتظار الموافقة"
+        "waitingForApproval": "بانتظار الموافقة",
+        "blocked": "محظور"
       },
       "detail": {
         "title": "ملف المستخدم",
@@ -1215,11 +1216,21 @@
         "address": "العنوان",
         "memberSince": "عضو منذ",
         "credits": "الرصيد",
+        "totalCredits": "إجمالي الرصيد",
         "creditPrices": "أسعار الرصيد",
+        "creditsRequired": "الرصيد المطلوب",
         "perCredit": "لكل رصيد",
-        "perRequest": "لكل طلب",
-        "perBid": "لكل مزايدة",
-        "documents": "المستندات"
+        "perRequest": "لكل طلب / رحلة",
+        "perBid": "لكل مزايدة / عرض",
+        "documents": "المستندات",
+        "block": "حظر المستخدم",
+        "unblock": "إلغاء الحظر",
+        "blockTitle": "حظر هذا المستخدم؟",
+        "unblockTitle": "إلغاء حظر هذا المستخدم؟",
+        "blockMessage": "سيتم تسجيل خروجهم ولن يتمكنوا من استخدام التطبيق حتى تلغي الحظر.",
+        "unblockMessage": "سيتمكنون من تسجيل الدخول واستخدام التطبيق مرة أخرى.",
+        "blockFailed": "تعذر تحديث حالة الحظر",
+        "blockedBadge": "محظور"
       }
     },
     "trips": {
@@ -1312,6 +1323,8 @@
       "createFailed": "تعذر إنشاء المنطقة الفرعية",
       "updateFailed": "تعذر تحديث المنطقة الفرعية",
       "deleteFailed": "تعذر حذف المنطقة الفرعية",
+      "deleteTitle": "حذف هذا الموقع؟",
+      "deleteMessage": "سيتم إزالة {{name}} من المناطق الفرعية.",
       "openInMaps": "فتح {{name}} في الخرائط"
     }
   },

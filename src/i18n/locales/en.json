@@ -1205,7 +1205,8 @@
         "all": "All",
         "verified": "Verified",
         "notVerified": "Not verified",
-        "waitingForApproval": "Waiting for approval"
+        "waitingForApproval": "Waiting for approval",
+        "blocked": "Blocked"
       },
       "detail": {
         "title": "User profile",
@@ -1215,11 +1216,21 @@
         "address": "Address",
         "memberSince": "Member since",
         "credits": "Credits",
+        "totalCredits": "Total Credits",
         "creditPrices": "Credit prices",
+        "creditsRequired": "Credits required",
         "perCredit": "Per credit",
-        "perRequest": "Per request",
-        "perBid": "Per bid",
-        "documents": "Documents"
+        "perRequest": "Per request / trip",
+        "perBid": "Per bid / offer",
+        "documents": "Documents",
+        "block": "Block user",
+        "unblock": "Unblock user",
+        "blockTitle": "Block this user?",
+        "unblockTitle": "Unblock this user?",
+        "blockMessage": "They will be signed out and cannot use the app until you unblock them.",
+        "unblockMessage": "They will be able to sign in and use the app again.",
+        "blockFailed": "Couldn't update this user's block status",
+        "blockedBadge": "Blocked"
       }
     },
     "trips": {
@@ -1312,6 +1323,8 @@
       "createFailed": "Couldn't create subzone",
       "updateFailed": "Couldn't update subzone",
       "deleteFailed": "Couldn't delete subzone",
+      "deleteTitle": "Delete this location?",
+      "deleteMessage": "{{name}} will be removed from subzones.",
       "openInMaps": "Open {{name}} in maps"
     }
   },

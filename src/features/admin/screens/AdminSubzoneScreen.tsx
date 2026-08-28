@@ -16,6 +16,7 @@ import { useLocationMapPicker } from '@/features/auth/hooks/useLocationMapPicker
 import { resolveCityAndPointFromCoords } from '@/features/auth/utils/geocodedAddressLabel';
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminSubzone } from '@/services/api/adminApi';
+import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
@@ -46,6 +47,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [saving, setSaving] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = React.useState<AdminSubzone | null>(null);
   const [actionErrorKey, setActionErrorKey] = React.useState<string | null>(null);
   const { openMapPickerForSelection, mapPickerSheet } = useLocationMapPicker();
 
@@ -194,7 +196,7 @@ export function AdminSubzoneScreen(): React.ReactElement {
                 ) : null}
               </Pressable>
               <Pressable
-                onPress={() => void removeSubzone(item.id)}
+                onPress={() => setPendingDelete(item)}
                 disabled={deleting}
                 style={({ pressed }) => [
                   styles.deleteButton,
@@ -309,6 +311,28 @@ export function AdminSubzoneScreen(): React.ReactElement {
           windowSize={7}
         />
       </AuthScaffold>
+      <AppDialog
+        visible={pendingDelete != null}
+        icon="trash-o"
+        title={t('admin.subzone.deleteTitle')}
+        message={t('admin.subzone.deleteMessage', { name: pendingDelete?.name ?? '' })}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setPendingDelete(null),
+        }}
+        confirmAction={{
+          label: t('admin.common.delete'),
+          onPress: () => {
+            const id = pendingDelete?.id;
+            setPendingDelete(null);
+            if (id) {
+              void removeSubzone(id);
+            }
+          },
+          loading: deletingId != null,
+          disabled: deletingId != null,
+        }}
+      />
       {mapPickerSheet}
     </>
   );

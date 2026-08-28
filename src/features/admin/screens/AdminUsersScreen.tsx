@@ -34,6 +34,7 @@ const FILTER_OPTIONS: { id: AdminUserFilter; labelKey: string }[] = [
   { id: 'verified', labelKey: 'admin.users.filters.verified' },
   { id: 'not_verified', labelKey: 'admin.users.filters.notVerified' },
   { id: 'documents_submitted', labelKey: 'admin.users.filters.waitingForApproval' },
+  { id: 'blocked', labelKey: 'admin.users.filters.blocked' },
 ];
 
 function ListSeparator(): React.ReactElement {

@@ -7,9 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { i18n as appI18n } from '@/i18n';
 import { adminApi, type AdminUserDetail, type IdentityDocumentStatus } from '@/services/api/adminApi';
+import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
+import { getErrorMessage } from '@/services/api/errorMessage';
+import { useDisplayCurrency } from '@/shared/utils/currency';
 import { openWhatsAppChat } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
@@ -165,10 +168,16 @@ function DocSection({
           : t('admin.users.notVerified');
 
   const isNotSubmitted = reviewStatus === 'not_submitted';
+  const [expanded, setExpanded] = React.useState(false);
 
   return (
     <View style={styles.docTile}>
-      <View style={styles.docHeader}>
+      <Pressable
+        onPress={() => setExpanded((open) => !open)}
+        style={({ pressed }) => [styles.docHeader, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+      >
         <AppText weight="bold" style={styles.docTitle}>
           {title}
         </AppText>
@@ -178,8 +187,15 @@ function DocSection({
             {statusLabel}
           </AppText>
         </View>
-      </View>
+        <FontAwesome
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={12}
+          color={colors.text.tertiary}
+        />
+      </Pressable>
 
+      {expanded ? (
+      <>
       {!isNotSubmitted ? (
         <>
           <DocField label={t('admin.users.documentNumber')}>
@@ -216,6 +232,10 @@ function DocSection({
             </View>
           ) : null}
         </>
+      ) : (
+        <AppText style={styles.docEmpty}>{t('admin.users.notVerified')}</AppText>
+      )}
+      </>
       ) : null}
     </View>
   );
@@ -227,6 +247,7 @@ export function AdminUserDetailContent({
   onUserUpdated,
 }: AdminUserDetailContentProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
+  const currency = useDisplayCurrency();
   const memberSince = formatTripDateTime(user.createdAt, i18n.language, '—', false);
   const [reviewingDoc, setReviewingDoc] = React.useState<'nic' | 'license' | null>(null);
   const [creditsDraft, setCreditsDraft] = React.useState(String(user.credits));
@@ -239,6 +260,10 @@ export function AdminUserDetailContent({
   const [savingPrices, setSavingPrices] = React.useState(false);
   const [creditsErrorKey, setCreditsErrorKey] = React.useState<string | null>(null);
   const [priceErrorKey, setPriceErrorKey] = React.useState<string | null>(null);
+  const [creditsOpen, setCreditsOpen] = React.useState(false);
+  const [blockOpen, setBlockOpen] = React.useState(false);
+  const [blocking, setBlocking] = React.useState(false);
+  const [blockError, setBlockError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setCreditsDraft(String(user.credits));
@@ -260,6 +285,7 @@ export function AdminUserDetailContent({
     tripCreateDraft !== String(user.tripCreateCredits ?? '') ||
     bidOfferDraft !== String(user.bidOfferCredits ?? '');
   const showLicense = listRole === 'driver';
+  const isBlocked = user.status === 'SUSPENDED';
 
   const openWhatsApp = () => {
     void openWhatsAppChat(
@@ -326,7 +352,22 @@ export function AdminUserDetailContent({
     }
   };
 
+  const confirmBlock = async () => {
+    setBlocking(true);
+    setBlockError(null);
+    try {
+      const updated = await adminApi.setUserBlocked(user.id, !isBlocked);
+      onUserUpdated(updated);
+      setBlockOpen(false);
+    } catch (err) {
+      setBlockError(getErrorMessage(err, t('admin.users.detail.blockFailed')));
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   return (
+    <>
     <View style={styles.root}>
       <View style={styles.shadowCard}>
         <AppText weight="bold" style={styles.cardHeading}>
@@ -365,93 +406,123 @@ export function AdminUserDetailContent({
       </View>
 
       <View style={styles.shadowCard}>
-        <AppText weight="bold" style={styles.cardHeading}>
-          {t('admin.users.detail.credits')}
-        </AppText>
-        <View style={styles.creditsRow}>
-          <AppText weight="semibold" style={styles.creditsLabel}>
-            {t('dashboard.home.credits')}
+        <Pressable
+          onPress={() => setCreditsOpen((open) => !open)}
+          style={({ pressed }) => [styles.sectionHeader, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: creditsOpen }}
+        >
+          <AppText weight="bold" style={styles.docTitle}>
+            {t('admin.users.detail.credits')}
           </AppText>
-          <TextInput
-            value={creditsDraft}
-            onChangeText={setCreditsDraft}
-            keyboardType="number-pad"
-            style={styles.creditsInput}
+          <FontAwesome
+            name={creditsOpen ? 'chevron-up' : 'chevron-down'}
+            size={12}
+            color={colors.text.tertiary}
           />
-          <Pressable
-            onPress={() => void saveCredits()}
-            disabled={!creditsDirty || savingCredits}
-            style={({ pressed }) => [
-              styles.creditsSaveButton,
-              pressed && creditsDirty && styles.pressed,
-              (!creditsDirty || savingCredits) && styles.creditsSaveDisabled,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.common.save')}
-            accessibilityState={{ disabled: !creditsDirty || savingCredits }}
-            hitSlop={8}
-          >
-            <AppText weight="semibold" style={styles.creditsSaveLabel}>
-              {savingCredits ? t('admin.common.saving') : t('admin.common.save')}
-            </AppText>
-          </Pressable>
-        </View>
-        {creditsErrorKey ? (
-          <AppText style={styles.creditsError}>{t(creditsErrorKey)}</AppText>
-        ) : null}
+        </Pressable>
+        {creditsOpen ? (
+          <View style={styles.creditsBody}>
+            <View style={styles.settingRow}>
+              <AppText weight="medium" style={styles.settingLabel}>
+                {t('admin.users.detail.totalCredits')}
+              </AppText>
+              <TextInput
+                value={creditsDraft}
+                onChangeText={setCreditsDraft}
+                keyboardType="number-pad"
+                style={styles.settingInput}
+              />
+              <Pressable
+                onPress={() => void saveCredits()}
+                disabled={!creditsDirty || savingCredits}
+                style={({ pressed }) => [
+                  styles.creditsSaveButton,
+                  pressed && creditsDirty && styles.pressed,
+                  (!creditsDirty || savingCredits) && styles.creditsSaveDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('admin.common.save')}
+                accessibilityState={{ disabled: !creditsDirty || savingCredits }}
+                hitSlop={8}
+              >
+                <AppText weight="semibold" style={styles.creditsSaveLabel}>
+                  {savingCredits ? t('admin.common.saving') : t('admin.common.save')}
+                </AppText>
+              </Pressable>
+            </View>
+            {creditsErrorKey ? (
+              <AppText style={styles.creditsError}>{t(creditsErrorKey)}</AppText>
+            ) : null}
 
-        <View style={styles.pricesDivider} />
-        <AppText weight="bold" style={styles.pricesHeading}>
-          {t('admin.users.detail.creditPrices')}
-        </AppText>
-        <View style={styles.pricesRow}>
-          <View style={styles.priceCell}>
-            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perCredit')}</AppText>
-            <TextInput
-              value={unitPriceDraft}
-              onChangeText={setUnitPriceDraft}
-              keyboardType="number-pad"
-              style={styles.priceCellInput}
-            />
+            <View style={styles.settingsGroup}>
+              <View style={styles.settingRow}>
+                <View style={styles.settingCopy}>
+                  <AppText weight="medium" style={styles.settingLabel}>
+                    {t('admin.users.detail.creditPrices')}
+                  </AppText>
+                  <AppText style={styles.settingHint}>
+                    {t('admin.users.detail.perCredit')}
+                  </AppText>
+                </View>
+                <View style={styles.priceValue}>
+                  <AppText weight="semibold" style={styles.currencyLabel}>
+                    {currency}
+                  </AppText>
+                  <TextInput
+                    value={unitPriceDraft}
+                    onChangeText={setUnitPriceDraft}
+                    keyboardType="number-pad"
+                    style={styles.settingInput}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.groupDivider} />
+
+              <AppText weight="medium" style={styles.groupTitle}>
+                {t('admin.users.detail.creditsRequired')}
+              </AppText>
+              <View style={styles.settingRow}>
+                <AppText style={styles.settingHint}>{t('admin.users.detail.perRequest')}</AppText>
+                <TextInput
+                  value={tripCreateDraft}
+                  onChangeText={setTripCreateDraft}
+                  keyboardType="number-pad"
+                  style={styles.settingInput}
+                />
+              </View>
+              <View style={styles.settingRow}>
+                <AppText style={styles.settingHint}>{t('admin.users.detail.perBid')}</AppText>
+                <TextInput
+                  value={bidOfferDraft}
+                  onChangeText={setBidOfferDraft}
+                  keyboardType="number-pad"
+                  style={styles.settingInput}
+                />
+              </View>
+
+              <Pressable
+                onPress={() => void savePrices()}
+                disabled={!pricesDirty || savingPrices}
+                style={({ pressed }) => [
+                  styles.settingsSaveBar,
+                  pressed && pricesDirty && styles.pressed,
+                  (!pricesDirty || savingPrices) && styles.creditsSaveDisabled,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('admin.common.save')}
+                accessibilityState={{ disabled: !pricesDirty || savingPrices }}
+              >
+                <AppText weight="semibold" style={styles.settingsSaveBarLabel}>
+                  {savingPrices ? t('admin.common.saving') : t('admin.common.save')}
+                </AppText>
+              </Pressable>
+            </View>
+            {priceErrorKey ? (
+              <AppText style={styles.creditsError}>{t(priceErrorKey)}</AppText>
+            ) : null}
           </View>
-          <View style={styles.priceCell}>
-            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perRequest')}</AppText>
-            <TextInput
-              value={tripCreateDraft}
-              onChangeText={setTripCreateDraft}
-              keyboardType="number-pad"
-              style={styles.priceCellInput}
-            />
-          </View>
-          <View style={styles.priceCell}>
-            <AppText style={styles.priceCellLabel}>{t('admin.users.detail.perBid')}</AppText>
-            <TextInput
-              value={bidOfferDraft}
-              onChangeText={setBidOfferDraft}
-              keyboardType="number-pad"
-              style={styles.priceCellInput}
-            />
-          </View>
-          <Pressable
-            onPress={() => void savePrices()}
-            disabled={!pricesDirty || savingPrices}
-            style={({ pressed }) => [
-              styles.creditsSaveButton,
-              pressed && pricesDirty && styles.pressed,
-              (!pricesDirty || savingPrices) && styles.creditsSaveDisabled,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.common.save')}
-            accessibilityState={{ disabled: !pricesDirty || savingPrices }}
-            hitSlop={8}
-          >
-            <AppText weight="semibold" style={styles.creditsSaveLabel}>
-              {savingPrices ? t('admin.common.saving') : t('admin.common.save')}
-            </AppText>
-          </Pressable>
-        </View>
-        {priceErrorKey ? (
-          <AppText style={styles.creditsError}>{t(priceErrorKey)}</AppText>
         ) : null}
       </View>
 
@@ -485,7 +556,35 @@ export function AdminUserDetailContent({
           }}
         />
       ) : null}
+
+      {blockError ? <AppText style={styles.creditsError}>{blockError}</AppText> : null}
+      <Button
+        label={isBlocked ? t('admin.users.detail.unblock') : t('admin.users.detail.block')}
+        variant={isBlocked ? 'secondary' : 'primary'}
+        onPress={() => setBlockOpen(true)}
+        loading={blocking}
+        disabled={blocking}
+      />
     </View>
+    <AppDialog
+      visible={blockOpen}
+      icon={isBlocked ? 'unlock' : 'ban'}
+      title={isBlocked ? t('admin.users.detail.unblockTitle') : t('admin.users.detail.blockTitle')}
+      message={
+        isBlocked ? t('admin.users.detail.unblockMessage') : t('admin.users.detail.blockMessage')
+      }
+      cancelAction={{
+        label: t('common.cancel'),
+        onPress: () => setBlockOpen(false),
+      }}
+      confirmAction={{
+        label: isBlocked ? t('admin.users.detail.unblock') : t('admin.users.detail.block'),
+        onPress: () => void confirmBlock(),
+        loading: blocking,
+        disabled: blocking,
+      }}
+    />
+    </>
   );
 }
 
@@ -505,8 +604,14 @@ const styles = StyleSheet.create({
     ...cardBackShadow,
   },
   cardHeading: {
+    flex: 1,
     fontSize: 13,
     color: colors.text.secondary,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   pricesDivider: {
     height: StyleSheet.hairlineWidth,
@@ -514,35 +619,77 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
-  pricesHeading: {
+  creditsBody: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  settingsGroup: {
+    backgroundColor: colors.background.subtle,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    gap: spacing.sm,
+  },
+  groupTitle: {
     fontSize: 13,
-    color: colors.text.secondary,
-    marginBottom: 2,
+    color: colors.text.primary,
   },
-  pricesRow: {
+  groupDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border.default,
+  },
+  settingRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  priceCell: {
+  settingCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 2,
   },
-  priceCellLabel: {
-    fontSize: 11,
-    color: colors.text.tertiary,
+  settingLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 13,
+    color: colors.text.primary,
   },
-  priceCellInput: {
+  settingHint: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  priceValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settingInput: {
+    width: 72,
     borderWidth: 1,
     borderColor: colors.border.strong,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     backgroundColor: colors.white,
-    fontSize: 14,
+    fontSize: 15,
     color: colors.text.primary,
     textAlign: 'center',
+  },
+  settingsSaveBar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+  },
+  settingsSaveBarLabel: {
+    fontSize: 13,
+    color: colors.white,
+  },
+  currencyLabel: {
+    fontSize: 13,
+    color: colors.text.primary,
   },
   detailRow: {
     flexDirection: 'row',
@@ -595,21 +742,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.xs,
-  },
-  creditsLabel: {
-    fontSize: 13,
-    color: colors.text.primary,
-  },
-  creditsInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border.strong,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.white,
-    fontSize: 15,
-    color: colors.text.primary,
   },
   creditsSaveButton: {
     paddingHorizontal: 10,

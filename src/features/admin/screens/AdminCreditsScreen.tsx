@@ -22,6 +22,7 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { adminApi, type AdminCreditPurchaseSummary } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
+import { useDisplayCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 import { getInputFontFamily } from '@/theme/typography';
 
@@ -31,6 +32,7 @@ import type { AdminCreditsStackParamList } from '../navigation/adminNavigationTy
 export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
+  const currency = useDisplayCurrency();
   const navigation =
     useNavigation<NativeStackNavigationProp<AdminCreditsStackParamList>>();
   const [unitPrice, setUnitPrice] = React.useState('');
@@ -159,12 +161,17 @@ export function AdminCreditsScreen(): React.ReactElement {
               <AppText weight="semibold" style={styles.settingsLabel} numberOfLines={1}>
                 {t('admin.credits.unitPriceLabel')}
               </AppText>
-              <TextInput
-                value={unitPrice}
-                onChangeText={setUnitPrice}
-                keyboardType="number-pad"
-                style={[styles.settingsInput, inputFont]}
-              />
+              <View style={styles.priceInputWrap}>
+                <AppText weight="semibold" style={styles.currencyLabel}>
+                  {currency}
+                </AppText>
+                <TextInput
+                  value={unitPrice}
+                  onChangeText={setUnitPrice}
+                  keyboardType="number-pad"
+                  style={[styles.settingsInput, inputFont]}
+                />
+              </View>
             </View>
             <View style={styles.settingsLine}>
               <AppText weight="semibold" style={styles.settingsLabel} numberOfLines={1}>
@@ -311,6 +318,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.primary,
     textAlign: 'center',
+  },
+  priceInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  currencyLabel: {
+    fontSize: 13,
+    color: colors.white,
   },
   settingsSave: {
     alignSelf: 'flex-end',

@@ -158,7 +158,12 @@ export type AdminProfile = {
   role: 'admin';
 };
 
-export type AdminUserFilter = 'all' | 'verified' | 'not_verified' | 'documents_submitted';
+export type AdminUserFilter =
+  | 'all'
+  | 'verified'
+  | 'not_verified'
+  | 'documents_submitted'
+  | 'blocked';
 
 export type AdminBankAccount = {
   bankName: string;
@@ -217,6 +222,14 @@ export const adminApi = {
 
   getUser(userId: string) {
     return apiRequest<AdminUserDetail>({ method: 'GET', url: `/admin/users/${userId}` });
+  },
+
+  setUserBlocked(userId: string, blocked: boolean) {
+    return apiRequest<AdminUserDetail>({
+      method: 'POST',
+      url: `/admin/users/${userId}/block`,
+      data: { blocked },
+    });
   },
 
   reviewDocument(
