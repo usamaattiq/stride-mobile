@@ -1254,7 +1254,14 @@
       "offerSenders": "Offer senders",
       "noResponses": "No bids or offers yet",
       "whatsappDriver": "Hi, regarding trip {{ref}} (driver).",
-      "whatsappPassenger": "Hi, regarding trip {{ref}} (passenger)."
+      "whatsappPassenger": "Hi, regarding trip {{ref}} (passenger).",
+      "closeTrip": "Close trip",
+      "closeRequest": "Close request",
+      "closeTripTitle": "Close this trip?",
+      "closeRequestTitle": "Close this request?",
+      "closeTripBody": "The listing will stop accepting bids or offers.",
+      "closeRequestBody": "This request will stop accepting offers.",
+      "closeFailed": "Couldn't close this listing"
     },
     "credits": {
       "title": "Credits",

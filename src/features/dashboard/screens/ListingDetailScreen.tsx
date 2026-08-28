@@ -115,9 +115,9 @@ export function ListingDetailScreen(): React.ReactElement {
   const [confirmRemove, setConfirmRemove] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
-  const [confirmCloseAuction, setConfirmCloseAuction] = React.useState(false);
-  const [closingAuction, setClosingAuction] = React.useState(false);
-  const [closeAuctionError, setCloseAuctionError] = React.useState<
+  const [confirmCloseListing, setConfirmCloseListing] = React.useState(false);
+  const [closingListing, setClosingListing] = React.useState(false);
+  const [closeListingError, setCloseListingError] = React.useState<
     string | null
   >(null);
   const [canCloseAuction, setCanCloseAuction] = React.useState(false);
@@ -364,29 +364,38 @@ export function ListingDetailScreen(): React.ReactElement {
       .finally(() => setRemoving(false));
   };
 
-  const handleCloseAuction = () => {
-    if (!trip || closingAuction) {
+  const handleCloseListing = () => {
+    if (!trip || closingListing) {
       return;
     }
-    setClosingAuction(true);
-    setCloseAuctionError(null);
-    void auctionApi
-      .close(trip.id)
+    setClosingListing(true);
+    setCloseListingError(null);
+    const request = isAdminViewer
+      ? adminApi.closeListing(trip.id).then(async (detail) => {
+          setAdminTrip(detail);
+          setTrip(mapAdminTripDetailToTrip(detail));
+        })
+      : auctionApi.close(trip.id);
+    void request
       .then(async () => {
-        setConfirmCloseAuction(false);
+        setConfirmCloseListing(false);
         setCanCloseAuction(false);
         setAuctionPanelKey((key) => key + 1);
-        await reloadTrip().catch(() => undefined);
+        if (!isAdminViewer) {
+          await reloadTrip().catch(() => undefined);
+        }
       })
       .catch((error) => {
-        setCloseAuctionError(
+        setCloseListingError(
           getErrorMessage(
             error,
-            t("dashboard.listings.detail.auctionBids.actionFailed"),
+            isAdminViewer
+              ? t("admin.trips.closeFailed")
+              : t("dashboard.listings.detail.auctionBids.actionFailed"),
           ),
         );
       })
-      .finally(() => setClosingAuction(false));
+      .finally(() => setClosingListing(false));
   };
 
   const goBack = () => navigation.goBack();
@@ -611,8 +620,16 @@ export function ListingDetailScreen(): React.ReactElement {
   // Hide delete once the listing is past / completed / closed / expired / ended.
   const canRemoveListing =
     isOwnListing && trip != null && getListingStatusBucket(trip) === "live";
+  const canAdminCloseListing =
+    isAdminViewer && trip != null && getListingStatusBucket(trip) === "live";
+  const closeListingLabel = isPassengerRequest
+    ? t("admin.trips.closeRequest")
+    : t("admin.trips.closeTrip");
   const showHeaderActions =
-    canCloseAuction || canRemoveListing || canWithdrawOffer;
+    canCloseAuction ||
+    canAdminCloseListing ||
+    canRemoveListing ||
+    canWithdrawOffer;
 
   return (
     <AuthScaffold
@@ -656,18 +673,20 @@ export function ListingDetailScreen(): React.ReactElement {
                 </AppText>
               </Pressable>
             ) : null}
-            {canCloseAuction ? (
+            {canCloseAuction || canAdminCloseListing ? (
               <Pressable
                 onPress={() => {
-                  setCloseAuctionError(null);
-                  setConfirmCloseAuction(true);
+                  setCloseListingError(null);
+                  setConfirmCloseListing(true);
                 }}
                 style={styles.headerActionButton}
                 hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel={t(
-                  "dashboard.listings.detail.auctionBids.close",
-                )}
+                accessibilityLabel={
+                  canAdminCloseListing
+                    ? closeListingLabel
+                    : t("dashboard.listings.detail.auctionBids.close")
+                }
               >
                 <FontAwesome
                   name="stop-circle"
@@ -675,7 +694,9 @@ export function ListingDetailScreen(): React.ReactElement {
                   color={colors.white}
                 />
                 <AppText weight="semibold" style={styles.headerActionLabel}>
-                  {t("common.close")}
+                  {canAdminCloseListing
+                    ? closeListingLabel
+                    : t("common.close")}
                 </AppText>
               </Pressable>
             ) : null}
@@ -927,26 +948,40 @@ export function ListingDetailScreen(): React.ReactElement {
       </View>
 
       <AppDialog
-        visible={confirmCloseAuction}
+        visible={confirmCloseListing}
         icon="stop-circle"
-        title={t("dashboard.listings.detail.auctionBids.closeConfirmTitle")}
+        title={
+          canAdminCloseListing
+            ? isPassengerRequest
+              ? t("admin.trips.closeRequestTitle")
+              : t("admin.trips.closeTripTitle")
+            : t("dashboard.listings.detail.auctionBids.closeConfirmTitle")
+        }
         message={
-          closeAuctionError ??
-          t("dashboard.listings.detail.auctionBids.closeConfirmBody")
+          closeListingError ??
+          (canAdminCloseListing
+            ? isPassengerRequest
+              ? t("admin.trips.closeRequestBody")
+              : t("admin.trips.closeTripBody")
+            : t("dashboard.listings.detail.auctionBids.closeConfirmBody"))
         }
         cancelAction={{
           label: t("common.cancel"),
           onPress: () => {
-            if (closingAuction) {
+            if (closingListing) {
               return;
             }
-            setConfirmCloseAuction(false);
-            setCloseAuctionError(null);
+            setConfirmCloseListing(false);
+            setCloseListingError(null);
           },
         }}
         confirmAction={{
-          label: t("dashboard.listings.detail.auctionBids.close"),
-          onPress: handleCloseAuction,
+          label: canAdminCloseListing
+            ? closeListingLabel
+            : t("dashboard.listings.detail.auctionBids.close"),
+          onPress: handleCloseListing,
+          loading: closingListing,
+          disabled: closingListing,
         }}
       />
 

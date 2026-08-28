@@ -263,6 +263,13 @@ export const adminApi = {
     return apiRequest<AdminTripDetail>({ method: 'GET', url: `/admin/trips/${tripId}` });
   },
 
+  closeListing(tripId: string) {
+    return apiRequest<AdminTripDetail>({
+      method: 'POST',
+      url: `/admin/trips/${tripId}/close`,
+    });
+  },
+
   getHomeStats() {
     return apiRequest<AdminHomeStats>({ method: 'GET', url: '/admin/home/stats' });
   },

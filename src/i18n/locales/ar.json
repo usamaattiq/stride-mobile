@@ -1254,7 +1254,14 @@
       "offerSenders": "مرسلو العروض",
       "noResponses": "لا توجد مزايدات أو عروض بعد",
       "whatsappDriver": "مرحباً، بخصوص الرحلة {{ref}} (سائق).",
-      "whatsappPassenger": "مرحباً، بخصوص الرحلة {{ref}} (راكب)."
+      "whatsappPassenger": "مرحباً، بخصوص الرحلة {{ref}} (راكب).",
+      "closeTrip": "إغلاق الرحلة",
+      "closeRequest": "إغلاق الطلب",
+      "closeTripTitle": "إغلاق هذه الرحلة؟",
+      "closeRequestTitle": "إغلاق هذا الطلب؟",
+      "closeTripBody": "سيتوقف الإدراج عن قبول المزايدات أو العروض.",
+      "closeRequestBody": "سيتوقف هذا الطلب عن قبول العروض.",
+      "closeFailed": "تعذر إغلاق هذا الإدراج"
     },
     "credits": {
       "title": "الرصيد",
