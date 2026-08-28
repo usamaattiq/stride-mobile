@@ -315,7 +315,6 @@ export function BuyCreditsScreen(): React.ReactElement {
                   unitPrice={item.unitPrice}
                   status={item.status}
                   compact
-                  rejectionReason={item.rejectionReason}
                   onPress={() =>
                     navigation.navigate('BuyCreditRequestDetail', { purchaseId: item.id })
                   }

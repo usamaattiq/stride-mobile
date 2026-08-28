@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditPurchaseProofCard';
+import { CreditPurchaseRemarksCard } from '@/features/dashboard/components/CreditPurchaseRemarksCard';
 import { CreditPurchaseRequestTile } from '@/features/dashboard/components/CreditPurchaseRequestTile';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
@@ -121,7 +122,6 @@ export function AdminCreditPurchaseDetailScreen(): React.ReactElement {
                 createdAt={purchase.createdAt}
                 avatarUrl={purchase.user.avatarViewUrl}
                 showAvatar
-                rejectionReason={purchase.rejectionReason}
                 onPress={() =>
                   navigation.navigate('UserDetail', { userId: purchase.user.id })
                 }
@@ -129,6 +129,9 @@ export function AdminCreditPurchaseDetailScreen(): React.ReactElement {
             </View>
             {purchase.proofViewUrl ? (
               <CreditPurchaseProofCard uri={purchase.proofViewUrl} />
+            ) : null}
+            {purchase.status === 'rejected' && purchase.rejectionReason?.trim() ? (
+              <CreditPurchaseRemarksCard remarks={purchase.rejectionReason} />
             ) : null}
             {purchase.status === 'pending' ? (
               <View style={styles.actions}>

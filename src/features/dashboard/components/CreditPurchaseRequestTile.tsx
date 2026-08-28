@@ -28,7 +28,6 @@ type CreditPurchaseRequestTileProps = {
   avatarUrl?: string | null;
   showAvatar?: boolean;
   compact?: boolean;
-  rejectionReason?: string | null;
   onPress: () => void;
 };
 
@@ -69,7 +68,6 @@ export function CreditPurchaseRequestTile({
   avatarUrl,
   showAvatar = false,
   compact = false,
-  rejectionReason,
   onPress,
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -154,6 +152,8 @@ export function CreditPurchaseRequestTile({
                   {subtitle}
                 </AppText>
               ) : null}
+            </View>
+            <View style={styles.priceBlock}>
               <AppText style={styles.calc} numberOfLines={1}>
                 {t('dashboard.home.creditsTimesPrice', {
                   count: credits,
@@ -161,23 +161,11 @@ export function CreditPurchaseRequestTile({
                   currency,
                 })}
               </AppText>
-            </View>
-            <View style={styles.priceBlock}>
               <AppText weight="bold" style={[styles.priceAmount, compact && styles.priceAmountCompact]} numberOfLines={1}>
                 {formatPriceWithCurrency(amount)}
               </AppText>
             </View>
           </View>
-          {status === 'rejected' && rejectionReason?.trim() ? (
-            <View style={[styles.remarksBox, compact && styles.remarksBoxCompact]}>
-              <AppText style={styles.remarksLabel} numberOfLines={1}>
-                {t('dashboard.home.rejectionRemarksLabel')}
-              </AppText>
-              <AppText style={styles.remarksText}>
-                {rejectionReason.trim()}
-              </AppText>
-            </View>
-          ) : null}
         </LinearGradient>
       </Pressable>
     </View>
@@ -317,13 +305,16 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   calc: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.secondary,
   },
   priceBlock: {
-    alignItems: 'flex-end',
-    flexShrink: 0,
-    minWidth: 64,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
     alignSelf: 'flex-end',
   },
   priceAmount: {
@@ -334,25 +325,5 @@ const styles = StyleSheet.create({
   priceAmountCompact: {
     fontSize: 18,
     lineHeight: 24,
-  },
-  remarksBox: {
-    marginHorizontal: spacing.xs,
-    marginBottom: 2,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primaryMuted,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 6,
-    gap: 2,
-  },
-  remarksBoxCompact: {
-    paddingVertical: 4,
-  },
-  remarksLabel: {
-    fontSize: 10,
-    color: colors.primary,
-  },
-  remarksText: {
-    fontSize: 12,
-    color: colors.primary,
   },
 });

@@ -1,11 +1,12 @@
 import React from 'react';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { I18nManager, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditPurchaseProofCard';
+import { CreditPurchaseRemarksCard } from '@/features/dashboard/components/CreditPurchaseRemarksCard';
 
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
@@ -95,9 +96,7 @@ export function CreditPurchaseDetailCard({
                 </View>
               ) : null}
             </View>
-            <AppText weight="bold" style={styles.title}>
-              {title}
-            </AppText>
+
             {phone?.trim() ? (
               <View style={styles.phoneRow}>
                 <FontAwesome name="phone" size={13} color={colors.primary} />
@@ -106,34 +105,48 @@ export function CreditPurchaseDetailCard({
             ) : null}
             {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null}
 
-            <View style={styles.metaRow}>
-              <FontAwesome5 name="coins" size={13} color={colors.accent.coins} solid />
-              <AppText weight="semibold" style={styles.metaText}>
-                {t('dashboard.home.creditsA11y', { count: credits })}
+            <View style={styles.qtyRow}>
+              <AppText weight="medium" style={styles.qtyLabel} numberOfLines={1}>
+                {t('dashboard.home.totalCredits')}
+              </AppText>
+              <AppText weight="semibold" style={styles.qtyValue} accessibilityLabel={title}>
+                {credits}
               </AppText>
             </View>
-            <AppText style={styles.calc}>
-                {t('dashboard.home.creditsTimesPrice', {
-                count: credits,
-                price: formatPriceAmount(unitPrice),
-                currency,
-              })}
-            </AppText>
-            <AppText weight="bold" style={styles.priceLine}>
-              {t('dashboard.home.requestAmount', {
-                amount: formatPriceAmount(amount),
-                currency,
-              })}
-            </AppText>
-            {rejectionReason ? (
-              <View style={styles.rejectBox}>
-                <AppText style={styles.rejectText}>{rejectionReason}</AppText>
+            <View style={styles.metaRow}>
+              <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
+              <AppText weight="semibold" style={styles.metaValue}>
+                {t('dashboard.listings.card.priceWithCurrency', {
+                  currency,
+                  price: formatPriceAmount(unitPrice),
+                })}
+              </AppText>
+            </View>
+            <View style={styles.metaRow}>
+              <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
+              <View style={styles.totalBlock}>
+                <AppText style={styles.totalCalc}>
+                  {t('dashboard.home.creditsTimesPrice', {
+                    count: credits,
+                    currency,
+                    price: formatPriceAmount(unitPrice),
+                  })}
+                </AppText>
+                <AppText weight="bold" style={styles.totalValue}>
+                  {t('dashboard.listings.card.priceWithCurrency', {
+                    currency,
+                    price: formatPriceAmount(amount),
+                  })}
+                </AppText>
               </View>
-            ) : null}
+            </View>
           </LinearGradient>
         </View>
       </View>
       {proofUri ? <CreditPurchaseProofCard uri={proofUri} /> : null}
+      {status === 'rejected' && rejectionReason?.trim() ? (
+        <CreditPurchaseRemarksCard remarks={rejectionReason} />
+      ) : null}
       {extra}
     </View>
   );
@@ -147,16 +160,18 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   card: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
     ...cardBackShadow,
   },
   inner: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
     overflow: 'hidden',
-    padding: spacing.md,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    gap: 8,
   },
   badge: {
     flexDirection: 'row',
@@ -196,10 +211,6 @@ const styles = StyleSheet.create({
   badgeTextGreen: { color: colors.accent.green.text },
   badgeTextAmber: { color: colors.accent.amber.text },
   badgeTextRed: { color: colors.primary },
-  title: {
-    fontSize: 22,
-    color: colors.text.primary,
-  },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,31 +226,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
   },
-  metaRow: {
+  qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
+    gap: spacing.sm,
   },
-  metaText: {
+  qtyLabel: {
     flex: 1,
-    fontSize: 15,
+    minWidth: 0,
+    fontSize: 13,
     color: colors.text.primary,
   },
-  calc: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  priceLine: {
+  qtyValue: {
     fontSize: 16,
     color: colors.text.primary,
   },
-  rejectBox: {
-    borderRadius: radius.md,
-    backgroundColor: colors.primaryMuted,
-    padding: spacing.sm,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  rejectText: {
-    color: colors.primary,
+  metaLabel: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  metaValue: {
+    fontSize: 12,
+    color: colors.text.primary,
+  },
+  totalBlock: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+    gap: 8,
+    minWidth: 0,
+  },
+  totalCalc: {
+    fontSize: 11,
+    color: colors.text.secondary,
+  },
+  totalValue: {
+    fontSize: 16,
+    color: colors.text.primary,
+    textAlign: 'right',
   },
 });

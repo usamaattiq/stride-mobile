@@ -250,7 +250,7 @@
       "statusPending": "Pending approval",
       "statusApproved": "Approved",
       "statusRejected": "Rejected",
-      "rejectionRemarksLabel": "Remarks",
+      "rejectionRemarksLabel": "Rejection Reason",
       "requestCredits": "{{count}} credits · {{amount}}",
       "requestDetailTitle": "Your request",
       "requestDetailFailed": "Couldn't load this request",

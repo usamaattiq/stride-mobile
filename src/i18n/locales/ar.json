@@ -250,7 +250,7 @@
       "statusPending": "بانتظار الموافقة",
       "statusApproved": "تمت الموافقة",
       "statusRejected": "مرفوض",
-      "rejectionRemarksLabel": "الملاحظات",
+      "rejectionRemarksLabel": "سبب الرفض",
       "requestCredits": "{{count}} رصيد · {{amount}}",
       "requestDetailTitle": "طلبك",
       "requestDetailFailed": "تعذر تحميل هذا الطلب",
