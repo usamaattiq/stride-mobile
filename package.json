@@ -55,7 +55,8 @@
     "build:preview": "eas build --profile preview",
     "submit:ios": "eas submit -p ios --profile production --latest",
     "update:preview": "eas update --channel preview",
-    "update:production": "eas update --channel production"
+    "update:production": "eas update --channel production",
+    "build:prod": "eas update --channel production --message \"Production update\""
   },
   "private": true
 }
