@@ -84,7 +84,6 @@ export function AdminHomeScreen(): React.ReactElement {
         <View style={styles.chartWrap}>
           <UsersByDateChart
             title={t('admin.home.usersByDate')}
-            emptyLabel={t('admin.home.chartEmpty')}
             points={data?.usersByDate ?? []}
           />
         </View>

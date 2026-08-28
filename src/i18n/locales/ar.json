@@ -1166,8 +1166,7 @@
       "totalTrips": "إجمالي الرحلات",
       "tripsByDrivers": "رحلات السائقين",
       "tripsByPassengers": "رحلات الركاب",
-      "usersByDate": "المستخدمون حسب التاريخ",
-      "chartEmpty": "لا يوجد مستخدمون جدد في هذه الفترة"
+      "usersByDate": "المستخدمون حسب التاريخ"
     },
     "users": {
       "title": "المستخدمون",

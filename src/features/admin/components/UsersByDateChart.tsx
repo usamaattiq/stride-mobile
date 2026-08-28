@@ -9,13 +9,11 @@ import { cardBackShadow } from '@/theme/cardShadow';
 type UsersByDateChartProps = {
   title: string;
   points: { date: string; count: number }[];
-  emptyLabel: string;
 };
 
 export function UsersByDateChart({
   title,
   points,
-  emptyLabel,
 }: UsersByDateChartProps): React.ReactElement {
   const max = Math.max(1, ...points.map((point) => point.count));
   const isRtl = I18nManager.isRTL;
@@ -32,30 +30,26 @@ export function UsersByDateChart({
           <AppText weight="bold" style={styles.title}>
             {title}
           </AppText>
-          {points.every((point) => point.count === 0) ? (
-            <AppText style={styles.empty}>{emptyLabel}</AppText>
-          ) : (
-            <View style={styles.chart}>
-              {points.map((point) => {
-                const height = Math.max(6, Math.round((point.count / max) * 120));
-                const day = point.date.slice(8);
-                return (
-                  <View key={point.date} style={styles.col}>
-                    <AppText style={styles.value}>{point.count || ''}</AppText>
-                    <View style={styles.track}>
-                      <LinearGradient
-                        colors={[colors.primary, '#F97066']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0.5, y: 0 }}
-                        style={[styles.bar, { height }]}
-                      />
-                    </View>
-                    <AppText style={styles.day}>{day}</AppText>
+          <View style={styles.chart}>
+            {points.map((point) => {
+              const height = Math.max(6, Math.round((point.count / max) * 120));
+              const day = point.date.slice(8);
+              return (
+                <View key={point.date} style={styles.col}>
+                  <AppText style={styles.value}>{point.count || ''}</AppText>
+                  <View style={styles.track}>
+                    <LinearGradient
+                      colors={[colors.primary, '#F97066']}
+                      start={{ x: 0.5, y: 1 }}
+                      end={{ x: 0.5, y: 0 }}
+                      style={[styles.bar, { height }]}
+                    />
                   </View>
-                );
-              })}
-            </View>
-          )}
+                  <AppText style={styles.day}>{day}</AppText>
+                </View>
+              );
+            })}
+          </View>
         </LinearGradient>
       </View>
     </View>
@@ -83,11 +77,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     color: colors.text.primary,
-  },
-  empty: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    paddingVertical: spacing.lg,
   },
   chart: {
     flexDirection: 'row',

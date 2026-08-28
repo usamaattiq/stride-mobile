@@ -1166,8 +1166,7 @@
       "totalTrips": "Total trips",
       "tripsByDrivers": "Trips by drivers",
       "tripsByPassengers": "Trips by passengers",
-      "usersByDate": "Users by date",
-      "chartEmpty": "No new users in this period"
+      "usersByDate": "Users by date"
     },
     "users": {
       "title": "Users",
