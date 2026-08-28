@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { colors, radius, spacing } from '@/theme';
 
@@ -49,7 +50,7 @@ export function AppDialog({
       statusBarTranslucent
       onRequestClose={dismiss}
     >
-      <View style={styles.root}>
+      <KeyboardAvoidingView behavior="padding" style={styles.root}>
         <Pressable
           style={styles.backdrop}
           onPress={dismiss}
@@ -87,7 +88,7 @@ export function AppDialog({
             />
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
