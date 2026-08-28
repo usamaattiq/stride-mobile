@@ -7,7 +7,7 @@ import type { TFunction } from 'i18next';
 import { i18n as appI18n } from '@/i18n';
 import type { AuctionType } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
-import { formatPriceAmount } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 
 export function formatAuctionRemaining(seconds: number, t: TFunction): string {
@@ -98,7 +98,7 @@ export function AuctionLeadingBidHeader({
       </View>
       <View style={styles.priceRow}>
         <AppText weight="bold" style={styles.amount}>
-          {formatPriceAmount(currentAmount)}
+          {formatPriceWithCurrency(currentAmount)}
         </AppText>
         {trailing}
       </View>

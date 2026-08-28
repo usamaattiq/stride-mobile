@@ -7,7 +7,7 @@ import { VehicleListItem } from "@/features/dashboard/components/VehicleListCont
 import type { Vehicle } from "@/features/dashboard/types/vehicle.types";
 import { i18n as appI18n } from "@/i18n";
 import type { OfferAttachmentPhotos } from "@/services/api/rfqApi.types";
-import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { formatPriceWithCurrency } from "@/shared/utils/currency";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { openWhatsAppChat } from "@/shared/utils/open-whatsapp";
@@ -36,15 +36,15 @@ export function driverSharedOfferPriceParts(
   }
   if (!Number.isFinite(seats) || seats < 1) {
     return {
-      perSeatLabel: formatPriceAmount(total),
+      perSeatLabel: formatPriceWithCurrency(total),
       seats: 1,
-      totalLabel: formatPriceAmount(total),
+      totalLabel: formatPriceWithCurrency(total),
     };
   }
   return {
-    perSeatLabel: formatPriceAmount(total / seats),
+    perSeatLabel: formatPriceWithCurrency(total / seats),
     seats,
-    totalLabel: formatPriceAmount(total),
+    totalLabel: formatPriceWithCurrency(total),
   };
 }
 

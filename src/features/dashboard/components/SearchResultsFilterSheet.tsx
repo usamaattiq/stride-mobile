@@ -12,7 +12,7 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
-import { formatLatinNumber } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 
 import { PriceRangeSlider } from './trip/PriceRangeSlider';
@@ -45,7 +45,7 @@ const PAYMENT_OPTIONS: ChipOption<TripPaymentMethod>[] = [
 ];
 
 function formatPrice(value: number): string {
-  return `PKR ${formatLatinNumber(Math.round(value))}`;
+  return formatPriceWithCurrency(value);
 }
 
 export function SearchResultsFilterSheet({

@@ -30,6 +30,7 @@ import { AppDialog } from "@/shared/components/AppDialog";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { ENV } from "@/shared/config/env";
+import { formatPriceWithCurrency, getDisplayCurrency } from "@/shared/utils/currency";
 import { formatPriceAmount } from "@/shared/utils/latin-digits";
 import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
@@ -656,7 +657,7 @@ export const TripOfferPanel = React.forwardRef<
   const offerPriceLabel = sharedParts
     ? sharedParts.perSeatLabel
     : activeOffer?.price != null
-      ? formatPriceAmount(activeOffer.price)
+      ? formatPriceWithCurrency(activeOffer.price)
       : "";
   const offerPriceSuffix = sharedParts
     ? t("dashboard.listings.pricePerSeatSuffix")
@@ -809,6 +810,7 @@ export const TripOfferPanel = React.forwardRef<
                   <AppText style={styles.totalCalc}>
                     {t("dashboard.listings.detail.offer.totalCalc", {
                       price: t("dashboard.listings.card.priceWithCurrency", {
+                        currency: getDisplayCurrency(),
                         price: formatPriceAmount(priceNumber),
                       }),
                       seats: t("dashboard.listings.detail.responses.seats", {
@@ -818,6 +820,7 @@ export const TripOfferPanel = React.forwardRef<
                   </AppText>
                   <AppText weight="bold" style={styles.totalValue}>
                     {t("dashboard.listings.card.priceWithCurrency", {
+                      currency: getDisplayCurrency(),
                       price: formatPriceAmount(totalPrice),
                     })}
                   </AppText>

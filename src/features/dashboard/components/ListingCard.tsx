@@ -12,7 +12,8 @@ import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
-import { formatPriceAmount, withLatinDigitsLocale } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency, stripCurrencyPrefix } from '@/shared/utils/currency';
+import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 import { getFontFamily } from '@/theme/typography';
@@ -249,8 +250,8 @@ export function ListingCard({
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
   const rawPrice = trip.startingPrice?.trim() || null;
-  const stripped = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
-  const price = stripped ? formatPriceAmount(stripped) || null : null;
+  const stripped = rawPrice ? stripCurrencyPrefix(rawPrice) : null;
+  const price = stripped ? formatPriceWithCurrency(stripped) || null : null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
   const isAuction = trip.listingType === 'auction';
   const offerSettled =

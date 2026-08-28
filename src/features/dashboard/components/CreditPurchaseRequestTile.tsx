@@ -9,6 +9,7 @@ import { i18n as appI18n } from '@/i18n';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency, useDisplayCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -61,6 +62,7 @@ export function CreditPurchaseRequestTile({
   onPress,
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
   const photoUrl = avatarUrl?.trim() || null;
@@ -128,12 +130,16 @@ export function CreditPurchaseRequestTile({
                 </AppText>
               ) : null}
               <AppText style={styles.calc} numberOfLines={1}>
-                {t('dashboard.home.creditsTimesPrice', { count: credits, price: unitPrice })}
+                {t('dashboard.home.creditsTimesPrice', {
+                  count: credits,
+                  price: formatPriceAmount(unitPrice),
+                  currency,
+                })}
               </AppText>
             </View>
             <View style={styles.priceBlock}>
               <AppText weight="bold" style={styles.priceAmount} numberOfLines={1}>
-                {formatPriceAmount(amount)}
+                {formatPriceWithCurrency(amount)}
               </AppText>
             </View>
           </View>

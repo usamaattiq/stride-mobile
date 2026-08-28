@@ -38,8 +38,8 @@ export function formatLatinNumber(value: number): string {
 }
 
 /**
- * Display a PKR amount without trailing `.00` from Decimal/Numeric APIs.
- * Whole rupees use grouping commas (e.g. `1,500`).
+ * Display a money amount without trailing `.00` from Decimal/Numeric APIs.
+ * Whole units use grouping commas (e.g. `1,500`). Currency is added separately.
  */
 export function formatPriceAmount(value: string | number | null | undefined): string {
   if (value == null) {

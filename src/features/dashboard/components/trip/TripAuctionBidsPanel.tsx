@@ -12,7 +12,7 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { formatPriceAmount } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -248,7 +248,7 @@ export function TripAuctionBidsPanel({
                 cardTone={isConfirmed ? 'confirmed' : isSelected ? 'selected' : 'default'}
                 name={displayName}
                 priceLabel={t('dashboard.listings.detail.auctionBids.amount', {
-                  amount: formatPriceAmount(row.peakAmount),
+                  amount: formatPriceWithCurrency(row.peakAmount),
                 })}
                 showWinner={row.rank === 1}
                 showMessage={showMessage}

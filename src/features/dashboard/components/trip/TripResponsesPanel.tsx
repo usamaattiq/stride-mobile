@@ -10,7 +10,7 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { isApiErrorWithCode } from '@/services/api/apiError';
-import { formatPriceAmount } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
@@ -327,7 +327,7 @@ export function TripResponsesPanel({
             const priceLabel = sharedParts
               ? sharedParts.perSeatLabel
               : offer.price != null
-                ? formatPriceAmount(offer.price)
+                ? formatPriceWithCurrency(offer.price)
                 : '';
             const priceSuffix = sharedParts
               ? t('dashboard.listings.pricePerSeatSuffix')

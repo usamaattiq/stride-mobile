@@ -28,7 +28,8 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { uploadLocalFileToPresignedUrl } from '@/shared/services/mediaUploadService';
 import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
-import { toLatinDigits } from '@/shared/utils/latin-digits';
+import { useDisplayCurrency } from '@/shared/utils/currency';
+import { formatPriceAmount, toLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, getInputFontFamily, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -41,6 +42,7 @@ function hasBankDetails(details: CreditBankAccount): boolean {
 export function BuyCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
+  const currency = useDisplayCurrency();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [quantityText, setQuantityText] = React.useState('0');
   const [unitPrice, setUnitPrice] = React.useState(2);
@@ -214,10 +216,14 @@ export function BuyCreditsScreen(): React.ReactElement {
                 </Pressable>
               </View>
               <AppText style={styles.calc}>
-                {t('dashboard.home.creditsTimesPrice', { count: quantity, price: unitPrice })}
+                {t('dashboard.home.creditsTimesPrice', {
+                  count: quantity,
+                  price: formatPriceAmount(unitPrice),
+                  currency,
+                })}
               </AppText>
               <AppText weight="bold" style={styles.total}>
-                {t('dashboard.home.total', { amount: total })}
+                {t('dashboard.home.total', { amount: formatPriceAmount(total), currency })}
               </AppText>
               </LinearGradient>
             </View>

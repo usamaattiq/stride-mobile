@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { CreditPurchaseProofCard } from '@/features/dashboard/components/CreditPurchaseProofCard';
 
 import { i18n as appI18n } from '@/i18n';
+import { formatPriceAmount } from '@/shared/utils/latin-digits';
+import { useDisplayCurrency } from '@/shared/utils/currency';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -48,6 +50,7 @@ export function CreditPurchaseDetailCard({
   extra,
 }: CreditPurchaseDetailCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
+  const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
   const statusLabel =
@@ -92,10 +95,17 @@ export function CreditPurchaseDetailCard({
               </AppText>
             </View>
             <AppText style={styles.calc}>
-              {t('dashboard.home.creditsTimesPrice', { count: credits, price: unitPrice })}
+                {t('dashboard.home.creditsTimesPrice', {
+                count: credits,
+                price: formatPriceAmount(unitPrice),
+                currency,
+              })}
             </AppText>
             <AppText weight="bold" style={styles.priceLine}>
-              {t('dashboard.home.requestAmount', { amount })}
+              {t('dashboard.home.requestAmount', {
+                amount: formatPriceAmount(amount),
+                currency,
+              })}
             </AppText>
             {rejectionReason ? (
               <View style={styles.rejectBox}>

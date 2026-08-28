@@ -68,7 +68,7 @@ import { mapAdminTripDetailToTrip } from "@/features/admin/utils/admin.mapper";
 import type { AdminTripsStackParamList } from "@/features/admin/navigation/adminNavigationTypes";
 import { authStore } from "@/store/authStore";
 import type { AdminTripDetail, AdminTripParticipant, AdminTripResponse } from "@/services/api/adminApi";
-import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { formatPriceWithCurrency } from "@/shared/utils/currency";
 import { OfferResponseCard } from "../components/trip/OfferResponseCard";
 
 type DetailTab = "overview" | "responses";
@@ -800,7 +800,7 @@ export function ListingDetailScreen(): React.ReactElement {
                         }
                         name={response.fullName}
                         priceLabel={
-                          response.amount != null ? formatPriceAmount(response.amount) : '—'
+                          response.amount != null ? formatPriceWithCurrency(response.amount) : '—'
                         }
                         footer="whatsapp"
                         whatsappPhone={response.phoneE164}

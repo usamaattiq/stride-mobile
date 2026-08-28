@@ -33,6 +33,7 @@ import { Button } from "@/shared/components/Button";
 import { CreditCostBadge } from "@/shared/components/CreditCostBadge";
 import { ENV } from "@/shared/config/env";
 import { formatPriceAmount, toLatinDigits } from "@/shared/utils/latin-digits";
+import { formatPriceWithCurrency, getDisplayCurrency } from "@/shared/utils/currency";
 import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
 import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
 import { colors, getInputFontFamily, radius, spacing } from "@/theme";
@@ -91,7 +92,7 @@ function formatAmount(amount: number | null | undefined): string {
   if (amount == null) {
     return "—";
   }
-  return formatPriceAmount(amount);
+  return formatPriceWithCurrency(amount);
 }
 
 function BidComposerBar({
@@ -276,11 +277,17 @@ function nextBidHint(
   if (auctionType === "reverse") {
     const ceiling = currentAmount > 0 ? currentAmount : minNextAmount;
     return ceiling != null && ceiling > 1
-      ? t("dashboard.listings.detail.bid.maxNext", { amount: ceiling })
+      ? t("dashboard.listings.detail.bid.maxNext", {
+          currency: getDisplayCurrency(),
+          amount: formatPriceAmount(ceiling),
+        })
       : t("dashboard.listings.detail.bid.amountPlaceholder");
   }
   return minNextAmount != null
-    ? t("dashboard.listings.detail.bid.minNext", { amount: minNextAmount })
+    ? t("dashboard.listings.detail.bid.minNext", {
+        currency: getDisplayCurrency(),
+        amount: formatPriceAmount(minNextAmount),
+      })
     : t("dashboard.listings.detail.bid.amountPlaceholder");
 }
 
@@ -887,7 +894,7 @@ export const TripBidPanel = React.forwardRef<
                       })
                 }
                 priceLabel={t("dashboard.listings.detail.auctionBids.amount", {
-                  amount: formatPriceAmount(row.peakAmount),
+                  amount: formatPriceWithCurrency(row.peakAmount),
                 })}
                 showWinner={row.rank === 1}
               />
