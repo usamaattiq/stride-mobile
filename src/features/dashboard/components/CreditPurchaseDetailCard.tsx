@@ -145,7 +145,7 @@ export function CreditPurchaseDetailCard({
       </View>
       {proofUri ? <CreditPurchaseProofCard uri={proofUri} /> : null}
       {status === 'rejected' && rejectionReason?.trim() ? (
-        <CreditPurchaseRemarksCard remarks={rejectionReason} />
+        <CreditPurchaseRemarksCard remarks={rejectionReason} showContactSupport />
       ) : null}
       {extra}
     </View>

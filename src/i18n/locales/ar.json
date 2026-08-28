@@ -251,6 +251,7 @@
       "statusApproved": "تمت الموافقة",
       "statusRejected": "مرفوض",
       "rejectionRemarksLabel": "سبب الرفض",
+      "contactSupport": "تواصل مع الدعم",
       "requestCredits": "{{count}} رصيد · {{amount}}",
       "requestDetailTitle": "طلبك",
       "requestDetailFailed": "تعذر تحميل هذا الطلب",

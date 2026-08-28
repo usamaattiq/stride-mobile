@@ -6,15 +6,18 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
+import { Button } from '@/shared/components/Button';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
 type CreditPurchaseRemarksCardProps = {
   remarks: string;
+  showContactSupport?: boolean;
 };
 
 export function CreditPurchaseRemarksCard({
   remarks,
+  showContactSupport = false,
 }: CreditPurchaseRemarksCardProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const isRtl = I18nManager.isRTL;
@@ -42,6 +45,12 @@ export function CreditPurchaseRemarksCard({
           <View style={styles.rejectBox}>
             <AppText style={styles.body}>{text}</AppText>
           </View>
+          {showContactSupport ? (
+            <Button
+              label={t('dashboard.home.contactSupport')}
+              variant="secondary"
+            />
+          ) : null}
         </LinearGradient>
       </View>
     </View>

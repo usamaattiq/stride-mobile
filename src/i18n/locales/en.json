@@ -251,6 +251,7 @@
       "statusApproved": "Approved",
       "statusRejected": "Rejected",
       "rejectionRemarksLabel": "Rejection Reason",
+      "contactSupport": "Contact support",
       "requestCredits": "{{count}} credits · {{amount}}",
       "requestDetailTitle": "Your request",
       "requestDetailFailed": "Couldn't load this request",
