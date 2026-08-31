@@ -13,7 +13,7 @@ type BrandLogoProps = {
 
 export function BrandLogo({
   light = false,
-  brandName = 'musafir249',
+  brandName = 'Mazad Al Safar',
 }: BrandLogoProps) {
   const wordmarkColor = light ? colors.text.inverse : colors.text.primary;
 

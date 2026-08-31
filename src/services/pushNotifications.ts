@@ -69,7 +69,7 @@ async function ensureAndroidNotificationChannel(): Promise<void> {
   }
   // Android 8+ drops pushes that have no channel. Create it before requesting a token.
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'Musafir249',
+    name: 'Mazad Al Safar',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#B42318',

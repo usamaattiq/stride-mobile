@@ -4,7 +4,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before 
 
 ## What this is
 
-`musafir249` (repo directory `stride-mobile`) is an Expo (SDK 54) / React Native app, currently implementing only the **auth flow**
+Mazad Al Safar (repo directory `stride-mobile`, npm package `musafir249`) is an Expo (SDK 54) / React Native app, currently implementing only the **auth flow**
 (welcome → signup → login) with a placeholder home screen. No backend is wired up yet — signup/login
 are demo/local-only (see `SignupDraftContext`, `Alert.alert('OTP resent', ...)`).
 
