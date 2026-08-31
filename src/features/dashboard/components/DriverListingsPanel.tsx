@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -20,7 +21,10 @@ import { tripApi } from "@/services/api/tripApi";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { usePullToRefresh } from "@/shared/hooks/usePullToRefresh";
-import { citiesReferToSamePlace, cityNameSearchHaystack, normalizeSearchText, prefetchCityNamesForSearch } from "@/shared/utils/localized-city-name";
+import {
+  resolveSearchQueryCityLabel,
+  toBrowseCityParams,
+} from "@/shared/utils/localized-city-name";
 import { ENV } from "@/shared/config/env";
 import { colors, spacing } from "@/theme";
 
@@ -43,54 +47,37 @@ import { mapTripDtoToTrip } from "../utils/trip.mapper";
 const SKELETON_COUNT = 3;
 const LISTING_CATEGORIES: TripListingCategory[] = ["all", "rfq", "auction"];
 const PAGE_SIZE = 20;
+const END_REACHED_THRESHOLD_PX = 200;
 const INITIAL_PAGE_WIDTH = Dimensions.get("window").width - spacing.md * 2;
 
-function matchesQuery(trip: Trip, query: string): boolean {
-  const normalized = normalizeSearchText(query);
-  if (!normalized) {
-    return true;
-  }
-  const haystack = normalizeSearchText(
-    [
-      cityNameSearchHaystack(trip.departureCity, trip.departurePoint),
-      cityNameSearchHaystack(trip.arrivalCity, trip.arrivalPoint),
-      trip.vehicleTitle ?? "",
-      trip.vehicleClass ?? "",
-    ].join(" "),
-  );
-  return haystack.includes(normalized);
+type CategoryState = {
+  trips: Trip[];
+  page: number;
+  totalPages: number;
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  loadError: string | null;
+  hasLoadedOnce: boolean;
+};
+
+function createCategoryState(): CategoryState {
+  return {
+    trips: [],
+    page: 1,
+    totalPages: 0,
+    isLoading: true,
+    isLoadingMore: false,
+    loadError: null,
+    hasLoadedOnce: false,
+  };
 }
 
-function matchesFilters(trip: Trip, filters: TripBrowseFilters): boolean {
-  if (
-    filters.paymentMethod &&
-    trip.paymentMethod !== filters.paymentMethod &&
-    trip.paymentMethod !== 'both'
-  ) {
-    return false;
-  }
-  if (filters.vehicleMode && trip.vehicleMode !== filters.vehicleMode) {
-    return false;
-  }
-  if (
-    filters.minSeats != null &&
-    (trip.vehicleTotalSeats ?? 0) < filters.minSeats
-  ) {
-    return false;
-  }
-  if (
-    filters.departureCity &&
-    !citiesReferToSamePlace(trip.departureCity, filters.departureCity)
-  ) {
-    return false;
-  }
-  if (
-    filters.arrivalCity &&
-    !citiesReferToSamePlace(trip.arrivalCity, filters.arrivalCity)
-  ) {
-    return false;
-  }
-  return true;
+function createInitialCategoryData(): Record<TripListingCategory, CategoryState> {
+  return {
+    all: createCategoryState(),
+    rfq: createCategoryState(),
+    auction: createCategoryState(),
+  };
 }
 
 export const DriverListingsPanel = React.memo(
@@ -99,12 +86,14 @@ export const DriverListingsPanel = React.memo(
     const navigation =
       useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
 
-    const [trips, setTrips] = React.useState<Trip[]>([]);
-    const [cityNamesEpoch, setCityNamesEpoch] = React.useState(0);
-    const [loadError, setLoadError] = React.useState<string | null>(null);
-    const [isScreenLoading, setIsScreenLoading] = React.useState(true);
-    const hasLoadedOnceRef = React.useRef(false);
     const [query, setQuery] = React.useState("");
+    const [debouncedQuery, setDebouncedQuery] = React.useState("");
+    // Trip city labels are stored in whichever single language the creator's
+    // app was in — a literal backend search can't match a query typed in a
+    // different script (e.g. Arabic vs. an English-stored "Lahore"). Resolve
+    // the query to its English city equivalent via geocoding before sending
+    // it; falls back to the raw text when it isn't a place name.
+    const [resolvedQuery, setResolvedQuery] = React.useState("");
     const [listingCategory, setListingCategory] =
       React.useState<TripListingCategory>("all");
     const [filters, setFilters] = React.useState<TripBrowseFilters>(
@@ -120,6 +109,47 @@ export const DriverListingsPanel = React.memo(
     const [visitedCategories, setVisitedCategories] = React.useState(
       () => new Set<TripListingCategory>(["all"]),
     );
+    const [categoryData, setCategoryData] = React.useState(
+      createInitialCategoryData,
+    );
+    const categoryDataRef = React.useRef(categoryData);
+    const visitedCategoriesRef = React.useRef(visitedCategories);
+    const paramsRef = React.useRef({ resolvedQuery, filters, routeType });
+
+    React.useEffect(() => {
+      categoryDataRef.current = categoryData;
+    }, [categoryData]);
+
+    React.useEffect(() => {
+      visitedCategoriesRef.current = visitedCategories;
+    }, [visitedCategories]);
+
+    React.useEffect(() => {
+      paramsRef.current = { resolvedQuery, filters, routeType };
+    }, [resolvedQuery, filters, routeType]);
+
+    React.useEffect(() => {
+      const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+      return () => clearTimeout(timer);
+    }, [query]);
+
+    React.useEffect(() => {
+      if (!debouncedQuery) {
+        setResolvedQuery("");
+        return;
+      }
+      let cancelled = false;
+      void resolveSearchQueryCityLabel(debouncedQuery, ENV.googleMapsApiKey).then(
+        (cityLabel) => {
+          if (!cancelled) {
+            setResolvedQuery(cityLabel || debouncedQuery);
+          }
+        },
+      );
+      return () => {
+        cancelled = true;
+      };
+    }, [debouncedQuery]);
 
     const typeOptions = React.useMemo(
       () => [
@@ -141,66 +171,162 @@ export const DriverListingsPanel = React.memo(
       });
     }, [listingCategory]);
 
-    const loadRequests = React.useCallback(async () => {
-      if (!hasLoadedOnceRef.current) {
-        setIsScreenLoading(true);
-      }
-      setLoadError(null);
-      try {
-        const result = await tripApi.browse({
-          kind: "requests",
-          page: 1,
-          limit: PAGE_SIZE,
-        });
-        const mapped = result.items.map(mapTripDtoToTrip);
-        setTrips(mapped);
-        const unique = new Map<
-          string,
-          { city: Trip["departureCity"]; latitude?: number; longitude?: number }
-        >();
-        for (const trip of mapped) {
-          unique.set(trip.departureCity.id, {
-            city: trip.departureCity,
-            latitude: trip.departurePoint?.latitude,
-            longitude: trip.departurePoint?.longitude,
+    // Stable identity: reads current search/filter/route params from a ref so
+    // it doesn't need to change (and re-trigger effects) whenever they do.
+    const loadCategoryPage = React.useCallback(
+      async (
+        category: TripListingCategory,
+        page: number,
+        mode: "replace" | "append" = "replace",
+      ) => {
+        const { resolvedQuery, filters, routeType } = paramsRef.current;
+        setCategoryData((current) => ({
+          ...current,
+          [category]: {
+            ...current[category],
+            isLoading: mode === "replace",
+            isLoadingMore: mode === "append",
+            loadError: null,
+          },
+        }));
+        try {
+          const [departure, arrival] = await Promise.all([
+            toBrowseCityParams(filters.departureCity, ENV.googleMapsApiKey),
+            toBrowseCityParams(filters.arrivalCity, ENV.googleMapsApiKey),
+          ]);
+          const result = await tripApi.browse({
+            kind: "requests",
+            q: resolvedQuery || undefined,
+            listingType: category === "all" ? undefined : category,
+            paymentMethod: filters.paymentMethod ?? undefined,
+            departureCity: departure.label,
+            departureCityId: departure.id,
+            arrivalCity: arrival.label,
+            arrivalCityId: arrival.id,
+            vehicleMode: filters.vehicleMode ?? undefined,
+            minSeats: filters.minSeats ?? undefined,
+            page,
+            limit: PAGE_SIZE,
           });
-          unique.set(trip.arrivalCity.id, {
-            city: trip.arrivalCity,
-            latitude: trip.arrivalPoint?.latitude,
-            longitude: trip.arrivalPoint?.longitude,
-          });
+          const mapped = result.items
+            .map(mapTripDtoToTrip)
+            .filter((trip) => routeType === null || trip.routeType === routeType);
+          setCategoryData((current) => ({
+            ...current,
+            [category]: {
+              trips:
+                mode === "append"
+                  ? [...current[category].trips, ...mapped]
+                  : mapped,
+              page,
+              totalPages: result.totalPages,
+              isLoading: false,
+              isLoadingMore: false,
+              loadError: null,
+              hasLoadedOnce: true,
+            },
+          }));
+        } catch (error) {
+          setCategoryData((current) => ({
+            ...current,
+            [category]: {
+              ...current[category],
+              trips: mode === "append" ? current[category].trips : [],
+              isLoading: false,
+              isLoadingMore: false,
+              loadError: getErrorMessage(
+                error,
+                t("dashboard.home.requestsLoadFailed"),
+              ),
+              hasLoadedOnce: true,
+            },
+          }));
         }
-        void prefetchCityNamesForSearch(
-          [...unique.values()],
-          ENV.googleMapsApiKey,
-        ).then(() => {
-          setCityNamesEpoch((value) => value + 1);
-        });
-      } catch (error) {
-        setLoadError(
-          getErrorMessage(error, t("dashboard.home.requestsLoadFailed")),
-        );
-        setTrips([]);
-      } finally {
-        hasLoadedOnceRef.current = true;
-        setIsScreenLoading(false);
+      },
+      [t],
+    );
+
+    const loadMoreCategory = React.useCallback(
+      (category: TripListingCategory) => {
+        const state = categoryDataRef.current[category];
+        if (
+          state.isLoading ||
+          state.isLoadingMore ||
+          state.page >= state.totalPages
+        ) {
+          return;
+        }
+        void loadCategoryPage(category, state.page + 1, "append");
+      },
+      [loadCategoryPage],
+    );
+
+    // Search/filter/route-type changes: reset every visited category back to
+    // page 1 and refetch it with the new params.
+    React.useEffect(() => {
+      setCategoryData((current) => {
+        const next = { ...current };
+        for (const category of LISTING_CATEGORIES) {
+          next[category] = {
+            ...createCategoryState(),
+            isLoading: visitedCategoriesRef.current.has(category),
+          };
+        }
+        return next;
+      });
+      for (const category of visitedCategoriesRef.current) {
+        void loadCategoryPage(category, 1);
       }
-    }, [t]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resolvedQuery, filters, routeType, loadCategoryPage]);
 
-    const { refreshControlProps } = usePullToRefresh(loadRequests);
+    // Newly-visited tab: fetch its first page immediately.
+    const prevVisitedRef = React.useRef(visitedCategories);
+    React.useEffect(() => {
+      for (const category of visitedCategories) {
+        if (!prevVisitedRef.current.has(category)) {
+          void loadCategoryPage(category, 1);
+        }
+      }
+      prevVisitedRef.current = visitedCategories;
+    }, [visitedCategories, loadCategoryPage]);
 
+    // Screen focus: refetch whatever's currently visited at its current page.
     useFocusEffect(
       React.useCallback(() => {
-        let cancelled = false;
-        void loadRequests().finally(() => {
-          if (cancelled) {
-            return;
-          }
-        });
-        return () => {
-          cancelled = true;
-        };
-      }, [loadRequests]),
+        for (const category of visitedCategoriesRef.current) {
+          void loadCategoryPage(
+            category,
+            categoryDataRef.current[category].page,
+          );
+        }
+      }, [loadCategoryPage]),
+    );
+
+    const loadVisitedCategories = React.useCallback(async () => {
+      await Promise.all(
+        [...visitedCategoriesRef.current].map((category) =>
+          loadCategoryPage(category, 1),
+        ),
+      );
+    }, [loadCategoryPage]);
+
+    const { refreshControlProps } = usePullToRefresh(loadVisitedCategories);
+
+    const onCategoryScroll = React.useCallback(
+      (
+        category: TripListingCategory,
+        event: NativeSyntheticEvent<NativeScrollEvent>,
+      ) => {
+        const { contentOffset, layoutMeasurement, contentSize } =
+          event.nativeEvent;
+        const distanceFromBottom =
+          contentSize.height - layoutMeasurement.height - contentOffset.y;
+        if (distanceFromBottom <= END_REACHED_THRESHOLD_PX) {
+          loadMoreCategory(category);
+        }
+      },
+      [loadMoreCategory],
     );
 
     const selectListingCategory = React.useCallback(
@@ -271,23 +397,6 @@ export const DriverListingsPanel = React.memo(
 
     const activeFilterCount = countActiveTripBrowseFilters(filters);
 
-    const tripsByCategory = React.useMemo(() => {
-      const applySharedFilters = (trip: Trip) =>
-        matchesQuery(trip, query) &&
-        matchesFilters(trip, filters) &&
-        (routeType === null || trip.routeType === routeType);
-
-      return {
-        all: trips.filter(applySharedFilters),
-        rfq: trips.filter(
-          (trip) => trip.listingType === "rfq" && applySharedFilters(trip),
-        ),
-        auction: trips.filter(
-          (trip) => trip.listingType === "auction" && applySharedFilters(trip),
-        ),
-      };
-    }, [trips, query, filters, routeType, cityNamesEpoch]);
-
     const renderCategoryPage = (
       category: TripListingCategory,
       width: number,
@@ -296,10 +405,10 @@ export const DriverListingsPanel = React.memo(
         return <View key={category} style={[styles.page, { width }]} />;
       }
 
-      const pageTrips = tripsByCategory[category];
+      const state = categoryData[category];
       let pageBody: React.ReactElement;
 
-      if (isScreenLoading && !hasLoadedOnceRef.current) {
+      if (state.isLoading && !state.hasLoadedOnce) {
         pageBody = (
           <View style={styles.skeletonList}>
             {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -309,19 +418,19 @@ export const DriverListingsPanel = React.memo(
             ))}
           </View>
         );
-      } else if (loadError && trips.length === 0) {
+      } else if (state.loadError && state.trips.length === 0) {
         pageBody = (
           <View style={styles.centered}>
-            <AppText style={styles.errorText}>{loadError}</AppText>
+            <AppText style={styles.errorText}>{state.loadError}</AppText>
             <Button
               label={t("dashboard.listings.retry")}
               onPress={() => {
-                void loadRequests();
+                void loadCategoryPage(category, state.page);
               }}
             />
           </View>
         );
-      } else if (trips.length === 0) {
+      } else if (state.trips.length === 0) {
         pageBody = (
           <View style={styles.centered}>
             <AppText weight="semibold" style={styles.emptyTitle}>
@@ -332,21 +441,10 @@ export const DriverListingsPanel = React.memo(
             </AppText>
           </View>
         );
-      } else if (pageTrips.length === 0) {
-        pageBody = (
-          <View style={styles.centered}>
-            <AppText weight="semibold" style={styles.emptyTitle}>
-              {t("dashboard.home.listingsFilterEmptyTitle")}
-            </AppText>
-            <AppText style={styles.emptySubtitle}>
-              {t("dashboard.home.listingsFilterEmptySubtitle")}
-            </AppText>
-          </View>
-        );
       } else {
         pageBody = (
           <View style={styles.list}>
-            {pageTrips.map((trip) => (
+            {state.trips.map((trip) => (
               <ListingCard
                 key={trip.id}
                 trip={trip}
@@ -356,6 +454,11 @@ export const DriverListingsPanel = React.memo(
                 }
               />
             ))}
+            {state.isLoadingMore && (
+              <View style={styles.loadMoreIndicator}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            )}
           </View>
         );
       }
@@ -368,6 +471,8 @@ export const DriverListingsPanel = React.memo(
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
+          onScroll={(event) => onCategoryScroll(category, event)}
+          scrollEventThrottle={100}
           refreshControl={<RefreshControl {...refreshControlProps} />}
         >
           {pageBody}
@@ -484,6 +589,10 @@ const styles = StyleSheet.create({
   },
   skeletonList: {
     gap: spacing.sm,
+  },
+  loadMoreIndicator: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
   },
   centered: {
     gap: spacing.md,

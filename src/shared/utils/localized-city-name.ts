@@ -172,6 +172,48 @@ export async function resolveLocalizedCityName(input: ResolveCityInput): Promise
   return request;
 }
 
+const searchQueryCache = new Map<string, string | null>();
+const searchQueryInflight = new Map<string, Promise<string | null>>();
+
+/**
+ * Resolves free-text search input (possibly typed in Arabic) to the English
+ * city name it refers to, via Google Geocoding. Trip records only ever store
+ * one language for their city labels (whichever the creator's app was in),
+ * so a literal substring search on the backend can't match a query typed in
+ * a different script. Returns null when the text doesn't geocode to a city
+ * (e.g. it's a vehicle name, not a place) — callers should fall back to the
+ * raw query in that case.
+ */
+export async function resolveSearchQueryCityLabel(
+  query: string,
+  apiKey: string,
+): Promise<string | null> {
+  const trimmed = query.trim();
+  if (!trimmed || !apiKey) {
+    return null;
+  }
+  const key = trimmed.toLowerCase();
+  if (searchQueryCache.has(key)) {
+    return searchQueryCache.get(key) ?? null;
+  }
+  const pending = searchQueryInflight.get(key);
+  if (pending) {
+    return pending;
+  }
+  const request = geocodeAddress(trimmed, apiKey, 'en')
+    .then((result) => {
+      const city = result?.city?.trim() || null;
+      searchQueryCache.set(key, city);
+      return city;
+    })
+    .catch(() => null)
+    .finally(() => {
+      searchQueryInflight.delete(key);
+    });
+  searchQueryInflight.set(key, request);
+  return request;
+}
+
 /** Attach a Google place_id and a language-aware city label when the picker only has a local id. */
 export async function enrichSelectedCity(
   city: TripCity,
