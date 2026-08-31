@@ -6,6 +6,27 @@ export function startOfLocalDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+/** Inclusive local calendar days in a [start, end] window. Same day = 1. */
+export const MAX_DATE_WINDOW_DAYS = 4;
+
+export function addLocalDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+export function inclusiveLocalDayCount(start: Date, end: Date): number {
+  const startDay = startOfLocalDay(start).getTime();
+  const endDay = startOfLocalDay(end).getTime();
+  const diff = Math.round((endDay - startDay) / 86_400_000);
+  return Math.abs(diff) + 1;
+}
+
+export function clampDateWindowEnd(start: Date, end: Date, maxDays = MAX_DATE_WINDOW_DAYS): Date {
+  const startDay = startOfLocalDay(start);
+  const endDay = startOfLocalDay(end);
+  const latest = addLocalDays(startDay, maxDays - 1);
+  return endDay.getTime() > latest.getTime() ? latest : endDay;
+}
+
 export function isSameLocalDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -81,6 +102,19 @@ export function mondayFirstWeekday(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
 
+/** True when start and end fall on different local calendar days. */
+export function isMultiDayWindow(
+  startIso: string | null | undefined,
+  endIso: string | null | undefined,
+): boolean {
+  const start = parseIsoDate(startIso ?? null);
+  const end = parseIsoDate(endIso ?? null);
+  if (!start || !end) {
+    return false;
+  }
+  return !isSameLocalDay(start, end);
+}
+
 export function formatDateRangeLabel(
   startIso: string | null | undefined,
   endIso: string | null | undefined,
@@ -112,6 +146,7 @@ export function formatTripDateTime(
   iso: string | null | undefined,
   locale: string,
   fallback = '—',
+  includeTime = true,
 ): string {
   if (!iso) {
     return fallback;
@@ -126,6 +161,9 @@ export function formatTripDateTime(
     month: 'short',
     year: 'numeric',
   });
+  if (!includeTime) {
+    return day;
+  }
   const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',

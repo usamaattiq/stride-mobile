@@ -1,5 +1,6 @@
 import React from 'react';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -14,12 +15,14 @@ export type WhatsAppContactCardProps = {
   /** Header icon — defaults to user. */
   icon?: React.ComponentProps<typeof FontAwesome>['name'];
   name: string | null;
+  /** Profile photo when available. */
+  avatarUrl?: string | null;
   /** When set, WhatsApp is shown. Omit until contact exchange (confirm). */
   phone?: string | null;
   /** Prefill text for WhatsApp. */
   message: string;
-  /** Opens in-app 1:1 chat (available once an offer/bid is in play). */
-  onMessagePress?: () => void;
+  /** Opens this user's profile (admin listing detail). */
+  onProfilePress?: () => void;
 };
 
 const WHATSAPP_GREEN = '#25D366';
@@ -36,15 +39,18 @@ export function WhatsAppContactCard({
   title,
   icon = 'user',
   name,
+  avatarUrl,
   phone,
   message,
   onMessagePress,
+  onProfilePress,
 }: WhatsAppContactCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const phoneValue = phone?.trim() || null;
   const showWhatsApp = Boolean(phoneValue);
   const displayName = name?.trim() || null;
   const initial = displayInitial(displayName);
+  const avatarUri = avatarUrl?.trim() || null;
 
   const openChat = () => {
     if (!phoneValue) {
@@ -62,12 +68,26 @@ export function WhatsAppContactCard({
         </AppText>
       </View>
 
-      <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <AppText weight="bold" style={styles.avatarInitial}>
-            {initial}
-          </AppText>
-        </View>
+      <Pressable
+        onPress={onProfilePress}
+        disabled={!onProfilePress}
+        style={({ pressed }) => [styles.identity, pressed && onProfilePress && styles.identityPressed]}
+        accessibilityRole={onProfilePress ? 'button' : undefined}
+      >
+        {avatarUri ? (
+          <Image
+            source={{ uri: avatarUri }}
+            style={styles.avatarImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        ) : (
+          <View style={styles.avatar}>
+            <AppText weight="bold" style={styles.avatarInitial}>
+              {initial}
+            </AppText>
+          </View>
+        )}
         <View style={styles.copy}>
           <AppText weight="semibold" style={styles.name} numberOfLines={1}>
             {displayName ?? t('dashboard.listings.detail.contact.fallbackName')}
@@ -78,7 +98,7 @@ export function WhatsAppContactCard({
               : t('dashboard.listings.detail.contact.chatHint')}
           </AppText>
         </View>
-      </View>
+      </Pressable>
 
       {onMessagePress ? (
         <Pressable
@@ -136,6 +156,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  identityPressed: {
+    opacity: 0.85,
+  },
   avatar: {
     width: 36,
     height: 36,
@@ -143,6 +166,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
   },
   avatarInitial: {
     fontSize: 15,

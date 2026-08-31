@@ -12,13 +12,13 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
-import { formatLatinNumber } from '@/shared/utils/latin-digits';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 
 import { PriceRangeSlider } from './trip/PriceRangeSlider';
 
 const PRICE_FLOOR = 0;
-const PRICE_CEILING = 50000;
+const PRICE_CEILING = 1000000;
 const PRICE_STEP = 500;
 
 type SearchResultsFilterSheetProps = {
@@ -45,7 +45,7 @@ const PAYMENT_OPTIONS: ChipOption<TripPaymentMethod>[] = [
 ];
 
 function formatPrice(value: number): string {
-  return `PKR ${formatLatinNumber(Math.round(value))}`;
+  return formatPriceWithCurrency(value);
 }
 
 export function SearchResultsFilterSheet({
@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
   scrollContent: {
     gap: spacing.lg,

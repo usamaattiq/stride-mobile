@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 
 import { navigationRef } from '@/navigation/navigationRef';
 import { resolveDeepLinkFromNotificationData } from '@/services/pushNotifications';
+import { authStore } from '@/store/authStore';
 
 const SCHEME = 'musafir249';
 const NAV_RETRY_MS = 80;
@@ -39,6 +40,19 @@ function navigateToListing(tripId: string, conversationId?: string): void {
   });
 }
 
+function navigateToBuyCredits(): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'MainTabs',
+    params: {
+      screen: 'Home',
+      params: {
+        screen: 'BuyCredits',
+      },
+    },
+    initial: false,
+  });
+}
+
 function navigateToNotifications(): void {
   navigationRef.navigate('Dashboard', {
     screen: 'MainTabs',
@@ -53,9 +67,23 @@ function navigateToNotifications(): void {
   });
 }
 
+function navigateToVerification(document: 'nic' | 'license'): void {
+  navigationRef.navigate('Dashboard', {
+    screen: 'MainTabs',
+    params: {
+      screen: 'Settings',
+      params: {
+        screen: document === 'nic' ? 'NicVerification' : 'DriverVerification',
+        params: document === 'license' ? { purpose: 'complete' } : undefined,
+      },
+    },
+    initial: false,
+  });
+}
+
 /**
  * Handles `musafir249://listing/<tripId>`, `musafir249://chat/<tripId>/<conversationId>`,
- * and `musafir249://notifications`.
+ * `musafir249://verification/<nic|license>`, and `musafir249://notifications`.
  */
 export function handlePingDeepLink(url: string): void {
   try {
@@ -78,8 +106,19 @@ export function handlePingDeepLink(url: string): void {
       navigateToListing(tripId, segments[2]);
       return;
     }
+    if (target === 'verification') {
+      const document = segments[1];
+      if (document === 'nic' || document === 'license') {
+        navigateToVerification(document);
+      }
+      return;
+    }
     if (target === 'notifications') {
       navigateToNotifications();
+      return;
+    }
+    if (target === 'credits') {
+      navigateToBuyCredits();
     }
   } catch (error) {
     console.warn('[push] Failed to handle deep link', url, error);
@@ -118,6 +157,9 @@ function parsePath(url: string): string[] {
 }
 
 function openFromData(data: Record<string, unknown> | undefined): void {
+  if (authStore.getSessionKind() === 'admin') {
+    return;
+  }
   const deepLink = resolveDeepLinkFromNotificationData(data);
   if (!deepLink) {
     return;

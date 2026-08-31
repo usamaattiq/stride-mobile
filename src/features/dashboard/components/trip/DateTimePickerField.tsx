@@ -29,8 +29,8 @@ type DateTimePickerFieldProps = {
   minimumDate?: Date;
   required?: boolean;
   optional?: boolean;
-  /** 'time' hides the date part — use when the date is already picked elsewhere. */
-  mode?: 'date-time' | 'time';
+  /** 'time' hides the date part — use when the date is already picked elsewhere. 'date' hides the time part. */
+  mode?: 'date-time' | 'time' | 'date';
   /** Skip the built-in label — use when a shared heading covers this field. */
   hideLabel?: boolean;
   /** `search` matches passenger-home fields on a white surface. */
@@ -41,6 +41,8 @@ type DateTimePickerFieldProps = {
    * whether `value` is set, for fields with no separate default-filling step.
    */
   timeConfirmed?: boolean;
+  /** iOS: expand the spinner under this field instead of a bottom sheet. */
+  inline?: boolean;
 };
 
 function parseIso(value: string | null): Date {
@@ -80,6 +82,7 @@ export function DateTimePickerField({
   hideLabel = false,
   variant = 'default',
   timeConfirmed,
+  inline = false,
 }: DateTimePickerFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
@@ -153,12 +156,12 @@ export function DateTimePickerField({
       ) : null}
 
       <View style={styles.row}>
-        {mode === 'date-time' ? (
+        {mode !== 'time' ? (
           <Pressable
             onPress={() => openPicker('date')}
             style={[
               styles.part,
-              styles.partDate,
+              mode === 'date-time' ? styles.partDate : styles.partFull,
               variant === 'search' && styles.partSearch,
             ]}
             accessibilityRole="button"
@@ -173,23 +176,25 @@ export function DateTimePickerField({
           </Pressable>
         ) : null}
 
-        <Pressable
-          onPress={() => openPicker('time')}
-          style={[
-            styles.part,
-            mode === 'date-time' ? styles.partTime : styles.partFull,
-            variant === 'search' && styles.partSearch,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('trips.create.selectTime')}
-        >
-          {variant === 'search' ? (
-            <FontAwesome name="clock-o" size={13} color={colors.text.secondary} />
-          ) : null}
-          <AppText weight="semibold" style={[styles.partValue, !hasTimeValue && styles.partPlaceholder]}>
-            {hasTimeValue ? formatTime(current, locale) : t('trips.create.selectTime')}
-          </AppText>
-        </Pressable>
+        {mode !== 'date' ? (
+          <Pressable
+            onPress={() => openPicker('time')}
+            style={[
+              styles.part,
+              mode === 'date-time' ? styles.partTime : styles.partFull,
+              variant === 'search' && styles.partSearch,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('trips.create.selectTime')}
+          >
+            {variant === 'search' ? (
+              <FontAwesome name="clock-o" size={13} color={colors.text.secondary} />
+            ) : null}
+            <AppText weight="semibold" style={[styles.partValue, !hasTimeValue && styles.partPlaceholder]}>
+              {hasTimeValue ? formatTime(current, locale) : t('trips.create.selectTime')}
+            </AppText>
+          </Pressable>
+        ) : null}
       </View>
       {onClear && hasValue ? (
         <Pressable
@@ -209,10 +214,48 @@ export function DateTimePickerField({
           minimumDate={minimumDate}
           onChange={handleAndroidChange}
           display="default"
+          design="default"
         />
       ) : null}
 
-      {Platform.OS === 'ios' ? (
+      {Platform.OS === 'ios' && pickerMode && inline ? (
+        <View style={styles.inlinePicker}>
+          <View style={styles.iosPickerWrap}>
+            <DateTimePicker
+              value={draft}
+              mode={pickerMode}
+              minimumDate={minimumDate}
+              onChange={handleIosChange}
+              display="spinner"
+              themeVariant="light"
+              textColor={colors.text.primary}
+              style={styles.iosPicker}
+            />
+          </View>
+          <View style={styles.inlineActions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleIosCancel}
+              style={styles.inlineAction}
+            >
+              <AppText weight="semibold" style={styles.inlineActionMuted}>
+                {t('common.cancel')}
+              </AppText>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleIosDone}
+              style={styles.inlineAction}
+            >
+              <AppText weight="semibold" style={styles.modalDoneText}>
+                {t('common.done')}
+              </AppText>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      {Platform.OS === 'ios' && !inline ? (
         <Modal
           transparent
           animationType="fade"
@@ -320,6 +363,30 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontSize: 12,
+    color: colors.text.secondary,
+  },
+  inlinePicker: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+  },
+  inlineActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+  },
+  inlineAction: {
+    paddingVertical: spacing.sm,
+  },
+  inlineActionMuted: {
+    fontSize: 16,
     color: colors.text.secondary,
   },
   modalBackdrop: {

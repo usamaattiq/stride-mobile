@@ -64,6 +64,8 @@ type AuthScaffoldProps = {
   showLanguageSwitcher?: boolean;
   /** Optional control rendered on the right of the header top bar. */
   headerRight?: React.ReactNode;
+  /** Optional control rendered beside the header title (e.g. a Requests button). */
+  titleRight?: React.ReactNode;
   /** Optional content rendered in the red header below the title/subtitle. */
   headerExtra?: React.ReactNode;
   /**
@@ -86,6 +88,14 @@ type AuthScaffoldProps = {
   extraKeyboardSpace?: number;
   /** Optional pull-to-refresh props for the scrollable body. */
   refreshControlProps?: RefreshControlProps;
+  /** Pinned below the scroll body (e.g. auction bid composer). */
+  footer?: React.ReactNode;
+  /**
+   * Dashboard tab roots: apply the status-bar inset on the red header only (matches
+   * Home/Settings) instead of wrapping the whole screen in SafeAreaView, which can
+   * jump on first lazy tab mount.
+   */
+  manualTopInset?: boolean;
 };
 
 export function AuthScaffold({
@@ -102,6 +112,7 @@ export function AuthScaffold({
   showLegalFooter = true,
   showLanguageSwitcher = true,
   headerRight,
+  titleRight,
   headerExtra,
   compactHeader = false,
   centerTitleInTopBar = false,
@@ -110,6 +121,8 @@ export function AuthScaffold({
   scrollBottomOffset,
   extraKeyboardSpace,
   refreshControlProps,
+  footer,
+  manualTopInset = false,
 }: AuthScaffoldProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   const hasStepper = Boolean(stepCount && currentStep);
@@ -121,6 +134,8 @@ export function AuthScaffold({
     ? spacing.xl
     : spacing.xl + Math.max(insets.bottom, spacing.xs);
 
+  const bodyPad = footer ? spacing.lg : contentBottomPad;
+
   const showTitleInTopBar = centerTitleInTopBar && Boolean(title);
   const showTitleInHeaderCopy = Boolean(title) && !showTitleInTopBar;
 
@@ -129,12 +144,12 @@ export function AuthScaffold({
       style={styles.cardScroll}
       contentContainerStyle={[
         compactHeader ? styles.cardWrapScrollCompact : styles.cardWrapScroll,
-        { paddingBottom: contentBottomPad },
+        { paddingBottom: bodyPad },
         contentWrapStyle,
       ]}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
-      bottomOffset={scrollBottomOffset ?? spacing.md}
+      {...(scrollBottomOffset != null ? { bottomOffset: scrollBottomOffset } : {})}
       extraKeyboardSpace={extraKeyboardSpace}
       refreshControl={
         refreshControlProps ? <RefreshControl {...refreshControlProps} /> : undefined
@@ -146,7 +161,7 @@ export function AuthScaffold({
     <View
       style={[
         compactHeader ? styles.cardWrapStaticCompact : styles.cardWrapStatic,
-        { paddingBottom: contentBottomPad },
+        { paddingBottom: bodyPad },
         contentWrapStyle,
       ]}
     >
@@ -154,8 +169,13 @@ export function AuthScaffold({
     </View>
   );
 
+  const Screen = manualTopInset ? View : SafeAreaView;
+  const screenProps = manualTopInset
+    ? { style: styles.safeArea }
+    : { style: styles.safeArea, edges: ['top', 'left', 'right'] as const };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <Screen {...screenProps}>
       <FocusAwareStatusBar style="light" />
       <View style={styles.root}>
         <View
@@ -163,6 +183,7 @@ export function AuthScaffold({
             styles.header,
             compactHeader ? styles.headerCompact : null,
             compactHeader && centerTitleInTopBar ? styles.headerCompactCenteredTitle : null,
+            manualTopInset ? { paddingTop: insets.top + spacing.md } : null,
             !compactHeader
               ? {
                   height: hasStepper
@@ -225,15 +246,18 @@ export function AuthScaffold({
               ]}
             >
               {showTitleInHeaderCopy ? (
-                <AppText
-                  weight="bold"
-                  style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.6}
-                >
-                  {title}
-                </AppText>
+                <View style={styles.titleRow}>
+                  <AppText
+                    weight="bold"
+                    style={[styles.title, compactHeader && styles.titleCompact, titleStyle]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
+                  >
+                    {title}
+                  </AppText>
+                  {titleRight}
+                </View>
               ) : null}
               {subtitle ? (
                 <AppText
@@ -260,6 +284,16 @@ export function AuthScaffold({
 
         <View style={[styles.cardWrap, compactHeader && styles.cardWrapCompact, cardWrapStyle]}>
           {body}
+          {footer ? (
+            <View
+              style={[
+                styles.screenFooter,
+                { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+              ]}
+            >
+              {footer}
+            </View>
+          ) : null}
         </View>
 
         {showLegalFooter && !isKeyboardVisible ? (
@@ -271,7 +305,7 @@ export function AuthScaffold({
           />
         ) : null}
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -360,7 +394,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 30,
     lineHeight: 36,
+    flexShrink: 1,
     maxWidth: 320,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    width: '100%',
   },
   titleCompact: {
     fontSize: 22,
@@ -413,6 +455,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
+  },
+  screenFooter: {
+    backgroundColor: colors.white,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.default,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
   legalFooter: {
     backgroundColor: colors.white,

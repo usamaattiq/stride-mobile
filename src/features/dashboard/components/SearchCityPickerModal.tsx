@@ -21,6 +21,7 @@ import { SUGGESTED_CITIES } from '@/features/dashboard/constants/suggestedCities
 import type { TripCity } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import type { TripSubzonePointDto } from '@/services/api/tripApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { FocusAwareStatusBar } from '@/shared/components/FocusAwareStatusBar';
 import { ENV } from '@/shared/config/env';
@@ -28,6 +29,10 @@ import { cityDisplayName } from '@/shared/utils/city-display-name';
 import { searchCities } from '@/shared/utils/city-search';
 import { enrichSelectedCity } from '@/shared/utils/localized-city-name';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
+
+type PickerListItem =
+  | { kind: 'saved'; id: string; location: TripSubzonePointDto }
+  | { kind: 'city'; id: string; city: TripCity };
 
 type SearchCityPickerModalProps = {
   visible: boolean;
@@ -40,6 +45,8 @@ type SearchCityPickerModalProps = {
   onClose: () => void;
   onSelect: (city: TripCity) => void;
   onChooseMap?: () => void;
+  savedLocations?: TripSubzonePointDto[];
+  onSelectSavedLocation?: (location: TripSubzonePointDto) => void;
 };
 
 const OPEN_MS = 180;
@@ -56,14 +63,6 @@ function filterSuggested(query: string): TripCity[] {
   }
   return SUGGESTED_CITIES.filter((city) => city.label.toLowerCase().includes(trimmed));
 }
-
-const keyExtractor = (item: TripCity) => item.id;
-
-const getItemLayout = (_: ArrayLike<TripCity> | null | undefined, index: number) => ({
-  length: ROW_HEIGHT,
-  offset: ROW_HEIGHT * index,
-  index,
-});
 
 type CityRowProps = {
   city: TripCity;
@@ -102,6 +101,36 @@ const CityRow = React.memo(function CityRow({
   );
 });
 
+type SavedLocationRowProps = {
+  location: TripSubzonePointDto;
+  onPress: (location: TripSubzonePointDto) => void;
+};
+
+const SavedLocationRow = React.memo(function SavedLocationRow({
+  location,
+  onPress,
+}: SavedLocationRowProps): React.ReactElement {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => onPress(location)}
+      style={({ pressed }) => [styles.savedLocationRow, pressed && styles.pressed]}
+    >
+      <View style={styles.cityIcon}>
+        <FontAwesome name="map-marker" size={14} color={colors.primary} />
+      </View>
+      <View style={styles.locationCopy}>
+        <AppText weight="regular" style={styles.locationName} numberOfLines={1}>
+          {location.name}
+        </AppText>
+        <AppText style={styles.locationCity} numberOfLines={1}>
+          {cityDisplayName(location.cityLabel)}
+        </AppText>
+      </View>
+    </Pressable>
+  );
+});
+
 export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   visible,
   mode,
@@ -111,6 +140,8 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   onClose,
   onSelect,
   onChooseMap,
+  savedLocations = [],
+  onSelectSavedLocation,
 }: SearchCityPickerModalProps): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
@@ -125,15 +156,18 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   ).current;
   const closingRef = React.useRef(false);
   const pendingSelectRef = React.useRef<TripCity | null>(null);
+  const pendingSavedLocationRef = React.useRef<TripSubzonePointDto | null>(null);
   const pendingMapRef = React.useRef(false);
   const onCloseRef = React.useRef(onClose);
   const onSelectRef = React.useRef(onSelect);
   const onChooseMapRef = React.useRef(onChooseMap);
+  const onSelectSavedLocationRef = React.useRef(onSelectSavedLocation);
   const searchGenRef = React.useRef(0);
 
   onCloseRef.current = onClose;
   onSelectRef.current = onSelect;
   onChooseMapRef.current = onChooseMap;
+  onSelectSavedLocationRef.current = onSelectSavedLocation;
 
   const [rendered, setRendered] = React.useState(visible);
   const [query, setQuery] = React.useState('');
@@ -163,14 +197,46 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     return source.filter((city) => city.id !== excludeCityId);
   }, [excludeCityId, query, remoteResults]);
 
+  const filteredSavedLocations = React.useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) {
+      return [];
+    }
+    return savedLocations.filter((location) => {
+      const cityKey = location.cityId ?? `subzone-${location.id}`;
+      if (excludeCityId && cityKey === excludeCityId) {
+        return false;
+      }
+      return (
+        location.name.toLowerCase().includes(trimmed) ||
+        location.cityLabel.toLowerCase().includes(trimmed)
+      );
+    });
+  }, [excludeCityId, query, savedLocations]);
+
+  const listItems = React.useMemo((): PickerListItem[] => {
+    const items: PickerListItem[] = [];
+    for (const location of filteredSavedLocations) {
+      items.push({ kind: 'saved', id: `saved-${location.id}`, location });
+    }
+    for (const city of cities) {
+      items.push({ kind: 'city', id: city.id, city });
+    }
+    return items;
+  }, [cities, filteredSavedLocations]);
+
   const finishClose = React.useCallback(() => {
     const selected = pendingSelectRef.current;
+    const savedLocation = pendingSavedLocationRef.current;
     const openMap = pendingMapRef.current;
     pendingSelectRef.current = null;
+    pendingSavedLocationRef.current = null;
     pendingMapRef.current = false;
     closingRef.current = false;
     setRendered(false);
-    if (selected) {
+    if (savedLocation) {
+      onSelectSavedLocationRef.current?.(savedLocation);
+    } else if (selected) {
       onSelectRef.current(selected);
     }
     onCloseRef.current();
@@ -203,6 +269,7 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     if (visible) {
       closingRef.current = false;
       pendingSelectRef.current = null;
+      pendingSavedLocationRef.current = null;
       pendingMapRef.current = false;
       setRendered(true);
       setQuery(value?.label ?? '');
@@ -275,6 +342,18 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
     };
   }, [excludeCityId, query, rendered, currentLanguage]);
 
+  const handleSavedLocationPress = React.useCallback(
+    (location: TripSubzonePointDto) => {
+      const cityKey = location.cityId ?? `subzone-${location.id}`;
+      if (excludeCityId && cityKey === excludeCityId) {
+        return;
+      }
+      pendingSavedLocationRef.current = location;
+      runClose();
+    },
+    [excludeCityId, runClose],
+  );
+
   const handleSelect = React.useCallback(
     (city: TripCity) => {
       if (excludeCityId && city.id === excludeCityId) {
@@ -289,10 +368,17 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
   );
 
   const renderItem = React.useCallback(
-    ({ item }: ListRenderItemInfo<TripCity>) => (
-      <CityRow city={item} selected={selectedId === item.id} onPress={handleSelect} />
-    ),
-    [handleSelect, selectedId],
+    ({ item }: ListRenderItemInfo<PickerListItem>) => {
+      if (item.kind === 'saved') {
+        return (
+          <SavedLocationRow location={item.location} onPress={handleSavedLocationPress} />
+        );
+      }
+      return (
+        <CityRow city={item.city} selected={selectedId === item.city.id} onPress={handleSelect} />
+      );
+    },
+    [handleSavedLocationPress, handleSelect, selectedId],
   );
 
   const listEmpty = React.useMemo(() => {
@@ -417,17 +503,18 @@ export const SearchCityPickerModal = React.memo(function SearchCityPickerModal({
               </Pressable>
             ) : null}
 
-            <View style={styles.sectionHeader}>
-              <AppText weight="semibold" style={styles.sectionTitle}>
-                {sectionTitle}
-              </AppText>
-            </View>
+            {query.trim().length === 0 ? (
+              <View style={styles.sectionHeader}>
+                <AppText weight="semibold" style={styles.sectionTitle}>
+                  {sectionTitle}
+                </AppText>
+              </View>
+            ) : null}
 
             <FlatList
-              data={cities}
-              keyExtractor={keyExtractor}
+              data={listItems}
+              keyExtractor={(item) => item.id}
               renderItem={renderItem}
-              getItemLayout={getItemLayout}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               removeClippedSubviews
@@ -522,6 +609,13 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xs,
   },
+  sectionHeaderInline: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  listSection: {
+    paddingHorizontal: spacing.md,
+  },
   mapRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -556,6 +650,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.default,
   },
+  savedLocationRow: {
+    minHeight: ROW_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border.default,
+  },
   cityRowSelected: {
     backgroundColor: colors.primarySoft,
     marginHorizontal: -spacing.xs,
@@ -577,6 +680,19 @@ const styles = StyleSheet.create({
   },
   cityLabelSelected: {
     color: colors.primary,
+  },
+  locationCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  locationName: {
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+  locationCity: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   empty: {
     alignItems: 'center',

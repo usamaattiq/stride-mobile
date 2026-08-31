@@ -100,7 +100,7 @@ export function TripFilterSheet({
   };
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.75}>
+    <AppBottomSheet visible={visible} onClose={onClose} heightRatio={0.85}>
       <View style={styles.sheetHandle} />
       <View style={styles.headerRow}>
         <AppText weight="semibold" style={styles.sheetTitle}>
@@ -113,8 +113,9 @@ export function TripFilterSheet({
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        nestedScrollEnabled
         contentContainerStyle={styles.scrollContent}
-        scrollEnabled={false}
       >
         <SeatsStepper
           label={t('dashboard.home.filterSeats')}
@@ -311,6 +312,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
   footerRow: {
     flexDirection: 'row',

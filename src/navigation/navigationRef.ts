@@ -10,3 +10,17 @@ export function resetToWelcome(): void {
     navigationRef.reset({ index: 0, routes: [{ name: 'Welcome' }] });
   }
 }
+
+/** Logged-in root: drop Welcome / login / signup from the back stack. */
+export function resetToDashboard(): void {
+  if (navigationRef.isReady()) {
+    navigationRef.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+  }
+}
+
+/** Admin root after admin login. */
+export function resetToAdmin(): void {
+  if (navigationRef.isReady()) {
+    navigationRef.reset({ index: 0, routes: [{ name: 'Admin' }] });
+  }
+}

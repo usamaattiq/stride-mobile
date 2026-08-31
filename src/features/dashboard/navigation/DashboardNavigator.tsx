@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import type { NavigationProp } from '@react-navigation/native';
-import { getFocusedRouteNameFromRoute, StackActions } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute, StackActions, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,13 +10,14 @@ import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
-import { colors } from '@/theme';
+import { AppText } from '@/shared/components/AppText';
+import { colors, radius, spacing } from '@/theme';
 import { getFontFamily } from '@/theme/typography';
 
 import { flushPendingPingDeepLink } from '@/services/pingDeepLinkRouting';
 
 import { CreateTripTabButton } from '../components/CreateTripTabButton';
-import { TripProvider, useTrips } from '../context/TripContext';
+import { TripProvider, useBeginCreateTrip } from '../context/TripContext';
 import { VehicleProvider } from '../context/VehicleContext';
 import { CreateTripTabScreen } from '../screens/CreateTripTabScreen';
 import { TripCreationFlowScreen } from '../screens/TripCreationFlowScreen';
@@ -58,20 +59,82 @@ function openTripCreation(
   openTripCreationFlow(rootNavigation);
 }
 
+const EXIT_CONFIRM_MS = 2000;
+
+function nestedStackIndex(route: { state?: { index?: number } } | undefined): number {
+  return route?.state?.index ?? 0;
+}
+
 function DashboardTabs(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { beginCreateTrip } = useTrips();
+  const beginCreateTrip = useBeginCreateTrip();
+  const rootNavigation = useNavigation<NavigationProp<DashboardRootStackParamList>>();
+  const [exitHintVisible, setExitHintVisible] = React.useState(false);
+  const lastBackAtRef = React.useRef(0);
+  const hideHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const safeBottomInset = insets.bottom;
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + safeBottomInset + DRIVER_TAB_BAR_EXTRA;
   const defaultTabBarStyle = [styles.tabBar, { height: tabBarHeight, paddingBottom: safeBottomInset }];
 
+  React.useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    const onHardwareBack = () => {
+      const rootState = rootNavigation.getState();
+      const focusedRoot = rootState.routes[rootState.index];
+      if (focusedRoot?.name !== 'MainTabs') {
+        return false;
+      }
+
+      const tabState = focusedRoot.state;
+      if (tabState) {
+        const currentTab = tabState.routes[tabState.index ?? 0];
+        if (nestedStackIndex(currentTab) > 0) {
+          return false;
+        }
+      }
+
+      const now = Date.now();
+      if (now - lastBackAtRef.current < EXIT_CONFIRM_MS) {
+        lastBackAtRef.current = 0;
+        setExitHintVisible(false);
+        BackHandler.exitApp();
+        return true;
+      }
+
+      lastBackAtRef.current = now;
+      setExitHintVisible(true);
+      if (hideHintTimerRef.current) {
+        clearTimeout(hideHintTimerRef.current);
+      }
+      hideHintTimerRef.current = setTimeout(() => {
+        setExitHintVisible(false);
+        lastBackAtRef.current = 0;
+      }, EXIT_CONFIRM_MS);
+      return true;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => {
+      sub.remove();
+      if (hideHintTimerRef.current) {
+        clearTimeout(hideHintTimerRef.current);
+      }
+    };
+  }, [rootNavigation]);
+
   return (
+    <View style={styles.tabsRoot}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        sceneContainerStyle: styles.tabScene,
+        lazy: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.text.tertiary,
         tabBarShowLabel: route.name !== 'CreateTrip',
@@ -97,7 +160,17 @@ function DashboardTabs(): React.ReactElement {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStackNavigator} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStackNavigator}
+        options={({ route }) => {
+          const focusedRoute = getFocusedRouteNameFromRoute(route) ?? 'HomeMain';
+          return {
+            tabBarStyle:
+              focusedRoute === 'HomeMain' ? defaultTabBarStyle : { display: 'none' },
+          };
+        }}
+      />
       <Tab.Screen name="MyListings" component={MyListingsScreen} />
       <Tab.Screen
         name="CreateTrip"
@@ -148,6 +221,19 @@ function DashboardTabs(): React.ReactElement {
         })}
       />
     </Tab.Navigator>
+      {exitHintVisible ? (
+        <View
+          pointerEvents="none"
+          style={[styles.exitToastWrap, { bottom: tabBarHeight + spacing.sm }]}
+        >
+          <View style={styles.exitToast}>
+            <AppText weight="medium" style={styles.exitToastText}>
+              {t('dashboard.tabs.tapAgainToExit')}
+            </AppText>
+          </View>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -185,6 +271,12 @@ export function DashboardNavigator(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
+  tabsRoot: {
+    flex: 1,
+  },
+  tabScene: {
+    backgroundColor: colors.primary,
+  },
   tabBar: {
     backgroundColor: colors.white,
     borderTopColor: colors.border.default,
@@ -201,5 +293,22 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     marginTop: 2,
     marginBottom: 2,
+  },
+  exitToastWrap: {
+    position: 'absolute',
+    left: spacing.md,
+    zIndex: 20,
+  },
+  exitToast: {
+    maxWidth: 260,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(17, 24, 39, 0.55)',
+  },
+  exitToastText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.white,
   },
 });

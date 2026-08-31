@@ -116,6 +116,9 @@ export function VehicleListItem({
               source={{ uri: thumbnailUri }}
               style={styles.thumbnailImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={vehicle.id}
+              transition={0}
             />
           ) : (
             <View style={styles.thumbnailFallback}>

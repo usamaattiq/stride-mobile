@@ -5,13 +5,17 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { i18n as appI18n } from '@/i18n';
+import { isAdminPhone } from '@/features/admin/constants/admin-phone';
 import { authApi } from '@/services/api/authApi';
+import { adminApi } from '@/services/api/adminApi';
 import { isApiErrorWithCode } from '@/services/api/apiError';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { getDeviceId } from '@/services/deviceId';
-import { registerForPushNotifications } from '@/services/pushNotifications';
+import { registerForPushNotifications, unregisterPushNotifications } from '@/services/pushNotifications';
+import type { AdminProfile } from '@/services/api/adminApi';
 import type { UserProfileDto } from '@/services/api/authApi.types';
 import { useAuthStore } from '@/store/authStore';
+import { adminStore } from '@/store/adminStore';
 import { useDevicePrefsStore } from '@/store/devicePrefsStore';
 import { useLoginFlowStore } from '@/store/loginFlowStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -20,7 +24,7 @@ import { AuthScaffold } from '../components/AuthScaffold';
 import { findCountryByCode } from '../constants/countries';
 import type { AuthStackParamList } from '../navigation/types';
 import { formatPhoneDisplay } from '../types/signup.types';
-import { toPhoneIdentity } from '../utils/phone-identity';
+import { normalizeLocalPhoneDigits, toPhoneIdentity } from '../utils/phone-identity';
 import { LoginForgotConfirmMpinScreen } from './LoginForgotConfirmMpinScreen';
 import { LoginForgotNewMpinScreen } from './LoginForgotNewMpinScreen';
 import { LoginMpinScreen } from './LoginMpinScreen';
@@ -89,7 +93,7 @@ export function LoginFlowScreen(): React.ReactElement {
     const matchedCountry = lastPhone ? findCountryByCode(lastPhone.countryCode) : undefined;
     if (lastPhone && matchedCountry) {
       setCountry(matchedCountry);
-      setPhoneDigits(lastPhone.phoneDigits);
+      setPhoneDigits(normalizeLocalPhoneDigits(lastPhone.phoneDigits));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -150,17 +154,11 @@ export function LoginFlowScreen(): React.ReactElement {
   }, [navigation, step, goToStep, resolveBackStep]);
 
   const completeLogin = async (accessToken: string, profile: UserProfileDto, usedMpin: string) => {
-    await useAuthStore.getState().setAuthenticated(accessToken);
+    await useAuthStore.getState().setAuthenticated(accessToken, 'user');
     useProfileStore.getState().setProfile(profile);
 
     const devicePrefs = useDevicePrefsStore.getState();
-    await devicePrefs.setLastPhone({
-      phoneDigits,
-      countryCode: country.code,
-      countryCallingCode: country.callingCode,
-    });
-    // Always cache the MPIN so enabling Face ID later in Settings can unlock
-    // biometric login on the very next sign-in (not only after a second login).
+    await devicePrefs.setLastPhone(toPhoneIdentity(country, phoneDigits));
     await devicePrefs.setCachedMpin(usedMpin);
     await devicePrefs.setBiometricEnabled(profile.biometricEnabled);
     void registerForPushNotifications();
@@ -168,8 +166,33 @@ export function LoginFlowScreen(): React.ReactElement {
     Keyboard.dismiss();
     isLeavingRef.current = true;
     useLoginFlowStore.getState().reset();
-    navigation.replace('Dashboard');
+    navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
   };
+
+  const completeAdminLogin = async (
+    accessToken: string,
+    profile: AdminProfile,
+    usedMpin: string,
+  ) => {
+    await useAuthStore.getState().setAuthenticated(accessToken, 'admin');
+    adminStore.setProfile(profile);
+    void unregisterPushNotifications();
+
+    const devicePrefs = useDevicePrefsStore.getState();
+    await devicePrefs.setLastPhone(toPhoneIdentity(country, phoneDigits));
+    await devicePrefs.setCachedMpin(usedMpin);
+    await devicePrefs.setBiometricEnabled(false);
+
+    Keyboard.dismiss();
+    isLeavingRef.current = true;
+    useLoginFlowStore.getState().reset();
+    navigation.reset({ index: 0, routes: [{ name: 'Admin' }] });
+  };
+
+  const currentPhoneIdentity = React.useCallback(
+    () => toPhoneIdentity(country, phoneDigits),
+    [country, phoneDigits],
+  );
 
   const handlePhoneDigitsChange = (digits: string) => {
     setSendOtpError(null);
@@ -185,7 +208,12 @@ export function LoginFlowScreen(): React.ReactElement {
     setSendOtpError(null);
     setSendingOtp(true);
     try {
-      await authApi.sendLoginOtp(toPhoneIdentity(country, phoneDigits), 'login');
+      const phone = currentPhoneIdentity();
+      if (isAdminPhone(phone)) {
+        await adminApi.sendLoginOtp(phone);
+      } else {
+        await authApi.sendLoginOtp(phone, 'login');
+      }
       setOtp('');
       goToStep('otp');
     } catch (error) {
@@ -201,7 +229,12 @@ export function LoginFlowScreen(): React.ReactElement {
 
   const handleResendOtp = async () => {
     try {
-      await authApi.sendLoginOtp(toPhoneIdentity(country, phoneDigits), 'login');
+      const phone = currentPhoneIdentity();
+      if (isAdminPhone(phone)) {
+        await adminApi.sendLoginOtp(phone);
+      } else {
+        await authApi.sendLoginOtp(phone, 'login');
+      }
       setOtp('');
     } catch (error) {
       setVerifyOtpError(
@@ -217,7 +250,12 @@ export function LoginFlowScreen(): React.ReactElement {
     setVerifyOtpError(null);
     setVerifyingOtp(true);
     try {
-      await authApi.verifyLoginOtp(toPhoneIdentity(country, phoneDigits), otpValue, 'login');
+      const phone = currentPhoneIdentity();
+      if (isAdminPhone(phone)) {
+        await adminApi.verifyLoginOtp(phone, otpValue);
+      } else {
+        await authApi.verifyLoginOtp(phone, otpValue, 'login');
+      }
       setMpin('');
       goToStep('mpin');
     } catch (error) {
@@ -232,8 +270,15 @@ export function LoginFlowScreen(): React.ReactElement {
     setLoginError(null);
     setLoggingIn(true);
     try {
+      const phone = currentPhoneIdentity();
+      if (isAdminPhone(phone)) {
+        const result = await adminApi.loginWithMpin(phone, mpinValue);
+        await completeAdminLogin(result.accessToken, result.profile, mpinValue);
+        return;
+      }
+
       const deviceId = await getDeviceId();
-      const result = await authApi.loginWithMpin(toPhoneIdentity(country, phoneDigits), mpinValue, deviceId);
+      const result = await authApi.loginWithMpin(phone, mpinValue, deviceId);
       await completeLogin(result.accessToken, result.profile, mpinValue);
     } catch (error) {
       setMpin('');

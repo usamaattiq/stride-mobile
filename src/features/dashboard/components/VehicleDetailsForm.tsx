@@ -86,28 +86,58 @@ export function VehicleDetailsForm({
           error={fieldError('title')}
         />
 
-        <AuthTextField
-          label={t('vehicles.fields.description')}
-          value={draft.description}
-          onChangeText={(value) => onChange({ description: value })}
-          onBlur={() => markTouched('description')}
-          placeholder={t('vehicles.fields.descriptionPlaceholder')}
-          multiline
-          textAlignVertical="top"
-          style={styles.textArea}
-          error={fieldError('description')}
-        />
+<VehicleClassPicker
+  label={t('vehicles.fields.class')}
+  placeholder={t('vehicles.classPlaceholder')}
+  value={draft.vehicleClass}
+  onChange={(vehicleClass) => {
+    markTouched('vehicleClass');
+    onChange({ vehicleClass });
+  }}
+  onBlur={() => markTouched('vehicleClass')}
+  required
+  error={fieldError('vehicleClass')}
+/>
 
-        <AuthTextField
-          label={t('vehicles.fields.plateNumber')}
-          required
-          value={draft.plateNumber}
-          onChangeText={(value) => onChange({ plateNumber: value })}
-          onBlur={() => markTouched('plateNumber')}
-          placeholder={t('vehicles.fields.plateNumberPlaceholder')}
-          autoCapitalize="characters"
-          error={fieldError('plateNumber')}
-        />
+<AuthTextField
+  label={t('vehicles.fields.brand')}
+  value={draft.brand}
+  onChangeText={(value) => onChange({ brand: value })}
+  onBlur={() => markTouched('brand')}
+  placeholder={t('vehicles.fields.brandPlaceholder')}
+  error={fieldError('brand')}
+/>
+
+<AuthTextField
+  label={t('vehicles.fields.model')}
+  value={draft.model}
+  onChangeText={(value) => onChange({ model: value })}
+  onBlur={() => markTouched('model')}
+  placeholder={t('vehicles.fields.modelPlaceholder')}
+  error={fieldError('model')}
+/>
+
+<AuthTextField
+  label={t('vehicles.fields.year')}
+  value={draft.year}
+  onChangeText={(value) => onChange({ year: onlyLatinDigits(value).slice(0, 4) })}
+  onBlur={() => markTouched('year')}
+  placeholder={t('vehicles.fields.yearPlaceholder')}
+  keyboardType="number-pad"
+  inputAccessoryViewID={yearAccessoryId}
+  error={fieldError('year')}
+/>
+<AuthTextField
+  label={t('vehicles.fields.plateNumber')}
+  required
+  value={draft.plateNumber}
+  onChangeText={(value) => onChange({ plateNumber: value })}
+  onBlur={() => markTouched('plateNumber')}
+  placeholder={t('vehicles.fields.plateNumberPlaceholder')}
+  autoCapitalize="characters"
+  error={fieldError('plateNumber')}
+/>
+
 
         <BiometricToggleRow
           iconName="snowflake"
@@ -131,48 +161,18 @@ export function VehicleDetailsForm({
           }}
           error={fieldError('totalSeats')}
         />
+          <AuthTextField
+            label={t('vehicles.fields.description')}
+            value={draft.description}
+            onChangeText={(value) => onChange({ description: value })}
+            onBlur={() => markTouched('description')}
+            placeholder={t('vehicles.fields.descriptionPlaceholder')}
+            multiline
+            textAlignVertical="top"
+            style={styles.textArea}
+            error={fieldError('description')}
+          />
 
-        <VehicleClassPicker
-          label={t('vehicles.fields.class')}
-          placeholder={t('vehicles.classPlaceholder')}
-          value={draft.vehicleClass}
-          onChange={(vehicleClass) => {
-            markTouched('vehicleClass');
-            onChange({ vehicleClass });
-          }}
-          onBlur={() => markTouched('vehicleClass')}
-          required
-          error={fieldError('vehicleClass')}
-        />
-
-        <AuthTextField
-          label={t('vehicles.fields.brand')}
-          value={draft.brand}
-          onChangeText={(value) => onChange({ brand: value })}
-          onBlur={() => markTouched('brand')}
-          placeholder={t('vehicles.fields.brandPlaceholder')}
-          error={fieldError('brand')}
-        />
-
-        <AuthTextField
-          label={t('vehicles.fields.model')}
-          value={draft.model}
-          onChangeText={(value) => onChange({ model: value })}
-          onBlur={() => markTouched('model')}
-          placeholder={t('vehicles.fields.modelPlaceholder')}
-          error={fieldError('model')}
-        />
-
-        <AuthTextField
-          label={t('vehicles.fields.year')}
-          value={draft.year}
-          onChangeText={(value) => onChange({ year: onlyLatinDigits(value).slice(0, 4) })}
-          onBlur={() => markTouched('year')}
-          placeholder={t('vehicles.fields.yearPlaceholder')}
-          keyboardType="number-pad"
-          inputAccessoryViewID={yearAccessoryId}
-          error={fieldError('year')}
-        />
         <KeyboardDoneBar
           nativeID={yearAccessoryId}
           disabled={submitDisabled}
@@ -188,6 +188,7 @@ export function VehicleDetailsForm({
 const styles = StyleSheet.create({
   form: {
     gap: spacing.sm,
+    paddingBottom: spacing.xxxl,
   },
   textArea: {
     minHeight: 96,

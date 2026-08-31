@@ -20,6 +20,10 @@ export type UserProfileDto = {
   driverLicenseFrontViewUrl?: string | null;
   driverLicenseBackUrl: string | null;
   driverLicenseBackViewUrl?: string | null;
+  nicStatus: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  nicRejectionReason?: string | null;
+  licenseStatus: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  licenseRejectionReason?: string | null;
   role: 'passenger' | 'driver';
   biometricEnabled: boolean;
   credits: number;
@@ -67,10 +71,26 @@ export type BecomeDriverPayload = {
   deviceId: string;
 };
 
-export type AccountDeletionBlockReason = 'owner_open_listing' | 'active_offer_or_bid';
+export type AccountDeletionBlockReason =
+  | 'owner_open_listing'
+  | 'active_offer'
+  | 'active_bid'
+  /** @deprecated older API combined offers and bids */
+  | 'active_offer_or_bid';
+
+export type AccountDeletionActivityKind = 'trip' | 'offer' | 'bid';
+
+export type AccountDeletionActivityRole = 'driver' | 'passenger';
+
+export type AccountDeletionActivity = {
+  kind: AccountDeletionActivityKind;
+  role: AccountDeletionActivityRole;
+  label: string;
+};
 
 export type AccountDeletionEligibility = {
   canDelete: boolean;
   reasons: AccountDeletionBlockReason[];
+  activities?: AccountDeletionActivity[];
 };
 

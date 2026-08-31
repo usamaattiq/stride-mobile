@@ -23,6 +23,10 @@ import {
   COUNTRY_OPTIONS,
   type CountryOption,
 } from '../constants/countries';
+import {
+  isLocalPhoneComplete,
+  sanitizeLocalPhoneInput,
+} from '../utils/phone-identity';
 
 export type PhoneInputProps = {
   value: string;
@@ -52,7 +56,7 @@ export function PhoneInput({
   const displayValue = (() => {
     if (!value) return '';
     const a = value.slice(0, 3);
-    const b = value.slice(3, 10);
+    const b = value.slice(3);
     return b.length > 0 ? `${a} ${b}` : a;
   })();
 
@@ -91,7 +95,10 @@ export function PhoneInput({
 
       <TextInput
         value={displayValue}
-        onChangeText={(text) => onChangeDigits(onlyLatinDigits(text).slice(0, 10))}
+        onChangeText={(text) =>
+          onChangeDigits(sanitizeLocalPhoneInput(onlyLatinDigits(text)))
+        }
+
         placeholder={placeholder}
         placeholderTextColor={colors.text.tertiary}
         keyboardType="phone-pad"
@@ -99,7 +106,12 @@ export function PhoneInput({
         inputAccessoryViewID={accessoryId}
         style={[styles.input, { fontFamily: getFontFamily('en', 'regular') }]}
       />
-      <KeyboardDoneBar nativeID={accessoryId} disabled={value.length < 10} onDone={onDone} />
+      <KeyboardDoneBar
+        nativeID={accessoryId}
+        disabled={!isLocalPhoneComplete(value)}
+        onDone={onDone}
+      />
+
 
       <AppBottomSheet
         visible={pickerVisible}

@@ -10,13 +10,15 @@ import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { isApiErrorWithCode } from '@/services/api/apiError';
+import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../../context/DashboardSessionContext';
 import type { TripVehicleMode } from '../../types/trip.types';
 import { isTerminalListingStatus } from '../../utils/listingFilters';
-import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
+import { reuseOfferSummaries } from '../../utils/reuseMediaViewUrls';
+import { OfferResponseCard, driverSharedOfferPriceParts, type OfferResponseTagTone } from './OfferResponseCard';
 import { OfferVehicleDetailSheet } from './OfferVehicleDetailSheet';
 import { TripMessagingSheet } from './TripMessagingSheet';
 
@@ -49,9 +51,12 @@ function isInactiveListingError(error: unknown): boolean {
   return isApiErrorWithCode(error, 'NOT_FOUND') || error instanceof Error;
 }
 
-function ownerListingRfqStatus(snapshot: RfqOwnerSnapshot): RfqOwnerSnapshot['status'] {
+function ownerListingRfqStatus(
+  snapshot: RfqOwnerSnapshot,
+  isPassengerRequest: boolean,
+): RfqOwnerSnapshot['status'] {
   if (snapshot.status === 'live' && snapshot.offers.some((offer) => offer.status === 'confirmed')) {
-    return 'confirmed';
+    return isPassengerRequest ? 'completed' : 'confirmed';
   }
   return snapshot.status;
 }
@@ -68,6 +73,58 @@ function latestOffersByResponder(offers: RfqOfferSummary[]): RfqOfferSummary[] {
     latest.push(offer);
   }
   return latest;
+}
+
+function parseOfferPrice(price: string | null): number | null {
+  if (price == null) {
+    return null;
+  }
+  const parsed = Number(String(price).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function offerSortAmount(
+  offer: RfqOfferSummary,
+  byPerSeat: boolean,
+): number | null {
+  const total = parseOfferPrice(offer.price);
+  if (total == null) {
+    return null;
+  }
+  if (!byPerSeat) {
+    return total;
+  }
+  const seats = Math.floor(Number(offer.offeredQuantity));
+  if (!Number.isFinite(seats) || seats < 1) {
+    return total;
+  }
+  return total / seats;
+}
+
+/**
+ * Passenger requests: cheapest on top. Driver listings: highest on top.
+ * Shared driver RFQs rank by per-seat price. Offers without a price stay at the bottom.
+ */
+function visibleOwnerOffers(
+  offers: RfqOfferSummary[],
+  lowestBest: boolean,
+  byPerSeat = false,
+): RfqOfferSummary[] {
+  const latest = latestOffersByResponder(offers);
+  return [...latest].sort((a, b) => {
+    const priceA = offerSortAmount(a, byPerSeat);
+    const priceB = offerSortAmount(b, byPerSeat);
+    if (priceA == null && priceB == null) {
+      return 0;
+    }
+    if (priceA == null) {
+      return 1;
+    }
+    if (priceB == null) {
+      return -1;
+    }
+    return lowestBest ? priceA - priceB : priceB - priceA;
+  });
 }
 
 function offeredSeatsLabel(
@@ -118,19 +175,32 @@ export function TripResponsesPanel({
   const [vehicleDetail, setVehicleDetail] = React.useState<RfqOfferVehicleSummary | null>(null);
   const [chatTarget, setChatTarget] = React.useState<RfqOfferSummary | null>(null);
 
+  const applyOwnerSnapshot = React.useCallback(
+    (ownerSnapshot: RfqOwnerSnapshot) => {
+      const offers = visibleOwnerOffers(
+        ownerSnapshot.offers,
+        isPassengerRequest,
+        !isPassengerRequest && vehicleMode === 'shared',
+      );
+      const nextBase = { ...ownerSnapshot, offers };
+      setNotListed(false);
+      setSnapshot((previous) => ({
+        ...nextBase,
+        offers: reuseOfferSummaries(previous?.offers, offers),
+      }));
+      onCountChange?.(offers.length);
+      onRfqStatusChange?.(ownerListingRfqStatus(nextBase, isPassengerRequest));
+    },
+    [isPassengerRequest, onCountChange, onRfqStatusChange, vehicleMode],
+  );
+
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
     void rfqApi
       .getSnapshot(tripId)
       .then((result) => {
-        const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = latestOffersByResponder(ownerSnapshot.offers);
-        const next = { ...ownerSnapshot, offers };
-        setNotListed(false);
-        setSnapshot(next);
-        onCountChange?.(offers.length);
-        onRfqStatusChange?.(ownerListingRfqStatus(next));
+        applyOwnerSnapshot(result as RfqOwnerSnapshot);
       })
       .catch((err) => {
         if (isInactiveListingError(err)) {
@@ -142,7 +212,7 @@ export function TripResponsesPanel({
         setError(getErrorMessage(err, t('dashboard.listings.detail.responses.loadFailed')));
       })
       .finally(() => setLoading(false));
-  }, [tripId, t, onCountChange, onRfqStatusChange]);
+  }, [applyOwnerSnapshot, tripId, t, onCountChange]);
 
   React.useEffect(() => {
     load();
@@ -156,13 +226,7 @@ export function TripResponsesPanel({
       void rfqApi
         .getSnapshot(tripId)
         .then((result) => {
-          const ownerSnapshot = result as RfqOwnerSnapshot;
-          const offers = latestOffersByResponder(ownerSnapshot.offers);
-          const next = { ...ownerSnapshot, offers };
-          setNotListed(false);
-          setSnapshot(next);
-          onCountChange?.(offers.length);
-          onRfqStatusChange?.(ownerListingRfqStatus(next));
+          applyOwnerSnapshot(result as RfqOwnerSnapshot);
         })
         .catch((err) => {
           if (isInactiveListingError(err)) {
@@ -173,7 +237,7 @@ export function TripResponsesPanel({
         });
     }, 5000);
     return () => clearInterval(timer);
-  }, [onCountChange, onRfqStatusChange, snapshot?.status, tripId]);
+  }, [applyOwnerSnapshot, onCountChange, snapshot?.status, tripId]);
 
   const statusLabel = (status: RfqOfferStatus): string =>
     t(`dashboard.listings.detail.responses.offerStatus.${status}`);
@@ -188,12 +252,7 @@ export function TripResponsesPanel({
           : rfqApi.rejectOffer;
     void request(tripId, offerId)
       .then((result) => {
-        const ownerSnapshot = result as RfqOwnerSnapshot;
-        const offers = latestOffersByResponder(ownerSnapshot.offers);
-        const next = { ...ownerSnapshot, offers };
-        setSnapshot(next);
-        onCountChange?.(offers.length);
-        onRfqStatusChange?.(ownerListingRfqStatus(next));
+        applyOwnerSnapshot(result as RfqOwnerSnapshot);
       })
       .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
       .finally(() => {
@@ -261,10 +320,25 @@ export function TripResponsesPanel({
             const displayName =
               offer.responderName?.trim() ||
               t('dashboard.listings.detail.responses.offerLabel', { index: index + 1 });
-            const priceLabel =
-              offer.price != null
-                ? t('dashboard.listings.card.priceWithCurrency', { price: offer.price })
+            const sharedParts =
+              !isPassengerRequest && vehicleMode === 'shared'
+                ? driverSharedOfferPriceParts(offer.price, offer.offeredQuantity)
+                : null;
+            const priceLabel = sharedParts
+              ? sharedParts.perSeatLabel
+              : offer.price != null
+                ? formatPriceWithCurrency(offer.price)
                 : '';
+            const priceSuffix = sharedParts
+              ? t('dashboard.listings.pricePerSeatSuffix')
+              : null;
+            const priceHint = sharedParts
+              ? t('dashboard.listings.detail.offer.priceTimesSeatsEquals', {
+                  price: sharedParts.perSeatLabel,
+                  seats: String(sharedParts.seats),
+                  total: sharedParts.totalLabel,
+                })
+              : null;
 
             return (
               <OfferResponseCard
@@ -281,10 +355,22 @@ export function TripResponsesPanel({
                 name={displayName}
                 verified={offer.responderIsVerified === true}
                 priceLabel={priceLabel}
-                detailLabel={offeredSeatsLabel(t, vehicleMode, offer.offeredQuantity, vehicleTotalSeats)}
+                priceSuffix={priceSuffix}
+                priceHint={priceHint}
+                detailLabel={
+                  isPassengerRequest
+                    ? null
+                    : offeredSeatsLabel(
+                        t,
+                        vehicleMode,
+                        offer.offeredQuantity,
+                        vehicleTotalSeats,
+                      )
+                }
                 showMessage={showMessage}
                 onMessagePress={() => setChatTarget(offer)}
                 vehicle={offer.vehicle}
+                photos={offer.photos}
                 onVehiclePress={() => {
                   if (offer.vehicle) {
                     setVehicleDetail(offer.vehicle);
@@ -385,5 +471,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
 });

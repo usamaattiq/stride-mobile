@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ScrollView, ScrollViewProps } from 'react-native';
+import { Platform, type ScrollView, type ScrollViewProps } from 'react-native';
 import {
   KeyboardAwareScrollView as ControllerKeyboardAwareScrollView,
   type KeyboardAwareScrollViewProps as ControllerProps,
@@ -7,7 +7,13 @@ import {
 
 import { spacing } from '@/theme';
 
-const DEFAULT_BOTTOM_OFFSET = spacing.md;
+/** Gap kept between the focused field and the keyboard. */
+const DEFAULT_BOTTOM_OFFSET = spacing.huge + spacing.xl;
+/**
+ * Extra inset while the keyboard is open. Android 3-button nav sits below the
+ * IME, so the field needs more room than iOS.
+ */
+const DEFAULT_EXTRA_KEYBOARD_SPACE = Platform.OS === 'ios' ? spacing.xl : spacing.xxxl;
 
 export type KeyboardAwareScrollViewProps = ScrollViewProps &
   Partial<
@@ -21,6 +27,7 @@ export const KeyboardAwareScrollView = React.forwardRef<ScrollView, KeyboardAwar
   function KeyboardAwareScrollView(
     {
       bottomOffset = DEFAULT_BOTTOM_OFFSET,
+      extraKeyboardSpace = DEFAULT_EXTRA_KEYBOARD_SPACE,
       keyboardShouldPersistTaps = 'handled',
       keyboardDismissMode = 'interactive',
       showsVerticalScrollIndicator = false,
@@ -33,9 +40,11 @@ export const KeyboardAwareScrollView = React.forwardRef<ScrollView, KeyboardAwar
       <ControllerKeyboardAwareScrollView
         ref={ref}
         bottomOffset={bottomOffset}
+        extraKeyboardSpace={extraKeyboardSpace}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
         keyboardDismissMode={keyboardDismissMode}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+        overScrollMode="never"
         {...props}
       >
         {children}

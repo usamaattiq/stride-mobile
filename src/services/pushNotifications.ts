@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { notificationsApi } from '@/services/api/notificationsApi';
 import { getDeviceId } from '@/services/deviceId';
 import { secureStorage } from '@/services/storage/secureStorage';
+import { authStore } from '@/store/authStore';
 import { profileStore } from '@/store/profileStore';
 
 const ANDROID_CHANNEL_ID = 'default';
@@ -19,9 +20,23 @@ function audienceRoleFromData(data: Record<string, unknown> | undefined): string
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+function isAdminSession(): boolean {
+  return authStore.getSessionKind() === 'admin';
+}
+
 if (!isExpoGo) {
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
+      if (isAdminSession()) {
+        return {
+          shouldShowAlert: false,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: false,
+          shouldShowList: false,
+        };
+      }
+
       const audienceRole = audienceRoleFromData(
         notification.request.content.data as Record<string, unknown> | undefined,
       );
@@ -88,7 +103,7 @@ export async function registerForPushNotifications(): Promise<void> {
 
   pushSyncInFlight = (async () => {
     try {
-      if (Platform.OS === 'web' || isExpoGo) {
+      if (Platform.OS === 'web' || isExpoGo || isAdminSession()) {
         return;
       }
 
@@ -209,6 +224,9 @@ export function attachPushTokenListener(): () => void {
     return () => undefined;
   }
   const subscription = Notifications.addPushTokenListener((token) => {
+    if (isAdminSession()) {
+      return;
+    }
     const next =
       token && typeof token === 'object' && 'data' in token && typeof token.data === 'string'
         ? token.data

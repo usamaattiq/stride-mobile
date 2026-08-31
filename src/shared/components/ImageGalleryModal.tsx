@@ -58,7 +58,14 @@ export function ImageGalleryModal({
   const renderItem = React.useCallback(
     ({ item }: ListRenderItemInfo<string>) => (
       <View style={[styles.page, { width: screenWidth }]}>
-        <Image source={{ uri: item }} style={styles.image} contentFit="contain" />
+        <Image
+          source={{ uri: item }}
+          style={styles.image}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+          recyclingKey={item.split('?')[0]}
+          transition={0}
+        />
       </View>
     ),
     [screenWidth],
@@ -91,7 +98,7 @@ export function ImageGalleryModal({
         <FlatList
           ref={listRef}
           data={images}
-          keyExtractor={(item, i) => `${item}-${i}`}
+          keyExtractor={(item, i) => `${item.split('?')[0]}-${i}`}
           renderItem={renderItem}
           horizontal
           pagingEnabled

@@ -1,34 +1,34 @@
-export type RfqCapacityMode = 'full' | 'partial';
+export type RfqCapacityMode = "full" | "partial";
 
 /** Persisted offer statuses from RMS (`OfferStatus`). */
 export type RfqOfferStatus =
-  | 'active'
-  | 'selected'
-  | 'confirmed'
-  | 'withdrawn'
-  | 'declined'
-  | 'timed_out'
-  | 'lapsed';
+  | "active"
+  | "selected"
+  | "confirmed"
+  | "withdrawn"
+  | "declined"
+  | "timed_out"
+  | "lapsed";
 
 /**
  * Role-tagged display statuses from RMS. Never the raw DB enum.
  */
 export type RfqStatusValue =
-  | 'live'
-  | 'awaiting-confirmation'
-  | 'offer-submitted'
-  | 'awaiting-your-confirmation'
-  | 'confirmed'
-  | 'completed'
-  | 'closed'
-  | 'expired';
+  | "live"
+  | "awaiting-confirmation"
+  | "offer-submitted"
+  | "awaiting-your-confirmation"
+  | "confirmed"
+  | "completed"
+  | "closed"
+  | "expired";
 
-export type RfqDisplayVariant = 'muted' | 'accent' | 'warning' | 'success';
+export type RfqDisplayVariant = "muted" | "accent" | "warning" | "success";
 
 export type RfqOfferVehicleSummary = {
   id: string;
   title: string;
-  vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster';
+  vehicleClass: "suv" | "sedan" | "bus" | "van" | "coaster";
   totalSeats: number;
   plateNumber: string;
   brand: string | null;
@@ -39,6 +39,15 @@ export type RfqOfferVehicleSummary = {
   hasAc?: boolean;
   year?: number | null;
   photoUrls?: string[];
+  photoDisplayUris?: string[];
+};
+
+/**
+ * Photos attached at offer time on sea/air passenger requests, where the driver
+ * has no saved vehicle to select.
+ */
+export type OfferAttachmentPhotos = {
+  photoUrls: string[];
   photoDisplayUris?: string[];
 };
 
@@ -60,6 +69,8 @@ export type RfqOfferSummary = {
   contactExchangeClosesAt?: string | null;
   /** Driver vehicle attached when offering on a passenger request. */
   vehicle?: RfqOfferVehicleSummary | null;
+  /** Ad-hoc photos attached instead of a vehicle on sea/air requests. */
+  photos?: OfferAttachmentPhotos | null;
 };
 
 export type RfqOwnerActions = {
@@ -90,18 +101,18 @@ type RfqSnapshotBase = {
 };
 
 export type RfqOwnerSnapshot = RfqSnapshotBase & {
-  role: 'owner';
+  role: "owner";
   platformId: string;
   externalRef: string | null;
   reservedQuantity?: string;
   closedAt: string | null;
-  closedReason: 'owner_manual' | 'auto_no_deal' | null;
+  closedReason: "owner_manual" | "auto_no_deal" | null;
   offers: RfqOfferSummary[];
   actions: RfqOwnerActions;
 };
 
 export type RfqResponderSnapshot = RfqSnapshotBase & {
-  role: 'responder';
+  role: "responder";
   platformId: string;
   externalRef: string | null;
   myOffers: RfqOfferSummary[];
@@ -111,10 +122,11 @@ export type RfqResponderSnapshot = RfqSnapshotBase & {
 };
 
 export type RfqPublicSnapshot = RfqSnapshotBase & {
-  role: 'public';
+  role: "public";
 };
 
-export type RfqSnapshot = RfqOwnerSnapshot | RfqResponderSnapshot | RfqPublicSnapshot;
+export type RfqSnapshot =
+  RfqOwnerSnapshot | RfqResponderSnapshot | RfqPublicSnapshot;
 
 export type RfqOfferResponse = {
   id: string;
@@ -128,11 +140,14 @@ export type RfqOfferResponse = {
   contactExchangeAllowed?: boolean;
   contactExchangeClosesAt?: string | null;
   vehicle?: RfqOfferVehicleSummary | null;
+  photos?: OfferAttachmentPhotos | null;
 };
 
 export type SubmitOfferPayload = {
   seats: number;
   price?: number;
-  /** Required when offering on a passenger request. */
+  /** Required when offering on a land passenger request. */
   vehicleId?: string;
+  /** Optional photos sent instead of a vehicle on sea/air passenger requests. */
+  photoUrls?: string[];
 };

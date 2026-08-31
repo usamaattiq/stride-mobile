@@ -41,8 +41,9 @@ export const createEmptySignupDraft = (): SignupDraft => ({
 });
 
 export function formatPhoneDisplay(country: CountryOption, digits: string): string {
-  const a = digits.slice(0, 3);
-  const b = digits.slice(3);
+  const normalized = digits.replace(/^0+/, '');
+  const a = normalized.slice(0, 3);
+  const b = normalized.slice(3);
   const local = b ? `${a} ${b}` : a;
   return `+${country.callingCode} ${local}`.trim();
 }

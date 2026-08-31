@@ -1,45 +1,61 @@
-import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
-import { Image } from 'expo-image';
+import React from "react";
+import { FontAwesome } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+} from "react-native";
+import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-import { i18n as appI18n } from '@/i18n';
-import { getErrorMessage } from '@/services/api/errorMessage';
-import { rfqApi } from '@/services/api/rfqApi';
+import { i18n as appI18n } from "@/i18n";
+import { getErrorMessage } from "@/services/api/errorMessage";
+import { isApiErrorWithCode } from "@/services/api/apiError";
+import { creditsApi } from "@/services/api/creditsApi";
+import { rfqApi } from "@/services/api/rfqApi";
 import type {
   RfqOfferStatus,
   RfqOfferVehicleSummary,
   RfqResponderSnapshot,
   RfqSnapshot,
-} from '@/services/api/rfqApi.types';
-import { AuthTextField } from '@/features/auth/components/AuthTextField';
-import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
-import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
-import { AppDialog } from '@/shared/components/AppDialog';
-import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
-import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
-import { colors, radius, spacing } from '@/theme';
+} from "@/services/api/rfqApi.types";
+import { AuthTextField } from "@/features/auth/components/AuthTextField";
+import { SeatsStepper } from "@/features/dashboard/components/SeatsStepper";
+import { AppBottomSheet } from "@/shared/components/AppBottomSheet";
+import { AppDialog } from "@/shared/components/AppDialog";
+import { AppText } from "@/shared/components/AppText";
+import { Button } from "@/shared/components/Button";
+import { ENV } from "@/shared/config/env";
+import { formatPriceWithCurrency, getDisplayCurrency } from "@/shared/utils/currency";
+import { formatPriceAmount } from "@/shared/utils/latin-digits";
+import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
+import { buildWhatsAppContactMessage } from "@/shared/utils/open-whatsapp";
+import { colors, radius, spacing } from "@/theme";
 
-import { useDashboardSession } from '../../context/DashboardSessionContext';
-import { useVehicles } from '../../context/VehicleContext';
-import type { DashboardRootStackParamList } from '../../navigation/dashboardRootTypes';
-import type { TripVehicleMode } from '../../types/trip.types';
-import type { Vehicle } from '../../types/vehicle.types';
-import { isTerminalListingStatus } from '../../utils/listingFilters';
-import { OfferResponseCard, type OfferResponseTagTone } from './OfferResponseCard';
-import { TripVehicleSelectStep } from './TripVehicleSelectStep';
-import { OfferVehicleDetailSheet, type OfferVehicleDetailSource } from './OfferVehicleDetailSheet';
-import { TripMessagingSheet } from './TripMessagingSheet';
+import { useDashboardSession } from "../../context/DashboardSessionContext";
+import { useVehicles } from "../../context/VehicleContext";
+import type { DashboardRootStackParamList } from "../../navigation/dashboardRootTypes";
+import type { TripVehicleMode } from "../../types/trip.types";
+import type { Vehicle } from "../../types/vehicle.types";
+import { isTerminalListingStatus } from "../../utils/listingFilters";
+import { reuseOfferSummaries } from "../../utils/reuseMediaViewUrls";
+import { uploadOfferPhotos } from "../../utils/offerPhotos";
+import { OfferPhotosPicker } from "./OfferPhotosPicker";
+import {
+  OfferResponseCard,
+  driverSharedOfferPriceParts,
+  type OfferResponseTagTone,
+} from "./OfferResponseCard";
+import { TripVehicleSelectStep } from "./TripVehicleSelectStep";
+import {
+  OfferVehicleDetailSheet,
+  type OfferVehicleDetailSource,
+} from "./OfferVehicleDetailSheet";
+import { TripMessagingSheet } from "./TripMessagingSheet";
 
 export type TripOfferPanelProps = {
   tripId: string;
@@ -48,11 +64,18 @@ export type TripOfferPanelProps = {
   vehicleTotalSeats: number | null;
   /** When true, driver must pick one of their vehicles before sending the offer. */
   requiresVehicle?: boolean;
+  /** True when the viewer is a driver responding to a passenger request. */
+  isPassengerRequest?: boolean;
+  /**
+   * Sea/air requests have no vehicle to select, so the driver may attach photos
+   * of the ferry or flight instead.
+   */
+  allowsPhotoAttachments?: boolean;
   /** Pre-select this vehicle after returning from the add-vehicle flow. */
   initialVehicleId?: string | null;
   /** Keep the parent listing card in sync after submit / confirm / decline / withdraw. */
   onOfferChange?: (update: {
-    rfqStatus: RfqResponderSnapshot['status'];
+    rfqStatus: RfqResponderSnapshot["status"];
     myOfferStatus: RfqOfferStatus | null;
     myOfferPrice: string | null;
     counterpartyName: string | null;
@@ -65,7 +88,12 @@ export type TripOfferPanelHandle = {
   openWithdrawConfirm: () => void;
 };
 
-const TERMINAL_STATUSES: RfqOfferStatus[] = ['withdrawn', 'declined', 'timed_out', 'lapsed'];
+const TERMINAL_STATUSES: RfqOfferStatus[] = [
+  "withdrawn",
+  "declined",
+  "timed_out",
+  "lapsed",
+];
 
 function parseQuantity(value: string | null | undefined): number | null {
   if (value == null || value.trim().length === 0) {
@@ -84,30 +112,36 @@ function offeredSeatsLabel(
   offeredQuantity: string | null,
   vehicleTotalSeats: number | null,
 ): string | null {
-  if (vehicleMode === 'fullPrivate') {
+  if (vehicleMode === "fullPrivate") {
     return vehicleTotalSeats != null
-      ? t('dashboard.listings.detail.responses.seats', { count: vehicleTotalSeats })
-      : t('trips.create.vehicleModeFullPrivate');
+      ? t("dashboard.listings.detail.responses.seats", {
+          count: vehicleTotalSeats,
+        })
+      : t("trips.create.vehicleModeFullPrivate");
   }
   const count = parseQuantity(offeredQuantity);
   if (count == null || count < 1) {
     return null;
   }
-  return t('dashboard.listings.detail.responses.seats', { count });
+  return t("dashboard.listings.detail.responses.seats", { count });
 }
 
 const TAG_TONE_BY_STATUS: Record<RfqOfferStatus, OfferResponseTagTone> = {
-  active: 'warning',
-  selected: 'selected',
-  confirmed: 'confirmed',
-  withdrawn: 'muted',
-  declined: 'muted',
-  timed_out: 'muted',
-  lapsed: 'muted',
+  active: "warning",
+  selected: "selected",
+  confirmed: "confirmed",
+  withdrawn: "muted",
+  declined: "muted",
+  timed_out: "muted",
+  lapsed: "muted",
 };
 
 function latestOfferFromSnapshot(snapshot: RfqResponderSnapshot) {
-  return snapshot.myOffers.find((offer) => !TERMINAL_STATUSES.includes(offer.status)) ?? null;
+  return (
+    snapshot.myOffers.find(
+      (offer) => !TERMINAL_STATUSES.includes(offer.status),
+    ) ?? null
+  );
 }
 
 function offerUpdateFromSnapshot(snapshot: RfqResponderSnapshot) {
@@ -133,26 +167,45 @@ export function OfferVehicleSummaryCard({
   compact?: boolean;
 }): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const isOfferVehicle = 'photoUrl' in vehicle;
+  const isOfferVehicle = "photoUrl" in vehicle;
   const photoUri = isOfferVehicle
     ? (vehicle.photoViewUrl ?? vehicle.photoUrl)
     : (vehicle.photoDisplayUris?.[0] ?? vehicle.photoUris[0] ?? null);
-  const brandModel = [vehicle.brand, vehicle.model].filter(Boolean).join(' ');
+  const brandModel = [vehicle.brand, vehicle.model].filter(Boolean).join(" ");
   const subtitle = headline
     ? brandModel
-    : [brandModel, t('vehicles.seatsCount', { count: vehicle.totalSeats })].filter(Boolean).join(' · ');
+    : [brandModel, t("vehicles.seatsCount", { count: vehicle.totalSeats })]
+        .filter(Boolean)
+        .join(" · ");
 
   const content = (
     <>
-      <View style={[styles.vehicleThumb, compact && styles.vehicleThumbCompact]}>
+      <View
+        style={[styles.vehicleThumb, compact && styles.vehicleThumbCompact]}
+      >
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.vehicleThumbImage} contentFit="cover" />
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.vehicleThumbImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={vehicle.id}
+            transition={0}
+          />
         ) : (
-          <FontAwesome name="car" size={compact ? 14 : 18} color={colors.text.tertiary} />
+          <FontAwesome
+            name="car"
+            size={compact ? 14 : 18}
+            color={colors.text.tertiary}
+          />
         )}
       </View>
       <View style={styles.vehicleCopy}>
-        <AppText weight="semibold" style={styles.vehicleTitle} numberOfLines={1}>
+        <AppText
+          weight="semibold"
+          style={styles.vehicleTitle}
+          numberOfLines={1}
+        >
           {headline ?? vehicle.title}
         </AppText>
         {subtitle ? (
@@ -167,7 +220,11 @@ export function OfferVehicleSummaryCard({
         ) : null}
       </View>
       {onPress ? (
-        <FontAwesome name="chevron-right" size={12} color={colors.text.tertiary} />
+        <FontAwesome
+          name="chevron-right"
+          size={12}
+          color={colors.text.tertiary}
+        />
       ) : null}
     </>
   );
@@ -182,54 +239,94 @@ export function OfferVehicleSummaryCard({
         ]}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={t('dashboard.listings.detail.responses.viewVehicleA11y', {
-          title: vehicle.title,
-        })}
+        accessibilityLabel={t(
+          "dashboard.listings.detail.responses.viewVehicleA11y",
+          {
+            title: vehicle.title,
+          },
+        )}
       >
         {content}
       </Pressable>
     );
   }
 
-  return <View style={[styles.vehicleSummary, compact && styles.vehicleSummaryCompact]}>{content}</View>;
+  return (
+    <View
+      style={[styles.vehicleSummary, compact && styles.vehicleSummaryCompact]}
+    >
+      {content}
+    </View>
+  );
 }
 
-export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPanelProps>(
-  function TripOfferPanel(
-    {
-      tripId,
-      routeLabel,
-      vehicleMode,
-      vehicleTotalSeats,
-      requiresVehicle = false,
-      initialVehicleId = null,
-      onOfferChange,
-      onCanWithdrawChange,
-    },
-    ref,
-  ): React.ReactElement | null {
+export const TripOfferPanel = React.forwardRef<
+  TripOfferPanelHandle,
+  TripOfferPanelProps
+>(function TripOfferPanel(
+  {
+    tripId,
+    routeLabel,
+    vehicleMode,
+    vehicleTotalSeats,
+    requiresVehicle = false,
+    isPassengerRequest = false,
+    allowsPhotoAttachments = false,
+    initialVehicleId = null,
+    onOfferChange,
+    onCanWithdrawChange,
+  },
+  ref,
+): React.ReactElement | null {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
   const navigation =
     useNavigation<NativeStackNavigationProp<DashboardRootStackParamList>>();
-  const { vehicles, isLoading: vehiclesLoading, refreshVehicles, beginAddVehicle } = useVehicles();
-  const isFullPrivate = vehicleMode === 'fullPrivate';
+  const {
+    vehicles,
+    isLoading: vehiclesLoading,
+    refreshVehicles,
+    beginAddVehicle,
+  } = useVehicles();
+  const isFullPrivate = vehicleMode === "fullPrivate";
+  // A driver offering on a passenger request covers the whole request, so he never picks seats.
+  const isDriverOffering =
+    isPassengerRequest || requiresVehicle || allowsPhotoAttachments;
+  const asksForSeats = !isFullPrivate && !isDriverOffering;
 
-  const [snapshot, setSnapshot] = React.useState<RfqResponderSnapshot | null>(null);
+  const [snapshot, setSnapshot] = React.useState<RfqResponderSnapshot | null>(
+    null,
+  );
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [seats, setSeats] = React.useState(isFullPrivate ? String(vehicleTotalSeats ?? 1) : '1');
-  const [price, setPrice] = React.useState('');
-  const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | null>(
-    initialVehicleId,
+  const [seats, setSeats] = React.useState(
+    isFullPrivate ? String(vehicleTotalSeats ?? 1) : "1",
   );
+  const [price, setPrice] = React.useState("");
+  const [selectedVehicleId, setSelectedVehicleId] = React.useState<
+    string | null
+  >(initialVehicleId);
   const [submitting, setSubmitting] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
   const [confirmDecline, setConfirmDecline] = React.useState(false);
   const [vehiclePickerOpen, setVehiclePickerOpen] = React.useState(false);
-  const [vehicleDetail, setVehicleDetail] = React.useState<OfferVehicleDetailSource | null>(null);
+  const [vehicleDetail, setVehicleDetail] =
+    React.useState<OfferVehicleDetailSource | null>(null);
   const [chatOpen, setChatOpen] = React.useState(false);
+  const [photoUris, setPhotoUris] = React.useState<string[]>([]);
+  const [bidOfferCredits, setBidOfferCredits] = React.useState(ENV.bidOfferCredits);
+
+  React.useEffect(() => {
+    void creditsApi
+      .getCatalog()
+      .then((catalog) => {
+        if (Number.isFinite(catalog.bidOfferCredits)) {
+          setBidOfferCredits(catalog.bidOfferCredits);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const selectedVehicle = React.useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -239,7 +336,10 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   const applySnapshot = React.useCallback(
     (result: RfqSnapshot) => {
       const next = result as RfqResponderSnapshot;
-      setSnapshot(next);
+      setSnapshot((previous) => ({
+        ...next,
+        myOffers: reuseOfferSummaries(previous?.myOffers, next.myOffers),
+      }));
       onOfferChange?.(offerUpdateFromSnapshot(next));
     },
     [onOfferChange],
@@ -251,7 +351,11 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     void rfqApi
       .getSnapshot(tripId)
       .then((result) => applySnapshot(result))
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.loadFailed'))))
+      .catch((err) =>
+        setError(
+          getErrorMessage(err, t("dashboard.listings.detail.offer.loadFailed")),
+        ),
+      )
       .finally(() => setLoading(false));
   }, [applySnapshot, tripId, t]);
 
@@ -293,7 +397,7 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   }, [requiresVehicle, initialVehicleId, selectedVehicleId, vehicles]);
 
   React.useEffect(() => {
-    if (isFullPrivate) {
+    if (!asksForSeats) {
       return;
     }
     const remaining = parseQuantity(snapshot?.availableQuantity);
@@ -305,11 +409,13 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     if (cap >= 1 && Number.isInteger(current) && current > cap) {
       setSeats(String(cap));
     }
-  }, [isFullPrivate, seats, snapshot?.availableQuantity, vehicleTotalSeats]);
+  }, [asksForSeats, seats, snapshot?.availableQuantity, vehicleTotalSeats]);
 
   const previewOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
   const canWithdraw = Boolean(
-    snapshot && previewOffer?.status === 'active' && snapshot.actions.canWithdraw,
+    snapshot &&
+    previewOffer?.status === "active" &&
+    snapshot.actions.canWithdraw,
   );
 
   React.useEffect(() => {
@@ -341,14 +447,18 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     return error ? (
       <View style={styles.card}>
         <AppText style={styles.errorText}>{error}</AppText>
-        <Button label={t('dashboard.listings.detail.offer.retry')} onPress={load} />
+        <Button
+          label={t("dashboard.listings.detail.offer.retry")}
+          onPress={load}
+        />
       </View>
     ) : null;
   }
 
   const activeOffer = snapshot ? latestOfferFromSnapshot(snapshot) : null;
-  const hasActionableOffer = activeOffer != null && !TERMINAL_STATUSES.includes(activeOffer.status);
-  const isConfirmedOffer = activeOffer?.status === 'confirmed';
+  const hasActionableOffer =
+    activeOffer != null && !TERMINAL_STATUSES.includes(activeOffer.status);
+  const isConfirmedOffer = activeOffer?.status === "confirmed";
   // Offering on a passenger request → viewer is the driver; otherwise passenger.
   const whatsappMessage = buildWhatsAppContactMessage(t, {
     asDriver: Boolean(requiresVehicle),
@@ -357,26 +467,53 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     requestId: tripId,
   });
   const panelTitle = isConfirmedOffer
-    ? t('dashboard.listings.detail.offer.titleConfirmed')
-    : t('dashboard.listings.detail.offer.title');
+    ? t("dashboard.listings.detail.offer.titleConfirmed")
+    : t("dashboard.listings.detail.offer.title");
 
   const seatsNumber = Number(seats);
   const listedSeats = vehicleTotalSeats ?? 50;
-  const remainingSeats = parseQuantity(snapshot.availableQuantity) ?? listedSeats;
+  const remainingSeats =
+    parseQuantity(snapshot.availableQuantity) ?? listedSeats;
   const maxSeats = Math.max(0, Math.min(listedSeats, remainingSeats));
   const seatsValid =
-    isFullPrivate ||
-    (maxSeats >= 1 && Number.isInteger(seatsNumber) && seatsNumber >= 1 && seatsNumber <= maxSeats);
+    !asksForSeats ||
+    (maxSeats >= 1 &&
+      Number.isInteger(seatsNumber) &&
+      seatsNumber >= 1 &&
+      seatsNumber <= maxSeats);
   const priceNumber = Number(price);
-  const priceValid = price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
+  const priceValid =
+    price.trim().length > 0 && Number.isFinite(priceNumber) && priceNumber >= 0;
   const vehicleValid = !requiresVehicle || Boolean(selectedVehicleId);
   const canSubmit = seatsValid && priceValid && vehicleValid && !submitting;
-  const effectiveSeats = isFullPrivate ? (vehicleTotalSeats ?? 1) : seatsNumber;
+  const passengerRequestedSeats = Math.max(1, vehicleTotalSeats ?? listedSeats);
+  // Passenger shared: per-seat price × min(driver vehicle seats, passenger need).
+  const passengerSharedBillableSeats = (() => {
+    if (!isPassengerRequest || isFullPrivate) {
+      return null;
+    }
+    const driverSeats = selectedVehicle?.totalSeats;
+    if (driverSeats != null && driverSeats >= 1) {
+      return Math.min(driverSeats, passengerRequestedSeats);
+    }
+    if (allowsPhotoAttachments) {
+      return passengerRequestedSeats;
+    }
+    return null;
+  })();
+  const coveredSeats = Math.min(50, Math.max(1, maxSeats));
+  const effectiveSeats = asksForSeats
+    ? seatsNumber
+    : isFullPrivate
+      ? (vehicleTotalSeats ?? 1)
+      : isPassengerRequest
+        ? (passengerSharedBillableSeats ?? 0)
+        : coveredSeats;
+  const pricesPerSeat =
+    asksForSeats || (isPassengerRequest && !isFullPrivate);
   const totalPrice =
-    priceValid && seatsValid
-      ? isFullPrivate
-        ? priceNumber
-        : priceNumber * effectiveSeats
+    priceValid && seatsValid && pricesPerSeat && effectiveSeats >= 1
+      ? priceNumber * effectiveSeats
       : null;
 
   const submitOffer = () => {
@@ -385,16 +522,39 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     }
     setSubmitting(true);
     setError(null);
-    void rfqApi
-      .submitOffer(tripId, {
-        // Full-private capacity is 1 whole-vehicle slot on the RFQ, not the seat count.
-        seats: isFullPrivate ? 1 : seatsNumber,
-        price: priceNumber,
-        ...(requiresVehicle && selectedVehicleId ? { vehicleId: selectedVehicleId } : {}),
-      })
-      .then(() => load())
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.submitFailed'))))
-      .finally(() => setSubmitting(false));
+    void (async () => {
+      try {
+        const photoUrls = allowsPhotoAttachments
+          ? await uploadOfferPhotos(
+              photoUris,
+              t("dashboard.listings.detail.offer.photosUploadFailed"),
+            )
+          : [];
+        await rfqApi.submitOffer(tripId, {
+          // Full-private capacity is 1 whole-vehicle slot on the RFQ, not the seat count.
+          seats: isFullPrivate ? 1 : asksForSeats ? seatsNumber : effectiveSeats,
+          price: totalPrice ?? priceNumber,
+          ...(requiresVehicle && selectedVehicleId
+            ? { vehicleId: selectedVehicleId }
+            : {}),
+          ...(photoUrls.length > 0 ? { photoUrls } : {}),
+        });
+        setPhotoUris([]);
+        void refreshSessionProfile();
+        load();
+      } catch (err) {
+        setError(
+          isApiErrorWithCode(err, "INSUFFICIENT_CREDITS")
+            ? t("common.insufficientCredits")
+            : getErrorMessage(
+            err,
+            t("dashboard.listings.detail.offer.submitFailed"),
+          ),
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    })();
   };
 
   const withdrawOffer = () => {
@@ -405,7 +565,14 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     void rfqApi
       .withdrawOffer(tripId, activeOffer.id)
       .then((result) => applySnapshot(result))
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.offer.withdrawFailed'))))
+      .catch((err) =>
+        setError(
+          getErrorMessage(
+            err,
+            t("dashboard.listings.detail.offer.withdrawFailed"),
+          ),
+        ),
+      )
       .finally(() => {
         setConfirmWithdraw(false);
       });
@@ -420,7 +587,14 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     void rfqApi
       .confirmOffer(tripId, activeOffer.id)
       .then((result) => applySnapshot(result))
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
+      .catch((err) =>
+        setError(
+          getErrorMessage(
+            err,
+            t("dashboard.listings.detail.responses.actionFailed"),
+          ),
+        ),
+      )
       .finally(() => setConfirming(false));
   };
 
@@ -433,7 +607,14 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
     void rfqApi
       .declineOffer(tripId, activeOffer.id)
       .then((result) => applySnapshot(result))
-      .catch((err) => setError(getErrorMessage(err, t('dashboard.listings.detail.responses.actionFailed'))))
+      .catch((err) =>
+        setError(
+          getErrorMessage(
+            err,
+            t("dashboard.listings.detail.responses.actionFailed"),
+          ),
+        ),
+      )
       .finally(() => {
         setConfirming(false);
         setConfirmDecline(false);
@@ -443,9 +624,9 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
   const goAddVehicle = () => {
     setVehiclePickerOpen(false);
     beginAddVehicle();
-    navigation.navigate('VehicleDetails', {
-      mode: 'add',
-      returnTo: 'ListingDetail',
+    navigation.navigate("VehicleDetails", {
+      mode: "add",
+      returnTo: "ListingDetail",
       listingTripId: tripId,
     });
   };
@@ -457,17 +638,37 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
 
   const ownerPhone = snapshot.ownerPhone?.trim() || null;
   const canDecideOffer =
-    activeOffer?.status === 'selected' &&
+    activeOffer?.status === "selected" &&
     (snapshot.actions.canConfirm || snapshot.actions.canDecline);
   const showOfferMessage =
     activeOffer != null &&
-    (activeOffer.status === 'active' ||
-      activeOffer.status === 'selected' ||
-      (activeOffer.status === 'confirmed' && Boolean(ownerPhone)));
-  const offerPriceLabel =
-    activeOffer?.price != null
-      ? t('dashboard.listings.card.priceWithCurrency', { price: activeOffer.price })
-      : '';
+    (activeOffer.status === "active" ||
+      activeOffer.status === "selected" ||
+      (activeOffer.status === "confirmed" && Boolean(ownerPhone)));
+  const sharedParts =
+    !isPassengerRequest &&
+    vehicleMode === "shared" &&
+    activeOffer != null
+      ? driverSharedOfferPriceParts(
+          activeOffer.price,
+          activeOffer.offeredQuantity,
+        )
+      : null;
+  const offerPriceLabel = sharedParts
+    ? sharedParts.perSeatLabel
+    : activeOffer?.price != null
+      ? formatPriceWithCurrency(activeOffer.price)
+      : "";
+  const offerPriceSuffix = sharedParts
+    ? t("dashboard.listings.pricePerSeatSuffix")
+    : null;
+  const offerPriceHint = sharedParts
+    ? t("dashboard.listings.detail.offer.priceTimesSeatsEquals", {
+        price: sharedParts.perSeatLabel,
+        seats: String(sharedParts.seats),
+        total: sharedParts.totalLabel,
+      })
+    : null;
 
   return (
     <View style={styles.root}>
@@ -482,36 +683,46 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
 
       {hasActionableOffer && activeOffer ? (
         <OfferResponseCard
-          tag={t(`dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`)}
+          tag={t(
+            `dashboard.listings.detail.responses.offerStatus.${activeOffer.status}`,
+          )}
           tagTone={TAG_TONE_BY_STATUS[activeOffer.status]}
           cardTone={
-            activeOffer.status === 'confirmed'
-              ? 'confirmed'
-              : activeOffer.status === 'selected'
-                ? 'selected'
-                : 'default'
+            activeOffer.status === "confirmed"
+              ? "confirmed"
+              : activeOffer.status === "selected"
+                ? "selected"
+                : "default"
           }
           name={
-            snapshot.ownerName?.trim() || t('dashboard.listings.detail.contact.fallbackName')
+            snapshot.ownerName?.trim() ||
+            t("dashboard.listings.detail.contact.fallbackName")
           }
           priceLabel={offerPriceLabel}
-          detailLabel={offeredSeatsLabel(
-            t,
-            vehicleMode,
-            activeOffer.offeredQuantity,
-            vehicleTotalSeats,
-          )}
+          priceSuffix={offerPriceSuffix}
+          priceHint={offerPriceHint}
+          detailLabel={
+            isDriverOffering
+              ? null
+              : offeredSeatsLabel(
+                  t,
+                  vehicleMode,
+                  activeOffer.offeredQuantity,
+                  vehicleTotalSeats,
+                )
+          }
           showMessage={showOfferMessage}
           onMessagePress={() => setChatOpen(true)}
           vehicle={activeOffer.vehicle}
+          photos={activeOffer.photos}
           onVehiclePress={() => {
             if (activeOffer.vehicle) {
               setVehicleDetail(activeOffer.vehicle);
             }
           }}
-          footer={canDecideOffer ? 'decide' : ownerPhone ? 'whatsapp' : null}
-          rejectLabel={t('dashboard.listings.detail.offer.decline')}
-          acceptLabel={t('dashboard.listings.detail.offer.confirm')}
+          footer={canDecideOffer ? "decide" : ownerPhone ? "whatsapp" : null}
+          rejectLabel={t("dashboard.listings.detail.offer.decline")}
+          acceptLabel={t("dashboard.listings.detail.offer.confirm")}
           onReject={() => setConfirmDecline(true)}
           onAccept={confirmOffer}
           acceptLoading={confirming}
@@ -527,7 +738,7 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
             {requiresVehicle ? (
               <View style={styles.vehiclePicker}>
                 <AppText weight="semibold" style={styles.vehiclePickerLabel}>
-                  {t('dashboard.listings.detail.offer.vehicleLabel')}
+                  {t("dashboard.listings.detail.offer.vehicleLabel")}
                 </AppText>
                 {selectedVehicle ? (
                   <View style={styles.selectedVehicleBlock}>
@@ -536,24 +747,33 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
                       onPress={() => setVehicleDetail(selectedVehicle)}
                     />
                     <Button
-                      label={t('dashboard.listings.detail.offer.changeVehicle')}
+                      label={t("dashboard.listings.detail.offer.changeVehicle")}
                       variant="secondary"
                       onPress={() => setVehiclePickerOpen(true)}
                     />
                   </View>
                 ) : (
                   <Button
-                    label={t('dashboard.listings.detail.offer.selectVehicle')}
+                    label={t("dashboard.listings.detail.offer.selectVehicle")}
                     variant="secondary"
                     onPress={() => setVehiclePickerOpen(true)}
                   />
                 )}
               </View>
             ) : null}
-            {!isFullPrivate ? (
+            {allowsPhotoAttachments ? (
+              <OfferPhotosPicker
+                photoUris={photoUris}
+                onChange={setPhotoUris}
+                disabled={submitting}
+              />
+            ) : null}
+            {asksForSeats ? (
               <SeatsStepper
-                label={t('dashboard.listings.detail.offer.seatsLabel')}
-                hint={t('dashboard.listings.detail.offer.seatsRemaining', { count: maxSeats })}
+                label={t("dashboard.listings.detail.offer.seatsLabel")}
+                hint={t("dashboard.listings.detail.offer.seatsRemaining", {
+                  count: maxSeats,
+                })}
                 required
                 value={
                   Number.isInteger(seatsNumber) && seatsNumber >= 1
@@ -568,40 +788,51 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
             <AuthTextField
               label={t(
                 isFullPrivate
-                  ? 'dashboard.listings.detail.offer.priceFullVehicleLabel'
-                  : 'dashboard.listings.detail.offer.pricePerSeatLabel',
+                  ? "dashboard.listings.detail.offer.priceFullVehicleLabel"
+                  : pricesPerSeat
+                    ? "dashboard.listings.detail.offer.pricePerSeatLabel"
+                    : "dashboard.listings.detail.offer.priceOfferLabel",
               )}
               value={price}
               onChangeText={setPrice}
               keyboardType="decimal-pad"
-              placeholder={t('dashboard.listings.detail.offer.pricePlaceholder')}
+              placeholder={t(
+                "dashboard.listings.detail.offer.pricePlaceholder",
+              )}
               dense
             />
-            {totalPrice != null && !isFullPrivate ? (
+            {totalPrice != null ? (
               <View style={styles.totalBox}>
                 <AppText weight="semibold" style={styles.totalLabel}>
-                  {t('dashboard.listings.detail.offer.totalLabel')}
+                  {t("dashboard.listings.detail.offer.totalLabel")}
                 </AppText>
                 <View style={styles.totalCalcRow}>
                   <AppText style={styles.totalCalc}>
-                    {t('dashboard.listings.detail.offer.totalCalc', {
-                      price: t('dashboard.listings.card.priceWithCurrency', { price: priceNumber }),
-                      seats: t('dashboard.listings.detail.responses.seats', {
+                    {t("dashboard.listings.detail.offer.totalCalc", {
+                      price: t("dashboard.listings.card.priceWithCurrency", {
+                        currency: getDisplayCurrency(),
+                        price: formatPriceAmount(priceNumber),
+                      }),
+                      seats: t("dashboard.listings.detail.responses.seats", {
                         count: effectiveSeats,
                       }),
                     })}
                   </AppText>
                   <AppText weight="bold" style={styles.totalValue}>
-                    {t('dashboard.listings.card.priceWithCurrency', { price: totalPrice })}
+                    {t("dashboard.listings.card.priceWithCurrency", {
+                      currency: getDisplayCurrency(),
+                      price: formatPriceAmount(totalPrice),
+                    })}
                   </AppText>
                 </View>
               </View>
             ) : null}
             <Button
-              label={t('dashboard.listings.detail.offer.submit')}
+              label={t("dashboard.listings.detail.offer.submit")}
               onPress={submitOffer}
               loading={submitting}
               disabled={!canSubmit}
+              creditCost={bidOfferCredits}
             />
           </View>
         </View>
@@ -609,7 +840,9 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
 
       {!hasActionableOffer && !snapshot.actions.canSubmitOffer ? (
         <View style={styles.card}>
-          <AppText style={styles.closedText}>{t('dashboard.listings.detail.offer.closed')}</AppText>
+          <AppText style={styles.closedText}>
+            {t("dashboard.listings.detail.offer.closed")}
+          </AppText>
         </View>
       ) : null}
 
@@ -618,7 +851,7 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
         onClose={() => setChatOpen(false)}
         tripId={tripId}
         counterpartyName={snapshot?.ownerName ?? null}
-        counterpartyRole={requiresVehicle ? 'passenger' : 'driver'}
+        counterpartyRole={requiresVehicle ? "passenger" : "driver"}
         offerId={activeOffer?.id}
       />
 
@@ -629,13 +862,13 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
       >
         <View style={styles.sheetHeader}>
           <AppText weight="bold" style={styles.sheetTitle}>
-            {t('dashboard.listings.detail.offer.selectVehicleTitle')}
+            {t("dashboard.listings.detail.offer.selectVehicleTitle")}
           </AppText>
           <Pressable
             onPress={() => setVehiclePickerOpen(false)}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel={t('common.cancel')}
+            accessibilityLabel={t("common.cancel")}
           >
             <FontAwesome name="times" size={18} color={colors.text.secondary} />
           </Pressable>
@@ -665,18 +898,22 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
       <AppDialog
         visible={confirmWithdraw}
         icon="undo"
-        title={t('dashboard.listings.detail.offer.withdrawConfirmTitle')}
+        title={t("dashboard.listings.detail.offer.withdrawConfirmTitle")}
         message={
           requiresVehicle
-            ? t('dashboard.listings.detail.offer.withdrawConfirmBodyNotifyPassenger')
-            : t('dashboard.listings.detail.offer.withdrawConfirmBodyNotifyDriver')
+            ? t(
+                "dashboard.listings.detail.offer.withdrawConfirmBodyNotifyPassenger",
+              )
+            : t(
+                "dashboard.listings.detail.offer.withdrawConfirmBodyNotifyDriver",
+              )
         }
         cancelAction={{
-          label: t('common.cancel'),
+          label: t("common.cancel"),
           onPress: () => setConfirmWithdraw(false),
         }}
         confirmAction={{
-          label: t('dashboard.listings.detail.offer.withdrawConfirmAction'),
+          label: t("dashboard.listings.detail.offer.withdrawConfirmAction"),
           onPress: withdrawOffer,
         }}
       />
@@ -684,18 +921,22 @@ export const TripOfferPanel = React.forwardRef<TripOfferPanelHandle, TripOfferPa
       <AppDialog
         visible={confirmDecline}
         icon="times"
-        title={t('dashboard.listings.detail.offer.declineConfirmTitle')}
+        title={t("dashboard.listings.detail.offer.declineConfirmTitle")}
         message={
           requiresVehicle
-            ? t('dashboard.listings.detail.offer.declineConfirmBodyNotifyPassenger')
-            : t('dashboard.listings.detail.offer.declineConfirmBodyNotifyDriver')
+            ? t(
+                "dashboard.listings.detail.offer.declineConfirmBodyNotifyPassenger",
+              )
+            : t(
+                "dashboard.listings.detail.offer.declineConfirmBodyNotifyDriver",
+              )
         }
         cancelAction={{
-          label: t('common.cancel'),
+          label: t("common.cancel"),
           onPress: () => setConfirmDecline(false),
         }}
         confirmAction={{
-          label: t('dashboard.listings.detail.offer.decline'),
+          label: t("dashboard.listings.detail.offer.decline"),
           onPress: declineOffer,
         }}
       />
@@ -708,8 +949,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.lg,
   },
   card: {
@@ -721,8 +962,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   title: {
@@ -747,9 +988,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingBottom: spacing.sm,
   },
   sheetTitle: {
@@ -763,8 +1004,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   vehicleSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     padding: spacing.sm,
     borderRadius: radius.md,
@@ -777,16 +1018,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     gap: spacing.xs,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderRadius: radius.sm,
   },
   vehicleThumb: {
     width: 52,
     height: 52,
     borderRadius: radius.sm,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
   },
   vehicleThumbCompact: {
@@ -795,8 +1036,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   vehicleThumbImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   vehicleCopy: {
     flex: 1,
@@ -826,9 +1067,9 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   totalCalcRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: spacing.sm,
   },
   totalCalc: {
@@ -843,6 +1084,6 @@ const styles = StyleSheet.create({
   closedText: {
     fontSize: 13,
     color: colors.text.tertiary,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

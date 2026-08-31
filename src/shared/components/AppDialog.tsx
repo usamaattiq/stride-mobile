@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { colors, radius, spacing } from '@/theme';
 
@@ -18,6 +19,7 @@ export type AppDialogProps = {
   visible: boolean;
   title: string;
   message?: string;
+  children?: React.ReactNode;
   /** FontAwesome glyph shown in the badge above the title. */
   icon?: React.ComponentProps<typeof FontAwesome>['name'];
   confirmAction: AppDialogAction;
@@ -33,6 +35,7 @@ export function AppDialog({
   visible,
   title,
   message,
+  children,
   icon = 'exclamation',
   confirmAction,
   cancelAction,
@@ -47,7 +50,7 @@ export function AppDialog({
       statusBarTranslucent
       onRequestClose={dismiss}
     >
-      <View style={styles.root}>
+      <KeyboardAvoidingView behavior="padding" style={styles.root}>
         <Pressable
           style={styles.backdrop}
           onPress={dismiss}
@@ -64,6 +67,7 @@ export function AppDialog({
           </AppText>
 
           {message ? <AppText style={styles.message}>{message}</AppText> : null}
+          {children ? <View style={styles.body}>{children}</View> : null}
 
           <View style={styles.actions}>
             {cancelAction ? (
@@ -84,7 +88,7 @@ export function AppDialog({
             />
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -131,6 +135,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  body: {
+    width: '100%',
   },
   actions: {
     flexDirection: 'row',

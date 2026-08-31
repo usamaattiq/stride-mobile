@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { I18nManager, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
@@ -12,21 +12,25 @@ import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { formatPriceWithCurrency, stripCurrencyPrefix } from '@/shared/utils/currency';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
+import { getFontFamily } from '@/theme/typography';
 
+import { ROUTE_TYPE_ICONS, ROUTE_TYPE_LABEL_KEYS } from '../constants/routeTypes';
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
-import { formatDateRangeLabel } from './trip/dateRangeUtils';
-import type { Trip } from '../types/trip.types';
+import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
+import { isSeaOrAirRoute, type Trip, type TripRouteType } from '../types/trip.types';
 import { getListingExpiresAtMs, isListingNotStartedYet } from '../utils/listingWindow';
+import { canRepostListing } from '../utils/listingFilters';
 
 function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
   if (trip.departureOpen) {
     return openLabel;
   }
-  if (trip.departureUntil) {
+  if (trip.departureUntil && isMultiDayWindow(trip.departureAt, trip.departureUntil)) {
     return formatDateRangeLabel(trip.departureAt, trip.departureUntil, locale, trip.departureAt);
   }
   const date = new Date(trip.departureAt);
@@ -38,6 +42,9 @@ function formatTripWhen(trip: Trip, locale: string, openLabel: string): string {
     day: 'numeric',
     month: 'short',
   });
+  if (!trip.departureTimeSet) {
+    return day;
+  }
   const time = date.toLocaleTimeString(latinLocale, {
     hour: 'numeric',
     minute: '2-digit',
@@ -105,9 +112,22 @@ function formatCountdown(remainingMs: number, t: TFunction): string {
 
 function RequestThumbnail({
   vehicleClass,
+  routeType,
 }: {
   vehicleClass: VehicleClass | null;
+  routeType: TripRouteType;
 }): React.ReactElement {
+  // Sea / air requests have no vehicle artwork — fall back to the route medium icon.
+  if (routeType !== 'land') {
+    return (
+      <View style={styles.requestThumb}>
+        <View style={styles.requestThumbFallback}>
+          <FontAwesome name={ROUTE_TYPE_ICONS[routeType]} size={30} color={colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
   const imageSource = getVehicleClassImage(vehicleClass);
 
   return (
@@ -117,6 +137,8 @@ function RequestThumbnail({
           source={imageSource}
           style={styles.requestThumbImage}
           contentFit="contain"
+          recyclingKey={vehicleClass ?? 'request'}
+          transition={0}
         />
       ) : (
         <View style={styles.requestThumbFallback}>
@@ -132,8 +154,10 @@ export type ListingCardProps = {
   onPress?: () => void;
   /** Photo count badge on the thumbnail. Off for My Listings list. */
   showPhotoCount?: boolean;
-  /** Shows "Pending" / "Not started yet" instead of the real active/countdown timer. For the unpublished trip preview. */
+  /** Shows "Pending" / "Coming soon" instead of the real active/countdown timer. For the unpublished trip preview. */
   pending?: boolean;
+  /** Owner action: open create-trip prefilled from this completed listing. */
+  onRepost?: () => void;
 };
 
 export function ListingCard({
@@ -141,6 +165,7 @@ export function ListingCard({
   onPress,
   showPhotoCount = false,
   pending = false,
+  onRepost,
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
@@ -153,13 +178,25 @@ export function ListingCard({
     return () => clearInterval(id);
   }, [tickMs]);
 
-  const fromCity = useLocalizedCityName(trip.departureCity, trip.departurePoint);
-  const toCity = useLocalizedCityName(trip.arrivalCity, trip.arrivalPoint);
+  const seaOrAir = isSeaOrAirRoute(trip.routeType);
+  const fromCity = useLocalizedCityName(
+    trip.departureCity,
+    pending && !seaOrAir ? undefined : trip.departurePoint,
+  );
+  const toCity = useLocalizedCityName(
+    trip.arrivalCity,
+    pending && !seaOrAir ? undefined : trip.arrivalPoint,
+  );
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
     : null;
+  const isPassengerRequest = trip.vehicleId == null;
+  const hidePassengerPrivateRfqSeats =
+    isPassengerRequest &&
+    trip.listingType === 'rfq' &&
+    trip.vehicleMode === 'fullPrivate';
   const seatsLabel =
-    trip.vehicleTotalSeats != null
+    !hidePassengerPrivateRfqSeats && trip.vehicleTotalSeats != null
       ? t('vehicles.seatsCount', { count: trip.vehicleTotalSeats })
       : null;
   const modeLabel =
@@ -212,17 +249,18 @@ export function ListingCard({
       ? [trip.vehiclePhotoUrl]
       : [];
   const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const offerPrice =
-    trip.myBidAmount != null
-      ? String(trip.myBidAmount)
-      : trip.myOfferPrice?.trim() || null;
-  const rawPrice = offerPrice ?? (trip.startingPrice?.trim() || null);
-  const price = rawPrice?.replace(/^\s*PKR\s*/i, '').trim() || null;
-  const isPassengerRequest = trip.vehicleId == null;
+  const rawPrice = trip.startingPrice?.trim() || null;
+  const stripped = rawPrice ? stripCurrencyPrefix(rawPrice) : null;
+  const price = stripped ? formatPriceWithCurrency(stripped) || null : null;
   // Countdown is listing time remaining — hide it until the listing has actually started.
   const isAuction = trip.listingType === 'auction';
+  const offerSettled =
+    trip.rfqStatus === 'confirmed' ||
+    trip.rfqStatus === 'completed' ||
+    trip.myOfferStatus === 'confirmed';
   // Auction remaining time lives next to Place your bid, not on the listing card.
-  const showCountdown = !isAuction && !pending && !startsLater && active;
+  const showCountdown =
+    !isAuction && !pending && !startsLater && active && !offerSettled;
   const listingLabel = isAuction
       ? t('trips.create.listingAuction')
       : t('trips.create.listingRfq');
@@ -234,25 +272,27 @@ export function ListingCard({
         : trip.paymentMethod === 'cash'
           ? t('trips.create.paymentCash')
           : t('trips.create.notSpecified');
+  const showRepost = Boolean(onRepost) && !pending && canRepostListing(trip);
+  const showFooterRow = showCountdown || showRepost || Boolean(trip.referenceCode);
+  const referenceChip = trip.referenceCode ? (
+    <View
+      style={styles.referenceChip}
+      accessibilityLabel={t('dashboard.listings.card.referenceCodeA11y', {
+        code: trip.referenceCode,
+      })}
+    >
+      <AppText weight="semibold" style={styles.referenceChipText} numberOfLines={1}>
+        {t('dashboard.listings.card.referenceCode', { code: trip.referenceCode })}
+      </AppText>
+    </View>
+  ) : (
+    <View />
+  );
+
+  const isRtl = I18nManager.isRTL;
 
   const content = (
     <>
-      <LinearGradient
-        colors={['#FFFFFF', '#FFF7F6', '#FEE4E2']}
-        locations={[0, 0.42, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={['rgba(254, 228, 226, 0)', 'rgba(254, 228, 226, 0.55)', 'rgba(253, 210, 207, 0.7)']}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0.35, y: 0.15 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientWash}
-        pointerEvents="none"
-      />
 
       <View style={styles.topRow}>
         <View style={styles.topBadges}>
@@ -276,6 +316,12 @@ export function ListingCard({
               numberOfLines={1}
             >
               {listingLabel}
+            </AppText>
+          </View>
+          <View style={styles.topBadge}>
+            <FontAwesome name={ROUTE_TYPE_ICONS[trip.routeType]} size={9} color={colors.primary} />
+            <AppText weight="semibold" style={styles.topBadgeText} numberOfLines={1}>
+              {t(ROUTE_TYPE_LABEL_KEYS[trip.routeType])}
             </AppText>
           </View>
           <View style={styles.topBadge}>
@@ -351,9 +397,12 @@ export function ListingCard({
               source={{ uri: trip.vehiclePhotoUrl }}
               style={styles.thumbnailImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={trip.id}
+              transition={0}
             />
           ) : isPassengerRequest ? (
-            <RequestThumbnail vehicleClass={trip.vehicleClass} />
+            <RequestThumbnail vehicleClass={trip.vehicleClass} routeType={trip.routeType} />
           ) : (
             <View style={styles.thumbnailFallback}>
               <FontAwesome name="car" size={18} color={colors.text.tertiary} />
@@ -408,7 +457,11 @@ export function ListingCard({
               ) : null}
               {classLabel || seatsLabel ? (
                 <View style={[styles.metaRow, styles.vehicleTypeMeta]}>
-                  <FontAwesome name="car" size={11} color={colors.primary} />
+                  <FontAwesome
+                    name={trip.routeType === 'land' ? 'car' : ROUTE_TYPE_ICONS[trip.routeType]}
+                    size={11}
+                    color={colors.primary}
+                  />
                   <AppText style={styles.metaText} numberOfLines={1}>
                     {[classLabel, seatsLabel].filter(Boolean).join(' · ')}
                   </AppText>
@@ -423,26 +476,60 @@ export function ListingCard({
                 </AppText>
                 {trip.vehicleMode === 'shared' ? (
                   <AppText style={styles.priceSuffix}>
-                    {t('dashboard.listings.pricePerSeatSuffix')}
+                    {t('dashboard.listings.priceDemandPerSeat')}
+                  </AppText>
+                ) : trip.vehicleMode === 'fullPrivate' ? (
+                  <AppText style={styles.priceSuffix}>
+                    {t('dashboard.listings.priceDemandFullVehicle')}
                   </AppText>
                 ) : null}
               </View>
             ) : null}
           </View>
 
-          {showCountdown ? (
+          {showFooterRow ? (
             <View style={styles.bodyCountdownRow}>
-              <View style={styles.countdownBadge}>
-                <FontAwesome name="clock-o" size={10} color={colors.primary} />
-                <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
-                  {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
-                </AppText>
-              </View>
+              {referenceChip}
+              {showCountdown ? (
+                <View style={styles.countdownBadge}>
+                  <FontAwesome name="clock-o" size={10} color={colors.primary} />
+                  <AppText weight="semibold" style={styles.countdownText} numberOfLines={1}>
+                    {pending ? t('dashboard.listings.card.notStarted') : timerLabel}
+                  </AppText>
+                </View>
+              ) : showRepost ? (
+                <Pressable
+                  onPress={onRepost}
+                  hitSlop={6}
+                  style={({ pressed }) => [styles.repostChip, pressed && styles.repostChipPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dashboard.listings.card.repost')}
+                >
+                  <FontAwesome name="repeat" size={10} color={colors.white} />
+                  <AppText weight="semibold" style={styles.repostChipText} numberOfLines={1}>
+                    {t('dashboard.listings.card.repost')}
+                  </AppText>
+                </Pressable>
+              ) : (
+                <View />
+              )}
             </View>
           ) : null}
         </View>
       </View>
     </>
+  );
+
+  const cardInner = (
+    <LinearGradient
+      colors={['#FFFFFF', '#FFFBFB', '#FFF4F2', '#FEE8E6', '#FED7D3']}
+      locations={[0, 0.28, 0.52, 0.78, 1]}
+      start={isRtl ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+      end={isRtl ? { x: 0, y: 1 } : { x: 1, y: 1 }}
+      style={styles.itemInner}
+    >
+      {content}
+    </LinearGradient>
   );
 
   const item = onPress ? (
@@ -452,12 +539,10 @@ export function ListingCard({
       accessibilityRole="button"
       accessibilityLabel={`${fromCity} to ${toCity}`}
     >
-      <View style={styles.itemInner}>{content}</View>
+      {cardInner}
     </Pressable>
   ) : (
-    <View style={styles.item}>
-      <View style={styles.itemInner}>{content}</View>
-    </View>
+    <View style={styles.item}>{cardInner}</View>
   );
 
   return (
@@ -485,15 +570,24 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border.default,
-    backgroundColor: colors.white,
     overflow: 'hidden',
   },
-  gradientWash: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '58%',
+  repostChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    flexShrink: 0,
+  },
+  repostChipPressed: {
+    opacity: 0.88,
+  },
+  repostChipText: {
+    fontSize: 11,
+    color: colors.white,
   },
   topRow: {
     flexDirection: 'row',
@@ -506,8 +600,9 @@ const styles = StyleSheet.create({
   topBadges: {
     flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
     minWidth: 0,
   },
   topBadge: {
@@ -589,10 +684,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.primaryMuted,
+    flexShrink: 0,
   },
   countdownText: {
     fontSize: 11,
     color: colors.primary,
+  },
+  referenceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: '62%',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  referenceChipText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    letterSpacing: 0.2,
+    fontFamily: getFontFamily('en', 'semibold'),
   },
   thumbnail: {
     width: 88,
@@ -696,11 +809,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexShrink: 0,
     minWidth: 64,
-    paddingTop: 2,
+    marginTop: -6,
   },
   bodyCountdownRow: {
     marginTop: 'auto',
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   priceAmount: {
     fontSize: 22,
@@ -708,7 +824,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   priceSuffix: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.text.secondary,
+    textAlign: 'right',
+    maxWidth: 110,
+    marginTop: -4,
   },
 });

@@ -6,4 +6,5 @@ export type SettingsStackParamList = {
   DriverVerification: { purpose?: DriverVerificationPurpose } | undefined;
   NicVerification: undefined;
   GeneralInformation: undefined;
+  BankAccounts: undefined;
 };

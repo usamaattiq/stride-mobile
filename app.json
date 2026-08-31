@@ -2,7 +2,7 @@
   "expo": {
     "name": "Musafir249",
     "slug": "musafir249",
-    "version": "1.0.3",
+    "version": "1.0.8",
     "orientation": "portrait",
     "scheme": "musafir249",
     "icon": "./assets/splash-logo.png",
@@ -91,29 +91,7 @@
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
         }
       ],
-      [
-        "@react-native-community/datetimepicker",
-        {
-          "android": {
-            "datePicker": {
-              "colorAccent": {
-                "light": "#B42318"
-              },
-              "colorControlActivated": {
-                "light": "#B42318"
-              }
-            },
-            "timePicker": {
-              "numbersSelectorColor": {
-                "light": "#B42318"
-              },
-              "headerBackground": {
-                "light": "#B42318"
-              }
-            }
-          }
-        }
-      ],
+      "@react-native-community/datetimepicker",
       "expo-secure-store",
       [
         "expo-notifications",
@@ -122,6 +100,13 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3e41e8f4-ab61-4839-8d3c-b568612d2666",
+      "enabled": true
+    },
     "extra": {
       "eas": {
         "projectId": "3e41e8f4-ab61-4839-8d3c-b568612d2666"

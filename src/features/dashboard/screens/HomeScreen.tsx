@@ -91,6 +91,9 @@ export function HomeScreen(): React.ReactElement {
       .getParent<BottomTabNavigationProp<DashboardTabParamList, 'Home'>>()
       ?.navigate({ name: 'Settings', params: { screen: 'SettingsHome' } });
   }, [navigation]);
+  const goToBuyCredits = React.useCallback(() => {
+    navigation.navigate('BuyCredits');
+  }, [navigation]);
 
   const roleLabel =
     user.role === 'driver'
@@ -162,6 +165,7 @@ export function HomeScreen(): React.ReactElement {
         onChatPress={showMessages}
         onNotificationsPress={showNotifications}
         onProfilePress={goToSettings}
+        onCreditsPress={goToBuyCredits}
       />
 
       {showPanelChrome && panelTitle ? (

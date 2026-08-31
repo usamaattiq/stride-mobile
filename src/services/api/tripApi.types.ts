@@ -12,6 +12,22 @@ export type TripLocationPointDto = {
   longitude: number;
 };
 
+export type TripLuggagePieceDto = {
+  type: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+};
+
+export type TripLuggageDto = {
+  option: 'handCarry' | 'checked';
+  type: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  weightKg: number | null;
+  items?: TripLuggagePieceDto[];
+};
+
 export type TripDto = {
   id: string;
   vehicleId: string | null;
@@ -22,16 +38,23 @@ export type TripDto = {
   vehiclePhotoViewUrls?: string[];
   vehicleClass: 'suv' | 'sedan' | 'bus' | 'van' | 'coaster' | null;
   vehicleTotalSeats: number | null;
+  routeType?: 'land' | 'sea' | 'air';
+  luggage?: TripLuggageDto | null;
   vehicleMode: 'shared' | 'fullPrivate';
   departureCity: TripCityDto;
   departurePoint: TripLocationPointDto;
   departureAt: string;
   departureUntil: string | null;
   departureOpen: boolean;
+  departureTimeSet?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
+  arrivalOpen?: boolean;
+  arrivalTimeSet?: boolean;
   listingType: 'rfq' | 'auction';
+  /** Public listing code, e.g. AUC-2026-1234. */
+  referenceCode: string;
   startingPrice: string | null;
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
@@ -71,14 +94,24 @@ export type CreateTripPayload = {
   departureAt: string;
   departureUntil?: string | null;
   departureOpen?: boolean;
+  departureTimeSet?: boolean;
   arrivalCity: TripCityDto;
   arrivalPoint: TripLocationPointDto;
   arrivalAt: string;
+  arrivalOpen?: boolean;
+  arrivalTimeSet?: boolean;
   listingType: 'rfq' | 'auction';
   /** Required for driver listings; omitted for passenger requests. */
   startingPrice?: string;
   /** Required for passenger requests when vehicleId is omitted. */
   seats?: number;
+  routeType?: 'land' | 'sea' | 'air';
+  luggageOption?: 'handCarry' | 'checked' | null;
+  luggageType?: 'suitcase' | 'backpack' | 'duffel' | 'box' | 'other' | null;
+  luggageLengthCm?: number | null;
+  luggageWidthCm?: number | null;
+  luggageWeightKg?: number | null;
+  luggageItems?: TripLuggagePieceDto[];
   paymentMethod: 'cash' | 'online' | 'both';
   durationHours: number;
   startMode: 'instant' | 'scheduled';
@@ -110,3 +143,23 @@ export type BrowseTripsParams = {
   page?: number;
   limit?: number;
 };
+
+export type TerminalKind = 'airport' | 'seaport';
+
+export type TerminalSearchItemDto = {
+  id: string;
+  code: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+};
+
+export type TripSubzonePointDto = {
+  id: string;
+  name: string;
+  cityId: string | null;
+  cityLabel: string;
+  latitude: number;
+  longitude: number;
+};
+

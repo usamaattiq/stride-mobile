@@ -15,6 +15,7 @@ type TripScheduleStepProps = {
   draft: TripDraft;
   onChange: (partial: Partial<TripDraft>) => void;
   onContinue: () => void;
+  errorMessage?: string | null;
 };
 
 type StartModeOption = {
@@ -43,6 +44,7 @@ export function TripScheduleStep({
   draft,
   onChange,
   onContinue,
+  errorMessage,
 }: TripScheduleStepProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
 
@@ -130,10 +132,12 @@ export function TripScheduleStep({
           </>
         ) : null}
 
+        {errorMessage ? <AppText style={styles.submitError}>{errorMessage}</AppText> : null}
         <Button
           label={`${t('common.continue')} →`}
           onPress={onContinue}
           disabled={!isScheduleComplete(draft)}
+          eagerPress
         />
       </View>
     </AuthCard>
@@ -230,6 +234,11 @@ const styles = StyleSheet.create({
   scheduleHint: {
     fontSize: 12,
     lineHeight: 16,
+    color: colors.primary,
+  },
+  submitError: {
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.primary,
   },
 });

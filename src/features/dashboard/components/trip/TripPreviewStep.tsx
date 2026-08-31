@@ -1,11 +1,11 @@
 import React from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ListingCard } from '@/features/dashboard/components/ListingCard';
 import { VEHICLE_CLASS_OPTIONS } from '@/features/dashboard/constants/vehicleClasses';
-import { formatTripDateTime } from '@/features/dashboard/components/trip/dateRangeUtils';
+import { formatDateRangeLabel, formatTripDateTime, isMultiDayWindow } from '@/features/dashboard/components/trip/dateRangeUtils';
 import { TripDetailsOverview } from '@/features/dashboard/components/trip/TripDetailsOverview';
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
@@ -17,13 +17,17 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { cityDisplayName } from '@/shared/utils/city-display-name';
+import { ENV } from '@/shared/config/env';
+import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { formatLatinNumber } from '@/shared/utils/latin-digits';
 import { colors, iosArabicOpticalAlignStyle, radius, spacing } from '@/theme';
 
 export type TripPreviewEditStep =
+  | 'routeType'
   | 'vehicle'
   | 'vehicleMode'
   | 'details'
+  | 'luggage'
   | 'listing'
   | 'schedule';
 
@@ -33,6 +37,7 @@ type TripPreviewStepProps = {
   onPublish: () => void;
   onEditStep: (step: TripPreviewEditStep) => void;
   publishing?: boolean;
+  publishCost?: number;
   errorMessage?: string | null;
 };
 
@@ -65,6 +70,7 @@ export function TripPreviewStep({
   vehicle,
   onPublish,
   publishing = false,
+  publishCost = ENV.tripCreateCredits,
   errorMessage = null,
 }: TripPreviewStepProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
@@ -77,12 +83,13 @@ export function TripPreviewStep({
   const publishLabel = t(
     isPassenger ? 'trips.create.publishRequest' : 'trips.create.publish',
   );
+  const publishCostLabel = formatLatinNumber(publishCost);
 
   const trip = enrichPreviewTrip(draft, vehicle);
-  const fromCity = draft.departureCity
-    ? cityDisplayName(draft.departureCity.label)
-    : null;
-  const toCity = draft.arrivalCity ? cityDisplayName(draft.arrivalCity.label) : null;
+  const fromCityName = useLocalizedCityName(draft.departureCity, draft.departurePoint);
+  const toCityName = useLocalizedCityName(draft.arrivalCity, draft.arrivalPoint);
+  const fromCity = fromCityName || null;
+  const toCity = toCityName || null;
   const modeLabel =
     draft.vehicleMode === 'fullPrivate'
       ? t('trips.create.vehicleModeFullPrivate')
@@ -91,12 +98,16 @@ export function TripPreviewStep({
         : null;
   const vehicleLabel =
     vehicle?.title ??
-    (draft.vehicleClass
-      ? t(
-          VEHICLE_CLASS_OPTIONS.find((item) => item.id === draft.vehicleClass)?.labelKey ??
-            'vehicles.classPlaceholder',
-        )
-      : t('trips.create.previewVehicle'));
+    (draft.routeType === 'sea'
+      ? t('trips.create.routeTypeSea')
+      : draft.routeType === 'air'
+        ? t('trips.create.routeTypeAir')
+        : draft.vehicleClass
+          ? t(
+              VEHICLE_CLASS_OPTIONS.find((item) => item.id === draft.vehicleClass)?.labelKey ??
+                'vehicles.classPlaceholder',
+            )
+          : t('trips.create.previewVehicle'));
   const description =
     draft.description.trim() ||
     (fromCity && toCity
@@ -107,13 +118,18 @@ export function TripPreviewStep({
           mode: modeLabel ?? t('trips.create.notSpecified'),
         })
       : null);
-  const departureWhen = draft.departureAt
-    ? formatTripDateTime(draft.departureAt, locale, '')
-    : t('dashboard.listings.card.open');
-  const arrivalWhen =
-    draft.departureAt && draft.arrivalAt
+  const departureWhen = !draft.departureAt
+    ? t('dashboard.listings.card.open')
+    : isMultiDayWindow(draft.departureAt, draft.departureUntil)
+      ? formatDateRangeLabel(draft.departureAt, draft.departureUntil, locale, '')
+      : draft.departureTimeSet
+        ? formatTripDateTime(draft.departureAt, locale, '')
+        : formatDateRangeLabel(draft.departureAt, null, locale, '');
+  const arrivalWhen = !draft.arrivalAt
+    ? undefined
+    : draft.arrivalTimeSet
       ? formatTripDateTime(draft.arrivalAt, locale, '')
-      : undefined;
+      : formatDateRangeLabel(draft.arrivalAt, null, locale, '');
 
   return (
     <View style={styles.root}>
@@ -121,6 +137,7 @@ export function TripPreviewStep({
 
       <TripDetailsOverview
         description={description}
+        luggage={trip?.luggage ?? null}
         fromCity={fromCity}
         toCity={toCity}
         departureWhen={departureWhen}
@@ -140,7 +157,7 @@ export function TripPreviewStep({
           publishing && styles.actionDisabled,
         ]}
         accessibilityRole="button"
-        accessibilityLabel={publishLabel}
+        accessibilityLabel={`${publishLabel}, ${t('trips.create.publishCostA11y', { count: publishCostLabel })}`}
         accessibilityState={{ busy: publishing, disabled: publishing }}
       >
         {publishing ? (
@@ -151,6 +168,12 @@ export function TripPreviewStep({
             <AppText weight="bold" style={[styles.publishButtonText, iosArabicAlign]}>
               {publishLabel}
             </AppText>
+            <View style={styles.publishCost}>
+              <FontAwesome5 name="coins" size={12} color={colors.accent.coins} solid />
+              <AppText weight="bold" style={styles.publishCostText}>
+                {publishCostLabel}
+              </AppText>
+            </View>
           </>
         )}
       </Pressable>
@@ -181,6 +204,20 @@ const styles = StyleSheet.create({
   },
   publishButtonText: {
     fontSize: 14,
+    color: colors.white,
+  },
+  publishCost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: spacing.xxs,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  publishCostText: {
+    fontSize: 13,
     color: colors.white,
   },
   actionDisabled: {

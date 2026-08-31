@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import {
   applyLocalDateToIso,
+  clampDateWindowEnd,
   daysInMonth,
   formatDateRangeLabel,
   isSameLocalDay,
+  MAX_DATE_WINDOW_DAYS,
   mondayFirstWeekday,
   parseIsoDate,
   startOfLocalDay,
@@ -15,7 +17,6 @@ import {
 import { i18n as appI18n } from '@/i18n';
 import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppText } from '@/shared/components/AppText';
-import { Button } from '@/shared/components/Button';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 
@@ -29,6 +30,17 @@ type DateRangeCalendarFieldProps = {
   hideLabel?: boolean;
   /** `onBrand` is for the red passenger search card (white text, no chrome). */
   variant?: 'default' | 'onBrand';
+  /**
+   * Render only the calendar (no trigger / nested sheet). Use inside a parent
+   * bottom sheet such as trip-create departure.
+   */
+  embedded?: boolean;
+  /** Called after the user confirms a range in embedded mode. */
+  onApply?: () => void;
+  /** Rendered above Clear / Done when the current draft is a single day. */
+  footer?: React.ReactNode;
+  /** Fired as soon as the in-progress selection becomes a multi-day window. */
+  onWindowSelected?: () => void;
 };
 
 function formatDay(date: Date, locale: string): string {
@@ -53,6 +65,10 @@ export function DateRangeCalendarField({
   required = false,
   hideLabel = false,
   variant = 'default',
+  embedded = false,
+  onApply,
+  footer,
+  onWindowSelected,
 }: DateRangeCalendarFieldProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
   const locale = i18n.language;
@@ -84,36 +100,59 @@ export function DateRangeCalendarField({
     );
   };
 
+  const commitDays = (start: Date | null, end: Date | null) => {
+    if (!start) {
+      onChange({ startIso: null, endIso: null });
+      return;
+    }
+
+    const endDay = clampDateWindowEnd(start, end ?? start);
+    const window = !isSameLocalDay(start, endDay);
+    if (window) {
+      onWindowSelected?.();
+    }
+    onChange({
+      startIso: applyLocalDateToIso(window ? null : startIso, start, 9),
+      endIso: applyLocalDateToIso(window ? null : endIso, endDay, 18),
+    });
+  };
+
   const onDayPress = (day: Date) => {
     const selected = startOfLocalDay(day);
 
-    if (!draftStart || (draftStart && draftEnd)) {
-      setDraftStart(selected);
-      setDraftEnd(null);
-      return;
+    let nextStart: Date | null;
+    let nextEnd: Date | null;
+
+    const completeWindow =
+      draftStart != null &&
+      draftEnd != null &&
+      !isSameLocalDay(draftStart, draftEnd);
+
+    if (!draftStart || completeWindow) {
+      nextStart = selected;
+      nextEnd = embedded ? selected : null;
+    } else if (selected.getTime() < draftStart.getTime()) {
+      nextStart = selected;
+      nextEnd = embedded ? selected : null;
+    } else {
+      nextStart = draftStart;
+      nextEnd = clampDateWindowEnd(draftStart, selected);
+      if (!isSameLocalDay(draftStart, nextEnd)) {
+        onWindowSelected?.();
+      }
     }
 
-    if (selected.getTime() < draftStart.getTime()) {
-      setDraftStart(selected);
-      setDraftEnd(null);
-      return;
+    setDraftStart(nextStart);
+    setDraftEnd(nextEnd);
+    if (embedded) {
+      commitDays(nextStart, nextEnd);
     }
-
-    setDraftEnd(selected);
   };
 
   const applyRange = () => {
-    if (!draftStart) {
-      onChange({ startIso: null, endIso: null });
-      setOpen(false);
-      return;
-    }
-
-    onChange({
-      startIso: applyLocalDateToIso(startIso, draftStart, 9),
-      endIso: draftEnd ? applyLocalDateToIso(endIso, draftEnd, 18) : null,
-    });
+    commitDays(draftStart, draftEnd);
     setOpen(false);
+    onApply?.();
   };
 
   const clearRange = () => {
@@ -121,6 +160,7 @@ export function DateRangeCalendarField({
     setDraftEnd(null);
     onChange({ startIso: null, endIso: null });
     setOpen(false);
+    onApply?.();
   };
 
   const year = visibleMonth.getFullYear();
@@ -138,6 +178,10 @@ export function DateRangeCalendarField({
   }
   while (cells.length % 7 !== 0) {
     cells.push(null);
+  }
+  const weeks: Array<Array<Date | null>> = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
   }
 
   const rangeLabel = formatDateRangeLabel(
@@ -157,99 +201,105 @@ export function DateRangeCalendarField({
   }, [locale]);
 
   const onBrand = variant === 'onBrand';
+  const isMultiDayDraft =
+    draftStart != null && draftEnd != null && !isSameLocalDay(draftStart, draftEnd);
 
-  return (
-    <View style={[styles.wrap, onBrand && styles.wrapOnBrand]}>
-      {!hideLabel ? (
-        <>
-          <AppText weight="medium" style={styles.label}>
-            {label}
-            {required ? <AppText style={styles.required}> *</AppText> : null}
-          </AppText>
-          <AppText style={styles.hint}>{t('trips.create.departureWindowHint')}</AppText>
-        </>
-      ) : null}
-
-      <Pressable
-        onPress={openSheet}
-        style={({ pressed }) => [
-          styles.trigger,
-          onBrand && styles.triggerOnBrand,
-          pressed && styles.triggerPressed,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
-        <FontAwesome name="calendar" size={onBrand ? 13 : 14} color={onBrand ? colors.white : colors.primary} />
-        <AppText
-          weight="semibold"
-          style={[
-            styles.triggerValue,
-            onBrand && styles.triggerValueOnBrand,
-            !startDate && (onBrand ? styles.triggerPlaceholderOnBrand : styles.triggerPlaceholder),
-          ]}
-          numberOfLines={1}
-        >
-          {startDate && !endDate
-            ? `${formatDay(startDate, locale)} → ${t('trips.create.selectDate')}`
-            : rangeLabel}
-        </AppText>
-        {onBrand ? null : (
-          <FontAwesome name="angle-right" size={16} color={colors.text.tertiary} />
-        )}
-      </Pressable>
-
-      <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.77}>
-        <View style={styles.sheetContent}>
-          <View style={styles.sheetHeader}>
-            <AppText weight="bold" style={styles.sheetTitle}>
+  const calendarBody = (
+    <View style={[styles.sheetContent, embedded && styles.sheetContentEmbedded]}>
+      {embedded ? null : (
+        <View style={styles.sheetHeader}>
+          <View style={styles.sheetTitleRow}>
+            <AppText weight="bold" style={styles.sheetTitle} numberOfLines={2}>
               {t('trips.create.departureDateWindow')}
             </AppText>
-            <View style={styles.sheetSubtitleWrap}>
-              <AppText style={styles.sheetSubtitle} numberOfLines={2}>
-                {draftStart && draftEnd
-                  ? `${formatDay(draftStart, locale)} → ${formatDay(draftEnd, locale)}`
-                  : draftStart
-                    ? `${formatDay(draftStart, locale)} → ${t('trips.create.selectDate')}`
-                    : t('trips.create.departureWindowHint')}
-              </AppText>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={clearRange}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  styles.headerActionSecondary,
+                  pressed && styles.headerActionPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+              >
+                <AppText weight="bold" style={styles.headerActionSecondaryLabel}>
+                  {t('common.clear')}
+                </AppText>
+              </Pressable>
+              <Pressable
+                onPress={applyRange}
+                disabled={!draftStart}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  styles.headerActionPrimary,
+                  !draftStart && styles.headerActionDisabled,
+                  pressed && draftStart && styles.headerActionPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.done')}
+                accessibilityState={{ disabled: !draftStart }}
+              >
+                <AppText
+                  weight="bold"
+                  style={[
+                    styles.headerActionPrimaryLabel,
+                    !draftStart && styles.headerActionDisabledLabel,
+                  ]}
+                >
+                  {t('common.done')}
+                </AppText>
+              </Pressable>
             </View>
           </View>
-
-          <View style={styles.monthRow}>
-            <Pressable
-              onPress={() => shiftMonth(-1)}
-              style={styles.monthNav}
-              hitSlop={8}
-              accessibilityRole="button"
-            >
-              <FontAwesome name="angle-left" size={18} color={colors.text.primary} />
-            </Pressable>
-            <AppText weight="semibold" style={styles.monthTitle}>
-              {formatMonthTitle(visibleMonth, locale)}
+          <View style={styles.sheetSubtitleWrap}>
+            <AppText style={styles.sheetSubtitle} numberOfLines={2}>
+              {draftStart && draftEnd
+                ? `${formatDay(draftStart, locale)} → ${formatDay(draftEnd, locale)}`
+                : draftStart
+                  ? `${formatDay(draftStart, locale)} → ${t('trips.create.selectDate')}`
+                  : t('trips.create.departureWindowHint', { count: MAX_DATE_WINDOW_DAYS })}
             </AppText>
-            <Pressable
-              onPress={() => shiftMonth(1)}
-              style={styles.monthNav}
-              hitSlop={8}
-              accessibilityRole="button"
-            >
-              <FontAwesome name="angle-right" size={18} color={colors.text.primary} />
-            </Pressable>
           </View>
+        </View>
+      )}
 
-          <View style={styles.weekRow}>
-            {weekdayLabels.map((weekday, index) => (
-              <AppText key={`${weekday}-${index}`} style={styles.weekday}>
-                {weekday}
-              </AppText>
-            ))}
-          </View>
+      <View style={styles.monthRow}>
+        <Pressable
+          onPress={() => shiftMonth(-1)}
+          style={styles.monthNav}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="angle-left" size={18} color={colors.text.primary} />
+        </Pressable>
+        <AppText weight="semibold" style={styles.monthTitle}>
+          {formatMonthTitle(visibleMonth, locale)}
+        </AppText>
+        <Pressable
+          onPress={() => shiftMonth(1)}
+          style={styles.monthNav}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <FontAwesome name="angle-right" size={18} color={colors.text.primary} />
+        </Pressable>
+      </View>
 
-          <View style={styles.grid}>
-            {cells.map((day, index) => {
+      <View style={styles.weekRow}>
+        {weekdayLabels.map((weekday, index) => (
+          <AppText key={`${weekday}-${index}`} style={styles.weekday}>
+            {weekday}
+          </AppText>
+        ))}
+      </View>
+
+      <View style={styles.grid}>
+        {weeks.map((week, weekIndex) => (
+          <View key={`week-${weekIndex}`} style={styles.weekDaysRow}>
+            {week.map((day, index) => {
               if (!day) {
-                return <View key={`empty-${index}`} style={styles.dayCell} />;
+                return <View key={`empty-${weekIndex}-${index}`} style={styles.dayCell} />;
               }
 
               const inRange =
@@ -294,22 +344,66 @@ export function DateRangeCalendarField({
               );
             })}
           </View>
+        ))}
+      </View>
 
-          <View style={styles.actions}>
-            <Button
-              label={t('common.clear')}
-              onPress={clearRange}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-            <Button
-              label={t('common.done')}
-              onPress={applyRange}
-              disabled={!draftStart || !draftEnd}
-              style={styles.actionButton}
-            />
-          </View>
-        </View>
+      {footer && !isMultiDayDraft ? <View style={styles.footer}>{footer}</View> : null}
+
+      <AppText style={styles.maxDaysNote}>
+        {t('trips.create.departureWindowMaxDays', { count: MAX_DATE_WINDOW_DAYS })}
+      </AppText>
+    </View>
+  );
+
+  if (embedded) {
+    return calendarBody;
+  }
+
+  return (
+    <View style={[styles.wrap, onBrand && styles.wrapOnBrand]}>
+      {!hideLabel ? (
+        <>
+          <AppText weight="medium" style={styles.label}>
+            {label}
+            {required ? <AppText style={styles.required}> *</AppText> : null}
+          </AppText>
+          <AppText style={styles.hint}>
+            {t('trips.create.departureWindowHint', { count: MAX_DATE_WINDOW_DAYS })}
+          </AppText>
+        </>
+      ) : null}
+
+      <Pressable
+        onPress={openSheet}
+        style={({ pressed }) => [
+          styles.trigger,
+          onBrand && styles.triggerOnBrand,
+          pressed && styles.triggerPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
+        <FontAwesome name="calendar" size={onBrand ? 13 : 14} color={onBrand ? colors.white : colors.primary} />
+        <AppText
+          weight="semibold"
+          style={[
+            styles.triggerValue,
+            onBrand && styles.triggerValueOnBrand,
+            !startDate && (onBrand ? styles.triggerPlaceholderOnBrand : styles.triggerPlaceholder),
+          ]}
+          numberOfLines={1}
+        >
+          {startDate && !endDate
+            ? `${formatDay(startDate, locale)} → ${t('trips.create.selectDate')}`
+            : rangeLabel}
+        </AppText>
+        {onBrand ? null : (
+          <FontAwesome name="angle-right" size={16} color={colors.text.tertiary} />
+        )}
+      </Pressable>
+
+      <AppBottomSheet visible={open} onClose={() => setOpen(false)} heightRatio={0.77}>
+        {calendarBody}
       </AppBottomSheet>
     </View>
   );
@@ -377,15 +471,62 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.xs,
   },
+  sheetContentEmbedded: {
+    flex: 0,
+  },
+  footer: {
+    gap: spacing.sm,
+  },
   sheetHeader: {
     gap: 2,
   },
+  sheetTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   sheetTitle: {
+    flex: 1,
     fontSize: 17,
     color: colors.text.primary,
   },
-  sheetSubtitleWrap: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  headerAction: {
     minHeight: 36,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerActionSecondary: {
+    backgroundColor: colors.primarySoft,
+  },
+  headerActionPrimary: {
+    backgroundColor: colors.primary,
+  },
+  headerActionDisabled: {
+    opacity: 0.45,
+  },
+  headerActionPressed: {
+    opacity: 0.85,
+  },
+  headerActionSecondaryLabel: {
+    fontSize: 13,
+    color: colors.primary,
+  },
+  headerActionPrimaryLabel: {
+    fontSize: 13,
+    color: colors.white,
+  },
+  headerActionDisabledLabel: {
+    color: colors.white,
+  },
+  sheetSubtitleWrap: {
+    minHeight: 22,
     justifyContent: 'center',
   },
   sheetSubtitle: {
@@ -421,12 +562,16 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   grid: {
+    flexShrink: 1,
+    gap: 0,
+  },
+  weekDaysRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    width: '100%',
   },
   dayCell: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
+    flex: 1,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -463,12 +608,13 @@ const styles = StyleSheet.create({
   dayLabelToday: {
     color: colors.primary,
   },
-  actions: {
+  maxDaysNote: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.text.secondary,
+    textAlign: 'center',
     marginTop: 'auto',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
 });

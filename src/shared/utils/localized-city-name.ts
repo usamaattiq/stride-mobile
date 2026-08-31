@@ -22,7 +22,74 @@ export function citiesReferToSamePlace(left: TripCity, right: TripCity): boolean
     return true;
   }
   return (
-    cityDisplayName(left.label).toLowerCase() === cityDisplayName(right.label).toLowerCase()
+    normalizeSearchText(cityDisplayName(left.label)) ===
+    normalizeSearchText(cityDisplayName(right.label))
+  );
+}
+
+/** Fold Arabic letter variants so "الرياض" matches even if alef/taa marbuta differ. */
+export function normalizeSearchText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u065F\u0670]/g, '');
+}
+
+export function getCachedLocalizedCityName(
+  city: TripCity,
+  language: string,
+  point?: { latitude: number; longitude: number } | null,
+): string | undefined {
+  return nameCache.get(
+    cacheKey({
+      city,
+      latitude: point?.latitude,
+      longitude: point?.longitude,
+      language,
+      apiKey: '',
+    }),
+  );
+}
+
+export function cityNameSearchHaystack(
+  city: TripCity,
+  point?: { latitude: number; longitude: number } | null,
+): string {
+  const tokens = [
+    city.label,
+    cityDisplayName(city.label),
+    getCachedLocalizedCityName(city, 'ar', point),
+    getCachedLocalizedCityName(city, 'en', point),
+  ].filter((token): token is string => Boolean(token));
+  return normalizeSearchText(tokens.join(' '));
+}
+
+export async function prefetchCityNamesForSearch(
+  cities: Array<{
+    city: TripCity;
+    latitude?: number | null;
+    longitude?: number | null;
+  }>,
+  apiKey: string,
+): Promise<void> {
+  if (!apiKey || cities.length === 0) {
+    return;
+  }
+  await Promise.all(
+    cities.flatMap((item) =>
+      (['ar', 'en'] as const).map((language) =>
+        resolveLocalizedCityName({
+          city: item.city,
+          latitude: item.latitude,
+          longitude: item.longitude,
+          language,
+          apiKey,
+        }),
+      ),
+    ),
   );
 }
 

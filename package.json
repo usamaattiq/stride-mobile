@@ -1,6 +1,6 @@
 {
   "name": "musafir249",
-  "version": "1.0.3",
+  "version": "1.0.8",
   "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -26,6 +26,7 @@
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.20",
     "i18next": "^26.3.6",
     "react": "19.1.0",
     "react-i18next": "^17.0.9",
@@ -51,7 +52,11 @@
     "web": "expo start --web",
     "build:android": "eas build -p android --profile production",
     "build:ios": "eas build -p ios --profile production",
-    "submit:ios": "eas submit -p ios --profile production --latest"
+    "build:preview": "eas build --profile preview",
+    "submit:ios": "eas submit -p ios --profile production --latest",
+    "update:preview": "eas update --channel preview",
+    "update:production": "eas update --channel production",
+    "build:prod": "eas update --channel production --message \"Production update\""
   },
   "private": true
 }

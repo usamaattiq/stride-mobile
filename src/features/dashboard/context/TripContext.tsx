@@ -1,10 +1,12 @@
 import React from 'react';
 
 import { tripApi } from '@/services/api/tripApi';
+import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
 import { useProfileStore } from '@/store/profileStore';
 
 import {
   createEmptyTripDraft,
+  tripToRepostDraft,
   type Trip,
   type TripDraft,
 } from '../types/trip.types';
@@ -17,6 +19,7 @@ type TripContextValue = {
   isPublishing: boolean;
   loadError: string | null;
   beginCreateTrip: () => void;
+  beginRepostTrip: (trip: Trip) => void;
   patchDraft: (partial: Partial<TripDraft>) => void;
   clearDraft: () => void;
   refreshTrips: () => Promise<void>;
@@ -27,6 +30,11 @@ type TripContextValue = {
 };
 
 const TripContext = React.createContext<TripContextValue | null>(null);
+
+/** Stable actions so tab chrome is not re-rendered on every draft keystroke. */
+const TripCreateActionsContext = React.createContext<{
+  beginCreateTrip: () => void;
+} | null>(null);
 
 export function TripProvider({
   children,
@@ -68,6 +76,10 @@ export function TripProvider({
     setDraft(createEmptyTripDraft());
   }, []);
 
+  const beginRepostTrip = React.useCallback((trip: Trip) => {
+    setDraft(tripToRepostDraft(trip));
+  }, []);
+
   const patchDraft = React.useCallback((partial: Partial<TripDraft>) => {
     setDraft((current) => ({ ...current, ...partial }));
   }, []);
@@ -95,6 +107,7 @@ export function TripProvider({
       const trip = mapTripDtoToTrip(created);
       setTrips((current) => [trip, ...current]);
       clearDraft();
+      void refreshSessionProfile();
       return trip;
     } finally {
       setIsPublishing(false);
@@ -114,6 +127,7 @@ export function TripProvider({
       isPublishing,
       loadError,
       beginCreateTrip,
+      beginRepostTrip,
       patchDraft,
       clearDraft,
       refreshTrips,
@@ -129,6 +143,7 @@ export function TripProvider({
       isPublishing,
       loadError,
       beginCreateTrip,
+      beginRepostTrip,
       patchDraft,
       clearDraft,
       refreshTrips,
@@ -139,7 +154,16 @@ export function TripProvider({
     ],
   );
 
-  return <TripContext.Provider value={value}>{children}</TripContext.Provider>;
+  const createActions = React.useMemo(
+    () => ({ beginCreateTrip }),
+    [beginCreateTrip],
+  );
+
+  return (
+    <TripCreateActionsContext.Provider value={createActions}>
+      <TripContext.Provider value={value}>{children}</TripContext.Provider>
+    </TripCreateActionsContext.Provider>
+  );
 }
 
 export function useTrips(): TripContextValue {
@@ -148,4 +172,12 @@ export function useTrips(): TripContextValue {
     throw new Error('useTrips must be used within TripProvider');
   }
   return context;
+}
+
+export function useBeginCreateTrip(): () => void {
+  const context = React.useContext(TripCreateActionsContext);
+  if (!context) {
+    throw new Error('useBeginCreateTrip must be used within TripProvider');
+  }
+  return context.beginCreateTrip;
 }

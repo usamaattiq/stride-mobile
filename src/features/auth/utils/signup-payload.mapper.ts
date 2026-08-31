@@ -2,6 +2,7 @@ import type { SignupSubmitPayload } from '@/services/api/authApi.types';
 import { uploadLocalFileToPresignedUrl } from '@/shared/services/mediaUploadService';
 
 import type { SignupDraft } from '../types/signup.types';
+import { toPhoneIdentity } from './phone-identity';
 
 /**
  * Uploads signup media (avatar / NIC) via presigned URLs, then builds the submit payload.
@@ -11,11 +12,7 @@ export async function toSignupSubmitPayload(
   draft: SignupDraft,
   deviceId: string,
 ): Promise<SignupSubmitPayload> {
-  const phone = {
-    countryCode: draft.country.code,
-    countryCallingCode: draft.country.callingCode,
-    phoneDigits: draft.phoneDigits,
-  };
+  const phone = toPhoneIdentity(draft.country, draft.phoneDigits);
 
   let avatarUrl: string | undefined;
   let nicFrontUrl: string | undefined;

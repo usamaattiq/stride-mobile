@@ -8,10 +8,11 @@ import { AuthTextField } from '@/features/auth/components/AuthTextField';
 import { DurationSlider } from '@/features/dashboard/components/trip/DurationSlider';
 import { SeatsStepper } from '@/features/dashboard/components/SeatsStepper';
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
-import type {
-  TripDraft,
-  TripListingType,
-  TripPaymentMethod,
+import {
+  isAuctionAllowed,
+  type TripDraft,
+  type TripListingType,
+  type TripPaymentMethod,
 } from '@/features/dashboard/types/trip.types';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
@@ -167,7 +168,7 @@ export function TripRfqAuctionStep({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { user } = useDashboardSession();
   const isPassenger = user.role === 'passenger';
-  const auctionAllowed = draft.vehicleMode === 'fullPrivate';
+  const auctionAllowed = isAuctionAllowed(draft.vehicleMode);
 
   const listingOptions: Array<{
     id: TripListingType;

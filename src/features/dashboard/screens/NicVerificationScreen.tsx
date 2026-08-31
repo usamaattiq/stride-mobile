@@ -8,6 +8,7 @@ import { AuthScaffold } from '@/features/auth/components/AuthScaffold';
 import { i18n as appI18n } from '@/i18n';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { AppDialog } from '@/shared/components/AppDialog';
+import { DocumentReviewStatusBanner } from '@/shared/components/DocumentReviewStatusBanner';
 import { IdentityDocumentVerification } from '@/shared/components/IdentityDocumentVerification';
 import {
   isRemoteMediaUrl,
@@ -63,9 +64,11 @@ export function NicVerificationScreen(): React.ReactElement {
       (profile?.nicFrontViewUrl ?? profile?.nicFrontUrl) &&
       (profile?.nicBackViewUrl ?? profile?.nicBackUrl),
   );
+  const nicStatus = profile?.nicStatus ?? 'not_submitted';
+  const isReadOnly = nicStatus === 'pending' || nicStatus === 'approved';
 
   const handleSubmit = async () => {
-    if (!frontUri || !backUri || submitting) {
+    if (!frontUri || !backUri || submitting || isReadOnly) {
       return;
     }
 
@@ -121,6 +124,10 @@ export function NicVerificationScreen(): React.ReactElement {
         showLanguageSwitcher={false}
       >
         <AuthCard>
+          <DocumentReviewStatusBanner
+            status={profile?.nicStatus ?? 'not_submitted'}
+            rejectionReason={profile?.nicRejectionReason}
+          />
           <IdentityDocumentVerification
             documentNumber={nicNumber}
             documentNumberLabel={t('nicVerification.nicNumber')}
@@ -153,6 +160,7 @@ export function NicVerificationScreen(): React.ReactElement {
             }}
             loading={submitting}
             errorMessage={submitError}
+            readOnly={isReadOnly}
           />
         </AuthCard>
       </AuthScaffold>
@@ -163,14 +171,14 @@ export function NicVerificationScreen(): React.ReactElement {
         title={
           wasEditingRef.current
             ? t('nicVerification.savedTitle')
-            : t('nicVerification.successTitle')
+            : t('nicVerification.submittedTitle')
         }
         message={
           continueToLicenseRef.current
             ? t('nicVerification.successBodyContinueLicense')
             : wasEditingRef.current
               ? t('nicVerification.savedBody')
-              : t('nicVerification.successBody')
+              : t('nicVerification.submittedBody')
         }
         confirmAction={{
           label: continueToLicenseRef.current

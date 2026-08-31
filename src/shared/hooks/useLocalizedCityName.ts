@@ -33,7 +33,7 @@ export function useLocalizedCityName(city: TripCity | null | undefined, point?: 
       apiKey: ENV.googleMapsApiKey,
     }).then((name) => {
       if (!cancelled && name) {
-        setLabel(name);
+        setLabel(cityDisplayName(name));
       }
     });
     return () => {

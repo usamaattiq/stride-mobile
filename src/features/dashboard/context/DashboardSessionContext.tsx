@@ -140,13 +140,8 @@ export function DashboardSessionProvider({
   );
 
   const hasDriverVerification = React.useMemo(
-    () =>
-      Boolean(
-        profile?.driverLicenseNumber?.trim() &&
-          profile.driverLicenseFrontUrl &&
-          profile.driverLicenseBackUrl,
-      ),
-    [profile],
+    () => profile?.licenseStatus === 'approved',
+    [profile?.licenseStatus],
   );
 
   const applyAuthResult = React.useCallback(

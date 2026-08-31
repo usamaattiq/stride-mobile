@@ -11,9 +11,14 @@ import Constants from 'expo-constants';
 import type { AuthStackParamList } from '@/features/auth/navigation/types';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { resetToWelcome } from '@/navigation/navigationRef';
+import { adminApi } from '@/services/api/adminApi';
 import { ApiError } from '@/services/api/apiError';
 import { authApi } from '@/services/api/authApi';
-import type { AccountDeletionBlockReason } from '@/services/api/authApi.types';
+import type {
+  AccountDeletionActivity,
+  AccountDeletionBlockReason,
+} from '@/services/api/authApi.types';
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { unregisterPushNotifications } from '@/services/pushNotifications';
 import { AppDialog } from '@/shared/components/AppDialog';
@@ -24,6 +29,7 @@ import { getLanguageOptions } from '@/shared/components/language-switcher/option
 import type { LanguageOption } from '@/shared/components/language-switcher/types/language-switcher.types';
 import { useLegalDocumentSheets } from '@/shared/hooks/useLegalDocumentSheets';
 import { useAuthStore } from '@/store/authStore';
+import { adminStore, useAdminStore } from '@/store/adminStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useSignupDraftStore } from '@/store/signupDraftStore';
 import { colors, spacing } from '@/theme';
@@ -45,32 +51,98 @@ type DeleteEligibilityState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   canDelete: boolean;
   reasons: AccountDeletionBlockReason[];
+  activities: AccountDeletionActivity[];
 };
 
 const INITIAL_DELETE_ELIGIBILITY: DeleteEligibilityState = {
   status: 'idle',
   canDelete: false,
   reasons: [],
+  activities: [],
 };
 
-function deletionBlockMessageKey(
+type DeleteBlockRow = {
+  key: string;
+  heading?: string;
+  text: string;
+};
+
+function parseDeletionActivities(raw: unknown): AccountDeletionActivity[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+    const row = item as Partial<AccountDeletionActivity>;
+    if (
+      (row.kind !== 'trip' && row.kind !== 'offer' && row.kind !== 'bid') ||
+      (row.role !== 'driver' && row.role !== 'passenger') ||
+      typeof row.label !== 'string' ||
+      !row.label.trim()
+    ) {
+      return [];
+    }
+    return [{ kind: row.kind, role: row.role, label: row.label.trim() }];
+  });
+}
+
+function activityItemLabel(
+  activity: AccountDeletionActivity,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
+  const key =
+    activity.kind === 'trip'
+      ? 'profile.account.deleteAccount.blockedTripItem'
+      : activity.kind === 'offer'
+        ? 'profile.account.deleteAccount.blockedOfferItem'
+        : 'profile.account.deleteAccount.blockedBidItem';
+  return t(key, { route: activity.label });
+}
+
+function deletionBlockRows(
   reasons: AccountDeletionBlockReason[],
-): 'profile.account.deleteAccount.blockedBoth'
-  | 'profile.account.deleteAccount.blockedOwner'
-  | 'profile.account.deleteAccount.blockedSender'
-  | 'profile.account.deleteAccount.blockedGeneric' {
-  const hasOwner = reasons.includes('owner_open_listing');
-  const hasSender = reasons.includes('active_offer_or_bid');
-  if (hasOwner && hasSender) {
-    return 'profile.account.deleteAccount.blockedBoth';
+  activities: AccountDeletionActivity[],
+  t: (key: string, options?: Record<string, string>) => string,
+): DeleteBlockRow[] {
+  if (activities.length > 0) {
+    const rows: DeleteBlockRow[] = [];
+    (['driver', 'passenger'] as const).forEach((role) => {
+      const group = activities.filter((activity) => activity.role === role);
+      if (group.length === 0) {
+        return;
+      }
+      const heading =
+        role === 'driver'
+          ? t('profile.account.deleteAccount.blockedAsDriver')
+          : t('profile.account.deleteAccount.blockedAsPassenger');
+      group.forEach((activity, index) => {
+        rows.push({
+          key: `${role}-${activity.kind}-${activity.label}-${index}`,
+          heading: index === 0 ? heading : undefined,
+          text: activityItemLabel(activity, t),
+        });
+      });
+    });
+    return rows;
   }
-  if (hasOwner) {
-    return 'profile.account.deleteAccount.blockedOwner';
+
+  const items: string[] = [];
+  const hasCombinedSender = reasons.includes('active_offer_or_bid');
+  if (reasons.includes('owner_open_listing')) {
+    items.push(t('profile.account.deleteAccount.blockedTrips'));
   }
-  if (hasSender) {
-    return 'profile.account.deleteAccount.blockedSender';
+  if (reasons.includes('active_offer') || hasCombinedSender) {
+    items.push(t('profile.account.deleteAccount.blockedOffers'));
   }
-  return 'profile.account.deleteAccount.blockedGeneric';
+  if (reasons.includes('active_bid') || hasCombinedSender) {
+    items.push(t('profile.account.deleteAccount.blockedBids'));
+  }
+  if (items.length === 0 && reasons.length > 0) {
+    items.push(t('profile.account.deleteAccount.blockedGeneric'));
+  }
+  return items.map((text, index) => ({ key: `fallback-${index}`, text }));
 }
 
 type SettingsNav = CompositeNavigationProp<
@@ -78,7 +150,7 @@ type SettingsNav = CompositeNavigationProp<
   BottomTabNavigationProp<DashboardTabParamList>
 >;
 
-const APP_VERSION = Constants.expoConfig?.version ?? '1.0.2';
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.8';
 
 export function SettingsHomeScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -92,7 +164,11 @@ export function SettingsHomeScreen(): React.ReactElement {
     switchToPassenger,
     resetSession,
   } = useDashboardSession();
+  const profile = useProfileStore((state) => state.profile);
   const { resetDraft } = useSignupDraftStore();
+  const sessionKind = useAuthStore((state) => state.sessionKind);
+  const adminProfile = useAdminStore((state) => state.profile);
+  const isAdmin = sessionKind === 'admin';
   const navigation = useNavigation<SettingsNav>();
   const dashboardRootNavigation = navigation.getParent()?.getParent() as
     | NativeStackNavigationProp<DashboardRootStackParamList>
@@ -112,6 +188,17 @@ export function SettingsHomeScreen(): React.ReactElement {
   );
   const deleteEligibilityRequestId = React.useRef(0);
 
+  const deleteBlockRows = React.useMemo(() => {
+    if (
+      deleteAccountError ||
+      deleteEligibility.status !== 'ready' ||
+      deleteEligibility.canDelete
+    ) {
+      return [];
+    }
+    return deletionBlockRows(deleteEligibility.reasons, deleteEligibility.activities, t);
+  }, [deleteAccountError, deleteEligibility, t]);
+
   const deleteDialogMessage = React.useMemo(() => {
     if (deleteAccountError) {
       return deleteAccountError;
@@ -125,7 +212,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     if (deleteEligibility.canDelete) {
       return t('profile.account.deleteAccount.confirm');
     }
-    return t(deletionBlockMessageKey(deleteEligibility.reasons));
+    return t('profile.account.deleteAccount.blockedIntro');
   }, [deleteAccountError, deleteEligibility, t]);
 
   const languageOptions = React.useMemo(() => getLanguageOptions(t), [t]);
@@ -141,14 +228,44 @@ export function SettingsHomeScreen(): React.ReactElement {
       getSettingsSectionsForRole({
         role: user.role,
         hasDriverVerification,
+        isAdmin,
       }),
-    [user.role, hasDriverVerification],
+    [user.role, hasDriverVerification, isAdmin],
   );
 
-  const isIdentityComplete =
-    user.role === 'driver'
+  const displayUser = React.useMemo(() => {
+    if (!isAdmin || !adminProfile) {
+      return user;
+    }
+    return {
+      ...user,
+      firstName: adminProfile.fullName.split(' ')[0] ?? adminProfile.fullName,
+      fullName: adminProfile.fullName,
+      mobileNumber: adminProfile.phoneE164,
+      isVerified: true,
+    };
+  }, [adminProfile, isAdmin, user]);
+
+  const isIdentityComplete = isAdmin
+    ? true
+    : user.role === 'driver'
       ? user.isVerified && hasDriverVerification
       : user.isVerified;
+
+  const isPendingApproval = React.useMemo(() => {
+    if (isAdmin || isIdentityComplete || !profile) {
+      return false;
+    }
+
+    const nicPending = profile.nicStatus === 'pending';
+    const licensePending = profile.licenseStatus === 'pending';
+
+    if (user.role === 'driver') {
+      return nicPending || licensePending;
+    }
+
+    return nicPending;
+  }, [isAdmin, isIdentityComplete, profile, user.role]);
 
   const handleVerifyPress = () => {
     if (user.role === 'driver') {
@@ -176,12 +293,21 @@ export function SettingsHomeScreen(): React.ReactElement {
     setDialog(null);
     void (async () => {
       await unregisterPushNotifications();
-      await authApi.logout().catch(() => undefined);
+      if (isAdmin) {
+        await adminApi.logout().catch(() => undefined);
+        adminStore.clearProfile();
+      } else {
+        await authApi.logout().catch(() => undefined);
+      }
       await useAuthStore.getState().signOut();
       useProfileStore.getState().clearProfile();
       resetDraft();
       resetSession();
-      authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      if (authRootNavigation) {
+        authRootNavigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+      } else {
+        resetToWelcome();
+      }
     })();
   };
 
@@ -199,7 +325,7 @@ export function SettingsHomeScreen(): React.ReactElement {
     const requestId = deleteEligibilityRequestId.current + 1;
     deleteEligibilityRequestId.current = requestId;
     setDeleteAccountError(null);
-    setDeleteEligibility({ status: 'loading', canDelete: false, reasons: [] });
+    setDeleteEligibility({ status: 'loading', canDelete: false, reasons: [], activities: [] });
     setDialog('delete-account');
     void authApi
       .getDeletionEligibility()
@@ -211,13 +337,14 @@ export function SettingsHomeScreen(): React.ReactElement {
           status: 'ready',
           canDelete: result.canDelete,
           reasons: result.reasons,
+          activities: parseDeletionActivities(result.activities),
         });
       })
       .catch(() => {
         if (deleteEligibilityRequestId.current !== requestId) {
           return;
         }
-        setDeleteEligibility({ status: 'error', canDelete: false, reasons: [] });
+        setDeleteEligibility({ status: 'error', canDelete: false, reasons: [], activities: [] });
       });
   };
 
@@ -241,9 +368,16 @@ export function SettingsHomeScreen(): React.ReactElement {
         authRootNavigation?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
       } catch (error) {
         if (error instanceof ApiError && error.code === 'ACCOUNT_DELETION_BLOCKED') {
-          const details = error.details as { reasons?: AccountDeletionBlockReason[] } | undefined;
+          const details = error.details as
+            | { reasons?: AccountDeletionBlockReason[]; activities?: unknown }
+            | undefined;
           const reasons = Array.isArray(details?.reasons) ? details.reasons : [];
-          setDeleteEligibility({ status: 'ready', canDelete: false, reasons });
+          setDeleteEligibility({
+            status: 'ready',
+            canDelete: false,
+            reasons,
+            activities: parseDeletionActivities(details?.activities),
+          });
           setDeleteAccountError(null);
         } else {
           setDeleteAccountError(
@@ -337,6 +471,9 @@ export function SettingsHomeScreen(): React.ReactElement {
       case 'manage-vehicles':
         dashboardRootNavigation?.navigate('ManageVehicles');
         break;
+      case 'bank-accounts':
+        navigation.navigate('BankAccounts');
+        break;
       case 'delete-account':
         openDeleteDialog();
         break;
@@ -356,10 +493,12 @@ export function SettingsHomeScreen(): React.ReactElement {
     <View style={styles.root}>
       <FocusAwareStatusBar style="light" />
       <SettingsProfileHeader
-        user={user}
+        user={displayUser}
         isIdentityComplete={isIdentityComplete}
+        isPendingApproval={isPendingApproval}
+        roleLabel={isAdmin ? t('admin.settings.role') : undefined}
         topInset={insets.top}
-        onVerifyPress={handleVerifyPress}
+        onVerifyPress={isAdmin ? undefined : handleVerifyPress}
         onLogoutPress={() => setDialog('logout')}
       />
 
@@ -475,7 +614,27 @@ export function SettingsHomeScreen(): React.ReactElement {
             deleteEligibility.status !== 'ready',
           loading: deletingAccount,
         }}
-      />
+      >
+        {deleteBlockRows.length > 0 ? (
+          <ScrollView
+            style={styles.deleteBlockScroll}
+            contentContainerStyle={styles.deleteBlockList}
+            nestedScrollEnabled
+          >
+            {deleteBlockRows.map((row) => (
+              <View key={row.key} style={styles.deleteBlockGroup}>
+                {row.heading ? (
+                  <AppText style={styles.deleteBlockHeading}>{row.heading}</AppText>
+                ) : null}
+                <View style={styles.deleteBlockRow}>
+                  <AppText style={styles.deleteBlockBullet}>•</AppText>
+                  <AppText style={styles.deleteBlockItem}>{row.text}</AppText>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
+      </AppDialog>
     </View>
   );
 }
@@ -504,6 +663,42 @@ const styles = StyleSheet.create({
   },
   menu: {
     gap: 8,
+  },
+  deleteBlockScroll: {
+    alignSelf: 'stretch',
+    maxHeight: 220,
+    marginTop: spacing.sm,
+  },
+  deleteBlockList: {
+    gap: spacing.xs,
+  },
+  deleteBlockGroup: {
+    gap: 2,
+  },
+  deleteBlockHeading: {
+    marginTop: spacing.xs,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: colors.text.primary,
+    textAlign: 'left',
+  },
+  deleteBlockRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+  deleteBlockBullet: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.text.secondary,
+  },
+  deleteBlockItem: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.text.secondary,
+    textAlign: 'left',
   },
   footer: {
     alignItems: 'center',

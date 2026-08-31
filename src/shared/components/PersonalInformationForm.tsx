@@ -179,8 +179,8 @@ export function PersonalInformationForm({
           onUseCurrentLocation={() => void handleUseCurrentLocation()}
           onSelectOnMap={handleSelectOnMap}
         />
-        <Button label={submitLabel} onPress={onSubmit} disabled={!canSubmit} loading={loading} />
         {errorMessage ? <AppText style={styles.errorText}>{errorMessage}</AppText> : null}
+        <Button label={submitLabel} onPress={onSubmit} disabled={!canSubmit} loading={loading} />
       </AuthCard>
       <View style={styles.spacer} />
       {mapPickerSheet}
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
   errorText: {
-    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
     fontSize: 13,
     lineHeight: 18,
     color: colors.primary,
