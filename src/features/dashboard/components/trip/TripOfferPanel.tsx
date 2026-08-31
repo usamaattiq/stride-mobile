@@ -59,6 +59,8 @@ import { TripMessagingSheet } from "./TripMessagingSheet";
 
 export type TripOfferPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill (e.g. RFQ-2026-0001). */
+  referenceCode?: string | null;
   routeLabel: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
@@ -266,6 +268,7 @@ export const TripOfferPanel = React.forwardRef<
 >(function TripOfferPanel(
   {
     tripId,
+    referenceCode,
     routeLabel,
     vehicleMode,
     vehicleTotalSeats,
@@ -464,7 +467,7 @@ export const TripOfferPanel = React.forwardRef<
     asDriver: Boolean(requiresVehicle),
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
   const panelTitle = isConfirmedOffer
     ? t("dashboard.listings.detail.offer.titleConfirmed")

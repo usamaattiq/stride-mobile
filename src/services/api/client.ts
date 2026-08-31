@@ -3,7 +3,7 @@ import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 import { ENV } from '@/shared/config/env';
 import { authStore } from '@/store/authStore';
 import { sessionRevokedHandler } from '@/services/sessionRevokedHandler';
-import { ApiError, isSessionRevokedError } from './apiError';
+import { ApiError, isAuthSessionEndedError } from './apiError';
 
 type ApiEnvelope<T> =
   | { success: true; data: T }
@@ -46,8 +46,8 @@ apiClient.interceptors.response.use(
             error.message || 'Unable to reach the server',
           );
 
-    if (isSessionRevokedError(apiError)) {
-      void sessionRevokedHandler.handle();
+    if (isAuthSessionEndedError(apiError) && authStore.getToken()) {
+      void sessionRevokedHandler.handle(apiError.code);
     }
 
     return Promise.reject(apiError);

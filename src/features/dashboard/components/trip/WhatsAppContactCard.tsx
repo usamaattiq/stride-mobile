@@ -23,6 +23,8 @@ export type WhatsAppContactCardProps = {
   message: string;
   /** Opens this user's profile (admin listing detail). */
   onProfilePress?: () => void;
+  /** Opens in-app chat with this contact when the platform thread exists. */
+  onMessagePress?: () => void;
 };
 
 const WHATSAPP_GREEN = '#25D366';

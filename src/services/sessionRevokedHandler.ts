@@ -3,18 +3,33 @@
 import { i18n as appI18n } from '@/i18n';
 import { resetToWelcome } from '@/navigation/navigationRef';
 import { unregisterPushNotifications } from '@/services/pushNotifications';
+import type { ApiErrorCode } from '@/services/api/apiError';
 import { authStore } from '@/store/authStore';
+import { adminStore } from '@/store/adminStore';
 import { profileStore } from '@/store/profileStore';
 
 let handling = false;
 
+function alertCopy(code: ApiErrorCode | undefined): { title: string; message: string } {
+  if (code === 'SESSION_REVOKED') {
+    return {
+      title: appI18n.t('auth.sessionRevoked.title'),
+      message: appI18n.t('auth.sessionRevoked.message'),
+    };
+  }
+  return {
+    title: appI18n.t('auth.sessionExpired.title'),
+    message: appI18n.t('auth.sessionExpired.message'),
+  };
+}
+
 /**
- * Fires when the server reports SESSION_REVOKED (e.g. the user signed in on another
- * device — Musafir249 keeps a single active session per user). Multiple in-flight requests
- * can fail with this at once; the guard ensures only one sign-out + one alert happen.
+ * Signs the user out when the access token is no longer valid (revoked session,
+ * expiry, invalid JWT, or generic 401). Multiple in-flight requests can fail at
+ * once; the guard ensures only one sign-out + one alert happen.
  */
 export const sessionRevokedHandler = {
-  async handle(): Promise<void> {
+  async handle(code?: ApiErrorCode): Promise<void> {
     if (handling) {
       return;
     }
@@ -24,8 +39,10 @@ export const sessionRevokedHandler = {
       await unregisterPushNotifications();
       await authStore.signOut();
       profileStore.clearProfile();
+      adminStore.clearProfile();
       resetToWelcome();
-      Alert.alert(appI18n.t('auth.sessionRevoked.title'), appI18n.t('auth.sessionRevoked.message'));
+      const copy = alertCopy(code);
+      Alert.alert(copy.title, copy.message);
     } finally {
       handling = false;
     }

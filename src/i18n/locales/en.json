@@ -161,6 +161,10 @@
     "sessionRevoked": {
       "title": "You were signed out",
       "message": "You were logged out because you signed in on another device or session."
+    },
+    "sessionExpired": {
+      "title": "Session expired",
+      "message": "Your session has expired. Please sign in again."
     }
   },
   "dashboard": {
@@ -588,8 +592,8 @@
           "chatOpenFailed": "Couldn't open chat.",
           "chatLoadFailed": "Couldn't load messages.",
           "chatSendFailed": "Couldn't send message.",
-          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Request ID: {{requestId}}",
-          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Request ID: {{requestId}}",
+          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Ref: {{ref}}",
+          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Ref: {{ref}}",
           "passengerContact": "Passenger contact",
           "driverContact": "Driver contact"
         },

@@ -161,6 +161,10 @@
     "sessionRevoked": {
       "title": "تم تسجيل خروجك",
       "message": "تم تسجيل خروجك لأنك سجلت الدخول من جهاز أو جلسة أخرى."
+    },
+    "sessionExpired": {
+      "title": "انتهت الجلسة",
+      "message": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
     }
   },
   "dashboard": {
@@ -588,8 +592,8 @@
           "chatOpenFailed": "تعذر فتح الدردشة.",
           "chatLoadFailed": "تعذر تحميل الرسائل.",
           "chatSendFailed": "تعذر إرسال الرسالة.",
-          "messageAsPassenger": "مرحباً، أنا {{name}} الراكب في رحلة {{route}}. رقم الطلب: {{requestId}}",
-          "messageAsDriver": "مرحباً، أنا {{name}} السائق في رحلة {{route}}. رقم الطلب: {{requestId}}",
+          "messageAsPassenger": "مرحباً، أنا {{name}} الراكب في رحلة {{route}}. المرجع: {{ref}}",
+          "messageAsDriver": "مرحباً، أنا {{name}} السائق في رحلة {{route}}. المرجع: {{ref}}",
           "passengerContact": "جهة اتصال الراكب",
           "driverContact": "جهة اتصال السائق"
         },

@@ -30,6 +30,8 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripAuctionBidsPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill. */
+  referenceCode?: string | null;
   routeLabel: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
@@ -42,6 +44,7 @@ export type TripAuctionBidsPanelProps = {
 
 export function TripAuctionBidsPanel({
   tripId,
+  referenceCode,
   routeLabel,
   isPassengerRequest = false,
   onCountChange,
@@ -60,7 +63,7 @@ export function TripAuctionBidsPanel({
     asDriver: !isPassengerRequest,
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
 
   const applySnapshot = React.useCallback(

@@ -60,6 +60,8 @@ import { TripMessagingSheet } from "./TripMessagingSheet";
 
 export type TripBidPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill (e.g. AUC-2026-0001). */
+  referenceCode?: string | null;
   routeLabel: string;
   isPassengerRequest?: boolean;
   /** When true, driver must pick one of their vehicles before placing a bid. */
@@ -297,6 +299,7 @@ export const TripBidPanel = React.forwardRef<
 >(function TripBidPanel(
   {
     tripId,
+    referenceCode,
     routeLabel,
       isPassengerRequest = false,
       requiresVehicle = false,
@@ -359,7 +362,7 @@ export const TripBidPanel = React.forwardRef<
     asDriver: isPassengerRequest,
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
 
   const applySnapshot = React.useCallback(

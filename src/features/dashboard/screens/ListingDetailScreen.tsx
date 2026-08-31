@@ -56,7 +56,10 @@ import { SegmentControl } from "../components/SegmentControl";
 import { VEHICLE_CLASS_OPTIONS } from "../constants/vehicleClasses";
 import { useTrips } from "../context/TripContext";
 import type { DashboardRootStackParamList } from "../navigation/dashboardRootTypes";
-import { openTripCreationFlow } from "../navigation/homeStackNavigation";
+import {
+  openTripCreationFlow,
+  type OpenTripCreationNavigation,
+} from "../navigation/homeStackNavigation";
 import { isSeaOrAirRoute, type Trip } from "../types/trip.types";
 import { getListingStatusBucket } from "../utils/listingFilters";
 import {
@@ -724,7 +727,7 @@ export function ListingDetailScreen(): React.ReactElement {
               ? () => {
                   beginRepostTrip(trip);
                   openTripCreationFlow(
-                    navigation as NativeStackNavigationProp<DashboardRootStackParamList>,
+                    navigation as unknown as OpenTripCreationNavigation,
                     { repost: true },
                   );
                 }
@@ -846,6 +849,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <TripBidPanel
                 ref={bidPanelRef}
                 tripId={trip.id}
+                referenceCode={trip.referenceCode}
                 routeLabel={`${fromCity} → ${toCity}`}
                 isPassengerRequest={isPassengerRequest}
                 requiresVehicle={isPassengerRequest}
@@ -861,6 +865,7 @@ export function ListingDetailScreen(): React.ReactElement {
               <TripOfferPanel
                 ref={offerPanelRef}
                 tripId={trip.id}
+                referenceCode={trip.referenceCode}
                 routeLabel={`${fromCity} → ${toCity}`}
                 vehicleMode={trip.vehicleMode}
                 vehicleTotalSeats={trip.vehicleTotalSeats}
@@ -923,6 +928,7 @@ export function ListingDetailScreen(): React.ReactElement {
                       <TripAuctionBidsPanel
                         key={auctionPanelKey}
                         tripId={trip.id}
+                        referenceCode={trip.referenceCode}
                         routeLabel={`${fromCity} → ${toCity}`}
                         isPassengerRequest={trip.vehicleId == null}
                         onCountChange={setResponsesCount}
@@ -931,6 +937,7 @@ export function ListingDetailScreen(): React.ReactElement {
                     ) : (
                       <TripResponsesPanel
                         tripId={trip.id}
+                        referenceCode={trip.referenceCode}
                         routeLabel={`${fromCity} → ${toCity}`}
                         vehicleMode={trip.vehicleMode}
                         vehicleTotalSeats={trip.vehicleTotalSeats}

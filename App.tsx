@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { I18nextProvider } from 'react-i18next';
@@ -11,7 +11,6 @@ import type { AuthStackParamList } from './src/features/auth/navigation/types';
 import { i18n, initializeI18n } from './src/i18n';
 import { authApi } from './src/services/api/authApi';
 import { adminApi } from './src/services/api/adminApi';
-import { isSessionRevokedError } from './src/services/api/apiError';
 import { usePingNotificationRouting } from './src/services/pingDeepLinkRouting';
 import {
   attachPushTokenListener,
@@ -124,13 +123,10 @@ export default function App() {
         if (mounted) {
           setInitialRouteName('Dashboard');
         }
-      } catch (error) {
+      } catch {
         await authStore.signOut();
         profileStore.clearProfile();
         adminStore.clearProfile();
-        if (isSessionRevokedError(error)) {
-          Alert.alert(i18n.t('auth.sessionRevoked.title'), i18n.t('auth.sessionRevoked.message'));
-        }
         if (mounted) {
           setInitialRouteName('Welcome');
         }
