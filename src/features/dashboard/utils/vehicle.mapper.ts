@@ -15,8 +15,10 @@ export function mapVehicleDtoToVehicle(dto: VehicleDto): Vehicle {
     brand: dto.brand ?? '',
     model: dto.model ?? '',
     year: dto.year != null ? String(dto.year) : '',
-    photoUris: [...dto.photoUrls],
-    photoDisplayUris: dto.photoViewUrls?.length ? [...dto.photoViewUrls] : [...dto.photoUrls],
+    photoUris: [...(dto.photoUrls ?? [])],
+    photoDisplayUris: dto.photoViewUrls?.length
+      ? [...dto.photoViewUrls]
+      : [...(dto.photoUrls ?? [])],
   };
 }
 

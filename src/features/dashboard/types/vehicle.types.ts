@@ -30,7 +30,10 @@ export type VehicleDraft = {
   brand: string;
   model: string;
   year: string;
+  /** Stable file URLs (or local URIs while drafting). Persist these. */
   photoUris: string[];
+  /** Signed / local URIs for <Image>; parallel to photoUris. */
+  photoDisplayUris: string[];
 };
 
 export function createEmptyVehicleDraft(): VehicleDraft {
@@ -45,7 +48,20 @@ export function createEmptyVehicleDraft(): VehicleDraft {
     model: '',
     year: '',
     photoUris: [],
+    photoDisplayUris: [],
   };
+}
+
+function displayUrisForVehicle(vehicle: Vehicle): string[] {
+  if (
+    vehicle.photoDisplayUris &&
+    vehicle.photoDisplayUris.length === vehicle.photoUris.length
+  ) {
+    return [...vehicle.photoDisplayUris];
+  }
+  return vehicle.photoDisplayUris?.length
+    ? [...vehicle.photoDisplayUris]
+    : [...vehicle.photoUris];
 }
 
 export function vehicleToDraft(vehicle: Vehicle): VehicleDraft {
@@ -61,6 +77,7 @@ export function vehicleToDraft(vehicle: Vehicle): VehicleDraft {
     model: vehicle.model,
     year: vehicle.year,
     photoUris: [...vehicle.photoUris],
+    photoDisplayUris: displayUrisForVehicle(vehicle),
   };
 }
 

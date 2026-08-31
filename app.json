@@ -91,6 +91,12 @@
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos so you can upload vehicle, profile, and document images."
+        }
+      ],
       "@react-native-community/datetimepicker",
       "expo-secure-store",
       [

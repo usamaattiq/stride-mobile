@@ -22,13 +22,17 @@ export function VehicleDetailsScreen(): React.ReactElement {
 
   React.useEffect(() => {
     if (route.params.mode === 'add') {
-      beginAddVehicle();
+      // List already starts a new draft. Do not wipe photos if this screen remounts
+      // after the user continues to the photos step.
+      if (draft.id) {
+        beginAddVehicle();
+      }
       return;
     }
     if (route.params.vehicleId) {
       beginEditVehicle(route.params.vehicleId);
     }
-  }, []);
+  }, [route.params.mode, route.params.vehicleId]);
 
   const handleContinue = () => {
     if (!isVehicleDetailsValid(draft)) {
