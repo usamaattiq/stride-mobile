@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mazad Al Safar",
     "slug": "musafir249",
-    "version": "1.0.10",
+    "version": "1.0.12",
     "orientation": "portrait",
     "scheme": "musafir249",
     "icon": "./assets/splash-logo.png",
@@ -15,16 +15,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.silveraxisltd.musafir249",
+      "buildNumber": "19",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSAppTransportSecurity": {
-          "NSExceptionDomains": {
-            "api.mazadalsafar.com": {
-              "NSExceptionAllowsInsecureHTTPLoads": true,
-              "NSIncludesSubdomains": true
-            }
-          }
-        }
+        "ITSAppUsesNonExemptEncryption": false
       },
       "splash": {
         "image": "./assets/splash-logo.png",
@@ -54,6 +47,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.silveraxisltd.musafir249",
+      "versionCode": 23,
       "googleServicesFile": "./google-services.json"
     },
     "web": {

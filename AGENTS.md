@@ -131,8 +131,8 @@ route params.
   `notificationsApi`, `uploadApi`, `vehicleApi`), each with a co-located `*.types.ts`. Errors are
   normalized via `apiError.ts` / `errorMessage.ts` — reuse those instead of ad hoc error handling.
 - Realtime chat goes over `socket.io-client` (`src/services/socket/chatSocket.ts`), not polling.
-- API base URL / environment config lives in `src/shared/config/env.ts`. `app.json`'s
-  `NSAppTransportSecurity` exception domain (`api.mazadalsafar.com`) documents the backend host —
+- API base URL / environment config lives in `src/shared/config/env.ts`. Production/preview
+  builds set `EXPO_PUBLIC_API_BASE_URL` in `eas.json` (`https://api.mazadalsafar.com/api`) —
   keep it in sync if the API domain changes.
 
 ## Theming
