@@ -18,7 +18,7 @@ export function EmptyState({ title, subtitle, style }: EmptyStateProps): React.R
         style={styles.icon}
         resizeMode="contain"
       />
-      <AppText weight="semibold" style={styles.title}>
+      <AppText  style={styles.title}>
         {title}
       </AppText>
       {/* {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null} */}
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     height: 110,
   },
   title: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: -12,
