@@ -94,7 +94,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos so you can upload vehicle, profile, and document images."
+          "photosPermission": "$(PRODUCT_NAME) needs access to your photo library so you can select an existing photo to use as your profile picture, or to upload a photo of your vehicle or a scan of your ID/registration document when completing driver verification.",
+          "cameraPermission": "$(PRODUCT_NAME) needs access to your camera so you can take a new photo to upload, such as your profile picture, a photo of your vehicle, or a scan of your ID/registration document for verification."
         }
       ],
       "@react-native-community/datetimepicker",
