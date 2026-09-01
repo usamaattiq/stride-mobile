@@ -52,6 +52,7 @@ export function TerminalSearchField({
   const [isFocused, setIsFocused] = React.useState(false);
   const skipSearchRef = React.useRef(false);
   const inputRef = React.useRef<TextInput>(null);
+  const listTouchActiveRef = React.useRef(false);
   const iconName = kind === 'airport' ? 'plane' : 'anchor';
 
   React.useEffect(() => {
@@ -166,6 +167,9 @@ export function TerminalSearchField({
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
               setTimeout(() => {
+                if (listTouchActiveRef.current) {
+                  return;
+                }
                 setIsFocused(false);
               }, 180);
             }}
@@ -185,11 +189,23 @@ export function TerminalSearchField({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={results.length > RESULTS_VISIBLE_COUNT}
             style={styles.resultsScroll}
+            onTouchStart={() => {
+              listTouchActiveRef.current = true;
+            }}
+            onTouchEnd={() => {
+              listTouchActiveRef.current = false;
+              if (!inputRef.current?.isFocused()) {
+                setIsFocused(false);
+              }
+            }}
+            onTouchCancel={() => {
+              listTouchActiveRef.current = false;
+            }}
           >
             {results.map((item) => (
               <Pressable
                 key={item.id}
-                onPressIn={() => handleSelect(item)}
+                onPress={() => handleSelect(item)}
                 style={styles.resultRow}
                 accessibilityRole="button"
               >

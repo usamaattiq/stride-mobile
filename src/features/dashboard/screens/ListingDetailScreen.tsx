@@ -133,11 +133,15 @@ export function ListingDetailScreen(): React.ReactElement {
     React.useState<React.ReactNode>(null);
   const [notificationChat, setNotificationChat] =
     React.useState<NotificationChatTarget | null>(null);
+  const seaOrAir = trip ? isSeaOrAirRoute(trip.routeType) : false;
   const fromCity = useLocalizedCityName(
     trip?.departureCity,
-    trip?.departurePoint,
+    seaOrAir ? undefined : trip?.departurePoint,
   );
-  const toCity = useLocalizedCityName(trip?.arrivalCity, trip?.arrivalPoint);
+  const toCity = useLocalizedCityName(
+    trip?.arrivalCity,
+    seaOrAir ? undefined : trip?.arrivalPoint,
+  );
 
   /** Owned listings come from the user's My Listings cache; discovery items do not.
    * Messages can pass viewerIsOwner so owner UI works even before the cache is warm. */

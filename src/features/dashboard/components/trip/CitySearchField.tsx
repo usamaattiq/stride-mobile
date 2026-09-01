@@ -50,6 +50,7 @@ export function CitySearchField({
   const [isFocused, setIsFocused] = React.useState(false);
   const skipSearchRef = React.useRef(false);
   const inputRef = React.useRef<TextInput>(null);
+  const listTouchActiveRef = React.useRef(false);
 
   React.useEffect(() => {
     if (isFocused) {
@@ -162,6 +163,9 @@ export function CitySearchField({
               onFocus?.();
             }}
             onBlur={() => {
+              if (listTouchActiveRef.current) {
+                return;
+              }
               setIsFocused(false);
               setResults([]);
               setShowEmpty(false);
@@ -185,6 +189,20 @@ export function CitySearchField({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={results.length > CITY_RESULTS_VISIBLE_COUNT}
             style={styles.resultsScroll}
+            onTouchStart={() => {
+              listTouchActiveRef.current = true;
+            }}
+            onTouchEnd={() => {
+              listTouchActiveRef.current = false;
+              if (!inputRef.current?.isFocused()) {
+                setIsFocused(false);
+                setResults([]);
+                setShowEmpty(false);
+              }
+            }}
+            onTouchCancel={() => {
+              listTouchActiveRef.current = false;
+            }}
           >
             {results.map((item) => (
               <Pressable

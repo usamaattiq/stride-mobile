@@ -191,11 +191,11 @@ export function ListingCard({
   const seaOrAir = isSeaOrAirRoute(trip.routeType);
   const fromCity = useLocalizedCityName(
     trip.departureCity,
-    pending && !seaOrAir ? undefined : trip.departurePoint,
+    seaOrAir ? undefined : pending ? undefined : trip.departurePoint,
   );
   const toCity = useLocalizedCityName(
     trip.arrivalCity,
-    pending && !seaOrAir ? undefined : trip.arrivalPoint,
+    seaOrAir ? undefined : pending ? undefined : trip.arrivalPoint,
   );
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
