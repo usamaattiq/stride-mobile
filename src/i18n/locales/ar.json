@@ -187,7 +187,7 @@
       "subtitle": "الرحلات والطلبات التي قدّمت عليها عرضاً.",
       "subtitlePassenger": "رحلات السائقين التي قدّمت عليها عرضاً.",
       "subtitleDriver": "طلبات الركاب التي قدّمت عليها عرضاً.",
-      "emptyTitle": "لا توجد عروض بعد",
+      "emptyTitle": "ستظهر عروضك هنا",
       "emptySubtitle": "عند إرسال عرض سيظهر هنا.",
       "emptySubtitlePassenger": "العروض التي تقدّمها على رحلات السائقين ستظهر هنا.",
       "emptySubtitleDriver": "العروض التي تقدّمها على طلبات الركاب ستظهر هنا.",
@@ -196,7 +196,7 @@
     "history": {
       "title": "السجل",
       "subtitle": "الطلبات السابقة والمكتملة.",
-      "emptyTitle": "لا يوجد سجل بعد",
+      "emptyTitle": "سيظهر سجلك هنا",
       "emptySubtitle": "ستظهر الطلبات السابقة والمكتملة هنا."
     },
     "passenger": {
@@ -207,11 +207,11 @@
         "offers": "العروض"
       },
       "myListings": {
-        "emptyTitle": "لا توجد طلبات بعد",
+        "emptyTitle": "ستظهر طلباتك هنا",
         "emptySubtitle": "أنشئ طلباً وسيظهر هنا."
       },
       "offers": {
-        "emptyTitle": "لا توجد عروض بعد",
+        "emptyTitle": "ستظهر عروضك هنا",
         "emptySubtitle": "العروض التي تقدّمها على رحلات السائقين ستظهر هنا."
       }
     },
@@ -251,7 +251,7 @@
       "sentTitle": "تم إرسال الطلب",
       "sentBody": "طلبك بانتظار موافقة المسؤول. سيُضاف الرصيد بعد الموافقة.",
       "myRequests": "طلباتك",
-      "noRequests": "لا توجد طلبات شراء بعد",
+      "noRequests": "ستظهر طلبات الشراء هنا",
       "statusPending": "بانتظار الموافقة",
       "statusApproved": "تمت الموافقة",
       "statusRejected": "مرفوض",
@@ -266,7 +266,7 @@
       "statPerCredit": "للرصيد",
       "bannerTitle": "طلبات العودة المتاحة",
       "bannerSubtitle": "اعثر على رحلات نشرها الركاب وقدّم أفضل عروضك.",
-      "requestsEmptyTitle": "لا توجد طلبات بعد",
+      "requestsEmptyTitle": "ستظهر الطلبات هنا",
       "requestsEmptySubtitle": "عندما ينشر الركاب طلبات بالقرب منك، ستظهر هنا.",
       "requestsLoadFailed": "تعذر تحميل طلبات الركاب.",
       "requestSearchPlaceholder": "ابحث عن مدينة أو مسار أو موقع...",
@@ -288,11 +288,11 @@
       "placeOffer": "قدّم عرضاً",
       "adTitle": "نمِّ أعمالك في النقل",
       "adSubtitle": "أنشئ قوائم واحصل على المزيد من الحجوزات.",
-      "emptyTitle": "لا توجد طلبات",
+      "emptyTitle": "ستظهر الطلبات هنا",
       "emptySubtitle": "عندما ينشر الركاب طلبات عودة بالقرب منك، ستظهر هنا.",
       "tripsBannerTitle": "الرحلات المتاحة",
       "tripsBannerSubtitle": "تصفح قوائم السائقين وقدّم أفضل عرض أو مزايدة.",
-      "tripsEmptyTitle": "لا توجد رحلات",
+      "tripsEmptyTitle": "ستظهر الرحلات المتاحة هنا",
       "tripsEmptySubtitle": "عندما ينشر السائقون رحلات تطابق بحثك، ستظهر هنا.",
       "pageOf": "صفحة {{page}} من {{total}}",
       "previousPageA11y": "الصفحة السابقة",
@@ -307,7 +307,7 @@
       "filterAny": "الكل",
       "filterReset": "إعادة تعيين",
       "filterApply": "تطبيق التصفية",
-      "listingsFilterEmptyTitle": "لا توجد نتائج",
+      "listingsFilterEmptyTitle": "ستظهر القوائم المطابقة هنا",
       "listingsFilterEmptySubtitle": "حاول تعديل أو مسح عوامل التصفية."
     },
     "messages": {
@@ -318,7 +318,7 @@
       "filterUnread": "غير مقروءة",
       "legendUnread": "غير مقروءة",
       "legendRead": "مقروءة",
-      "emptyTitle": "لا توجد رسائل",
+      "emptyTitle": "ستظهر الرسائل هنا",
       "emptySubtitle": "تظهر الرسائل عندما تتحدث حول رحلة نشرتها أو رحلة تقدمت إليها في هذا الدور.",
       "loadFailed": "تعذر تحميل الرسائل. اسحب لإعادة المحاولة.",
       "noPreview": "لا توجد رسائل بعد",
@@ -334,7 +334,7 @@
     "notifications": {
       "title": "الإشعارات",
       "subtitle": "تحديثات حول العروض والحجوزات والقوائم.",
-      "emptyTitle": "لا توجد إشعارات",
+      "emptyTitle": "ستظهر الإشعارات هنا",
       "emptySubtitle": "ستظهر هنا التحديثات حول العروض والحجوزات والقوائم.",
       "loadFailed": "تعذر تحميل الإشعارات. اسحب لإعادة المحاولة."
     },
@@ -380,7 +380,7 @@
       "searchTitle": "بحث",
       "searchSubtitle": "ابحث عن رحلات نشرها السائقون واحجزها.",
       "searchPlaceholder": "ابحث عن مدينة أو مسار أو مركبة...",
-      "emptyTitle": "لا توجد قوائم بعد",
+      "emptyTitle": "ستظهر القوائم المتاحة هنا",
       "emptySubtitle": "انشر رحلة وستظهر هنا.",
       "statusFilter": {
         "all": "الكل",
@@ -488,7 +488,7 @@
           "loadFailed": "تعذر تحميل الردود.",
           "actionFailed": "تعذر إتمام هذا الإجراء.",
           "retry": "حاول مرة أخرى",
-          "emptyTitle": "لا توجد ردود بعد",
+          "emptyTitle": "ستظهر الردود هنا",
           "emptyBody": "ستظهر عروض الركاب لهذه الرحلة هنا.",
           "currentlyNotListed": "غير مدرج حالياً",
           "offerLabel": "الرد رقم {{index}}",
@@ -521,7 +521,7 @@
           "loadFailed": "تعذر تحميل المزايدات.",
           "actionFailed": "تعذر إكمال هذا الإجراء.",
           "retry": "أعد المحاولة",
-          "emptyTitle": "لا توجد مزايدات بعد",
+          "emptyTitle": "ستظهر المزايدات هنا",
           "emptyBody": "ستظهر مزايدات هذا المزاد هنا.",
           "currentAmount": "المبلغ الحالي {{currency}} {{amount}}",
           "activate": "بدء المزاد",
@@ -804,12 +804,12 @@
     "addVehicleTitle": "إضافة مركبة",
     "addVehicle": "إضافة مركبة",
     "searchPlaceholder": "ابحث بالعنوان أو اللوحة أو العلامة...",
-    "emptyTitle": "لا توجد مركبات بعد",
+    "emptyTitle": "ستظهر مركباتك هنا",
     "emptySubtitle": "أضف مركبتك الأولى لبدء تقديم الرحلات على Mazad Al Safar.",
     "filter": {
       "title": "تصفية المركبات",
       "acAny": "الكل",
-      "emptyTitle": "لا توجد نتائج",
+      "emptyTitle": "ستظهر المركبات المطابقة هنا",
       "emptySubtitle": "جرّب بحثاً مختلفاً أو امسح عوامل التصفية."
     },
     "detailsTitle": "تفاصيل المركبة",

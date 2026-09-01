@@ -187,7 +187,7 @@
       "subtitle": "Trips and requests you've offered on.",
       "subtitlePassenger": "Driver trips you've offered on.",
       "subtitleDriver": "Passenger requests you've offered on.",
-      "emptyTitle": "No offers yet",
+      "emptyTitle": "Your offers will show here",
       "emptySubtitle": "When you send an offer, it will show up here.",
       "emptySubtitlePassenger": "Offers you place on driver trips will show up here.",
       "emptySubtitleDriver": "Offers you place on passenger requests will show up here.",
@@ -196,7 +196,7 @@
     "history": {
       "title": "History",
       "subtitle": "Past and completed requests.",
-      "emptyTitle": "No history yet",
+      "emptyTitle": "Your history will show here",
       "emptySubtitle": "Past and completed requests will show up here."
     },
     "passenger": {
@@ -207,11 +207,11 @@
         "offers": "Offers"
       },
       "myListings": {
-        "emptyTitle": "No requests yet",
+        "emptyTitle": "Your requests will show here",
         "emptySubtitle": "Create a request and it will show up here."
       },
       "offers": {
-        "emptyTitle": "No offers yet",
+        "emptyTitle": "Your offers will show here",
         "emptySubtitle": "Offers you place on driver trips will show up here."
       }
     },
@@ -251,7 +251,7 @@
       "sentTitle": "Request sent",
       "sentBody": "Your request is waiting for admin approval. Credits will be added once it is approved.",
       "myRequests": "Your requests",
-      "noRequests": "No purchase requests yet",
+      "noRequests": "Purchase requests will show here",
       "statusPending": "Pending approval",
       "statusApproved": "Approved",
       "statusRejected": "Rejected",
@@ -266,7 +266,7 @@
       "statPerCredit": "Each",
       "bannerTitle": "Available Reverse Requests",
       "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
-      "requestsEmptyTitle": "No requests yet",
+      "requestsEmptyTitle": "Requests will show here",
       "requestsEmptySubtitle": "When passengers post requests near you, they will show up here.",
       "requestsLoadFailed": "Couldn't load passenger requests.",
       "requestSearchPlaceholder": "Search city, route or location...",
@@ -288,11 +288,11 @@
       "placeOffer": "Place Offer",
       "adTitle": "Grow Your Transport Business",
       "adSubtitle": "Create listings and get more bookings.",
-      "emptyTitle": "No requests",
+      "emptyTitle": "Requests will show here",
       "emptySubtitle": "When passengers post reverse requests near you, they will show up here.",
       "tripsBannerTitle": "Available Trips",
       "tripsBannerSubtitle": "Browse driver listings and place your best offer or bid.",
-      "tripsEmptyTitle": "No trips available",
+      "tripsEmptyTitle": "Available trips will show here",
       "tripsEmptySubtitle": "When drivers publish trips matching your search, they will show up here.",
       "pageOf": "Page {{page}} of {{total}}",
       "previousPageA11y": "Previous page",
@@ -307,7 +307,7 @@
       "filterAny": "Any",
       "filterReset": "Reset",
       "filterApply": "Apply filters",
-      "listingsFilterEmptyTitle": "No matches",
+      "listingsFilterEmptyTitle": "Matching listings will show here",
       "listingsFilterEmptySubtitle": "Try adjusting or clearing your filters."
     },
     "messages": {
@@ -318,7 +318,7 @@
       "filterUnread": "Unread",
       "legendUnread": "Unread",
       "legendRead": "Read",
-      "emptyTitle": "No messages",
+      "emptyTitle": "Messages will show here",
       "emptySubtitle": "Messages appear when you chat on a trip you posted or a trip you applied to in this role.",
       "loadFailed": "Couldn't load messages. Pull to retry.",
       "noPreview": "No messages yet",
@@ -334,7 +334,7 @@
     "notifications": {
       "title": "Notifications",
       "subtitle": "Updates about offers, bookings, and listings.",
-      "emptyTitle": "No notifications",
+      "emptyTitle": "Notifications will show here",
       "emptySubtitle": "Updates about offers, bookings, and listings will appear here.",
       "loadFailed": "Couldn't load notifications. Pull to retry."
     },
@@ -380,7 +380,7 @@
       "searchTitle": "Search",
       "searchSubtitle": "Find and book trips posted by drivers near you.",
       "searchPlaceholder": "Search city, route or vehicle...",
-      "emptyTitle": "No listings yet",
+      "emptyTitle": "Available listings will show here",
       "emptySubtitle": "Publish a trip and it will show up here.",
       "statusFilter": {
         "all": "All",
@@ -488,7 +488,7 @@
           "loadFailed": "Couldn't load responses.",
           "actionFailed": "Couldn't complete that action.",
           "retry": "Try again",
-          "emptyTitle": "No responses yet",
+          "emptyTitle": "Responses will show here",
           "emptyBody": "Passenger offers for this trip will show up here.",
           "currentlyNotListed": "Currently not listed",
           "offerLabel": "Response #{{index}}",
@@ -521,7 +521,7 @@
           "loadFailed": "Couldn't load bids.",
           "actionFailed": "Couldn't complete that action.",
           "retry": "Try again",
-          "emptyTitle": "No bids yet",
+          "emptyTitle": "Bids will show here",
           "emptyBody": "Bids for this auction will show up here.",
           "currentAmount": "Current amount {{currency}} {{amount}}",
           "activate": "Start auction",
@@ -804,12 +804,12 @@
     "addVehicleTitle": "Add a vehicle",
     "addVehicle": "Add vehicle",
     "searchPlaceholder": "Search by title, plate, brand...",
-    "emptyTitle": "No vehicles yet",
+    "emptyTitle": "Your vehicles will show here",
     "emptySubtitle": "Add your first vehicle to start offering rides on Mazad Al Safar.",
     "filter": {
       "title": "Filter vehicles",
       "acAny": "Any",
-      "emptyTitle": "No matches",
+      "emptyTitle": "Matching vehicles will show here",
       "emptySubtitle": "Try a different search or clear your filters."
     },
     "detailsTitle": "Vehicle details",

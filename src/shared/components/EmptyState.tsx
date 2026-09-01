@@ -21,7 +21,7 @@ export function EmptyState({ title, subtitle, style }: EmptyStateProps): React.R
       <AppText weight="semibold" style={styles.title}>
         {title}
       </AppText>
-      {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null}
+      {/* {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null} */}
     </View>
   );
 }
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    color: colors.text.primary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginTop: -12,
   },
