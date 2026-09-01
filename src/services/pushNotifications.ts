@@ -8,7 +8,8 @@ import { secureStorage } from '@/services/storage/secureStorage';
 import { authStore } from '@/store/authStore';
 import { profileStore } from '@/store/profileStore';
 
-const ANDROID_CHANNEL_ID = 'default';
+/** Android channel sound/vibration is immutable after creation — bump this ID whenever NOTIFICATION_SOUND changes. */
+const ANDROID_CHANNEL_ID = 'default-v2';
 const NOTIFICATION_SOUND = 'notification_tone.wav';
 
 /** Expo Go ships truncated notification native code (SDK 53+); skip push APIs there. */
