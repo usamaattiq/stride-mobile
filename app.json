@@ -102,7 +102,8 @@
       [
         "expo-notifications",
         {
-          "color": "#B42318"
+          "color": "#B42318",
+          "sounds": ["./assets/notification_tone.wav"]
         }
       ]
     ],
