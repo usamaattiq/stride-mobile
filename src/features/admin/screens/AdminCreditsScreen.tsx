@@ -277,7 +277,6 @@ export function AdminCreditsScreen(): React.ReactElement {
                   ? t('admin.credits.historySubtitle')
                   : t('admin.credits.requestsSubtitle')
               }
-              icon="coins"
             />
           )
         }

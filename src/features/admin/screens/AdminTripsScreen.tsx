@@ -100,7 +100,6 @@ export function AdminTripsScreen(): React.ReactElement {
       variant={trips.length > 0 ? 'filtered' : 'none'}
       title={t('admin.trips.empty')}
       subtitle={t('admin.trips.subtitle')}
-      icon="map-marked-alt"
     />
   );
 

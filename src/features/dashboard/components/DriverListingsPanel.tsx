@@ -20,6 +20,7 @@ import { getErrorMessage } from "@/services/api/errorMessage";
 import { tripApi } from "@/services/api/tripApi";
 import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { usePullToRefresh } from "@/shared/hooks/usePullToRefresh";
 import {
   resolveSearchQueryCityLabel,
@@ -432,14 +433,10 @@ export const DriverListingsPanel = React.memo(
         );
       } else if (state.trips.length === 0) {
         pageBody = (
-          <View style={styles.centered}>
-            <AppText weight="semibold" style={styles.emptyTitle}>
-              {t("dashboard.home.requestsEmptyTitle")}
-            </AppText>
-            <AppText style={styles.emptySubtitle}>
-              {t("dashboard.home.requestsEmptySubtitle")}
-            </AppText>
-          </View>
+          <EmptyState
+            title={t("dashboard.home.requestsEmptyTitle")}
+            subtitle={t("dashboard.home.requestsEmptySubtitle")}
+          />
         );
       } else {
         pageBody = (
@@ -598,16 +595,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     alignItems: "center",
     paddingVertical: spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    color: colors.text.primary,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    textAlign: "center",
   },
   errorText: {
     fontSize: 13,
