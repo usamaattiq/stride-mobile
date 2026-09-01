@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest, withCacheBust } from './client';
 
 export type CreditPurchaseStatus = 'pending' | 'approved' | 'rejected';
 
@@ -35,7 +35,7 @@ export const creditsApi = {
     return apiRequest<CreditCatalog>({
       method: 'GET',
       url: '/credits/catalog',
-      params: { _: Date.now() },
+      params: withCacheBust(),
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },

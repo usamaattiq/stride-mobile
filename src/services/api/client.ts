@@ -58,3 +58,10 @@ export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
   const response = await apiClient.request<T>(config);
   return response as unknown as T;
 }
+
+/** Appends a `_` cache-busting query param, for GETs that must bypass CDN/proxy caching. */
+export function withCacheBust<T extends Record<string, unknown> = Record<string, never>>(
+  params?: T,
+): T & { _: number } {
+  return { ...(params as T), _: Date.now() };
+}

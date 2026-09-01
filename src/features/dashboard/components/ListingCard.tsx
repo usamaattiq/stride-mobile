@@ -12,6 +12,7 @@ import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { useNowTicking } from '@/shared/hooks/useNowTicking';
 import { formatPriceWithCurrency, stripCurrencyPrefix } from '@/shared/utils/currency';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
@@ -170,7 +171,7 @@ export type ListingCardProps = {
   onRepost?: () => void;
 };
 
-export function ListingCard({
+export const ListingCard = React.memo(function ListingCard({
   trip,
   onPress,
   showPhotoCount = false,
@@ -179,14 +180,13 @@ export function ListingCard({
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
-  const [now, setNow] = React.useState(() => Date.now());
+  const [tickMs, setTickMs] = React.useState(30_000);
+  const now = useNowTicking(tickMs, !pending);
   const startsLater = !pending && isListingNotStartedYet(trip, now);
   const remainingMs = startsLater ? 0 : getListingExpiresAtMs(trip) - now;
-  const tickMs = startsLater ? 15_000 : 30_000;
   React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), tickMs);
-    return () => clearInterval(id);
-  }, [tickMs]);
+    setTickMs(startsLater ? 15_000 : 30_000);
+  }, [startsLater]);
 
   const seaOrAir = isSeaOrAirRoute(trip.routeType);
   const fromCity = useLocalizedCityName(
@@ -565,7 +565,7 @@ export function ListingCard({
       />
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   shadowGutter: {

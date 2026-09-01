@@ -12,6 +12,7 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { useNowTicking } from '@/shared/hooks/useNowTicking';
 import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
@@ -131,17 +132,9 @@ export function TripAuctionBidsPanel({
     return () => clearInterval(timer);
   }, [applySnapshot, snapshot?.status, tripId]);
 
-  const [nowMs, setNowMs] = React.useState(() => Date.now());
   const endsAtMs = auctionEndsAtMs(snapshot);
+  const nowMs = useNowTicking(1000, endsAtMs != null && endsAtMs > Date.now());
   const liveRemaining = remainingSecondsUntil(endsAtMs, nowMs);
-
-  React.useEffect(() => {
-    if (endsAtMs == null || endsAtMs <= Date.now()) {
-      return undefined;
-    }
-    const timer = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [endsAtMs]);
 
   const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);

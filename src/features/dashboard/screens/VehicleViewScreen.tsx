@@ -359,12 +359,32 @@ function PhotoHero({
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const width = Dimensions.get('window').width - spacing.md * 2;
 
-  const onScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = Math.round(event.nativeEvent.contentOffset.x / Math.max(width, 1));
-    if (next !== index) {
-      onIndexChange(next);
-    }
-  };
+  const onScrollEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const next = Math.round(event.nativeEvent.contentOffset.x / Math.max(width, 1));
+      if (next !== index) {
+        onIndexChange(next);
+      }
+    },
+    [index, onIndexChange, width],
+  );
+
+  const renderPhoto = React.useCallback(
+    ({ item, index: itemIndex }: ListRenderItemInfo<string>) => (
+      <Pressable
+        onPress={onOpenGallery}
+        style={{ width, height: HERO_HEIGHT }}
+        accessibilityRole="imagebutton"
+        accessibilityLabel={t('vehicles.view.photoA11y', {
+          number: itemIndex + 1,
+          total: photos.length,
+        })}
+      >
+        <Image source={{ uri: item }} style={styles.heroImage} contentFit="cover" />
+      </Pressable>
+    ),
+    [onOpenGallery, photos.length, t, width],
+  );
 
   if (photos.length === 0) {
     return (
@@ -388,19 +408,7 @@ function PhotoHero({
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onScrollEnd}
-        renderItem={({ item, index: itemIndex }: ListRenderItemInfo<string>) => (
-          <Pressable
-            onPress={onOpenGallery}
-            style={{ width, height: HERO_HEIGHT }}
-            accessibilityRole="imagebutton"
-            accessibilityLabel={t('vehicles.view.photoA11y', {
-              number: itemIndex + 1,
-              total: photos.length,
-            })}
-          >
-            <Image source={{ uri: item }} style={styles.heroImage} contentFit="cover" />
-          </Pressable>
-        )}
+        renderItem={renderPhoto}
       />
       <LinearGradient
         colors={['transparent', 'rgba(10,10,10,0.4)']}

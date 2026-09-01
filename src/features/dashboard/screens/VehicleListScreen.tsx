@@ -39,6 +39,10 @@ import {
 } from '../types/vehicleBrowse.types';
 import type { Vehicle } from '../types/vehicle.types';
 
+function vehicleKeyExtractor(item: Vehicle): string {
+  return item.id;
+}
+
 export function VehicleListScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
@@ -88,6 +92,11 @@ export function VehicleListScreen(): React.ReactElement {
       navigation.navigate('VehicleView', { vehicleId: vehicle.id });
     },
     [navigation],
+  );
+
+  const renderVehicleItem = React.useCallback(
+    ({ item }: { item: Vehicle }) => <VehicleListItem vehicle={item} onPress={() => openVehicleView(item)} />,
+    [openVehicleView],
   );
 
   const listHeader = (
@@ -151,13 +160,8 @@ export function VehicleListScreen(): React.ReactElement {
     listBody = (
       <FlatList
         data={filteredVehicles}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <VehicleListItem
-            vehicle={item}
-            onPress={() => openVehicleView(item)}
-          />
-        )}
+        keyExtractor={vehicleKeyExtractor}
+        renderItem={renderVehicleItem}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <VehiclesEmptyState
