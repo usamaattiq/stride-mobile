@@ -132,7 +132,7 @@ route params.
   normalized via `apiError.ts` / `errorMessage.ts` — reuse those instead of ad hoc error handling.
 - Realtime chat goes over `socket.io-client` (`src/services/socket/chatSocket.ts`), not polling.
 - API base URL / environment config lives in `src/shared/config/env.ts`. `app.json`'s
-  `NSAppTransportSecurity` exception domain (`api.musafir249.com`) documents the backend host —
+  `NSAppTransportSecurity` exception domain (`api.mazadalsafar.com`) documents the backend host —
   keep it in sync if the API domain changes.
 
 ## Theming

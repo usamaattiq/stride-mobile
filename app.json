@@ -19,7 +19,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSExceptionDomains": {
-            "api.musafir249.com": {
+            "api.mazadalsafar.com": {
               "NSExceptionAllowsInsecureHTTPLoads": true,
               "NSIncludesSubdomains": true
             }
