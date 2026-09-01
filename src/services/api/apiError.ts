@@ -34,8 +34,20 @@ export class ApiError extends Error {
   }
 }
 
+const AUTH_SESSION_ENDED_CODES = new Set<string>([
+  'SESSION_REVOKED',
+  'TOKEN_EXPIRED',
+  'TOKEN_INVALID',
+  'UNAUTHORIZED',
+]);
+
 export function isSessionRevokedError(error: unknown): boolean {
   return error instanceof ApiError && error.code === 'SESSION_REVOKED';
+}
+
+/** Token is unusable — sign the user out. Includes expiry, invalid JWT, and generic 401. */
+export function isAuthSessionEndedError(error: unknown): boolean {
+  return error instanceof ApiError && AUTH_SESSION_ENDED_CODES.has(error.code);
 }
 
 export function isApiErrorWithCode(error: unknown, code: ApiErrorCode): boolean {

@@ -1,6 +1,6 @@
 {
   "name": "musafir249",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -17,6 +17,7 @@
     "expo-dev-client": "~6.0.21",
     "expo-font": "~14.0.12",
     "expo-image": "~3.0.11",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-local-authentication": "~17.0.8",

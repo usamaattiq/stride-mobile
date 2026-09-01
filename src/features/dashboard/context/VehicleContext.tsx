@@ -22,7 +22,7 @@ type VehicleContextValue = {
   loadError: string | null;
   beginAddVehicle: () => void;
   beginEditVehicle: (vehicleId: string) => boolean;
-  patchDraft: (partial: Partial<VehicleDraft>) => void;
+  patchDraft: (partial: Partial<VehicleDraft> | ((current: VehicleDraft) => Partial<VehicleDraft>)) => void;
   clearDraft: () => void;
   refreshVehicles: () => Promise<void>;
   saveDraftVehicle: (partial?: Partial<VehicleDraft>) => Promise<Vehicle | null>;
@@ -42,6 +42,8 @@ export function VehicleProvider({
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const draftRef = React.useRef(draft);
+  draftRef.current = draft;
 
   const refreshVehicles = React.useCallback(async () => {
     setIsLoading(true);
@@ -87,13 +89,19 @@ export function VehicleProvider({
     [vehicles],
   );
 
-  const patchDraft = React.useCallback((partial: Partial<VehicleDraft>) => {
-    setDraft((current) => ({ ...current, ...partial }));
-  }, []);
+  const patchDraft = React.useCallback(
+    (partial: Partial<VehicleDraft> | ((current: VehicleDraft) => Partial<VehicleDraft>)) => {
+      setDraft((current) => ({
+        ...current,
+        ...(typeof partial === 'function' ? partial(current) : partial),
+      }));
+    },
+    [],
+  );
 
   const saveDraftVehicle = React.useCallback(
     async (partial?: Partial<VehicleDraft>) => {
-      const merged = { ...draft, ...partial };
+      const merged = { ...draftRef.current, ...partial };
 
       setIsSaving(true);
       try {
@@ -109,7 +117,11 @@ export function VehicleProvider({
 
         const payload = draftToVehiclePayload({ ...merged, photoUris: photoUrls });
         if (!payload) {
-          return null;
+          throw new Error(
+            photoUrls.length === 0
+              ? 'Add at least one vehicle photo'
+              : 'Vehicle details are incomplete',
+          );
         }
 
         const savedDto = merged.id
@@ -126,13 +138,12 @@ export function VehicleProvider({
           next[existingIndex] = saved;
           return next;
         });
-        clearDraft();
         return saved;
       } finally {
         setIsSaving(false);
       }
     },
-    [clearDraft, draft],
+    [],
   );
 
   const removeVehicle = React.useCallback(async (vehicleId: string) => {

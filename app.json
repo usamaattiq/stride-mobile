@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Musafir249",
+    "name": "Mazad Al Safar",
     "slug": "musafir249",
-    "version": "1.0.8",
+    "version": "1.0.10",
     "orientation": "portrait",
     "scheme": "musafir249",
     "icon": "./assets/splash-logo.png",
@@ -13,13 +13,13 @@
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.silveraxisltd.musafir249",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSExceptionDomains": {
-            "api.musafir249.com": {
+            "api.mazadalsafar.com": {
               "NSExceptionAllowsInsecureHTTPLoads": true,
               "NSIncludesSubdomains": true
             }
@@ -91,12 +91,20 @@
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure sign-in."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "$(PRODUCT_NAME) needs access to your photo library so you can select an existing photo to use as your profile picture, or to upload a photo of your vehicle or a scan of your ID/registration document when completing driver verification.",
+          "cameraPermission": "$(PRODUCT_NAME) needs access to your camera so you can take a new photo to upload, such as your profile picture, a photo of your vehicle, or a scan of your ID/registration document for verification."
+        }
+      ],
       "@react-native-community/datetimepicker",
       "expo-secure-store",
       [
         "expo-notifications",
         {
-          "color": "#B42318"
+          "color": "#B42318",
+          "sounds": ["./assets/notification_tone.wav"]
         }
       ]
     ],

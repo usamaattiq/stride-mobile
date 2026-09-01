@@ -11,6 +11,7 @@ import { useDashboardSession } from '@/features/dashboard/context/DashboardSessi
 import type { Vehicle } from '@/features/dashboard/types/vehicle.types';
 import {
   draftToTrip,
+  isSeaOrAirRoute,
   type Trip,
   type TripDraft,
 } from '@/features/dashboard/types/trip.types';
@@ -86,8 +87,15 @@ export function TripPreviewStep({
   const publishCostLabel = formatLatinNumber(publishCost);
 
   const trip = enrichPreviewTrip(draft, vehicle);
-  const fromCityName = useLocalizedCityName(draft.departureCity, draft.departurePoint);
-  const toCityName = useLocalizedCityName(draft.arrivalCity, draft.arrivalPoint);
+  const seaOrAir = isSeaOrAirRoute(draft.routeType);
+  const fromCityName = useLocalizedCityName(
+    draft.departureCity,
+    seaOrAir ? undefined : draft.departurePoint,
+  );
+  const toCityName = useLocalizedCityName(
+    draft.arrivalCity,
+    seaOrAir ? undefined : draft.arrivalPoint,
+  );
   const fromCity = fromCityName || null;
   const toCity = toCityName || null;
   const modeLabel =

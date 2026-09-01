@@ -3,7 +3,7 @@ import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 import { ENV } from '@/shared/config/env';
 import { authStore } from '@/store/authStore';
 import { sessionRevokedHandler } from '@/services/sessionRevokedHandler';
-import { ApiError, isSessionRevokedError } from './apiError';
+import { ApiError, isAuthSessionEndedError } from './apiError';
 
 type ApiEnvelope<T> =
   | { success: true; data: T }
@@ -46,8 +46,8 @@ apiClient.interceptors.response.use(
             error.message || 'Unable to reach the server',
           );
 
-    if (isSessionRevokedError(apiError)) {
-      void sessionRevokedHandler.handle();
+    if (isAuthSessionEndedError(apiError) && authStore.getToken()) {
+      void sessionRevokedHandler.handle(apiError.code);
     }
 
     return Promise.reject(apiError);
@@ -57,4 +57,11 @@ apiClient.interceptors.response.use(
 export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
   const response = await apiClient.request<T>(config);
   return response as unknown as T;
+}
+
+/** Appends a `_` cache-busting query param, for GETs that must bypass CDN/proxy caching. */
+export function withCacheBust<T extends Record<string, unknown> = Record<string, never>>(
+  params?: T,
+): T & { _: number } {
+  return { ...(params as T), _: Date.now() };
 }

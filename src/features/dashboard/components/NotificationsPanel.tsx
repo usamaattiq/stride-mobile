@@ -8,6 +8,7 @@ import { notificationsApi, type InboxNotificationDto } from '@/services/api/noti
 import { getErrorMessage } from '@/services/api/errorMessage';
 import { handlePingDeepLink } from '@/services/pingDeepLinkRouting';
 import { AppText } from '@/shared/components/AppText';
+import { EmptyState } from '@/shared/components/EmptyState';
 import { colors, radius, spacing } from '@/theme';
 
 import { useDashboardSession } from '../context/DashboardSessionContext';
@@ -121,14 +122,10 @@ export const NotificationsPanel = React.memo(function NotificationsPanel(): Reac
             </AppText>
           </View>
         ) : (
-          <View style={styles.empty}>
-            <AppText weight="semibold" style={styles.emptyTitle}>
-              {t('dashboard.notifications.emptyTitle')}
-            </AppText>
-            <AppText style={styles.emptySubtitle}>
-              {t('dashboard.notifications.emptySubtitle')}
-            </AppText>
-          </View>
+          <EmptyState
+            title={t('dashboard.notifications.emptyTitle')}
+            subtitle={t('dashboard.notifications.emptySubtitle')}
+          />
         )
       }
       renderItem={renderItem}
@@ -259,17 +256,14 @@ const styles = StyleSheet.create({
     height: spacing.xs,
   },
   empty: {
+    flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.xxxl,
-    gap: spacing.xs,
+    gap: spacing.xxs,
   },
   emptyTitle: {
     fontSize: 16,
     color: colors.text.primary,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    textAlign: 'center',
   },
 });

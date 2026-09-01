@@ -11,6 +11,13 @@ import type {
 type VehicleFlowNavigation = NavigationProp<VehicleRouteParamList>;
 type TripRootNavigation = NavigationProp<DashboardRootStackParamList>;
 
+/** Accepts dashboard stack and nested screens (e.g. ListingDetail on admin vs user). */
+export type OpenTripCreationNavigation = {
+  getState: () => { index: number; routes: ReadonlyArray<{ name: string }> };
+  dispatch: (action: ReturnType<typeof CommonActions.reset>) => void;
+  navigate: (name: 'TripCreation', params?: TripCreationParams) => void;
+};
+
 type CompleteVehicleFlowOptions = {
   selectVehicleId?: string;
   stackOrigin?: VehicleStackOrigin;
@@ -103,7 +110,7 @@ export function completeVehicleFlow(
  * Presents trip creation over the current tab — no tab switch, one smooth push.
  */
 export function openTripCreationFlow(
-  rootNavigation: TripRootNavigation,
+  rootNavigation: OpenTripCreationNavigation,
   params?: Omit<TripCreationParams, 'flowKey'>,
 ): void {
   const nextParams = { flowKey: Date.now(), ...params };

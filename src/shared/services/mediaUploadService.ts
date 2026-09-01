@@ -1,5 +1,11 @@
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+
 import { uploadApi } from '@/services/api/uploadApi';
 import type { PresignUploadResult, UploadPurpose } from '@/services/api/uploadApi.types';
+
+/** Longest edge after resize — enough for docs/photos, small enough for S3. */
+const MAX_UPLOAD_EDGE = 1600;
+const JPEG_QUALITY = 0.72;
 
 function guessContentType(uri: string, fallback = 'image/jpeg'): string {
   const lower = uri.toLowerCase().split('?')[0] ?? uri;
@@ -18,6 +24,50 @@ function filenameFromUri(uri: string, fallback: string): string {
     return last;
   }
   return fallback;
+}
+
+function jpegFilename(filename: string): string {
+  return filename.replace(/\.[a-z0-9]{1,8}$/i, '') + '.jpg';
+}
+
+/** Copy/resize to a cache JPEG so pickers and uploads use a readable local file. */
+export async function prepareLocalImage(localUri: string): Promise<string> {
+  const probeContext = ImageManipulator.manipulate(localUri);
+  let width = 0;
+  let height = 0;
+  try {
+    const probed = await probeContext.renderAsync();
+    width = probed.width;
+    height = probed.height;
+    probed.release();
+  } finally {
+    probeContext.release();
+  }
+
+  const context = ImageManipulator.manipulate(localUri);
+  try {
+    const longest = Math.max(width, height);
+    if (longest > MAX_UPLOAD_EDGE) {
+      const scale = MAX_UPLOAD_EDGE / longest;
+      context.resize({
+        width: Math.round(width * scale),
+        height: Math.round(height * scale),
+      });
+    }
+
+    const image = await context.renderAsync();
+    try {
+      const saved = await image.saveAsync({
+        compress: JPEG_QUALITY,
+        format: SaveFormat.JPEG,
+      });
+      return saved.uri;
+    } finally {
+      image.release();
+    }
+  } finally {
+    context.release();
+  }
 }
 
 async function readLocalUriAsBlob(uri: string): Promise<Blob> {
@@ -73,10 +123,21 @@ export async function uploadLocalFileToPresignedUrl(
     };
   },
 ): Promise<PresignUploadResult> {
-  const blob = await readLocalUriAsBlob(localUri);
-  const contentType = resolveContentType(localUri, blob, options.contentType);
-  const filename =
-    options.filename ?? filenameFromUri(localUri, `${options.purpose}.jpg`);
+  let uploadUri = localUri;
+  try {
+    uploadUri = await prepareLocalImage(localUri);
+  } catch {
+    uploadUri = localUri;
+  }
+
+  const blob = await readLocalUriAsBlob(uploadUri);
+  const compressed = uploadUri !== localUri;
+  const contentType = compressed
+    ? 'image/jpeg'
+    : resolveContentType(uploadUri, blob, options.contentType);
+  const filename = compressed
+    ? jpegFilename(options.filename ?? filenameFromUri(localUri, `${options.purpose}.jpg`))
+    : (options.filename ?? filenameFromUri(localUri, `${options.purpose}.jpg`));
 
   const presign = options.signupPhone
     ? await uploadApi.presignSignup({

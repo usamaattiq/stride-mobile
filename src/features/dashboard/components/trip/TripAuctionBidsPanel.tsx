@@ -12,6 +12,7 @@ import type {
 } from '@/services/api/auctionApi.types';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { useNowTicking } from '@/shared/hooks/useNowTicking';
 import { formatPriceWithCurrency } from '@/shared/utils/currency';
 import { buildWhatsAppContactMessage } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
@@ -30,6 +31,8 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripAuctionBidsPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill. */
+  referenceCode?: string | null;
   routeLabel: string;
   isPassengerRequest?: boolean;
   onCountChange?: (count: number) => void;
@@ -42,6 +45,7 @@ export type TripAuctionBidsPanelProps = {
 
 export function TripAuctionBidsPanel({
   tripId,
+  referenceCode,
   routeLabel,
   isPassengerRequest = false,
   onCountChange,
@@ -60,7 +64,7 @@ export function TripAuctionBidsPanel({
     asDriver: !isPassengerRequest,
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
 
   const applySnapshot = React.useCallback(
@@ -128,17 +132,9 @@ export function TripAuctionBidsPanel({
     return () => clearInterval(timer);
   }, [applySnapshot, snapshot?.status, tripId]);
 
-  const [nowMs, setNowMs] = React.useState(() => Date.now());
   const endsAtMs = auctionEndsAtMs(snapshot);
+  const nowMs = useNowTicking(1000, endsAtMs != null && endsAtMs > Date.now());
   const liveRemaining = remainingSecondsUntil(endsAtMs, nowMs);
-
-  React.useEffect(() => {
-    if (endsAtMs == null || endsAtMs <= Date.now()) {
-      return undefined;
-    }
-    const timer = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [endsAtMs]);
 
   const runOwnerAction = (action: 'selectNext' | 'activate') => {
     setActing(true);

@@ -72,6 +72,25 @@ function matchesPriceRange(trip: Trip, priceRange: SearchResultsFilters['priceRa
   return true;
 }
 
+function keyExtractor(item: Trip): string {
+  return item.id;
+}
+
+const TripListRow = React.memo(function TripListRow({
+  trip,
+  onPress,
+}: {
+  trip: Trip;
+  onPress: (tripId: string) => void;
+}): React.ReactElement {
+  const handlePress = React.useCallback(() => onPress(trip.id), [onPress, trip.id]);
+  return (
+    <View style={styles.cardPad}>
+      <ListingCard trip={trip} onPress={handlePress} />
+    </View>
+  );
+});
+
 export function SearchResultsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const insets = useSafeAreaInsets();
@@ -158,6 +177,15 @@ export function SearchResultsScreen(): React.ReactElement {
 
   const { refreshControlProps } = usePullToRefresh(loadTrips);
 
+  const handleTripPress = React.useCallback(
+    (tripId: string) => navigation.navigate('ListingDetail', { tripId }),
+    [navigation],
+  );
+  const renderTripItem = React.useCallback(
+    ({ item }: { item: Trip }) => <TripListRow trip={item} onPress={handleTripPress} />,
+    [handleTripPress],
+  );
+
   const skeletonList = (
     <View style={styles.cardPad}>
       {SKELETON_KEYS.map((key) => (
@@ -208,15 +236,8 @@ export function SearchResultsScreen(): React.ReactElement {
             </View>
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.cardPad}>
-                  <ListingCard
-                    trip={item}
-                    onPress={() => navigation.navigate('ListingDetail', { tripId: item.id })}
-                  />
-                </View>
-              )}
+              keyExtractor={keyExtractor}
+              renderItem={renderTripItem}
               ListEmptyComponent={
                 isLoading ? (
                   skeletonList

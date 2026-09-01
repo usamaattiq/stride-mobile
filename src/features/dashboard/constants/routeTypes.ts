@@ -11,6 +11,11 @@ export const ROUTE_TYPE_ICONS: Record<TripRouteType, FontAwesomeIcon> = {
   air: 'plane',
 };
 
+export const ROUTE_TYPE_IMAGES: Partial<Record<TripRouteType, number>> = {
+  sea: require('@/assets/images/sea.png'),
+  air: require('@/assets/images/air.png'),
+};
+
 export const ROUTE_TYPE_LABEL_KEYS: Record<TripRouteType, string> = {
   land: 'trips.create.routeTypeLand',
   sea: 'trips.create.routeTypeSea',

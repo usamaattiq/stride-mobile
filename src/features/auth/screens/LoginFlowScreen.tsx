@@ -174,9 +174,12 @@ export function LoginFlowScreen(): React.ReactElement {
     profile: AdminProfile,
     usedMpin: string,
   ) => {
+    // Unregister the push token while still on the previous (non-admin) session —
+    // the device-tokens route rejects admin tokens as invalid, which would trip
+    // sessionRevokedHandler and sign the admin right back out.
+    await unregisterPushNotifications();
     await useAuthStore.getState().setAuthenticated(accessToken, 'admin');
     adminStore.setProfile(profile);
-    void unregisterPushNotifications();
 
     const devicePrefs = useDevicePrefsStore.getState();
     await devicePrefs.setLastPhone(toPhoneIdentity(country, phoneDigits));

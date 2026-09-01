@@ -6,7 +6,7 @@
   },
   "auth": {
     "welcome": {
-      "brandName": "musafir249",
+      "brandName": "Mazad Al Safar",
       "title": "Book your next trip in minutes",
       "subtitle": "Compare buses, vans and private rides across every route.",
       "signUp": "Sign up",
@@ -161,6 +161,10 @@
     "sessionRevoked": {
       "title": "You were signed out",
       "message": "You were logged out because you signed in on another device or session."
+    },
+    "sessionExpired": {
+      "title": "Session expired",
+      "message": "Your session has expired. Please sign in again."
     }
   },
   "dashboard": {
@@ -183,7 +187,7 @@
       "subtitle": "Trips and requests you've offered on.",
       "subtitlePassenger": "Driver trips you've offered on.",
       "subtitleDriver": "Passenger requests you've offered on.",
-      "emptyTitle": "No offers yet",
+      "emptyTitle": "Your offers will show here",
       "emptySubtitle": "When you send an offer, it will show up here.",
       "emptySubtitlePassenger": "Offers you place on driver trips will show up here.",
       "emptySubtitleDriver": "Offers you place on passenger requests will show up here.",
@@ -192,7 +196,7 @@
     "history": {
       "title": "History",
       "subtitle": "Past and completed requests.",
-      "emptyTitle": "No history yet",
+      "emptyTitle": "Your history will show here",
       "emptySubtitle": "Past and completed requests will show up here."
     },
     "passenger": {
@@ -203,11 +207,11 @@
         "offers": "Offers"
       },
       "myListings": {
-        "emptyTitle": "No requests yet",
+        "emptyTitle": "Your requests will show here",
         "emptySubtitle": "Create a request and it will show up here."
       },
       "offers": {
-        "emptyTitle": "No offers yet",
+        "emptyTitle": "Your offers will show here",
         "emptySubtitle": "Offers you place on driver trips will show up here."
       }
     },
@@ -247,7 +251,7 @@
       "sentTitle": "Request sent",
       "sentBody": "Your request is waiting for admin approval. Credits will be added once it is approved.",
       "myRequests": "Your requests",
-      "noRequests": "No purchase requests yet",
+      "noRequests": "Purchase requests will show here",
       "statusPending": "Pending approval",
       "statusApproved": "Approved",
       "statusRejected": "Rejected",
@@ -262,7 +266,7 @@
       "statPerCredit": "Each",
       "bannerTitle": "Available Reverse Requests",
       "bannerSubtitle": "Find trips posted by passengers and place your best offers.",
-      "requestsEmptyTitle": "No requests yet",
+      "requestsEmptyTitle": "Available requests will show here",
       "requestsEmptySubtitle": "When passengers post requests near you, they will show up here.",
       "requestsLoadFailed": "Couldn't load passenger requests.",
       "requestSearchPlaceholder": "Search city, route or location...",
@@ -284,11 +288,11 @@
       "placeOffer": "Place Offer",
       "adTitle": "Grow Your Transport Business",
       "adSubtitle": "Create listings and get more bookings.",
-      "emptyTitle": "No requests",
+      "emptyTitle": "Available requests will show here",
       "emptySubtitle": "When passengers post reverse requests near you, they will show up here.",
       "tripsBannerTitle": "Available Trips",
       "tripsBannerSubtitle": "Browse driver listings and place your best offer or bid.",
-      "tripsEmptyTitle": "No trips available",
+      "tripsEmptyTitle": "Available trips will show here",
       "tripsEmptySubtitle": "When drivers publish trips matching your search, they will show up here.",
       "pageOf": "Page {{page}} of {{total}}",
       "previousPageA11y": "Previous page",
@@ -303,7 +307,7 @@
       "filterAny": "Any",
       "filterReset": "Reset",
       "filterApply": "Apply filters",
-      "listingsFilterEmptyTitle": "No matches",
+      "listingsFilterEmptyTitle": "Matching listings will show here",
       "listingsFilterEmptySubtitle": "Try adjusting or clearing your filters."
     },
     "messages": {
@@ -314,7 +318,7 @@
       "filterUnread": "Unread",
       "legendUnread": "Unread",
       "legendRead": "Read",
-      "emptyTitle": "No messages",
+      "emptyTitle": "Messages will show here",
       "emptySubtitle": "Messages appear when you chat on a trip you posted or a trip you applied to in this role.",
       "loadFailed": "Couldn't load messages. Pull to retry.",
       "noPreview": "No messages yet",
@@ -330,7 +334,7 @@
     "notifications": {
       "title": "Notifications",
       "subtitle": "Updates about offers, bookings, and listings.",
-      "emptyTitle": "No notifications",
+      "emptyTitle": "Notifications will show here",
       "emptySubtitle": "Updates about offers, bookings, and listings will appear here.",
       "loadFailed": "Couldn't load notifications. Pull to retry."
     },
@@ -376,7 +380,7 @@
       "searchTitle": "Search",
       "searchSubtitle": "Find and book trips posted by drivers near you.",
       "searchPlaceholder": "Search city, route or vehicle...",
-      "emptyTitle": "No listings yet",
+      "emptyTitle": "Available listings will show here",
       "emptySubtitle": "Publish a trip and it will show up here.",
       "statusFilter": {
         "all": "All",
@@ -461,7 +465,7 @@
         "share": "Share Listing",
         "edit": "Edit Listing",
         "editComingSoon": "Editing listings will be available soon.",
-        "shareMessage": "Musafir249 listing: {{from}} → {{to}}. Price {{price}} /seat.",
+        "shareMessage": "Mazad Al Safar listing: {{from}} → {{to}}. Price {{price}} /seat.",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available in a future update.",
         "manageHint": "Remove this listing if it is no longer needed.",
@@ -484,7 +488,7 @@
           "loadFailed": "Couldn't load responses.",
           "actionFailed": "Couldn't complete that action.",
           "retry": "Try again",
-          "emptyTitle": "No responses yet",
+          "emptyTitle": "Responses will show here",
           "emptyBody": "Passenger offers for this trip will show up here.",
           "currentlyNotListed": "Currently not listed",
           "offerLabel": "Response #{{index}}",
@@ -517,7 +521,7 @@
           "loadFailed": "Couldn't load bids.",
           "actionFailed": "Couldn't complete that action.",
           "retry": "Try again",
-          "emptyTitle": "No bids yet",
+          "emptyTitle": "Bids will show here",
           "emptyBody": "Bids for this auction will show up here.",
           "currentAmount": "Current amount {{currency}} {{amount}}",
           "activate": "Start auction",
@@ -588,8 +592,8 @@
           "chatOpenFailed": "Couldn't open chat.",
           "chatLoadFailed": "Couldn't load messages.",
           "chatSendFailed": "Couldn't send message.",
-          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Request ID: {{requestId}}",
-          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Request ID: {{requestId}}",
+          "messageAsPassenger": "Hi, I'm {{name}}, the passenger for {{route}}. Ref: {{ref}}",
+          "messageAsDriver": "Hi, I'm {{name}}, the driver for {{route}}. Ref: {{ref}}",
           "passengerContact": "Passenger contact",
           "driverContact": "Driver contact"
         },
@@ -673,7 +677,7 @@
       },
       "becomeDriver": {
         "title": "Become a driver",
-        "subtitle": "Offer rides and earn with Musafir249",
+        "subtitle": "Offer rides and earn with Mazad Al Safar",
         "confirm": "Switch this account to driver mode? You can switch back anytime from Settings.",
         "confirmCta": "Become driver"
       },
@@ -800,12 +804,12 @@
     "addVehicleTitle": "Add a vehicle",
     "addVehicle": "Add vehicle",
     "searchPlaceholder": "Search by title, plate, brand...",
-    "emptyTitle": "No vehicles yet",
-    "emptySubtitle": "Add your first vehicle to start offering rides on Musafir249.",
+    "emptyTitle": "Your vehicles will show here",
+    "emptySubtitle": "Add your first vehicle to start offering rides on Mazad Al Safar.",
     "filter": {
       "title": "Filter vehicles",
       "acAny": "Any",
-      "emptyTitle": "No matches",
+      "emptyTitle": "Matching vehicles will show here",
       "emptySubtitle": "Try a different search or clear your filters."
     },
     "detailsTitle": "Vehicle details",
@@ -1354,11 +1358,11 @@
     },
     "terms": {
       "title": "Terms & Conditions",
-      "intro": "Welcome to Musafir249. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Welcome to Mazad Al Safar. These Terms & Conditions describe how you may access and use our booking platform. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "acceptance": {
           "title": "1. Acceptance of Terms",
-          "body": "By creating an account or using any part of Musafir249, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
+          "body": "By creating an account or using any part of Mazad Al Safar, you agree to these Terms & Conditions. If you do not agree, you must not use the platform."
         },
         "eligibility": {
           "title": "2. Eligibility",
@@ -1366,7 +1370,7 @@
         },
         "platformUse": {
           "title": "3. Platform Use",
-          "body": "Musafir249 helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
+          "body": "Mazad Al Safar helps you compare and book buses, vans, and private rides. You agree to use the platform only for lawful purposes and not to misuse bookings, payments, or messaging features."
         },
         "accountsSecurity": {
           "title": "4. Accounts and Security",
@@ -1378,17 +1382,17 @@
         },
         "limitationLiability": {
           "title": "6. Limitation of Liability",
-          "body": "To the fullest extent permitted by law, Musafir249 is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
+          "body": "To the fullest extent permitted by law, Mazad Al Safar is provided on an \"as is\" basis. We are not liable for indirect, incidental, or consequential losses arising from your use of the platform while this placeholder policy is in effect."
         },
         "changesTerms": {
           "title": "7. Changes to These Terms",
-          "body": "We may update these Terms & Conditions from time to time. Continued use of Musafir249 after changes are published constitutes acceptance of the revised terms."
+          "body": "We may update these Terms & Conditions from time to time. Continued use of Mazad Al Safar after changes are published constitutes acceptance of the revised terms."
         }
       }
     },
     "privacy": {
       "title": "Privacy Policy",
-      "intro": "Your privacy matters to us. This Privacy Policy explains what information Musafir249 may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
+      "intro": "Your privacy matters to us. This Privacy Policy explains what information Mazad Al Safar may collect, how we use it, and the choices available to you. The content below is placeholder text for demonstration purposes only.",
       "sections": {
         "informationCollect": {
           "title": "1. Information We Collect",

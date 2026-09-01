@@ -9,6 +9,7 @@ import { authStore } from '@/store/authStore';
 import { profileStore } from '@/store/profileStore';
 
 const ANDROID_CHANNEL_ID = 'default';
+const NOTIFICATION_SOUND = 'notification_tone.wav';
 
 /** Expo Go ships truncated notification native code (SDK 53+); skip push APIs there. */
 const isExpoGo =
@@ -69,11 +70,11 @@ async function ensureAndroidNotificationChannel(): Promise<void> {
   }
   // Android 8+ drops pushes that have no channel. Create it before requesting a token.
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'Musafir249',
+    name: 'Mazad Al Safar',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#B42318',
-    sound: 'default',
+    sound: NOTIFICATION_SOUND,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     enableVibrate: true,
     showBadge: true,

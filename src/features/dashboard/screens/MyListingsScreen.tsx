@@ -44,6 +44,7 @@ import {
 const SKELETON_COUNT = 4;
 const LISTING_CATEGORIES: TripListingCategory[] = ['all', 'rfq', 'auction'];
 const INITIAL_PAGE_WIDTH = Dimensions.get('window').width - spacing.md * 2;
+const PAGE_SIZE = 10;
 
 export function MyListingsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
@@ -65,6 +66,16 @@ export function MyListingsScreen(): React.ReactElement {
   const [visitedCategories, setVisitedCategories] = React.useState(
     () => new Set<TripListingCategory>(['all']),
   );
+  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+
+  // Reset pagination whenever the filtered set changes shape (filters/search/category/data).
+  React.useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [listingCategory, statusFilter, query, trips]);
+
+  const loadMoreVisible = React.useCallback(() => {
+    setVisibleCount((current) => current + PAGE_SIZE);
+  }, []);
 
   const typeOptions = React.useMemo(
     () => [
@@ -271,21 +282,32 @@ export function MyListingsScreen(): React.ReactElement {
         </ScrollView>
       );
     } else {
+      const visibleTrips = pageTrips.slice(0, visibleCount);
+      const hasMore = pageTrips.length > visibleTrips.length;
       pageBody = (
         <FlatList
-          data={pageTrips}
+          data={visibleTrips}
           keyExtractor={(item) => item.id}
           renderItem={renderTrip}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={ListSeparator}
           showsVerticalScrollIndicator={false}
-          initialNumToRender={4}
-          maxToRenderPerBatch={4}
+          initialNumToRender={PAGE_SIZE}
+          maxToRenderPerBatch={PAGE_SIZE}
           windowSize={5}
           removeClippedSubviews={false}
           updateCellsBatchingPeriod={50}
           keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl {...refreshControlProps} />}
+          onEndReached={hasMore ? loadMoreVisible : undefined}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footerSkeleton}>
+                <ListingCardSkeleton />
+              </View>
+            ) : null
+          }
         />
       );
     }
@@ -379,6 +401,9 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: spacing.sm,
+  },
+  footerSkeleton: {
+    marginTop: spacing.sm,
   },
   centered: {
     flexGrow: 1,

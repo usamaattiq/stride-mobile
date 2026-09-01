@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest, withCacheBust } from './client';
 import type { PhoneIdentity } from './authApi.types';
 import { getDeviceId } from '@/services/deviceId';
 
@@ -224,7 +224,7 @@ export const adminApi = {
     return apiRequest<AdminUserDetail>({
       method: 'GET',
       url: `/admin/users/${userId}`,
-      params: { _: Date.now() },
+      params: withCacheBust(),
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },
@@ -307,7 +307,7 @@ export const adminApi = {
     }>({
       method: 'GET',
       url: '/admin/credits/settings',
-      params: { _: Date.now() },
+      params: withCacheBust(),
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },
@@ -354,7 +354,7 @@ export const adminApi = {
     return apiRequest<{ items: AdminCreditPurchaseSummary[] }>({
       method: 'GET',
       url: '/admin/credits/purchases',
-      params: { view, _: Date.now() },
+      params: withCacheBust({ view }),
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
   },

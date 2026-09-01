@@ -2,13 +2,14 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { i18n as appI18n } from '@/i18n';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
+import { prepareLocalImage } from '@/shared/services/mediaUploadService';
 import { colors, radius, spacing } from '@/theme';
 
 import { MAX_VEHICLE_PHOTOS } from '../types/vehicle.types';
@@ -26,6 +27,11 @@ type VehiclePhotosFormProps = {
 
 const GRID_GAP = spacing.sm;
 const COLUMNS = 3;
+const SCREEN_CONTENT_WIDTH = Math.max(0, Dimensions.get('window').width - spacing.md * 4);
+const FALLBACK_TILE =
+  SCREEN_CONTENT_WIDTH > 0
+    ? (SCREEN_CONTENT_WIDTH - GRID_GAP * (COLUMNS - 1)) / COLUMNS
+    : 96;
 
 export function VehiclePhotosForm({
   photoUris,
@@ -61,18 +67,28 @@ export function VehiclePhotosForm({
       allowsMultipleSelection: true,
       selectionLimit: remainingSlots,
       allowsEditing: false,
-      quality: 0.85,
+      quality: 1,
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const uris = result.assets
+      const picked = result.assets
         .map((asset) => asset.uri)
         .filter((uri): uri is string => Boolean(uri))
         .slice(0, remainingSlots);
-      if (uris.length > 0) {
-        setSubmitAttempted(false);
-        onAddPhotos(uris);
+      if (picked.length === 0) {
+        return;
       }
+      const prepared = await Promise.all(
+        picked.map(async (uri) => {
+          try {
+            return await prepareLocalImage(uri);
+          } catch {
+            return uri;
+          }
+        }),
+      );
+      setSubmitAttempted(false);
+      onAddPhotos(prepared);
     }
   };
 
@@ -81,10 +97,11 @@ export function VehiclePhotosForm({
   };
 
   const handleSubmit = () => {
-    setSubmitAttempted(true);
     if (!hasPhotos || submitDisabled || loading) {
+      setSubmitAttempted(true);
       return;
     }
+    setSubmitAttempted(false);
     onSubmit();
   };
 
@@ -95,8 +112,8 @@ export function VehiclePhotosForm({
   // sidesteps that entirely.
   const [gridWidth, setGridWidth] = React.useState(0);
   const tileSize =
-    gridWidth > 0 ? (gridWidth - GRID_GAP * (COLUMNS - 1)) / COLUMNS : null;
-  const tileSizeStyle = tileSize ? { width: tileSize, height: tileSize } : null;
+    gridWidth > 0 ? (gridWidth - GRID_GAP * (COLUMNS - 1)) / COLUMNS : FALLBACK_TILE;
+  const tileSizeStyle = { width: tileSize, height: tileSize };
 
   return (
     <AuthCard>
@@ -163,10 +180,10 @@ export function VehiclePhotosForm({
             <Pressable
               onPress={() => void pickImages()}
               style={[
-                styles.gridItem,
+                hasPhotos ? styles.gridItem : styles.addTileEmptyBox,
                 styles.addTile,
                 photosError && !hasPhotos ? styles.addTileError : null,
-                hasPhotos ? tileSizeStyle : styles.addTileEmpty,
+                hasPhotos ? tileSizeStyle : null,
               ]}
               accessibilityRole="button"
               accessibilityLabel={t('vehicles.photos.addPictures')}
@@ -270,10 +287,14 @@ const styles = StyleSheet.create({
   addTileError: {
     borderColor: colors.primary,
   },
-  addTileEmpty: {
+  addTileEmptyBox: {
     width: '100%',
-    aspectRatio: undefined,
-    minHeight: 120,
+    height: 120,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.subtle,
     gap: spacing.xs,
   },
   addIconWrap: {

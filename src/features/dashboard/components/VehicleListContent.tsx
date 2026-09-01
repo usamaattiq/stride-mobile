@@ -56,7 +56,7 @@ type VehicleListItemProps = {
   compact?: boolean;
 };
 
-export function VehicleListItem({
+export const VehicleListItem = React.memo(function VehicleListItem({
   vehicle,
   onPress,
   onRemovePress,
@@ -210,7 +210,7 @@ export function VehicleListItem({
       </View>
     </Pressable>
   );
-}
+});
 
 type AddVehicleButtonProps = {
   onPress: () => void;

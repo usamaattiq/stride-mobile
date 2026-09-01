@@ -32,6 +32,7 @@ import { AppText } from "@/shared/components/AppText";
 import { Button } from "@/shared/components/Button";
 import { CreditCostBadge } from "@/shared/components/CreditCostBadge";
 import { ENV } from "@/shared/config/env";
+import { useNowTicking } from "@/shared/hooks/useNowTicking";
 import { formatPriceAmount, toLatinDigits } from "@/shared/utils/latin-digits";
 import { formatPriceWithCurrency, getDisplayCurrency } from "@/shared/utils/currency";
 import { refreshSessionProfile } from "@/shared/utils/refresh-session-profile";
@@ -60,6 +61,8 @@ import { TripMessagingSheet } from "./TripMessagingSheet";
 
 export type TripBidPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill (e.g. AUC-2026-0001). */
+  referenceCode?: string | null;
   routeLabel: string;
   isPassengerRequest?: boolean;
   /** When true, driver must pick one of their vehicles before placing a bid. */
@@ -297,6 +300,7 @@ export const TripBidPanel = React.forwardRef<
 >(function TripBidPanel(
   {
     tripId,
+    referenceCode,
     routeLabel,
       isPassengerRequest = false,
       requiresVehicle = false,
@@ -359,7 +363,7 @@ export const TripBidPanel = React.forwardRef<
     asDriver: isPassengerRequest,
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
 
   const applySnapshot = React.useCallback(
@@ -466,25 +470,17 @@ export const TripBidPanel = React.forwardRef<
     return () => clearInterval(timer);
   }, [applySnapshot, publicSnapshot?.status, snapshot?.status, tripId]);
 
-  const [nowMs, setNowMs] = React.useState(() => Date.now());
   const endsAtMs =
     auctionEndsAtMs(snapshot) ??
     auctionEndsAtMs(publicSnapshot) ??
     listingExpiresAtMs ??
     null;
+  const nowMs = useNowTicking(1000, endsAtMs != null && endsAtMs > Date.now());
   const listingStarted =
     listingStartsAtMs == null || listingStartsAtMs <= nowMs;
   const liveRemaining = listingStarted
     ? remainingSecondsUntil(endsAtMs, nowMs)
     : null;
-
-  React.useEffect(() => {
-    if (endsAtMs == null || endsAtMs <= Date.now()) {
-      return undefined;
-    }
-    const timer = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [endsAtMs]);
 
   const canWithdraw = Boolean(snapshot?.actions.canWithdraw);
 

@@ -12,13 +12,14 @@ import type { RfqOfferStatus, RfqStatusValue } from '@/services/api/rfqApi.types
 import { AppText } from '@/shared/components/AppText';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { useLocalizedCityName } from '@/shared/hooks/useLocalizedCityName';
+import { useNowTicking } from '@/shared/hooks/useNowTicking';
 import { formatPriceWithCurrency, stripCurrencyPrefix } from '@/shared/utils/currency';
 import { withLatinDigitsLocale } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 import { getFontFamily } from '@/theme/typography';
 
-import { ROUTE_TYPE_ICONS, ROUTE_TYPE_LABEL_KEYS } from '../constants/routeTypes';
+import { ROUTE_TYPE_ICONS, ROUTE_TYPE_IMAGES, ROUTE_TYPE_LABEL_KEYS } from '../constants/routeTypes';
 import { getVehicleClassImage, getVehicleClassLabelKey } from '../constants/vehicleClasses';
 import type { VehicleClass } from '../types/vehicle.types';
 import { formatDateRangeLabel, isMultiDayWindow } from './trip/dateRangeUtils';
@@ -117,13 +118,23 @@ function RequestThumbnail({
   vehicleClass: VehicleClass | null;
   routeType: TripRouteType;
 }): React.ReactElement {
-  // Sea / air requests have no vehicle artwork — fall back to the route medium icon.
   if (routeType !== 'land') {
+    const routeImage = ROUTE_TYPE_IMAGES[routeType];
     return (
       <View style={styles.requestThumb}>
-        <View style={styles.requestThumbFallback}>
-          <FontAwesome name={ROUTE_TYPE_ICONS[routeType]} size={30} color={colors.primary} />
-        </View>
+        {routeImage ? (
+          <Image
+            source={routeImage}
+            style={styles.requestThumbImage}
+            contentFit="contain"
+            recyclingKey={routeType}
+            transition={0}
+          />
+        ) : (
+          <View style={styles.requestThumbFallback}>
+            <FontAwesome name={ROUTE_TYPE_ICONS[routeType]} size={30} color={colors.primary} />
+          </View>
+        )}
       </View>
     );
   }
@@ -160,7 +171,7 @@ export type ListingCardProps = {
   onRepost?: () => void;
 };
 
-export function ListingCard({
+export const ListingCard = React.memo(function ListingCard({
   trip,
   onPress,
   showPhotoCount = false,
@@ -169,23 +180,22 @@ export function ListingCard({
 }: ListingCardProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
 
-  const [now, setNow] = React.useState(() => Date.now());
+  const [tickMs, setTickMs] = React.useState(30_000);
+  const now = useNowTicking(tickMs, !pending);
   const startsLater = !pending && isListingNotStartedYet(trip, now);
   const remainingMs = startsLater ? 0 : getListingExpiresAtMs(trip) - now;
-  const tickMs = startsLater ? 15_000 : 30_000;
   React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), tickMs);
-    return () => clearInterval(id);
-  }, [tickMs]);
+    setTickMs(startsLater ? 15_000 : 30_000);
+  }, [startsLater]);
 
   const seaOrAir = isSeaOrAirRoute(trip.routeType);
   const fromCity = useLocalizedCityName(
     trip.departureCity,
-    pending && !seaOrAir ? undefined : trip.departurePoint,
+    seaOrAir ? undefined : pending ? undefined : trip.departurePoint,
   );
   const toCity = useLocalizedCityName(
     trip.arrivalCity,
-    pending && !seaOrAir ? undefined : trip.arrivalPoint,
+    seaOrAir ? undefined : pending ? undefined : trip.arrivalPoint,
   );
   const classLabel = trip.vehicleClass
     ? t(getVehicleClassLabelKey(trip.vehicleClass))
@@ -555,7 +565,7 @@ export function ListingCard({
       />
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   shadowGutter: {

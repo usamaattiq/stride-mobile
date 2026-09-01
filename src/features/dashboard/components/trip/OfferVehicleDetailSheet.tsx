@@ -26,21 +26,25 @@ import { colors, radius, spacing } from '@/theme';
 
 export type OfferVehicleDetailSource = RfqOfferVehicleSummary | Vehicle;
 
+function isSavedVehicle(vehicle: OfferVehicleDetailSource): vehicle is Vehicle {
+  return typeof vehicle.year === 'string';
+}
+
 function photosFromVehicle(vehicle: OfferVehicleDetailSource): string[] {
-  if ('photoDisplayUris' in vehicle && vehicle.photoDisplayUris?.length) {
+  if (vehicle.photoDisplayUris?.length) {
     return vehicle.photoDisplayUris;
   }
-  if ('photoUris' in vehicle && vehicle.photoUris.length) {
-    return vehicle.photoDisplayUris?.length ? vehicle.photoDisplayUris : vehicle.photoUris;
+  if (isSavedVehicle(vehicle) && vehicle.photoUris.length) {
+    return vehicle.photoUris;
   }
-  if ('photoUrls' in vehicle && vehicle.photoUrls?.length) {
-    return vehicle.photoDisplayUris?.length ? vehicle.photoDisplayUris : vehicle.photoUrls;
+  if (!isSavedVehicle(vehicle) && vehicle.photoUrls?.length) {
+    return vehicle.photoUrls;
   }
-  const single =
-    'photoViewUrl' in vehicle
-      ? (vehicle.photoViewUrl ?? vehicle.photoUrl)
-      : vehicle.photoDisplayUris?.[0] ?? vehicle.photoUris[0] ?? null;
-  return single ? [single] : [];
+  if (!isSavedVehicle(vehicle)) {
+    const single = vehicle.photoViewUrl ?? vehicle.photoUrl;
+    return single ? [single] : [];
+  }
+  return [];
 }
 
 type OfferVehicleDetailSheetProps = {
@@ -82,13 +86,12 @@ export function OfferVehicleDetailSheet({
   const year =
     vehicle == null
       ? ''
-      : 'photoUrl' in vehicle && vehicle.year != null
-        ? String(vehicle.year)
-        : !('photoUrl' in vehicle)
-          ? vehicle.year.trim()
+      : typeof vehicle.year === 'string'
+        ? vehicle.year.trim()
+        : vehicle.year != null
+          ? String(vehicle.year)
           : '';
-  const description =
-    vehicle && 'description' in vehicle ? vehicle.description.trim() : '';
+  const description = vehicle?.description?.trim() ?? '';
 
   const overviewRows: Array<{
     icon: React.ComponentProps<typeof FontAwesome>['name'];

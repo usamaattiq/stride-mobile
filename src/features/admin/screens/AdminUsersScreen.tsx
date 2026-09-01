@@ -102,7 +102,6 @@ export function AdminUsersScreen(): React.ReactElement {
     <ListingsEmptyState
       title={t('admin.users.empty')}
       subtitle={t('admin.users.subtitle')}
-      icon="users"
     />
   );
 

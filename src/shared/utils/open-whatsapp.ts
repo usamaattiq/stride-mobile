@@ -12,7 +12,8 @@ export function buildWhatsAppContactMessage(
     asDriver: boolean;
     name: string;
     route: string;
-    requestId: string;
+    /** Public listing code, e.g. RFQ-2026-0001. */
+    ref: string;
   },
 ): string {
   const key = params.asDriver
@@ -21,7 +22,7 @@ export function buildWhatsAppContactMessage(
   return t(key, {
     name: params.name.trim() || t('dashboard.listings.detail.contact.fallbackName'),
     route: params.route,
-    requestId: params.requestId,
+    ref: params.ref,
   });
 }
 

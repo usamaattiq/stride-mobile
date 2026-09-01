@@ -256,7 +256,6 @@ export function MyOffersScreen(): React.ReactElement {
                 ? 'dashboard.offers.emptySubtitlePassenger'
                 : 'dashboard.offers.emptySubtitleDriver',
             )}
-            icon="tag"
           />
         </ScrollView>
       );

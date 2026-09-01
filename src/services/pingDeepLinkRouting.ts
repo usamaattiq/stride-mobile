@@ -68,13 +68,25 @@ function navigateToNotifications(): void {
 }
 
 function navigateToVerification(document: 'nic' | 'license'): void {
+  if (document === 'nic') {
+    navigationRef.navigate('Dashboard', {
+      screen: 'MainTabs',
+      params: {
+        screen: 'Settings',
+        params: { screen: 'NicVerification' },
+      },
+      initial: false,
+    });
+    return;
+  }
+
   navigationRef.navigate('Dashboard', {
     screen: 'MainTabs',
     params: {
       screen: 'Settings',
       params: {
-        screen: document === 'nic' ? 'NicVerification' : 'DriverVerification',
-        params: document === 'license' ? { purpose: 'complete' } : undefined,
+        screen: 'DriverVerification',
+        params: { purpose: 'complete' },
       },
     },
     initial: false,

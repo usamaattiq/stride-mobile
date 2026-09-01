@@ -24,6 +24,8 @@ import { TripMessagingSheet } from './TripMessagingSheet';
 
 export type TripResponsesPanelProps = {
   tripId: string;
+  /** Public listing code shown in WhatsApp prefill. */
+  referenceCode?: string | null;
   routeLabel: string;
   vehicleMode: TripVehicleMode;
   vehicleTotalSeats: number | null;
@@ -147,6 +149,7 @@ function offeredSeatsLabel(
 
 export function TripResponsesPanel({
   tripId,
+  referenceCode,
   routeLabel,
   vehicleMode,
   vehicleTotalSeats,
@@ -164,7 +167,7 @@ export function TripResponsesPanel({
     asDriver: !isPassengerRequest,
     name: user.fullName,
     route: routeLabel,
-    requestId: tripId,
+    ref: referenceCode?.trim() || tripId,
   });
   const [snapshot, setSnapshot] = React.useState<RfqOwnerSnapshot | null>(null);
   const [loading, setLoading] = React.useState(true);
