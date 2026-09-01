@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '@/features/auth/components/AuthCard';
@@ -18,11 +18,11 @@ type TripRouteTypeStepProps = {
 
 const OPTIONS: Array<{
   id: TripRouteType;
-  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  image: number;
 }> = [
-  { id: 'land', icon: 'road' },
-  { id: 'sea', icon: 'ship' },
-  { id: 'air', icon: 'plane' },
+  { id: 'land', image: require('@/assets/images/bus.png') },
+  { id: 'sea', image: require('@/assets/images/sea.png') },
+  { id: 'air', image: require('@/assets/images/air.png') },
 ];
 
 
@@ -68,7 +68,7 @@ export function TripRouteTypeStep({
                 </AppText>
 
                 <View style={styles.iconWrap}>
-                  <FontAwesome name={option.icon} size={32} color={colors.text.secondary} />
+                  <Image source={option.image} style={styles.iconImage} resizeMode="contain" />
                 </View>
               </Pressable>
             );
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: '100%',
-    minHeight: 92,
+    minHeight: 122,
     borderWidth: 1.5,
     borderColor: colors.border.default,
     borderRadius: radius.lg,
@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'relative',
+    paddingRight: spacing.xxl,
   },
   tileSelected: {
     borderColor: colors.primary,
@@ -120,8 +121,8 @@ const styles = StyleSheet.create({
   },
   tileTitle: {
     flex: 1,
-    fontSize: 16,
-    color: colors.text.primary,
+    fontSize: 20,
+    color: '#615f5f',
     paddingRight: spacing.sm,
   },
   iconWrap: {
@@ -129,5 +130,9 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconImage: {
+    width: 90,
+    height: 90,
   },
 });
