@@ -236,6 +236,7 @@
       "totalPriceWithCalc": "{{count}} × {{rate}} = {{total}}",
       "total": "الإجمالي: {{currency}} {{amount}}",
       "creditsTimesPrice": "{{count}} × {{currency}} {{price}}",
+      "approxInCurrency": "≈ {{currency}} {{price}}",
       "balance": "رصيدك: {{count}}",
       "proofLabel": "إثبات الدفع",
       "bankTitle": "بيانات البنك",

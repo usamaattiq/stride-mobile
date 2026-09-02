@@ -12,7 +12,6 @@ import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
 import { ImageGalleryModal } from '@/shared/components/ImageGalleryModal';
 import { getErrorMessage } from '@/services/api/errorMessage';
-import { useDisplayCurrency } from '@/shared/utils/currency';
 import { openWhatsAppChat } from '@/shared/utils/open-whatsapp';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
@@ -247,7 +246,6 @@ export function AdminUserDetailContent({
   onUserUpdated,
 }: AdminUserDetailContentProps): React.ReactElement {
   const { t, i18n } = useTranslation(undefined, { i18n: appI18n });
-  const currency = useDisplayCurrency();
   const memberSince = formatTripDateTime(user.createdAt, i18n.language, '—', false);
   const [reviewingDoc, setReviewingDoc] = React.useState<'nic' | 'license' | null>(null);
   const [creditsDraft, setCreditsDraft] = React.useState(String(user.credits));
@@ -317,11 +315,11 @@ export function AdminUserDetailContent({
     const unitPrice = Number(unitPriceDraft);
     const tripCreateCredits = Number(tripCreateDraft);
     const bidOfferCredits = Number(bidOfferDraft);
-    if (
-      ![unitPrice, tripCreateCredits, bidOfferCredits].every(
-        (value) => Number.isInteger(value) && value >= 0,
-      )
-    ) {
+    const priceValid = Number.isFinite(unitPrice) && unitPrice >= 0;
+    const countsValid = [tripCreateCredits, bidOfferCredits].every(
+      (value) => Number.isInteger(value) && value >= 0,
+    );
+    if (!priceValid || !countsValid) {
       setPriceErrorKey('admin.credits.settingsInvalid');
       return;
     }
@@ -467,13 +465,13 @@ export function AdminUserDetailContent({
                 </View>
                 <View style={styles.priceValue}>
                   <AppText weight="semibold" style={styles.currencyLabel}>
-                    {currency}
+                    USD
                   </AppText>
                   <TextInput
                     key={`u-price-${user.creditUnitPrice ?? 'g'}`}
                     value={unitPriceDraft}
                     onChangeText={setUnitPriceDraft}
-                    keyboardType="number-pad"
+                    keyboardType="decimal-pad"
                     style={styles.settingInput}
                   />
                 </View>

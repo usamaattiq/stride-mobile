@@ -236,6 +236,7 @@
       "totalPriceWithCalc": "{{count}} × {{rate}} = {{total}}",
       "total": "Total: {{currency}} {{amount}}",
       "creditsTimesPrice": "{{count}} × {{currency}} {{price}}",
+      "approxInCurrency": "≈ {{currency}} {{price}}",
       "balance": "Your balance: {{count}}",
       "proofLabel": "Payment proof",
       "bankTitle": "Bank details",

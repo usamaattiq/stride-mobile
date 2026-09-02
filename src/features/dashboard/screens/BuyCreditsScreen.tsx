@@ -29,6 +29,7 @@ import { Button } from '@/shared/components/Button';
 import { uploadLocalFileToPresignedUrl } from '@/shared/services/mediaUploadService';
 import { useDashboardSession } from '@/features/dashboard/context/DashboardSessionContext';
 import { refreshSessionProfile } from '@/shared/utils/refresh-session-profile';
+import { useConvertedAmount } from '@/shared/hooks/useConvertedAmount';
 import { useDisplayCurrency } from '@/shared/utils/currency';
 import { formatLatinNumber, formatPriceAmount, toLatinDigits } from '@/shared/utils/latin-digits';
 import { colors, getInputFontFamily, radius, spacing } from '@/theme';
@@ -47,7 +48,8 @@ export function BuyCreditsScreen(): React.ReactElement {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { user } = useDashboardSession();
   const [quantityText, setQuantityText] = React.useState('0');
-  const [unitPrice, setUnitPrice] = React.useState(2);
+  const [unitPriceUsd, setUnitPriceUsd] = React.useState(0);
+  const [unitPricePkr, setUnitPricePkr] = React.useState(0);
   const [bankAccounts, setBankAccounts] = React.useState<CreditBankAccount[]>([]);
   const [proofUri, setProofUri] = React.useState<string | null>(null);
   const [purchases, setPurchases] = React.useState<CreditPurchase[]>([]);
@@ -63,7 +65,8 @@ export function BuyCreditsScreen(): React.ReactElement {
         creditsApi.getCatalog(),
         creditsApi.listPurchases(),
       ]);
-      setUnitPrice(catalog.unitPrice);
+      setUnitPriceUsd(catalog.unitPrice);
+      setUnitPricePkr(catalog.unitPricePkr);
       setBankAccounts(catalog.bankAccounts ?? []);
       setPurchases(list.items);
       await refreshSessionProfile();
@@ -79,9 +82,13 @@ export function BuyCreditsScreen(): React.ReactElement {
   }, [load]);
 
   const quantity = Number.parseInt(quantityText, 10) || 0;
-  const total = quantity * unitPrice;
-  const proofRequired = unitPrice > 0;
+  const totalPkr = quantity * unitPricePkr;
+  const totalUsd = quantity * unitPriceUsd;
+  const proofRequired = unitPricePkr > 0;
   const canSubmit = quantity >= 1 && (!proofRequired || Boolean(proofUri)) && !submitting;
+  const convertedUnitPrice = useConvertedAmount(unitPriceUsd, currency);
+  const convertedTotal = useConvertedAmount(totalUsd, currency);
+  const showLocalConversion = currency.toUpperCase() !== 'PKR';
   const qtyFontFamily = getInputFontFamily(currentLanguage, 'number-pad');
 
   const setQuantity = (next: number) => {
@@ -240,12 +247,22 @@ export function BuyCreditsScreen(): React.ReactElement {
               </View>
               <View style={styles.metaRow}>
                 <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
-                <AppText weight="semibold" style={styles.metaValue}>
-                  {t('dashboard.listings.card.priceWithCurrency', {
-                    currency,
-                    price: formatPriceAmount(unitPrice),
-                  })}
-                </AppText>
+                <View style={styles.totalBlock}>
+                  <AppText weight="semibold" style={styles.metaValue}>
+                    {t('dashboard.listings.card.priceWithCurrency', {
+                      currency: 'PKR',
+                      price: formatPriceAmount(unitPricePkr),
+                    })}
+                  </AppText>
+                  {showLocalConversion && convertedUnitPrice != null ? (
+                    <AppText style={styles.convertedHint}>
+                      {t('dashboard.home.approxInCurrency', {
+                        currency,
+                        price: formatPriceAmount(convertedUnitPrice),
+                      })}
+                    </AppText>
+                  ) : null}
+                </View>
               </View>
               <View style={styles.metaRow}>
                 <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
@@ -253,16 +270,24 @@ export function BuyCreditsScreen(): React.ReactElement {
                   <AppText style={styles.totalCalc}>
                     {t('dashboard.home.creditsTimesPrice', {
                       count: quantity,
-                      currency,
-                      price: formatPriceAmount(unitPrice),
+                      currency: 'PKR',
+                      price: formatPriceAmount(unitPricePkr),
                     })}
                   </AppText>
                   <AppText weight="bold" style={styles.totalValue}>
                     {t('dashboard.listings.card.priceWithCurrency', {
-                      currency,
-                      price: formatPriceAmount(total),
+                      currency: 'PKR',
+                      price: formatPriceAmount(totalPkr),
                     })}
                   </AppText>
+                  {showLocalConversion && convertedTotal != null ? (
+                    <AppText style={styles.convertedHint}>
+                      {t('dashboard.home.approxInCurrency', {
+                        currency,
+                        price: formatPriceAmount(convertedTotal),
+                      })}
+                    </AppText>
+                  ) : null}
                 </View>
               </View>
               </LinearGradient>
@@ -323,7 +348,7 @@ export function BuyCreditsScreen(): React.ReactElement {
                   createdAt={item.createdAt}
                   credits={item.credits}
                   amount={item.amount}
-                  unitPrice={item.unitPrice}
+                  unitPrice={item.credits > 0 ? item.amount / item.credits : 0}
                   status={item.status}
                   compact
                   onPress={() =>
@@ -469,6 +494,11 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 16,
     color: colors.text.primary,
+    textAlign: 'right',
+  },
+  convertedHint: {
+    fontSize: 11,
+    color: colors.text.secondary,
     textAlign: 'right',
   },
   bankTitle: {

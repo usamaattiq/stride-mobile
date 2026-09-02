@@ -11,7 +11,6 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
-import { formatPriceWithCurrency, useDisplayCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
 
@@ -72,7 +71,6 @@ export function CreditPurchaseRequestTile({
 }: CreditPurchaseRequestTileProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
-  const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
   const photoUrl = avatarUrl?.trim() || null;
@@ -158,11 +156,14 @@ export function CreditPurchaseRequestTile({
                 {t('dashboard.home.creditsTimesPrice', {
                   count: credits,
                   price: formatPriceAmount(unitPrice),
-                  currency,
+                  currency: 'PKR',
                 })}
               </AppText>
               <AppText weight="bold" style={[styles.priceAmount, compact && styles.priceAmountCompact]} numberOfLines={1}>
-                {formatPriceWithCurrency(amount)}
+                {t('dashboard.listings.card.priceWithCurrency', {
+                  currency: 'PKR',
+                  price: formatPriceAmount(amount),
+                })}
               </AppText>
             </View>
           </View>

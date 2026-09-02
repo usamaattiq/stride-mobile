@@ -10,7 +10,12 @@ export type CreditBankAccount = {
 };
 
 export type CreditCatalog = {
+  /** Admin-configured price per credit, in USD. */
   unitPrice: number;
+  /** unitPrice converted to PKR at the current rate - this is what's actually charged. */
+  unitPricePkr: number;
+  /** The USD -> PKR rate used to compute unitPricePkr. */
+  usdToPkrRate: number;
   currency: 'PKR';
   tripCreateCredits: number;
   bidOfferCredits: number;

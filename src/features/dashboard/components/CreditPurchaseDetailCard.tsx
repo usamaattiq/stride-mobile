@@ -11,7 +11,6 @@ import { CreditPurchaseRemarksCard } from '@/features/dashboard/components/Credi
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
-import { useDisplayCurrency } from '@/shared/utils/currency';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
 import { colors, radius, spacing } from '@/theme';
@@ -56,7 +55,6 @@ export function CreditPurchaseDetailCard({
 }: CreditPurchaseDetailCardProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
-  const currency = useDisplayCurrency();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
   const timestamp = createdAt
@@ -117,7 +115,7 @@ export function CreditPurchaseDetailCard({
               <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
               <AppText weight="semibold" style={styles.metaValue}>
                 {t('dashboard.listings.card.priceWithCurrency', {
-                  currency,
+                  currency: 'USD',
                   price: formatPriceAmount(unitPrice),
                 })}
               </AppText>
@@ -125,16 +123,9 @@ export function CreditPurchaseDetailCard({
             <View style={styles.metaRow}>
               <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
               <View style={styles.totalBlock}>
-                <AppText style={styles.totalCalc}>
-                  {t('dashboard.home.creditsTimesPrice', {
-                    count: credits,
-                    currency,
-                    price: formatPriceAmount(unitPrice),
-                  })}
-                </AppText>
                 <AppText weight="bold" style={styles.totalValue}>
                   {t('dashboard.listings.card.priceWithCurrency', {
-                    currency,
+                    currency: 'PKR',
                     price: formatPriceAmount(amount),
                   })}
                 </AppText>

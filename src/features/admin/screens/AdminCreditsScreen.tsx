@@ -22,7 +22,6 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { adminApi, type AdminCreditPurchaseSummary } from '@/services/api/adminApi';
 import { AppText } from '@/shared/components/AppText';
 import { usePullToRefresh } from '@/shared/hooks/usePullToRefresh';
-import { useDisplayCurrency } from '@/shared/utils/currency';
 import { colors, radius, spacing } from '@/theme';
 import { getInputFontFamily } from '@/theme/typography';
 
@@ -41,7 +40,6 @@ type CreditsPageData = {
 export function AdminCreditsScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
-  const currency = useDisplayCurrency();
   const navigation =
     useNavigation<NativeStackNavigationProp<AdminCreditsStackParamList>>();
   const [unitPrice, setUnitPrice] = React.useState('');
@@ -112,7 +110,11 @@ export function AdminCreditsScreen(): React.ReactElement {
     const nextPrice = Number(unitPrice);
     const nextTrip = Number(tripCreate);
     const nextBid = Number(bidOffer);
-    if (![nextPrice, nextTrip, nextBid].every((value) => Number.isInteger(value) && value >= 0)) {
+    const priceValid = Number.isFinite(nextPrice) && nextPrice >= 0;
+    const countsValid = [nextTrip, nextBid].every(
+      (value) => Number.isInteger(value) && value >= 0,
+    );
+    if (!priceValid || !countsValid) {
       setSettingsErrorKey('admin.credits.settingsInvalid');
       return;
     }
@@ -183,13 +185,13 @@ export function AdminCreditsScreen(): React.ReactElement {
               </AppText>
               <View style={styles.priceInputWrap}>
                 <AppText weight="semibold" style={styles.currencyLabel}>
-                  {currency}
+                  USD
                 </AppText>
                 <TextInput
                   key={`unit-${settingsStamp}`}
                   value={unitPrice}
                   onChangeText={setUnitPrice}
-                  keyboardType="number-pad"
+                  keyboardType="decimal-pad"
                   style={[styles.settingsInput, inputFont]}
                 />
               </View>
