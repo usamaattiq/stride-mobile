@@ -86,9 +86,11 @@ export function BuyCreditsScreen(): React.ReactElement {
   const totalUsd = quantity * unitPriceUsd;
   const proofRequired = unitPricePkr > 0;
   const canSubmit = quantity >= 1 && (!proofRequired || Boolean(proofUri)) && !submitting;
+  const isPkr = currency.toUpperCase() === 'PKR';
   const convertedUnitPrice = useConvertedAmount(unitPriceUsd, currency);
   const convertedTotal = useConvertedAmount(totalUsd, currency);
-  const showLocalConversion = currency.toUpperCase() !== 'PKR';
+  const displayUnitPrice = isPkr ? unitPricePkr : convertedUnitPrice;
+  const displayTotal = isPkr ? totalPkr : convertedTotal;
   const qtyFontFamily = getInputFontFamily(currentLanguage, 'number-pad');
 
   const setQuantity = (next: number) => {
@@ -249,45 +251,35 @@ export function BuyCreditsScreen(): React.ReactElement {
                 <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
                 <View style={styles.totalBlock}>
                   <AppText weight="semibold" style={styles.metaValue}>
-                    {t('dashboard.listings.card.priceWithCurrency', {
-                      currency: 'PKR',
-                      price: formatPriceAmount(unitPricePkr),
-                    })}
+                    {displayUnitPrice != null
+                      ? t('dashboard.listings.card.priceWithCurrency', {
+                          currency,
+                          price: formatPriceAmount(displayUnitPrice),
+                        })
+                      : ''}
                   </AppText>
-                  {showLocalConversion && convertedUnitPrice != null ? (
-                    <AppText style={styles.convertedHint}>
-                      {t('dashboard.home.approxInCurrency', {
-                        currency,
-                        price: formatPriceAmount(convertedUnitPrice),
-                      })}
-                    </AppText>
-                  ) : null}
                 </View>
               </View>
               <View style={styles.metaRow}>
                 <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
                 <View style={styles.totalBlock}>
-                  <AppText style={styles.totalCalc}>
-                    {t('dashboard.home.creditsTimesPrice', {
-                      count: quantity,
-                      currency: 'PKR',
-                      price: formatPriceAmount(unitPricePkr),
-                    })}
-                  </AppText>
-                  <AppText weight="bold" style={styles.totalValue}>
-                    {t('dashboard.listings.card.priceWithCurrency', {
-                      currency: 'PKR',
-                      price: formatPriceAmount(totalPkr),
-                    })}
-                  </AppText>
-                  {showLocalConversion && convertedTotal != null ? (
-                    <AppText style={styles.convertedHint}>
-                      {t('dashboard.home.approxInCurrency', {
+                  {displayUnitPrice != null ? (
+                    <AppText style={styles.totalCalc}>
+                      {t('dashboard.home.creditsTimesPrice', {
+                        count: quantity,
                         currency,
-                        price: formatPriceAmount(convertedTotal),
+                        price: formatPriceAmount(displayUnitPrice),
                       })}
                     </AppText>
                   ) : null}
+                  <AppText weight="bold" style={styles.totalValue}>
+                    {displayTotal != null
+                      ? t('dashboard.listings.card.priceWithCurrency', {
+                          currency,
+                          price: formatPriceAmount(displayTotal),
+                        })
+                      : ''}
+                  </AppText>
                 </View>
               </View>
               </LinearGradient>

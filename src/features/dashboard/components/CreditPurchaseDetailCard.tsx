@@ -10,6 +10,8 @@ import { CreditPurchaseRemarksCard } from '@/features/dashboard/components/Credi
 
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { useConvertedAmount } from '@/shared/hooks/useConvertedAmount';
+import { useDisplayCurrency } from '@/shared/utils/currency';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
@@ -57,6 +59,13 @@ export function CreditPurchaseDetailCard({
   const { currentLanguage } = useLanguage();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
+  const currency = useDisplayCurrency();
+  const ratePerCreditPkr = credits > 0 ? amount / credits : 0;
+  const isPkr = currency.toUpperCase() === 'PKR';
+  const convertedUnitPrice = useConvertedAmount(unitPrice, currency);
+  const convertedTotal = useConvertedAmount(unitPrice * credits, currency);
+  const displayRate = isPkr ? ratePerCreditPkr : convertedUnitPrice;
+  const displayTotal = isPkr ? amount : convertedTotal;
   const timestamp = createdAt
     ? formatTripDateTime(createdAt, currentLanguage, '')
     : '';
@@ -113,21 +122,36 @@ export function CreditPurchaseDetailCard({
             </View>
             <View style={styles.metaRow}>
               <AppText style={styles.metaLabel}>{t('dashboard.home.ratePerCredit')}</AppText>
-              <AppText weight="semibold" style={styles.metaValue}>
-                {t('dashboard.listings.card.priceWithCurrency', {
-                  currency: 'USD',
-                  price: formatPriceAmount(unitPrice),
-                })}
-              </AppText>
+              <View style={styles.totalBlock}>
+                <AppText weight="semibold" style={styles.metaValue}>
+                  {displayRate != null
+                    ? t('dashboard.listings.card.priceWithCurrency', {
+                        currency,
+                        price: formatPriceAmount(displayRate),
+                      })
+                    : ''}
+                </AppText>
+              </View>
             </View>
             <View style={styles.metaRow}>
               <AppText style={styles.metaLabel}>{t('dashboard.home.totalPrice')}</AppText>
               <View style={styles.totalBlock}>
+                {displayRate != null ? (
+                  <AppText style={styles.totalCalc}>
+                    {t('dashboard.home.creditsTimesPrice', {
+                      count: credits,
+                      currency,
+                      price: formatPriceAmount(displayRate),
+                    })}
+                  </AppText>
+                ) : null}
                 <AppText weight="bold" style={styles.totalValue}>
-                  {t('dashboard.listings.card.priceWithCurrency', {
-                    currency: 'PKR',
-                    price: formatPriceAmount(amount),
-                  })}
+                  {displayTotal != null
+                    ? t('dashboard.listings.card.priceWithCurrency', {
+                        currency,
+                        price: formatPriceAmount(displayTotal),
+                      })
+                    : ''}
                 </AppText>
               </View>
             </View>

@@ -10,6 +10,8 @@ import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import type { CreditPurchaseStatus } from '@/services/api/creditsApi';
 import { AppText } from '@/shared/components/AppText';
+import { useConvertedAmount } from '@/shared/hooks/useConvertedAmount';
+import { useDisplayCurrency } from '@/shared/utils/currency';
 import { formatPriceAmount } from '@/shared/utils/latin-digits';
 import { colors, radius, spacing } from '@/theme';
 import { cardBackShadow } from '@/theme/cardShadow';
@@ -73,6 +75,13 @@ export function CreditPurchaseRequestTile({
   const { currentLanguage } = useLanguage();
   const isRtl = I18nManager.isRTL;
   const statusUi = statusStyle(status);
+  const currency = useDisplayCurrency();
+  const ratePerCreditPkr = credits > 0 ? amount / credits : 0;
+  const isPkr = currency.toUpperCase() === 'PKR';
+  const convertedUnitPrice = useConvertedAmount(unitPrice, currency);
+  const convertedTotal = useConvertedAmount(unitPrice * credits, currency);
+  const displayRate = isPkr ? ratePerCreditPkr : convertedUnitPrice;
+  const displayTotal = isPkr ? amount : convertedTotal;
   const photoUrl = avatarUrl?.trim() || null;
   const timestamp = createdAt
     ? formatTripDateTime(createdAt, currentLanguage, '')
@@ -152,18 +161,22 @@ export function CreditPurchaseRequestTile({
               ) : null}
             </View>
             <View style={styles.priceBlock}>
-              <AppText style={styles.calc} numberOfLines={1}>
-                {t('dashboard.home.creditsTimesPrice', {
-                  count: credits,
-                  price: formatPriceAmount(unitPrice),
-                  currency: 'PKR',
-                })}
-              </AppText>
+              {displayRate != null ? (
+                <AppText style={styles.calc} numberOfLines={1}>
+                  {t('dashboard.home.creditsTimesPrice', {
+                    count: credits,
+                    price: formatPriceAmount(displayRate),
+                    currency,
+                  })}
+                </AppText>
+              ) : null}
               <AppText weight="bold" style={[styles.priceAmount, compact && styles.priceAmountCompact]} numberOfLines={1}>
-                {t('dashboard.listings.card.priceWithCurrency', {
-                  currency: 'PKR',
-                  price: formatPriceAmount(amount),
-                })}
+                {displayTotal != null
+                  ? t('dashboard.listings.card.priceWithCurrency', {
+                      currency,
+                      price: formatPriceAmount(displayTotal),
+                    })
+                  : ''}
               </AppText>
             </View>
           </View>
