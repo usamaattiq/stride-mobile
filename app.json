@@ -47,7 +47,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.silveraxisltd.musafir249",
-      "versionCode": 23,
+      "versionCode": 24,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
