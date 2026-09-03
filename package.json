@@ -56,9 +56,9 @@
     "build:ios": "eas build -p ios --profile production",
     "build:preview": "eas build --profile preview",
     "submit:ios": "eas submit -p ios --profile production --latest",
-    "update:preview": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel preview",
-    "update:production": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production",
-    "build:prod": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production --message \"Production update\""
+    "update:preview": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.mazadalsafar.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel preview",
+    "update:production": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.mazadalsafar.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production",
+    "build:prod": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.mazadalsafar.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production --message \"Production update\""
   },
   "private": true
 }
