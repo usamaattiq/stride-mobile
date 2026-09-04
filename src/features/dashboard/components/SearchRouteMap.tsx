@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { searchMapLocations } from '@/features/auth/utils/signup-map-geocode';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { locationsApi } from '@/services/api/locationsApi';
 import { AppText } from '@/shared/components/AppText';
 import { hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, spacing } from '@/theme';
@@ -33,9 +34,54 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
   const [error, setError] = React.useState<string | null>(null);
   const [from, setFrom] = React.useState<ResolvedPoint | null>(null);
   const [to, setTo] = React.useState<ResolvedPoint | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = React.useState<
+    Array<{ latitude: number; longitude: number }> | null
+  >(null);
+  const [drawnCoordinates, setDrawnCoordinates] = React.useState<
+    Array<{ latitude: number; longitude: number }> | null
+  >(null);
   const mapRef = React.useRef<MapView | null>(null);
   const onReadyRef = React.useRef(onReady);
   onReadyRef.current = onReady;
+  const drawAnimationRef = React.useRef<number | null>(null);
+
+  const animateRouteDraw = React.useCallback(
+    (points: Array<{ latitude: number; longitude: number }>) => {
+      if (drawAnimationRef.current != null) {
+        cancelAnimationFrame(drawAnimationRef.current);
+      }
+
+      const durationMs = 1500;
+      const startedAt = Date.now();
+      // Ease-out: fast start, gentle finish — reads as a path being traced in.
+      const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+
+      const step = () => {
+        const elapsed = Date.now() - startedAt;
+        const linearProgress = Math.min(1, elapsed / durationMs);
+        const progress = easeOutCubic(linearProgress);
+        const count = Math.max(2, Math.round(points.length * progress));
+        setDrawnCoordinates(points.slice(0, count));
+
+        if (linearProgress < 1) {
+          drawAnimationRef.current = requestAnimationFrame(step);
+        } else {
+          drawAnimationRef.current = null;
+        }
+      };
+
+      drawAnimationRef.current = requestAnimationFrame(step);
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    return () => {
+      if (drawAnimationRef.current != null) {
+        cancelAnimationFrame(drawAnimationRef.current);
+      }
+    };
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -45,6 +91,8 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
       setError(null);
       setFrom(null);
       setTo(null);
+      setRouteCoordinates(null);
+      setDrawnCoordinates(null);
 
       if (!hasGoogleMapsApiKey()) {
         if (!cancelled) {
@@ -73,20 +121,61 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
           return;
         }
 
-        if (!cancelled) {
-          setFrom({
-            latitude: origin.latitude,
-            longitude: origin.longitude,
-            label: departureLabel,
-          });
-          setTo({
-            latitude: destination.latitude,
-            longitude: destination.longitude,
-            label: arrivalLabel,
-          });
-          setLoading(false);
-          onReadyRef.current?.();
+        if (cancelled) {
+          return;
         }
+
+        setFrom({
+          latitude: origin.latitude,
+          longitude: origin.longitude,
+          label: departureLabel,
+        });
+        setTo({
+          latitude: destination.latitude,
+          longitude: destination.longitude,
+          label: arrivalLabel,
+        });
+        setLoading(false);
+        onReadyRef.current?.();
+
+        // Wait for the real driving route before animating anything, so the
+        // draw-in only happens once, along the actual road path. Falls back
+        // to a straight line only if directions aren't available at all.
+        locationsApi
+          .directions({
+            originLat: origin.latitude,
+            originLng: origin.longitude,
+            destinationLat: destination.latitude,
+            destinationLng: destination.longitude,
+          })
+          .then((directions) => {
+            if (cancelled) return;
+            if (directions?.points?.length) {
+              // Directions snaps start/end to the nearest road, which can
+              // sit slightly off the geocoded pin — force the drawn path to
+              // touch the markers exactly.
+              const points = [
+                { latitude: origin.latitude, longitude: origin.longitude },
+                ...directions.points,
+                { latitude: destination.latitude, longitude: destination.longitude },
+              ];
+              setRouteCoordinates(points);
+              animateRouteDraw(points);
+            } else {
+              animateRouteDraw([
+                { latitude: origin.latitude, longitude: origin.longitude },
+                { latitude: destination.latitude, longitude: destination.longitude },
+              ]);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              animateRouteDraw([
+                { latitude: origin.latitude, longitude: origin.longitude },
+                { latitude: destination.latitude, longitude: destination.longitude },
+              ]);
+            }
+          });
       } catch {
         if (!cancelled) {
           setError(t('dashboard.search.results.mapUnavailable'));
@@ -100,23 +189,23 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
     return () => {
       cancelled = true;
     };
-  }, [arrivalLabel, currentLanguage, departureLabel, t]);
+  }, [animateRouteDraw, arrivalLabel, currentLanguage, departureLabel, t]);
 
   const handleMapReady = React.useCallback(() => {
     if (!from || !to || !mapRef.current) {
       return;
     }
     mapRef.current.fitToCoordinates(
-      [
+      routeCoordinates ?? [
         { latitude: from.latitude, longitude: from.longitude },
         { latitude: to.latitude, longitude: to.longitude },
       ],
       {
         edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-        animated: false,
+        animated: true,
       },
     );
-  }, [from, to]);
+  }, [from, to, routeCoordinates]);
 
   React.useEffect(() => {
     handleMapReady();
@@ -139,21 +228,20 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
           <Marker
             coordinate={{ latitude: from.latitude, longitude: from.longitude }}
             title={from.label}
-            pinColor={colors.primary}
+            pinColor={colors.accent.green.text}
           />
           <Marker
             coordinate={{ latitude: to.latitude, longitude: to.longitude }}
             title={to.label}
             pinColor={colors.primary}
           />
-          <Polyline
-            coordinates={[
-              { latitude: from.latitude, longitude: from.longitude },
-              { latitude: to.latitude, longitude: to.longitude },
-            ]}
-            strokeColor={colors.primary}
-            strokeWidth={3}
-          />
+          {drawnCoordinates ? (
+            <Polyline
+              coordinates={drawnCoordinates}
+              strokeColor={colors.primary}
+              strokeWidth={3}
+            />
+          ) : null}
         </MapView>
       ) : null}
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mazad Al Safar",
     "slug": "musafir249",
-    "version": "1.0.14",
+    "version": "1.0.15",
     "orientation": "portrait",
     "scheme": "musafir249",
     "icon": "./assets/splash-logo.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.silveraxisltd.musafir249",
-      "buildNumber": "20",
+      "buildNumber": "21",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -47,7 +47,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.silveraxisltd.musafir249",
-      "versionCode": 25,
+      "versionCode": 26,
       "googleServicesFile": "./google-services.json"
     },
     "web": {

@@ -24,6 +24,12 @@ export type MapSearchResultDto = {
   longitude: number;
 };
 
+export type DirectionsDto = {
+  points: Array<{ latitude: number; longitude: number }>;
+  distanceMeters: number;
+  durationSeconds: number;
+};
+
 export function createPlacesSessionToken(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
@@ -151,6 +157,25 @@ export const locationsApi = {
       return Array.isArray(rows) ? rows : [];
     } catch {
       return [];
+    }
+  },
+
+  directions: async (input: {
+    originLat: number;
+    originLng: number;
+    destinationLat: number;
+    destinationLng: number;
+  }): Promise<DirectionsDto | null> => {
+    const params = withAuthParams(input);
+    if (!params) return null;
+    try {
+      return await apiRequest<DirectionsDto | null>({
+        method: 'GET',
+        url: '/locations/directions',
+        params,
+      });
+    } catch {
+      return null;
     }
   },
 };
