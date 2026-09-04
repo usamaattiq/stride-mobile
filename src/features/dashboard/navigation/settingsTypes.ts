@@ -4,7 +4,7 @@ export type SettingsStackParamList = {
   SettingsHome: undefined;
   SecuritySettings: undefined;
   DriverVerification: { purpose?: DriverVerificationPurpose } | undefined;
-  NicVerification: undefined;
+  NicVerification: { continueToDriverLicense?: boolean } | undefined;
   GeneralInformation: undefined;
   BankAccounts: undefined;
 };

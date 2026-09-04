@@ -461,6 +461,8 @@ export function SettingsHomeScreen(): React.ReactElement {
         if (profile?.licenseStatus === 'pending' || profile?.licenseStatus === 'approved') {
           setSwitchRoleError(null);
           setDialog('driver');
+        } else if (!user.isVerified) {
+          navigation.navigate('NicVerification', { continueToDriverLicense: true });
         } else {
           navigation.navigate('DriverVerification', { purpose: 'become' });
         }

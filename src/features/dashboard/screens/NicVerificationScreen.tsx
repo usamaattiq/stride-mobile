@@ -1,5 +1,6 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -28,9 +29,11 @@ export function NicVerificationScreen(): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const route = useRoute<RouteProp<SettingsStackParamList, 'NicVerification'>>();
   const { user, hasDriverVerification, submitNicVerification } =
     useDashboardSession();
   const profile = useProfileStore((state) => state.profile);
+  const isBecomeDriverFlow = route.params?.continueToDriverLicense === true;
 
   const [nicNumber, setNicNumber] = React.useState(
     () => profile?.nicNumber?.trim() ?? '',
@@ -44,6 +47,7 @@ export function NicVerificationScreen(): React.ReactElement {
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [savedVisible, setSavedVisible] = React.useState(false);
+  const [skipConfirmVisible, setSkipConfirmVisible] = React.useState(false);
   const continueToLicenseRef = React.useRef(false);
   const wasEditingRef = React.useRef(false);
 
@@ -96,7 +100,8 @@ export function NicVerificationScreen(): React.ReactElement {
         nicBackUrl,
       });
       continueToLicenseRef.current =
-        user.role === 'driver' && !hasDriverVerification;
+        (user.role === 'driver' && !hasDriverVerification) ||
+        route.params?.continueToDriverLicense === true;
       setSavedVisible(true);
     } catch (error) {
       setSubmitError(getErrorMessage(error, t('nicVerification.submitFailed')));
@@ -105,10 +110,21 @@ export function NicVerificationScreen(): React.ReactElement {
     }
   };
 
+  const handleSkipPress = () => {
+    setSkipConfirmVisible(true);
+  };
+
+  const handleSkipConfirm = () => {
+    setSkipConfirmVisible(false);
+    navigation.replace('DriverVerification', { purpose: 'become' });
+  };
+
   const handleSuccessConfirm = () => {
     setSavedVisible(false);
     if (continueToLicenseRef.current) {
-      navigation.replace('DriverVerification', { purpose: 'complete' });
+      navigation.replace('DriverVerification', {
+        purpose: user.role === 'driver' ? 'complete' : 'become',
+      });
       return;
     }
     navigation.goBack();
@@ -158,12 +174,31 @@ export function NicVerificationScreen(): React.ReactElement {
             onSubmit={() => {
               void handleSubmit();
             }}
+            skipLabel={
+              isBecomeDriverFlow && !isReadOnly ? t('driverVerification.skip') : undefined
+            }
+            onSkip={isBecomeDriverFlow && !isReadOnly ? handleSkipPress : undefined}
             loading={submitting}
             errorMessage={submitError}
             readOnly={isReadOnly}
           />
         </AuthCard>
       </AuthScaffold>
+
+      <AppDialog
+        visible={skipConfirmVisible}
+        icon="exclamation-triangle"
+        title={t('driverVerification.skipConfirmTitle')}
+        message={t('driverVerification.skipConfirmBody')}
+        cancelAction={{
+          label: t('common.cancel'),
+          onPress: () => setSkipConfirmVisible(false),
+        }}
+        confirmAction={{
+          label: t('driverVerification.skipConfirmConfirm'),
+          onPress: handleSkipConfirm,
+        }}
+      />
 
       <AppDialog
         visible={savedVisible}
