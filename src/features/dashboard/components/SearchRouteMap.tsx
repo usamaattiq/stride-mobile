@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 
 import { searchMapLocations } from '@/features/auth/utils/signup-map-geocode';
@@ -9,8 +9,6 @@ import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
 import { ENV, hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, spacing } from '@/theme';
-
-import { buildSearchRouteMapHtml } from '../utils/search-route-map';
 
 type SearchRouteMapProps = {
   departureLabel: string;
@@ -33,7 +31,9 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
   const { currentLanguage } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [html, setHtml] = React.useState<string | null>(null);
+  const [from, setFrom] = React.useState<ResolvedPoint | null>(null);
+  const [to, setTo] = React.useState<ResolvedPoint | null>(null);
+  const mapRef = React.useRef<MapView | null>(null);
   const onReadyRef = React.useRef(onReady);
   onReadyRef.current = onReady;
 
@@ -43,7 +43,8 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
     async function resolveRoute() {
       setLoading(true);
       setError(null);
-      setHtml(null);
+      setFrom(null);
+      setTo(null);
 
       if (!hasGoogleMapsApiKey()) {
         if (!cancelled) {
@@ -72,19 +73,19 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
           return;
         }
 
-        const from: ResolvedPoint = {
-          latitude: origin.latitude,
-          longitude: origin.longitude,
-          label: departureLabel,
-        };
-        const to: ResolvedPoint = {
-          latitude: destination.latitude,
-          longitude: destination.longitude,
-          label: arrivalLabel,
-        };
-
         if (!cancelled) {
-          setHtml(buildSearchRouteMapHtml(ENV.googleMapsApiKey, from, to));
+          setFrom({
+            latitude: origin.latitude,
+            longitude: origin.longitude,
+            label: departureLabel,
+          });
+          setTo({
+            latitude: destination.latitude,
+            longitude: destination.longitude,
+            label: arrivalLabel,
+          });
+          setLoading(false);
+          onReadyRef.current?.();
         }
       } catch {
         if (!cancelled) {
@@ -101,23 +102,59 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
     };
   }, [arrivalLabel, currentLanguage, departureLabel, t]);
 
+  const handleMapReady = React.useCallback(() => {
+    if (!from || !to || !mapRef.current) {
+      return;
+    }
+    mapRef.current.fitToCoordinates(
+      [
+        { latitude: from.latitude, longitude: from.longitude },
+        { latitude: to.latitude, longitude: to.longitude },
+      ],
+      {
+        edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+        animated: false,
+      },
+    );
+  }, [from, to]);
+
+  React.useEffect(() => {
+    handleMapReady();
+  }, [handleMapReady]);
+
   return (
     <View style={styles.root}>
-      {html ? (
-        <WebView
-          originWhitelist={['*']}
-          source={{ html }}
+      {from && to ? (
+        <MapView
+          ref={mapRef}
           style={styles.map}
-          javaScriptEnabled
-          domStorageEnabled
+          provider={PROVIDER_GOOGLE}
+          onMapReady={handleMapReady}
           scrollEnabled={false}
-          bounces={false}
-          setSupportMultipleWindows={false}
-          onLoadEnd={() => {
-            setLoading(false);
-            onReadyRef.current?.();
-          }}
-        />
+          zoomEnabled={false}
+          rotateEnabled={false}
+          pitchEnabled={false}
+          toolbarEnabled={false}
+        >
+          <Marker
+            coordinate={{ latitude: from.latitude, longitude: from.longitude }}
+            title={from.label}
+            pinColor={colors.primary}
+          />
+          <Marker
+            coordinate={{ latitude: to.latitude, longitude: to.longitude }}
+            title={to.label}
+            pinColor={colors.primary}
+          />
+          <Polyline
+            coordinates={[
+              { latitude: from.latitude, longitude: from.longitude },
+              { latitude: to.latitude, longitude: to.longitude },
+            ]}
+            strokeColor={colors.primary}
+            strokeWidth={3}
+          />
+        </MapView>
       ) : null}
 
       {loading ? (

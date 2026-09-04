@@ -74,7 +74,7 @@
         "mapSearchAction": "Search",
         "mapNoResults": "No places found. Try a different search.",
         "mapFallbackTitle": "Map key not found",
-        "mapFallbackBody": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY in .env and restart Expo.",
+        "mapFallbackBody": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS in .env and rebuild the app.",
         "mapConfirm": "Confirm Location",
         "cta": "Continue"
       },
@@ -987,7 +987,7 @@
       "descriptionPlaceholder": "Add notes for passengers (optional)",
       "cityPlaceholder": "Search city",
       "cityNoResults": "No cities found. Try another search.",
-      "cityApiHint": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to search cities.",
+      "cityApiHint": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS to search cities.",
       "savedLocations": "Saved locations",
       "pointPlaceholder": "No point selected yet",
       "selectOnMap": "Select on map",

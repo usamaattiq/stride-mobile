@@ -74,7 +74,7 @@
         "mapSearchAction": "بحث",
         "mapNoResults": "لم يتم العثور على أماكن. جرّب بحثًا مختلفًا.",
         "mapFallbackTitle": "مفتاح الخريطة غير موجود",
-        "mapFallbackBody": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY في ملف env. وأعد تشغيل Expo.",
+        "mapFallbackBody": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS في ملف env. ثم أعد بناء التطبيق.",
         "mapConfirm": "تأكيد الموقع",
         "cta": "متابعة"
       },
@@ -987,7 +987,7 @@
       "descriptionPlaceholder": "أضف ملاحظات للركاب (اختياري)",
       "cityPlaceholder": "ابحث عن مدينة",
       "cityNoResults": "لم يتم العثور على مدن. جرّب بحثاً آخر.",
-      "cityApiHint": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY للبحث عن المدن.",
+      "cityApiHint": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS للبحث عن المدن.",
       "savedLocations": "المواقع المحفوظة",
       "pointPlaceholder": "لم يتم اختيار نقطة بعد",
       "selectOnMap": "التحديد على الخريطة",

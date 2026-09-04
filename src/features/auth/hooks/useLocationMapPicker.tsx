@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,8 +8,7 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { WebView } from 'react-native-webview';
-import type { WebViewMessageEvent } from 'react-native-webview';
+import MapView, { PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import { i18n as appI18n } from '@/i18n';
@@ -20,20 +19,14 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { ENV } from '@/shared/config/env';
+import { ENV, hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 import { resolveAddressLabel } from '../utils/geocodedAddressLabel';
 import { searchMapLocations, type MapSearchResult } from '../utils/signup-map-geocode';
-import { buildSignupMapPickerHtml } from '../utils/signup-map-picker';
 
 export type LocationSelection = {
   label: string;
-  latitude: number;
-  longitude: number;
-};
-
-type MapRegion = {
   latitude: number;
   longitude: number;
 };
@@ -45,10 +38,14 @@ type MapPin = {
 };
 
 // Default map focus (Lahore) used when no coordinates are available yet.
-const DEFAULT_REGION: MapRegion = {
+const DEFAULT_REGION: Region = {
   latitude: 31.5204,
   longitude: 74.3587,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
+
+const PIN_REGION_DELTA = 0.02;
 
 type UseLocationMapPicker = {
   locationLoading: boolean;
@@ -60,14 +57,26 @@ type UseLocationMapPicker = {
   mapPickerSheet: React.ReactElement;
 };
 
+function toRegion(latitude: number, longitude: number): Region {
+  return {
+    latitude,
+    longitude,
+    latitudeDelta: PIN_REGION_DELTA,
+    longitudeDelta: PIN_REGION_DELTA,
+  };
+}
+
 export function useLocationMapPicker(): UseLocationMapPicker {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
   const mapsApiKey = ENV.googleMapsApiKey;
 
-  const mapWebViewRef = useRef<WebView>(null);
+  const mapRef = useRef<MapView | null>(null);
   const skipMapSearchRef = useRef(false);
   const confirmSelectionRef = useRef<((selection: LocationSelection) => void) | null>(null);
+  const suppressRegionResolveRef = useRef(false);
+  const lastUserLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
 
   const [locationLoading, setLocationLoading] = useState(false);
   const [mapVisible, setMapVisible] = useState(false);
@@ -76,16 +85,16 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   const [mapSearchLoading, setMapSearchLoading] = useState(false);
   const [mapSearchShowEmpty, setMapSearchShowEmpty] = useState(false);
   const [mapPin, setMapPin] = useState<MapPin | null>(null);
-  // Seeds the WebView HTML only when the picker opens — must NOT track live pan
-  // updates (mapPin), otherwise every pan reloads the whole WebView instead of
-  // just panning the already-loaded map.
-  const [mapHtmlSeed, setMapHtmlSeed] = useState<MapRegion>(DEFAULT_REGION);
+  const [mapRegion, setMapRegion] = useState<Region>(DEFAULT_REGION);
+  const [mapInstanceKey, setMapInstanceKey] = useState(0);
+  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
   const [infoDialog, setInfoDialog] = useState<{ title: string; body: string } | null>(null);
 
-  const pinMapToLocation = useCallback((latitude: number, longitude: number, address?: string) => {
-    mapWebViewRef.current?.injectJavaScript(
-      `window.__MUSAFIR_SET_LOCATION && window.__MUSAFIR_SET_LOCATION(${latitude}, ${longitude}, ${JSON.stringify(address ?? '')}); true;`,
-    );
+  const animateTo = useCallback((latitude: number, longitude: number) => {
+    const next = toRegion(latitude, longitude);
+    suppressRegionResolveRef.current = true;
+    setMapRegion(next);
+    mapRef.current?.animateToRegion(next, 350);
   }, []);
 
   const runMapSearch = useCallback(
@@ -118,6 +127,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     setMapSearchResults([]);
     setMapSearchLoading(false);
     setMapSearchShowEmpty(false);
+    setIsResolvingAddress(false);
     confirmSelectionRef.current = null;
   }, []);
 
@@ -128,6 +138,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       setMapSearchResults([]);
       setMapSearchLoading(false);
       setMapSearchShowEmpty(false);
+      setIsResolvingAddress(false);
 
       if (initial) {
         const seed: MapPin = {
@@ -136,12 +147,13 @@ export function useLocationMapPicker(): UseLocationMapPicker {
           label: initial.label?.trim() || undefined,
         };
         setMapPin(seed);
-        setMapHtmlSeed(seed);
+        setMapRegion(toRegion(seed.latitude, seed.longitude));
       } else {
         setMapPin(null);
-        setMapHtmlSeed(DEFAULT_REGION);
+        setMapRegion(DEFAULT_REGION);
       }
 
+      setMapInstanceKey((key) => key + 1);
       setMapVisible(true);
     },
     [],
@@ -174,18 +186,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     }
   }, [t]);
 
-  const lastUserLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
-  const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
-
-  const showUserLocationOnMap = useCallback((latitude: number, longitude: number) => {
-    lastUserLocationRef.current = { latitude, longitude };
-    mapWebViewRef.current?.injectJavaScript(
-      `window.__MUSAFIR_SHOW_USER_LOCATION && window.__MUSAFIR_SHOW_USER_LOCATION(${latitude}, ${longitude}); true;`,
-    );
-  }, []);
-
-  // Live blue-dot tracking while the picker sheet is open — separate from the
-  // fixed center pin, which represents the value being selected, not the device.
+  // Keep last GPS fix while the sheet is open (for locate-me without a second one-shot).
   useEffect(() => {
     if (!mapVisible) {
       void locationWatchRef.current?.remove();
@@ -203,7 +204,10 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       const subscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Balanced, timeInterval: 5000, distanceInterval: 15 },
         (position) => {
-          showUserLocationOnMap(position.coords.latitude, position.coords.longitude);
+          lastUserLocationRef.current = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
         },
       );
       if (cancelled) {
@@ -218,14 +222,7 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       void locationWatchRef.current?.remove();
       locationWatchRef.current = null;
     };
-  }, [mapVisible, showUserLocationOnMap]);
-
-  const handleMapLoadEnd = useCallback(() => {
-    const last = lastUserLocationRef.current;
-    if (last) {
-      showUserLocationOnMap(last.latitude, last.longitude);
-    }
-  }, [showUserLocationOnMap]);
+  }, [mapVisible]);
 
   const recenterToMyLocation = useCallback(async () => {
     try {
@@ -238,10 +235,6 @@ export function useLocationMapPicker(): UseLocationMapPicker {
         return;
       }
 
-      // Reuse the live watch's last fix instead of racing a second, concurrent
-      // one-shot request against it — on Android, calling getCurrentPositionAsync
-      // while watchPositionAsync is already active on the same provider is
-      // flaky and can hang silently after the first call.
       let coords = lastUserLocationRef.current;
       if (!coords) {
         coords = await readDeviceCoordinates();
@@ -250,14 +243,14 @@ export function useLocationMapPicker(): UseLocationMapPicker {
       const { latitude, longitude } = coords;
       const label = await resolveAddressLabel(latitude, longitude);
       setMapPin({ latitude, longitude, label });
-      pinMapToLocation(latitude, longitude, label);
+      animateTo(latitude, longitude);
     } catch {
       setInfoDialog({
         title: t('auth.signup.personal.locationErrorTitle'),
         body: t('auth.signup.personal.locationErrorBody'),
       });
     }
-  }, [pinMapToLocation, t]);
+  }, [animateTo, t]);
 
   const handleConfirmMapSelection = useCallback(async () => {
     if (!mapPin) {
@@ -281,35 +274,25 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     closeMapPicker();
   }, [closeMapPicker, mapPin, t]);
 
-  const handleMapMessage = useCallback(
-    (event: WebViewMessageEvent) => {
-      try {
-        const payload = JSON.parse(event.nativeEvent.data) as {
-          type?: string;
-          latitude?: number;
-          longitude?: number;
-          address?: string;
-        };
+  const handleRegionChangeComplete = useCallback((nextRegion: Region) => {
+    setMapRegion(nextRegion);
 
-        if (payload.type === 'recenter') {
-          void recenterToMyLocation();
-          return;
-        }
+    if (suppressRegionResolveRef.current) {
+      suppressRegionResolveRef.current = false;
+      return;
+    }
 
-        if (typeof payload.latitude === 'number' && typeof payload.longitude === 'number') {
-          const address = payload.address?.trim();
-          setMapPin((current) => ({
-            latitude: payload.latitude as number,
-            longitude: payload.longitude as number,
-            label: address || current?.label,
-          }));
-        }
-      } catch {
-        // no-op
-      }
-    },
-    [recenterToMyLocation],
-  );
+    setIsResolvingAddress(true);
+    void resolveAddressLabel(nextRegion.latitude, nextRegion.longitude)
+      .then((label) => {
+        setMapPin({
+          latitude: nextRegion.latitude,
+          longitude: nextRegion.longitude,
+          label,
+        });
+      })
+      .finally(() => setIsResolvingAddress(false));
+  }, []);
 
   const handleSelectMapSearchResult = useCallback(
     (result: MapSearchResult) => {
@@ -321,9 +304,9 @@ export function useLocationMapPicker(): UseLocationMapPicker {
         longitude: result.longitude,
         label: result.label,
       });
-      pinMapToLocation(result.latitude, result.longitude, result.label);
+      animateTo(result.latitude, result.longitude);
     },
-    [pinMapToLocation],
+    [animateTo],
   );
 
   useEffect(() => {
@@ -346,12 +329,8 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     return () => clearTimeout(id);
   }, [mapSearchQuery, mapVisible, runMapSearch]);
 
-  const mapPickerHtml = useMemo(
-    () => buildSignupMapPickerHtml(mapsApiKey, mapHtmlSeed),
-    [mapHtmlSeed, mapsApiKey],
-  );
-
   const searchFontFamily = getFontFamily(currentLanguage, 'regular');
+  const mapsReady = hasGoogleMapsApiKey();
 
   const mapPickerSheet = (
     <>
@@ -423,15 +402,40 @@ export function useLocationMapPicker(): UseLocationMapPicker {
           </View>
         </View>
 
-        {mapsApiKey ? (
-          <WebView
-            ref={mapWebViewRef}
-            style={styles.map}
-            originWhitelist={['*']}
-            source={{ html: mapPickerHtml }}
-            onMessage={handleMapMessage}
-            onLoadEnd={handleMapLoadEnd}
-          />
+        {mapsReady ? (
+          <View style={styles.mapWrap}>
+            <MapView
+              key={mapInstanceKey}
+              ref={mapRef}
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              initialRegion={mapRegion}
+              onRegionChangeComplete={handleRegionChangeComplete}
+              showsUserLocation
+              showsMyLocationButton={false}
+              toolbarEnabled={false}
+            />
+
+            <View style={styles.pinWrap} pointerEvents="none">
+              <FontAwesome name="map-marker" size={36} color={colors.primary} />
+              <View style={styles.pinShadow} />
+            </View>
+
+            {isResolvingAddress ? (
+              <View style={styles.resolvingBadge}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : null}
+
+            <Pressable
+              style={styles.locateButton}
+              onPress={() => void recenterToMyLocation()}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.signup.personal.mapTitle')}
+            >
+              <FontAwesome name="crosshairs" size={18} color={colors.text.secondary} />
+            </Pressable>
+          </View>
         ) : (
           <View style={styles.mapFallback}>
             <AppText weight="semibold" style={styles.mapFallbackTitle}>
@@ -516,6 +520,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+    zIndex: 10,
   },
   searchCardInner: {
     borderRadius: radius.lg,
@@ -575,8 +580,51 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
   },
-  map: {
+  mapWrap: {
     flex: 1,
+    overflow: 'hidden',
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  pinWrap: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -12,
+    marginTop: -36,
+    alignItems: 'center',
+  },
+  pinShadow: {
+    width: 10,
+    height: 4,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    marginTop: -2,
+  },
+  resolvingBadge: {
+    position: 'absolute',
+    top: spacing.md,
+    alignSelf: 'center',
+    backgroundColor: colors.white,
+    borderRadius: radius.full,
+    padding: spacing.sm,
+  },
+  locateButton: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: spacing.md,
+    width: 40,
+    height: 40,
+    borderRadius: 2,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   mapFallback: {
     flex: 1,

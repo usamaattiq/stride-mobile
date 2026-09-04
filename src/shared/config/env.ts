@@ -2,20 +2,38 @@ import { Platform } from 'react-native';
 
 /**
  * Public env vars (EXPO_PUBLIC_*). Inlined at bundle time — restart Expo after changing `.env`.
- * The map picker needs a Google Maps JavaScript API + Geocoding API key; without it the picker
- * shows a fallback message (current-location still works via expo-location).
- * Android/iOS use separate keys (each restricted to its own package/bundle ID in Google Cloud).
+ *
+ * IMPORTANT: use direct `process.env.EXPO_PUBLIC_*` access (not dynamic keys) so Metro/EAS
+ * can inline values into release builds.
+ *
+ * Google Maps keys must NOT be committed. Set locally in `.env` and on EAS Environment
+ * Variables as EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS.
+ * Native MapView reads the same keys from app.config.ts (android.config.googleMaps /
+ * ios.config.googleMapsApiKey). Geocoding / Places REST calls use the JS-side key.
  */
-const googleMapsApiKeyForPlatform = (): string => {
-  const key =
-    Platform.OS === 'ios'
-      ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
-      : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID;
-  return key?.trim() ?? '';
-};
+const EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID?.trim() || '';
+const EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS?.trim() || '';
+const EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
+
+/** Platform-appropriate Maps key (Android/iOS vars with legacy single-key fallback). */
+export function getGoogleMapsApiKey(platform: typeof Platform.OS = Platform.OS): string {
+  if (platform === 'android') {
+    return EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID || EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  }
+  if (platform === 'ios') {
+    return EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS || EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  }
+  return (
+    EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ||
+    EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
+  );
+}
 
 export const ENV = {
-  googleMapsApiKey: googleMapsApiKeyForPlatform(),
+  googleMapsApiKey: getGoogleMapsApiKey(),
   apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? '',
   /** Hosted stride-compliance origin, no trailing slash (e.g. https://compliance.stride.ai). */
   complianceBaseUrl: process.env.EXPO_PUBLIC_COMPLIANCE_BASE_URL?.trim() ?? '',
