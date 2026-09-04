@@ -458,7 +458,12 @@ export function SettingsHomeScreen(): React.ReactElement {
         navigation.navigate('GeneralInformation');
         break;
       case 'become-driver':
-        navigation.navigate('DriverVerification', { purpose: 'become' });
+        if (profile?.licenseStatus === 'pending' || profile?.licenseStatus === 'approved') {
+          setSwitchRoleError(null);
+          setDialog('driver');
+        } else {
+          navigation.navigate('DriverVerification', { purpose: 'become' });
+        }
         break;
       case 'switch-driver':
         setSwitchRoleError(null);
