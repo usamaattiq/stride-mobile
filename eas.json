@@ -11,22 +11,12 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview",
-      "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.mazadalsafar.com/api",
-        "EXPO_PUBLIC_COMPLIANCE_BASE_URL": "https://compliance.musafir249.com",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyCsCHhp429lD3J9Mr8a1sLQSrLgCoOXuIU"
-      }
+      "channel": "preview"
     },
     "production": {
       "channel": "production",
       "android": {
         "credentialsSource": "local"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.mazadalsafar.com/api",
-        "EXPO_PUBLIC_COMPLIANCE_BASE_URL": "https://compliance.musafir249.com",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyCsCHhp429lD3J9Mr8a1sLQSrLgCoOXuIU"
       }
     }
   },

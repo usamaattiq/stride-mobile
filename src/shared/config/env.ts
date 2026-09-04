@@ -1,10 +1,21 @@
+import { Platform } from 'react-native';
+
 /**
  * Public env vars (EXPO_PUBLIC_*). Inlined at bundle time — restart Expo after changing `.env`.
  * The map picker needs a Google Maps JavaScript API + Geocoding API key; without it the picker
  * shows a fallback message (current-location still works via expo-location).
+ * Android/iOS use separate keys (each restricted to its own package/bundle ID in Google Cloud).
  */
+const googleMapsApiKeyForPlatform = (): string => {
+  const key =
+    Platform.OS === 'ios'
+      ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
+      : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID;
+  return key?.trim() ?? '';
+};
+
 export const ENV = {
-  googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '',
+  googleMapsApiKey: googleMapsApiKeyForPlatform(),
   apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ?? '',
   /** Hosted stride-compliance origin, no trailing slash (e.g. https://compliance.stride.ai). */
   complianceBaseUrl: process.env.EXPO_PUBLIC_COMPLIANCE_BASE_URL?.trim() ?? '',

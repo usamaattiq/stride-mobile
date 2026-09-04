@@ -1,6 +1,6 @@
 {
   "name": "musafir249",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -56,9 +56,9 @@
     "build:ios": "eas build -p ios --profile production",
     "build:preview": "eas build --profile preview",
     "submit:ios": "eas submit -p ios --profile production --latest",
-    "update:preview": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel preview",
-    "update:production": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production",
-    "build:prod": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyD-6Nl3ypQTW4UgCyReSOm93GQPr2TiEKo eas update --channel production --message \"Production update\""
+    "update:preview": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=AIzaSyCZiJ7a6GebbgOKZAOxWXDRVefPVE1dKV8 EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=AIzaSyBKwMV4J4oXoYF_TIjnCi_d4abNRHEUIX0c eas update --channel preview",
+    "update:production": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=AIzaSyCZiJ7a6GebbgOKZAOxWXDRVefPVE1dKV8 EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=AIzaSyBKwMV4J4oXoYF_TIjnCi_d4abNRHEUIX0c eas update --channel production",
+    "build:prod": "cross-env EXPO_PUBLIC_API_BASE_URL=https://api.mazadalsafar.com/api EXPO_PUBLIC_COMPLIANCE_BASE_URL=https://compliance.musafir249.com EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=AIzaSyCZiJ7a6GebbgOKZAOxWXDRVefPVE1dKV8 EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=AIzaSyBKwMV4J4oXoYF_TIjnCi_d4abNRHEUIX0c eas update --channel production --message \"Production update\""
   },
   "private": true
 }
