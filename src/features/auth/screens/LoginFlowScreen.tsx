@@ -93,7 +93,7 @@ export function LoginFlowScreen(): React.ReactElement {
     const matchedCountry = lastPhone ? findCountryByCode(lastPhone.countryCode) : undefined;
     if (lastPhone && matchedCountry) {
       setCountry(matchedCountry);
-      setPhoneDigits(normalizeLocalPhoneDigits(lastPhone.phoneDigits));
+      setPhoneDigits(normalizeLocalPhoneDigits(lastPhone.phoneDigits, matchedCountry.phoneDigitLength));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

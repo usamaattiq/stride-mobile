@@ -32,7 +32,7 @@ export function LoginPhoneScreen({
   errorMessage,
 }: LoginPhoneScreenProps): React.ReactElement {
   const { t } = useTranslation(undefined, { i18n: appI18n });
-  const canContinue = isLocalPhoneComplete(phoneDigits) && !loading;
+  const canContinue = isLocalPhoneComplete(phoneDigits, country.phoneDigitLength) && !loading;
 
   return (
     <>

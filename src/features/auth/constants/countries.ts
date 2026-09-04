@@ -4,6 +4,8 @@ export type CountryOption = {
   name: string;
   flag: string;
   currency: string;
+  /** National number length (after dropping a leading trunk 0), e.g. Pakistan 300 1234567 = 10. */
+  phoneDigitLength: number;
 };
 
 export const DEFAULT_COUNTRY: CountryOption = {
@@ -12,19 +14,21 @@ export const DEFAULT_COUNTRY: CountryOption = {
   name: 'Pakistan',
   flag: '🇵🇰',
   currency: 'PKR',
+  phoneDigitLength: 10,
 };
 
 export const COUNTRY_OPTIONS: readonly CountryOption[] = [
   DEFAULT_COUNTRY,
-  { code: 'SA', callingCode: '966', name: 'Saudi Arabia', flag: '🇸🇦', currency: 'SAR' },
-  { code: 'AE', callingCode: '971', name: 'United Arab Emirates', flag: '🇦🇪', currency: 'AED' },
-  { code: 'US', callingCode: '1', name: 'United States', flag: '🇺🇸', currency: 'USD' },
-  { code: 'GB', callingCode: '44', name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP' },
-  { code: 'IN', callingCode: '91', name: 'India', flag: '🇮🇳', currency: 'INR' },
-  { code: 'EG', callingCode: '20', name: 'Egypt', flag: '🇪🇬', currency: 'EGP' },
-  { code: 'JO', callingCode: '962', name: 'Jordan', flag: '🇯🇴', currency: 'JOD' },
-  { code: 'QA', callingCode: '974', name: 'Qatar', flag: '🇶🇦', currency: 'QAR' },
-  { code: 'KW', callingCode: '965', name: 'Kuwait', flag: '🇰🇼', currency: 'KWD' },
+  { code: 'SA', callingCode: '966', name: 'Saudi Arabia', flag: '🇸🇦', currency: 'SAR', phoneDigitLength: 9 },
+  { code: 'AE', callingCode: '971', name: 'United Arab Emirates', flag: '🇦🇪', currency: 'AED', phoneDigitLength: 9 },
+  { code: 'US', callingCode: '1', name: 'United States', flag: '🇺🇸', currency: 'USD', phoneDigitLength: 10 },
+  { code: 'GB', callingCode: '44', name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', phoneDigitLength: 10 },
+  { code: 'IN', callingCode: '91', name: 'India', flag: '🇮🇳', currency: 'INR', phoneDigitLength: 10 },
+  { code: 'EG', callingCode: '20', name: 'Egypt', flag: '🇪🇬', currency: 'EGP', phoneDigitLength: 10 },
+  { code: 'JO', callingCode: '962', name: 'Jordan', flag: '🇯🇴', currency: 'JOD', phoneDigitLength: 9 },
+  { code: 'QA', callingCode: '974', name: 'Qatar', flag: '🇶🇦', currency: 'QAR', phoneDigitLength: 8 },
+  { code: 'KW', callingCode: '965', name: 'Kuwait', flag: '🇰🇼', currency: 'KWD', phoneDigitLength: 8 },
+  { code: 'SD', callingCode: '249', name: 'Sudan', flag: '🇸🇩', currency: 'SDG', phoneDigitLength: 9 },
 ] as const;
 
 export function findCountryByCode(code: string): CountryOption | undefined {

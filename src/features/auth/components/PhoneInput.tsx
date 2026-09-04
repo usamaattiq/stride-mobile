@@ -96,7 +96,7 @@ export function PhoneInput({
       <TextInput
         value={displayValue}
         onChangeText={(text) =>
-          onChangeDigits(sanitizeLocalPhoneInput(onlyLatinDigits(text)))
+          onChangeDigits(sanitizeLocalPhoneInput(onlyLatinDigits(text), country.phoneDigitLength))
         }
 
         placeholder={placeholder}
@@ -108,7 +108,7 @@ export function PhoneInput({
       />
       <KeyboardDoneBar
         nativeID={accessoryId}
-        disabled={!isLocalPhoneComplete(value)}
+        disabled={!isLocalPhoneComplete(value, country.phoneDigitLength)}
         onDone={onDone}
       />
 
