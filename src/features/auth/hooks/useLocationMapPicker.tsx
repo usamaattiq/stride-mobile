@@ -19,7 +19,7 @@ import { AppBottomSheet } from '@/shared/components/AppBottomSheet';
 import { AppDialog } from '@/shared/components/AppDialog';
 import { AppText } from '@/shared/components/AppText';
 import { Button } from '@/shared/components/Button';
-import { ENV, hasGoogleMapsApiKey } from '@/shared/config/env';
+import { hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, getFontFamily, radius, spacing } from '@/theme';
 
 import { resolveAddressLabel } from '../utils/geocodedAddressLabel';
@@ -69,7 +69,7 @@ function toRegion(latitude: number, longitude: number): Region {
 export function useLocationMapPicker(): UseLocationMapPicker {
   const { t } = useTranslation(undefined, { i18n: appI18n });
   const { currentLanguage } = useLanguage();
-  const mapsApiKey = ENV.googleMapsApiKey;
+  const mapsReady = hasGoogleMapsApiKey();
 
   const mapRef = useRef<MapView | null>(null);
   const skipMapSearchRef = useRef(false);
@@ -97,29 +97,26 @@ export function useLocationMapPicker(): UseLocationMapPicker {
     mapRef.current?.animateToRegion(next, 350);
   }, []);
 
-  const runMapSearch = useCallback(
-    async (query: string) => {
-      const trimmed = query.trim();
-      if (!trimmed || !mapsApiKey) {
-        setMapSearchResults([]);
-        return;
-      }
+  const runMapSearch = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setMapSearchResults([]);
+      return;
+    }
 
-      setMapSearchLoading(true);
-      setMapSearchShowEmpty(false);
-      try {
-        const results = await searchMapLocations(trimmed, mapsApiKey);
-        setMapSearchResults(results);
-        setMapSearchShowEmpty(results.length === 0);
-      } catch {
-        setMapSearchResults([]);
-        setMapSearchShowEmpty(true);
-      } finally {
-        setMapSearchLoading(false);
-      }
-    },
-    [mapsApiKey],
-  );
+    setMapSearchLoading(true);
+    setMapSearchShowEmpty(false);
+    try {
+      const results = await searchMapLocations(trimmed);
+      setMapSearchResults(results);
+      setMapSearchShowEmpty(results.length === 0);
+    } catch {
+      setMapSearchResults([]);
+      setMapSearchShowEmpty(true);
+    } finally {
+      setMapSearchLoading(false);
+    }
+  }, []);
 
   const closeMapPicker = useCallback(() => {
     setMapVisible(false);
@@ -330,7 +327,6 @@ export function useLocationMapPicker(): UseLocationMapPicker {
   }, [mapSearchQuery, mapVisible, runMapSearch]);
 
   const searchFontFamily = getFontFamily(currentLanguage, 'regular');
-  const mapsReady = hasGoogleMapsApiKey();
 
   const mapPickerSheet = (
     <>

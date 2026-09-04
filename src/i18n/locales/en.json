@@ -987,7 +987,7 @@
       "descriptionPlaceholder": "Add notes for passengers (optional)",
       "cityPlaceholder": "Search city",
       "cityNoResults": "No cities found. Try another search.",
-      "cityApiHint": "Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS to search cities.",
+      "cityApiHint": "Set EXPO_PUBLIC_API_BASE_URL so city search can reach the API.",
       "savedLocations": "Saved locations",
       "pointPlaceholder": "No point selected yet",
       "selectOnMap": "Select on map",

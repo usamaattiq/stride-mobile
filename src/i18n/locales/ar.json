@@ -987,7 +987,7 @@
       "descriptionPlaceholder": "أضف ملاحظات للركاب (اختياري)",
       "cityPlaceholder": "ابحث عن مدينة",
       "cityNoResults": "لم يتم العثور على مدن. جرّب بحثاً آخر.",
-      "cityApiHint": "أضف EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS للبحث عن المدن.",
+      "cityApiHint": "عيّن EXPO_PUBLIC_API_BASE_URL حتى يصل بحث المدن إلى الواجهة البرمجية.",
       "savedLocations": "المواقع المحفوظة",
       "pointPlaceholder": "لم يتم اختيار نقطة بعد",
       "selectOnMap": "التحديد على الخريطة",

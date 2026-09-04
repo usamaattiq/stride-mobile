@@ -2,8 +2,6 @@ import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import type { LocationGeocodedAddress } from 'expo-location';
 
-import { ENV } from '@/shared/config/env';
-
 import { reverseGeocodeDetails, reverseGeocodeLocation } from './signup-map-geocode';
 
 function normalizeLocationSegment(segment: string): string {
@@ -74,11 +72,7 @@ export async function resolveAddressLabel(latitude: number, longitude: number): 
     // Fall through to Google Geocoding API.
   }
 
-  const googleLabel = await reverseGeocodeLocation(
-    latitude,
-    longitude,
-    ENV.googleMapsApiKey,
-  );
+  const googleLabel = await reverseGeocodeLocation(latitude, longitude);
   if (googleLabel) {
     return googleLabel;
   }
@@ -109,7 +103,7 @@ export async function resolveCityAndPointFromCoords(
     // Fall through to Google.
   }
 
-  const google = await reverseGeocodeDetails(latitude, longitude, ENV.googleMapsApiKey);
+  const google = await reverseGeocodeDetails(latitude, longitude);
   const cityLabel = google?.city?.trim() || '';
   const address =
     addressFromCaller || google?.address || coordinateFallbackLabel(latitude, longitude);

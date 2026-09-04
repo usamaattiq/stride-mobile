@@ -178,7 +178,7 @@ export function CitySearchField({
         </View>
       )}
 
-      {!ENV.googleMapsApiKey ? (
+      {!ENV.apiBaseUrl ? (
         <AppText style={styles.hint}>{t('trips.create.cityApiHint')}</AppText>
       ) : null}
 

@@ -9,7 +9,8 @@ import { Platform } from 'react-native';
  * Google Maps keys must NOT be committed. Set locally in `.env` and on EAS Environment
  * Variables as EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID / _IOS.
  * Native MapView reads the same keys from app.config.ts (android.config.googleMaps /
- * ios.config.googleMapsApiKey). Geocoding / Places REST calls use the JS-side key.
+ * ios.config.googleMapsApiKey). Places / Geocoding go through stride-api `/locations/*`
+ * with GOOGLE_MAPS_SERVER_API_KEY — do not call maps.googleapis.com from the app.
  */
 const EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID =
   process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID?.trim() || '';

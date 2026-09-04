@@ -73,9 +73,9 @@ export async function prefetchCityNamesForSearch(
     latitude?: number | null;
     longitude?: number | null;
   }>,
-  apiKey: string,
+  _apiKey?: string,
 ): Promise<void> {
-  if (!apiKey || cities.length === 0) {
+  if (cities.length === 0) {
     return;
   }
   await Promise.all(
@@ -86,7 +86,7 @@ export async function prefetchCityNamesForSearch(
           latitude: item.latitude,
           longitude: item.longitude,
           language,
-          apiKey,
+          apiKey: '',
         }),
       ),
     ),
@@ -116,12 +116,9 @@ function cacheKey(input: ResolveCityInput): string {
 
 async function lookupLocalizedCityName(input: ResolveCityInput): Promise<string> {
   const fallback = cityDisplayName(input.city.label);
-  if (!input.apiKey) {
-    return fallback;
-  }
 
   if (isGooglePlaceId(input.city.id)) {
-    const byPlace = await geocodePlaceId(input.city.id, input.apiKey, input.language);
+    const byPlace = await geocodePlaceId(input.city.id, undefined, input.language);
     const fromPlace = byPlace?.city?.trim() || cityDisplayName(byPlace?.address ?? '');
     if (fromPlace) {
       return fromPlace;
@@ -132,7 +129,7 @@ async function lookupLocalizedCityName(input: ResolveCityInput): Promise<string>
     const byCoords = await reverseGeocodeDetails(
       input.latitude,
       input.longitude,
-      input.apiKey,
+      undefined,
       input.language,
     );
     const fromCoords = byCoords?.city?.trim() || cityDisplayName(byCoords?.address ?? '');
@@ -141,7 +138,7 @@ async function lookupLocalizedCityName(input: ResolveCityInput): Promise<string>
     }
   }
 
-  const byAddress = await geocodeAddress(fallback, input.apiKey, input.language);
+  const byAddress = await geocodeAddress(fallback, undefined, input.language);
   return byAddress?.city?.trim() || cityDisplayName(byAddress?.address ?? '') || fallback;
 }
 
@@ -186,10 +183,10 @@ const searchQueryInflight = new Map<string, Promise<string | null>>();
  */
 export async function resolveSearchQueryCityLabel(
   query: string,
-  apiKey: string,
+  _apiKey?: string,
 ): Promise<string | null> {
   const trimmed = query.trim();
-  if (!trimmed || !apiKey) {
+  if (!trimmed) {
     return null;
   }
   const key = trimmed.toLowerCase();
@@ -200,7 +197,7 @@ export async function resolveSearchQueryCityLabel(
   if (pending) {
     return pending;
   }
-  const request = geocodeAddress(trimmed, apiKey, 'en')
+  const request = geocodeAddress(trimmed, undefined, 'en')
     .then((result) => {
       const city = result?.city?.trim() || null;
       searchQueryCache.set(key, city);
@@ -218,23 +215,20 @@ export async function resolveSearchQueryCityLabel(
 export async function enrichSelectedCity(
   city: TripCity,
   language: string,
-  apiKey: string,
+  _apiKey?: string,
 ): Promise<TripCity> {
   const fallbackLabel = cityDisplayName(city.label);
-  if (!apiKey) {
-    return { ...city, label: fallbackLabel };
-  }
 
   if (isGooglePlaceId(city.id)) {
     const localized = await resolveLocalizedCityName({
       city,
       language,
-      apiKey,
+      apiKey: '',
     });
     return { id: city.id, label: localized || fallbackLabel };
   }
 
-  const geocoded = await geocodeAddress(fallbackLabel, apiKey, language);
+  const geocoded = await geocodeAddress(fallbackLabel, undefined, language);
   if (!geocoded?.placeId) {
     return { ...city, label: fallbackLabel };
   }
@@ -247,7 +241,7 @@ export async function enrichSelectedCity(
 
 export async function toBrowseCityParams(
   city: TripCity | null | undefined,
-  apiKey: string,
+  _apiKey?: string,
 ): Promise<{ id?: string; label?: string }> {
   if (!city) {
     return {};
@@ -255,7 +249,7 @@ export async function toBrowseCityParams(
   const englishName = await resolveLocalizedCityName({
     city,
     language: 'en',
-    apiKey,
+    apiKey: '',
   });
   return {
     id: isGooglePlaceId(city.id) ? city.id : undefined,

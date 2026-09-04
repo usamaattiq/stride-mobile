@@ -7,7 +7,7 @@ import { searchMapLocations } from '@/features/auth/utils/signup-map-geocode';
 import { i18n as appI18n } from '@/i18n';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { AppText } from '@/shared/components/AppText';
-import { ENV, hasGoogleMapsApiKey } from '@/shared/config/env';
+import { hasGoogleMapsApiKey } from '@/shared/config/env';
 import { colors, spacing } from '@/theme';
 
 type SearchRouteMapProps = {
@@ -57,8 +57,8 @@ export const SearchRouteMap = React.memo(function SearchRouteMap({
 
       try {
         const [originHits, destinationHits] = await Promise.all([
-          searchMapLocations(departureLabel, ENV.googleMapsApiKey, currentLanguage),
-          searchMapLocations(arrivalLabel, ENV.googleMapsApiKey, currentLanguage),
+          searchMapLocations(departureLabel, undefined, currentLanguage),
+          searchMapLocations(arrivalLabel, undefined, currentLanguage),
         ]);
 
         const origin = originHits[0];
